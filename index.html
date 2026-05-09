@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<title>Zahrada Mariánovice — 3D</title>
+<title>Garden — 3D viewer</title>
 <style>
   body { margin: 0; overflow: hidden; font-family: -apple-system, sans-serif; background: #87ceeb; }
   #info { position: absolute; top: 0; left: 0; padding: 12px 16px; background: rgba(0,0,0,0.65); color: white; z-index: 100; line-height: 1.5; max-width: 320px; border-bottom-right-radius: 8px; font-size: 13px; }
@@ -17,54 +17,66 @@
   #toggles input { margin-right: 6px; }
   #legend { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.65); color: white; padding: 10px 12px; font-size: 11px; z-index: 100; border-radius: 6px; max-width: 220px; }
   #legend .swatch { display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 6px; border: 1px solid rgba(255,255,255,0.3); }
-  #timeBar { position: absolute; top: 80px; left: 12px; background: rgba(0,0,0,0.65); padding: 8px 12px; z-index: 100; color: white; border-radius: 6px; font-size: 12px; max-width: 320px; }
-  #timeBar input { width: 200px; vertical-align: middle; }
-  #timeBar #timeLabel { display: inline-block; min-width: 56px; font-family: monospace; }
+  #timeBar { position: absolute; top: 100px; left: 12px; background: rgba(0,0,0,0.65); padding: 8px 12px; z-index: 100; color: white; border-radius: 6px; font-size: 12px; max-width: 340px; }
+  #timeBar input[type="range"] { width: 200px; vertical-align: middle; }
+  #timeBar .lbl-mono { display: inline-block; min-width: 56px; font-family: monospace; }
+  #timeBar .seasons { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+  #timeBar .seasons button { background: #444; color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+  #timeBar .seasons button:hover { background: #5dade2; }
+  #timeBar .seasons button.active { background: #5dade2; }
   #tooltip { position: absolute; pointer-events: none; background: rgba(0,0,0,0.85); color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; opacity: 0; transition: opacity 0.15s; z-index: 200; }
 </style>
 </head>
 <body>
 
 <div id="info">
-  <b>Zahrada — 3D vizualizace</b><br>
-  <small>Levé tlačítko: rotace · Pravé: posun · Scroll: zoom</small><br>
-  <small style="opacity:0.85">Další: <a href="editor.html" style="color:#5dade2">2D editor</a> · <a href="zahrada-plan.svg" style="color:#5dade2">2D půdorys</a></small>
+  <b>Garden — 3D visualization</b><br>
+  <small>Left mouse: rotate · Right mouse: pan · Scroll: zoom</small><br>
+  <small style="opacity:0.85">Other: <a href="editor.html" style="color:#5dade2">2D editor</a> · <a href="zahrada-plan.svg" style="color:#5dade2">2D plan</a></small>
 </div>
 
 <div id="presets">
-  <h4>POHLED</h4>
-  <button onclick="setPreset('iso')">Isometric (JV)</button>
-  <button onclick="setPreset('top')">Top-down (plán)</button>
-  <button onclick="setPreset('east')">Od východu (brána)</button>
-  <button onclick="setPreset('north')">Od severu</button>
-  <button onclick="setPreset('south')">Od jihu (sad)</button>
-  <button onclick="setPreset('ground')">Pohled chodce</button>
-  <button onclick="startTour()" style="background:#e07b3b">▶ Procházka pozemkem</button>
+  <h4>VIEW</h4>
+  <button onclick="setPreset('iso')">Isometric (SE)</button>
+  <button onclick="setPreset('top')">Top-down (plan)</button>
+  <button onclick="setPreset('east')">From east (gate)</button>
+  <button onclick="setPreset('north')">From north</button>
+  <button onclick="setPreset('south')">From south (orchard)</button>
+  <button onclick="setPreset('ground')">Walking eye level</button>
+  <button onclick="startTour()" style="background:#e07b3b">▶ Walking tour</button>
 </div>
 
 <div id="toggles">
-  <label><input type="checkbox" id="togglePlot" checked> Plot</label>
-  <label><input type="checkbox" id="toggleTrees" checked> Stromy</label>
-  <label><input type="checkbox" id="toggleRoof" checked> Střecha domu</label>
-  <label><input type="checkbox" id="toggleFurniture" checked> Nábytek + auta</label>
-  <label><input type="checkbox" id="toggleAxes"> Osy XYZ</label>
+  <label><input type="checkbox" id="togglePlot" checked> Fence</label>
+  <label><input type="checkbox" id="toggleTrees" checked> Trees</label>
+  <label><input type="checkbox" id="toggleRoof" checked> Roof</label>
+  <label><input type="checkbox" id="toggleFurniture" checked> Furniture + cars</label>
+  <label><input type="checkbox" id="toggleAxes"> XYZ axes</label>
   <label><input type="checkbox" id="toggleFP"> First-person (WASD)</label>
 </div>
 
 <div id="timeBar">
-  Denní doba: <span id="timeLabel">14:00</span>
-  <br><input type="range" id="timeSlider" min="6" max="20" step="0.25" value="14">
+  Day of year: <span class="lbl-mono" id="dateLabel">Jun 21</span>
+  <input type="range" id="daySlider" min="1" max="365" step="1" value="172">
+  <div class="seasons">
+    <button data-day="80">Spring (Mar 21)</button>
+    <button data-day="172" class="active">Summer (Jun 21)</button>
+    <button data-day="265">Autumn (Sep 22)</button>
+    <button data-day="355">Winter (Dec 21)</button>
+  </div>
+  <br>Hour: <span class="lbl-mono" id="timeLabel">14:00</span>
+  <input type="range" id="timeSlider" min="0" max="24" step="0.25" value="14">
 </div>
 
 <div id="tooltip"></div>
 
 <div id="legend">
-  <div><span class="swatch" style="background:#d4b896"></span>dům · <span class="swatch" style="background:#888"></span>garáž</div>
-  <div><span class="swatch" style="background:#8b6f47"></span>sauna · <span class="swatch" style="background:#5dade2"></span>Softub</div>
-  <div><span class="swatch" style="background:#a87d4a"></span>terasy · <span class="swatch" style="background:#cdc1ad"></span>přístřešek</div>
-  <div><span class="swatch" style="background:#c8a878"></span>pergola · <span class="swatch" style="background:#bdbdbd"></span>příjezd</div>
-  <div><span class="swatch" style="background:#7a5a3a"></span>záhony · <span class="swatch" style="background:#5a8a5a"></span>stromy</div>
-  <div><span class="swatch" style="background:#3a7ab8"></span>nádrž</div>
+  <div><span class="swatch" style="background:#d4b896"></span>house · <span class="swatch" style="background:#888"></span>garage</div>
+  <div><span class="swatch" style="background:#8b6f47"></span>sauna · <span class="swatch" style="background:#5dade2"></span>hot tub</div>
+  <div><span class="swatch" style="background:#a87d4a"></span>terraces · <span class="swatch" style="background:#cdc1ad"></span>shelter</div>
+  <div><span class="swatch" style="background:#c8a878"></span>pergola · <span class="swatch" style="background:#bdbdbd"></span>driveway</div>
+  <div><span class="swatch" style="background:#7a5a3a"></span>raised beds · <span class="swatch" style="background:#5a8a5a"></span>trees</div>
+  <div><span class="swatch" style="background:#3a7ab8"></span>rain tank</div>
 </div>
 
 <script type="importmap">
@@ -159,47 +171,77 @@ sun.shadow.camera.near = 1;
 sun.shadow.camera.far = 200;
 scene.add(sun);
 
-// Sun position from time of day
-// CZ (50°N): vychází na V, v poledne na J (peak ~60°), zapadá na Z
-// Three.js coords: X = východ, Z = jih, Y = nahoru
-function setSunFromTime(hour) {
-  const t = (hour - 6) / 14;                       // 0..1 between 6:00 and 20:00
-  const elevAngle = Math.sin(t * Math.PI) * (Math.PI / 3);  // peak 60° v poledne
-  const azAngle = Math.PI / 2 + t * Math.PI;       // 90° (východ) → 180° (jih) → 270° (západ)
+// Solar position formula (lat 50°N, day-of-year + hour)
+// Returns { elev, az } in radians; az measured from N clockwise (compass).
+function solarPosition(dayOfYear, hour, latDeg = 50) {
+  const lat = latDeg * Math.PI / 180;
+  const decl = 23.45 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + dayOfYear) / 365);
+  const H = (hour - 12) * 15 * Math.PI / 180;
+  const sinElev = Math.sin(lat) * Math.sin(decl) + Math.cos(lat) * Math.cos(decl) * Math.cos(H);
+  const elev = Math.asin(Math.max(-1, Math.min(1, sinElev)));
+  // Azimuth from south (positive west)
+  const azFromSouth = Math.atan2(
+    Math.sin(H),
+    Math.cos(H) * Math.sin(lat) - Math.tan(decl) * Math.cos(lat)
+  );
+  const az = Math.PI + azFromSouth;
+  return { elev, az };
+}
+
+let currentHour = 14;
+let currentDay = 172;  // 21. června default
+
+function updateSun() {
+  const { elev, az } = solarPosition(currentDay, currentHour);
   const dist = 100;
-  const horizDist = dist * Math.cos(elevAngle);
-  const x = horizDist * Math.sin(azAngle);
-  const y = dist * Math.sin(elevAngle);
-  const z = -horizDist * Math.cos(azAngle);
+  const horizDist = dist * Math.cos(elev);
+  const x = horizDist * Math.sin(az);
+  const y = dist * Math.sin(elev);
+  const z = -horizDist * Math.cos(az);
   sun.position.set(x, Math.max(2, y), z);
-  // Color & intensity by time
-  if (hour < 7 || hour > 19) {
-    sun.color.setHex(0xff9870);
-    sun.intensity = 0.7;
-    skyMat.uniforms.topColor.value.setHex(0x394e6e);
-    skyMat.uniforms.bottomColor.value.setHex(0xff9863);
-  } else if (hour < 9 || hour > 17) {
-    sun.color.setHex(0xffd49a);
-    sun.intensity = 1.1;
-    skyMat.uniforms.topColor.value.setHex(0x5a8fc4);
-    skyMat.uniforms.bottomColor.value.setHex(0xffc890);
+  // Below-horizon (night) handling
+  if (elev < 0) {
+    sun.intensity = 0.05;
+    skyMat.uniforms.topColor.value.setHex(0x0a1024);
+    skyMat.uniforms.bottomColor.value.setHex(0x1a2144);
+    sun.color.setHex(0x6080a0);
+    ambient.intensity = 0.15;
   } else {
-    sun.color.setHex(0xfff5d0);
-    sun.intensity = 1.4;
-    skyMat.uniforms.topColor.value.setHex(0x4a8fcf);
-    skyMat.uniforms.bottomColor.value.setHex(0xc4d8e8);
+    const elevDeg = elev * 180 / Math.PI;
+    if (elevDeg < 8) {
+      // Sunrise/sunset golden
+      sun.color.setHex(0xff9560);
+      sun.intensity = 0.8;
+      skyMat.uniforms.topColor.value.setHex(0x4a4068);
+      skyMat.uniforms.bottomColor.value.setHex(0xff9050);
+    } else if (elevDeg < 25) {
+      // Morning/late afternoon
+      sun.color.setHex(0xffd49a);
+      sun.intensity = 1.15;
+      skyMat.uniforms.topColor.value.setHex(0x5a8fc4);
+      skyMat.uniforms.bottomColor.value.setHex(0xffc890);
+    } else {
+      // Daytime
+      sun.color.setHex(0xfff5d0);
+      sun.intensity = 1.4;
+      skyMat.uniforms.topColor.value.setHex(0x4a8fcf);
+      skyMat.uniforms.bottomColor.value.setHex(0xc4d8e8);
+    }
+    ambient.intensity = 0.3 + Math.min(1, elevDeg / 60) * 0.2;
   }
   skyMat.uniforms.sunPos.value.set(x, y, z).normalize();
   skyMat.uniforms.sunColor.value.copy(sun.color);
-  const elevFactor = Math.sin(t * Math.PI);
-  ambient.intensity = 0.3 + elevFactor * 0.2;
   scene.fog.color.setRGB(
     0.7 * skyMat.uniforms.bottomColor.value.r + 0.3,
     0.7 * skyMat.uniforms.bottomColor.value.g + 0.3,
     0.7 * skyMat.uniforms.bottomColor.value.b + 0.3
   );
 }
-setSunFromTime(14);
+function setSunFromTime(hour) {
+  currentHour = hour;
+  updateSun();
+}
+updateSun();
 
 // Axes helper
 const axes = new THREE.AxesHelper(5);
@@ -1150,18 +1192,48 @@ document.getElementById('toggleRoof').addEventListener('change', e => roofGroup.
 document.getElementById('toggleFurniture').addEventListener('change', e => furnitureGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);
 
-// ───────────────────────── DAY/NIGHT SLIDER ─────────────────────────
+// ───────────────────────── DATE + TIME SLIDERS ─────────────────────────
 const timeSlider = document.getElementById('timeSlider');
 const timeLabel = document.getElementById('timeLabel');
+const daySlider = document.getElementById('daySlider');
+const dateLabel = document.getElementById('dateLabel');
+
+function dayToDate(d) {
+  const md = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let m = 0, day = d;
+  while (day > md[m]) { day -= md[m]; m++; }
+  return `${mn[m]} ${day}`;
+}
+
 function updateTimeLabel() {
   const v = parseFloat(timeSlider.value);
   const h = Math.floor(v);
   const m = Math.round((v - h) * 60);
   timeLabel.textContent = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-  setSunFromTime(v);
+  currentHour = v;
+  updateSun();
+}
+function updateDayLabel() {
+  const v = parseInt(daySlider.value);
+  dateLabel.textContent = dayToDate(v);
+  currentDay = v;
+  // Highlight matching season button
+  document.querySelectorAll('#timeBar .seasons button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.day) === v);
+  });
+  updateSun();
 }
 timeSlider.addEventListener('input', updateTimeLabel);
+daySlider.addEventListener('input', updateDayLabel);
+document.querySelectorAll('#timeBar .seasons button').forEach(b => {
+  b.addEventListener('click', () => {
+    daySlider.value = b.dataset.day;
+    updateDayLabel();
+  });
+});
 updateTimeLabel();
+updateDayLabel();
 
 // ───────────────────────── HOVER POPISKY (raycaster) ─────────────────────────
 const tooltip = document.getElementById('tooltip');
@@ -1181,20 +1253,20 @@ function addHoverTarget(plotX, plotY, w, d, h, name) {
   scene.add(m);
   namedObjects.push(m);
 }
-addHoverTarget(10.48, 7.18, 10.8, 19.25, 6, 'Dům 10,8 × 19,25 m');
-addHoverTarget(27.63, 19.4, 7.18, 7.05, 3, 'Garáž 7,18 × 7,05 m');
-addHoverTarget(21.28, 19.4, 6.35, 7.05, 2.5, 'Carport (přístřešek) 6,35 × 7,05 m');
+addHoverTarget(10.48, 7.18, 10.8, 19.25, 6, 'House 10.8 × 19.25 m');
+addHoverTarget(27.63, 19.4, 7.18, 7.05, 3, 'Garage 7.18 × 7.05 m');
+addHoverTarget(21.28, 19.4, 6.35, 7.05, 2.5, 'Carport 6.35 × 7.05 m');
 addHoverTarget(6.5, 1, 4, 3, 3, 'Sauna 4 × 3 m');
-addHoverTarget(3.5, 1, 3, 3, 2.5, 'Přístřešek u sauny');
+addHoverTarget(3.5, 1, 3, 3, 2.5, 'Sauna shelter');
 addHoverTarget(25.28, 1, 7, 5, 2.5, 'Pergola + grill 7 × 5 m');
-addHoverTarget(20.58, 11.58, 4, 10.95, 0.4, 'Terasa V (E.02) 4 × 11 m');
-addHoverTarget(9.48, 7.18, 1, 19.25, 0.4, 'Terasa Z — sidewalk');
-addHoverTarget(34.81, 22.84, 4.33, 3.61, 0.3, '2× parkování');
-addHoverTarget(35, 7, 3, 3, 0.5, 'Ohniště + sezení');
-addHoverTarget(27.5, 13, 5.5, 4, 0.3, 'Vodní plocha');
-addHoverTarget(40, 22.2, 2.5, 2.5, 0.1, 'Nádrž dešťová (pod zemí)');
-addHoverTarget(1, 10, 3.5, 9, 0.4, 'Vyvýšené záhony (4 ks)');
-addHoverTarget(0, 21, 5.5, 11, 0.5, 'Ovocný sad');
+addHoverTarget(20.58, 11.58, 4, 10.95, 0.4, 'East terrace 4 × 11 m');
+addHoverTarget(9.48, 7.18, 1, 19.25, 0.4, 'West terrace — sidewalk');
+addHoverTarget(34.81, 22.84, 4.33, 3.61, 0.3, '2× parking');
+addHoverTarget(35, 7, 3, 3, 0.5, 'Fire pit + seating');
+addHoverTarget(27.5, 13, 5.5, 4, 0.3, 'Pond');
+addHoverTarget(40, 22.2, 2.5, 2.5, 0.1, 'Rainwater tank (underground)');
+addHoverTarget(1, 10, 3.5, 9, 0.4, 'Raised beds (4×)');
+addHoverTarget(0, 21, 5.5, 11, 0.5, 'Orchard');
 
 window.addEventListener('mousemove', e => {
   mouse.x = (e.clientX / innerWidth) * 2 - 1;
@@ -1271,63 +1343,63 @@ window.addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
-// ───────────────────────── WALKING TOUR (POV procházka — pomaleji, víc zastavek) ─────────────────────────
-// Každý waypoint: p = [x, z] pozice chodce, la = [x, z] kam se dívá, dur = sekundy do dalšího
+// ───────────────────────── WALKING TOUR (POV walkthrough) ─────────────────────────
+// Each waypoint: p = [x, z] walker position, la = [x, z] look-at, dur = seconds to next
 const tourPath = [
-  // Příchod k bráně
-  { p: [50, 32],   la: [42, 30],   dur: 4,   label: 'Příchod k bráně z východu' },
-  { p: [44, 30],   la: [22, 17],   dur: 4,   label: 'U brány — pohled na celý pozemek' },
-  // Příjezd k domu
-  { p: [40, 29],   la: [33, 24],   dur: 4,   label: 'Příjezdová cesta' },
-  { p: [35, 27],   la: [28, 23],   dur: 4,   label: 'Pohled na carport a garáž' },
-  { p: [33, 26],   la: [30, 23],   dur: 3,   label: 'Garážová vrata' },
-  { p: [27, 26],   la: [21, 22],   dur: 4,   label: 'Procházka kolem carportu ke vstupu' },
-  // Vstup do domu
-  { p: [22, 23],   la: [21, 22],   dur: 3,   label: 'U vstupních dveří' },
-  { p: [20, 22],   la: [17, 17],   dur: 4,   label: 'Vstup do domu — průchod do obýváku' },
-  // V obýváku — rozhlížíme se
-  { p: [18, 18],   la: [22, 14],   dur: 5,   label: 'Obývák — pohled na HS portály a terasu V' },
-  { p: [18, 18],   la: [17, 22],   dur: 4,   label: 'Obývák — pohled ke krbu a komínu' },
-  { p: [17, 17.5], la: [12, 17.5], dur: 4,   label: 'Pohled k portálu do atria' },
+  // Approaching the gate
+  { p: [50, 32],   la: [42, 30],   dur: 4,   label: 'Approaching the gate from the east' },
+  { p: [44, 30],   la: [22, 17],   dur: 4,   label: 'At the gate — overview of the plot' },
+  // Driveway to house
+  { p: [40, 29],   la: [33, 24],   dur: 4,   label: 'Driveway' },
+  { p: [35, 27],   la: [28, 23],   dur: 4,   label: 'View of carport and garage' },
+  { p: [33, 26],   la: [30, 23],   dur: 3,   label: 'Garage door' },
+  { p: [27, 26],   la: [21, 22],   dur: 4,   label: 'Walking past the carport to entry' },
+  // House entrance
+  { p: [22, 23],   la: [21, 22],   dur: 3,   label: 'At the front door' },
+  { p: [20, 22],   la: [17, 17],   dur: 4,   label: 'Entering the house — into the living room' },
+  // In the living room — looking around
+  { p: [18, 18],   la: [22, 14],   dur: 5,   label: 'Living room — HS sliding doors to east terrace' },
+  { p: [18, 18],   la: [17, 22],   dur: 4,   label: 'Living room — view toward fireplace and chimney' },
+  { p: [17, 17.5], la: [12, 17.5], dur: 4,   label: 'Looking toward atrium portal' },
   // Atrium
-  { p: [15, 17.5], la: [12, 17.5], dur: 3,   label: 'U atriumového portálu' },
-  { p: [13, 17.5], la: [11, 17.5], dur: 4,   label: 'V atriu — open courtyard' },
-  { p: [12, 17.5], la: [12, 30],   dur: 4,   label: 'V atriu — pohled k nebi (atrium otevřené)' },
-  { p: [12, 17.5], la: [22, 17.5], dur: 4,   label: 'V atriu — zpět na dům' },
-  // Výstup z atria na západ
-  { p: [10, 17.5], la: [5, 17.5],  dur: 4,   label: 'Výstup z atria na západ' },
-  { p: [8, 17],    la: [3, 30],    dur: 4,   label: 'Pohled k sadu' },
-  // Sad
-  { p: [6, 24],    la: [2, 30],    dur: 5,   label: 'V sadu — ovocné stromy' },
-  { p: [4, 28],    la: [3, 32],    dur: 4,   label: 'Mezi stromy v sadu' },
-  // Záhony
-  { p: [4, 18],    la: [2, 13],    dur: 4,   label: 'Vyvýšené záhony (4×)' },
-  // K sauně
-  { p: [6, 12],    la: [8, 5],     dur: 5,   label: 'Procházka severozápadně k sauně' },
-  { p: [8, 7],     la: [5, 3],     dur: 4,   label: 'Přístřešek u sauny + Softub' },
-  { p: [9, 5],     la: [5, 2.5],   dur: 4,   label: 'U Softubu — pohled na saunu' },
-  { p: [10, 4],    la: [13, 1],    dur: 4,   label: 'Pohled k severnímu plotu (stromy)' },
-  // K pergole
-  { p: [14, 5],    la: [28, 3],    dur: 5,   label: 'Procházka severním pruhem k pergole' },
-  { p: [22, 5],    la: [28, 3],    dur: 4,   label: 'Přibližujeme se k pergole' },
-  { p: [27, 6],    la: [29, 3],    dur: 4,   label: 'U pergoly + grill point' },
-  { p: [29, 5],    la: [36, 8],    dur: 4,   label: 'Pohled k ohništi' },
-  // Ohniště
-  { p: [33, 7],    la: [36, 8],    dur: 4,   label: 'Cesta k ohništi' },
-  { p: [35, 7.5],  la: [36, 8],    dur: 5,   label: 'Sezení u ohniště' },
-  { p: [37, 8],    la: [36, 8],    dur: 4,   label: 'Druhá strana ohniště' },
-  // Východní strana — stromy
-  { p: [40, 12],   la: [42, 16],   dur: 4,   label: 'Východní pruh — stromy proti sousedce' },
-  // Vodní plocha
-  { p: [33, 14],   la: [30, 15],   dur: 5,   label: 'Příchod k vodní ploše' },
-  { p: [27, 15],   la: [30, 15],   dur: 5,   label: 'U vodní plochy — lekníny' },
-  { p: [30, 12],   la: [30, 15],   dur: 4,   label: 'Druhá strana vodní plochy' },
-  // Terasa V
-  { p: [25, 18],   la: [22, 17],   dur: 5,   label: 'Pohled na terasu V (HS portály)' },
-  { p: [23, 18],   la: [16, 18],   dur: 4,   label: 'Na hlavní terase V' },
-  // Konec
-  { p: [22, 22],   la: [22, 17],   dur: 4,   label: 'Konec — celkový pohled' },
-  { p: [22, 22],   la: [22, 17],   dur: 0.1, label: 'Konec' },
+  { p: [15, 17.5], la: [12, 17.5], dur: 3,   label: 'At the atrium portal' },
+  { p: [13, 17.5], la: [11, 17.5], dur: 4,   label: 'In the atrium — open courtyard' },
+  { p: [12, 17.5], la: [12, 30],   dur: 4,   label: 'Atrium — looking up to open sky' },
+  { p: [12, 17.5], la: [22, 17.5], dur: 4,   label: 'Atrium — looking back at the house' },
+  // Exiting atrium to west
+  { p: [10, 17.5], la: [5, 17.5],  dur: 4,   label: 'Exiting atrium to the west' },
+  { p: [8, 17],    la: [3, 30],    dur: 4,   label: 'View toward the orchard' },
+  // Orchard
+  { p: [6, 24],    la: [2, 30],    dur: 5,   label: 'In the orchard — fruit trees' },
+  { p: [4, 28],    la: [3, 32],    dur: 4,   label: 'Among orchard trees' },
+  // Raised beds
+  { p: [4, 18],    la: [2, 13],    dur: 4,   label: 'Raised beds (4×)' },
+  // To sauna
+  { p: [6, 12],    la: [8, 5],     dur: 5,   label: 'Walking northwest to the sauna' },
+  { p: [8, 7],     la: [5, 3],     dur: 4,   label: 'Sauna shelter + hot tub' },
+  { p: [9, 5],     la: [5, 2.5],   dur: 4,   label: 'At the hot tub — looking at sauna' },
+  { p: [10, 4],    la: [13, 1],    dur: 4,   label: 'View toward the north fence (trees)' },
+  // To pergola
+  { p: [14, 5],    la: [28, 3],    dur: 5,   label: 'Walking the north strip to the pergola' },
+  { p: [22, 5],    la: [28, 3],    dur: 4,   label: 'Approaching the pergola' },
+  { p: [27, 6],    la: [29, 3],    dur: 4,   label: 'At the pergola + grill spot' },
+  { p: [29, 5],    la: [36, 8],    dur: 4,   label: 'Looking toward the fire pit' },
+  // Fire pit
+  { p: [33, 7],    la: [36, 8],    dur: 4,   label: 'Walking to the fire pit' },
+  { p: [35, 7.5],  la: [36, 8],    dur: 5,   label: 'Sitting at the fire pit' },
+  { p: [37, 8],    la: [36, 8],    dur: 4,   label: 'Other side of the fire pit' },
+  // East side — trees
+  { p: [40, 12],   la: [42, 16],   dur: 4,   label: 'East strip — trees toward neighbor' },
+  // Pond
+  { p: [33, 14],   la: [30, 15],   dur: 5,   label: 'Approaching the pond' },
+  { p: [27, 15],   la: [30, 15],   dur: 5,   label: 'At the pond — water lilies' },
+  { p: [30, 12],   la: [30, 15],   dur: 4,   label: 'Other side of the pond' },
+  // East terrace
+  { p: [25, 18],   la: [22, 17],   dur: 5,   label: 'View of east terrace (HS doors)' },
+  { p: [23, 18],   la: [16, 18],   dur: 4,   label: 'On the east terrace' },
+  // End
+  { p: [22, 22],   la: [22, 17],   dur: 4,   label: 'Final overview' },
+  { p: [22, 22],   la: [22, 17],   dur: 0.1, label: 'End' },
 ];
 
 let tourActive = false;

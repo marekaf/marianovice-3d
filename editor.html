@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Zahrada Mariánovice — interaktivní plán</title>
+<title>Garden — 2D drag-drop editor</title>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
   .toolbar { background: #2a2a2a; color: #fff; padding: 12px 20px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
@@ -22,7 +22,7 @@
 <div class="toolbar">
   <button id="exportBtn">⬇ Export SVG</button>
   <button id="resetBtn">↺ Reset</button>
-  <span class="info">Přetáhni prvky myší. Snap na 2 m grid.</span>
+  <span class="info">Drag elements with the mouse. Snap to 2 m grid.</span>
   <span class="coord" id="coord">—</span>
 </div>
 
@@ -58,8 +58,8 @@
 
   <rect x="0" y="0" width="1100" height="880" fill="white"/>
 
-  <text x="550" y="28" class="title">Schematický plán zahrady</text>
-  <text x="550" y="46" class="subtitle">5-úhelník · grid 2×2 m (sloupce 1-23, řádky a-q) · měřítko 1:55</text>
+  <text x="550" y="28" class="title">Garden schematic plan</text>
+  <text x="550" y="46" class="subtitle">Pentagon · grid 2×2 m (columns 1-23, rows a-q) · scale 1:55</text>
 
   <g transform="translate(80, 110)">
     <g clip-path="url(#plotShape)">
@@ -69,7 +69,7 @@
     <polygon points="0,0 794.88,0 794.88,420.84 776.0,637.4 20.7,547.4"
              fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
 
-    <!-- Sloupce 1-22 -->
+    <!-- Columns 1-22 -->
     <g font-size="9" fill="#555" text-anchor="middle" font-weight="600">
       <text x="18" y="-6">1</text><text x="54" y="-6">2</text><text x="90" y="-6">3</text>
       <text x="126" y="-6">4</text><text x="162" y="-6">5</text><text x="198" y="-6">6</text>
@@ -81,7 +81,7 @@
       <text x="774" y="-6">22</text>
     </g>
 
-    <!-- Řádky a-q -->
+    <!-- Rows a-q -->
     <g font-size="9" fill="#555" text-anchor="middle" font-weight="600">
       <text x="-10" y="22">a</text><text x="-10" y="58">b</text><text x="-10" y="94">c</text>
       <text x="-10" y="130">d</text><text x="-10" y="166">e</text><text x="-10" y="202">f</text>
@@ -91,96 +91,96 @@
       <text x="-10" y="562">p</text><text x="-10" y="598">q</text>
     </g>
 
-    <!-- Délky stran -->
-    <text x="397" y="-22" class="strana">↔ 44,16 m (sever)</text>
-    <text x="813" y="200" class="strana" transform="rotate(90, 813, 200)">↔ 23,38 m</text>
-    <text x="813" y="525" class="strana" transform="rotate(85, 813, 525)">↔ 12,08 m</text>
-    <text x="400" y="617" class="strana">↔ 42,27 m (jih)</text>
-    <text x="-32" y="280" class="strana" transform="rotate(-90, -32, 280)">↔ 30,44 m (Z)</text>
+    <!-- Side lengths -->
+    <text x="397" y="-22" class="strana">↔ 44.16 m (north)</text>
+    <text x="813" y="200" class="strana" transform="rotate(90, 813, 200)">↔ 23.38 m</text>
+    <text x="813" y="525" class="strana" transform="rotate(85, 813, 525)">↔ 12.08 m</text>
+    <text x="400" y="617" class="strana">↔ 42.27 m (south)</text>
+    <text x="-32" y="280" class="strana" transform="rotate(-90, -32, 280)">↔ 30.44 m (W)</text>
 
-    <!-- DŮM (FIXED) -->
+    <!-- HOUSE (FIXED) -->
     <g id="dum-group">
       <path d="M 189 129 L 383 129 L 383 208 L 370 208 L 370 406 L 383 406 L 383 476 L 189 476 L 189 345 L 266 345 L 266 287 L 189 287 Z"
             fill="#d4b896" opacity="0.95" stroke="#7a5e3e" stroke-width="2.5"/>
-      <text x="286" y="320" class="lbl" font-size="20" font-weight="700">DŮM</text>
-      <text x="286" y="343" class="lbl">10,8 × 19,25 m</text>
+      <text x="286" y="320" class="lbl" font-size="20" font-weight="700">HOUSE</text>
+      <text x="286" y="343" class="lbl">10,8 × 19.25 m</text>
       <rect x="370" y="208" width="13" height="198" fill="#a87d4a" opacity="0.4"/>
     </g>
 
     <!-- TERASA Z (draggable as whole) -->
-    <g class="draggable" data-name="terasa Z">
+    <g class="draggable" data-name="west terrace">
       <rect x="171" y="129" width="18" height="347" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
       <rect x="189" y="287" width="77" height="58" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
-      <text x="227" y="312" class="lbl-sm">terasa Z</text>
-      <text x="227" y="326" class="dim">atrium + 1 m chodníček</text>
+      <text x="227" y="312" class="lbl-sm">west terrace</text>
+      <text x="227" y="326" class="dim">atrium + 1 m sidewalk</text>
     </g>
 
     <!-- Terasa V (draggable) -->
-    <g class="draggable" data-name="terasa V">
+    <g class="draggable" data-name="east terrace">
       <rect x="383" y="208" width="72" height="198" fill="#a87d4a" opacity="0.78" stroke="#5a3e25" stroke-width="1.2"/>
-      <text x="419" y="295" class="lbl-w">terasa V</text>
+      <text x="419" y="295" class="lbl-w">east terrace</text>
       <text x="419" y="311" class="lbl-sm-w">(E.02)</text>
       <text x="419" y="327" class="dim" fill="#fff">4 × 11 m</text>
     </g>
 
-    <!-- Schody/sezení (draggable) -->
-    <g class="draggable" data-name="schody">
+    <!-- Stairs/seating (draggable) -->
+    <g class="draggable" data-name="stairs">
       <rect x="383" y="135" width="72" height="65" fill="#9a9a9a" opacity="0.6"/>
-      <text x="419" y="160" class="lbl-sm">schody/sezení</text>
-      <text x="419" y="176" class="dim">4 × 3,6 m</text>
+      <text x="419" y="160" class="lbl-sm">stairs/seating</text>
+      <text x="419" y="176" class="dim">4 × 3.6 m</text>
     </g>
 
     <!-- Carport (FIXED) -->
     <g id="carport-group">
       <rect x="383" y="349" width="114" height="127" fill="#bdbdbd" opacity="0.5" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
-      <text x="440" y="408" class="lbl-sm">přístřešek</text>
-      <text x="440" y="422" class="lbl-sm">pro auto</text>
-      <text x="440" y="438" class="dim">6,35 × 7,05 m</text>
+      <text x="440" y="408" class="lbl-sm">shelter</text>
+      <text x="440" y="422" class="lbl-sm">for car</text>
+      <text x="440" y="438" class="dim">6,35 × 7.05 m</text>
     </g>
 
     <!-- Garáž (FIXED) -->
     <g id="garaz-group">
       <rect x="497" y="349" width="117" height="127" fill="#888" opacity="0.88" stroke="#3a3a3a" stroke-width="2"/>
-      <text x="555" y="408" class="lbl-w" font-size="14" font-weight="700">GARÁŽ</text>
-      <text x="555" y="426" class="dim" fill="#fff">~6,5 × 7,05 m</text>
+      <text x="555" y="408" class="lbl-w" font-size="14" font-weight="700">GARAGE</text>
+      <text x="555" y="426" class="dim" fill="#fff">~6,5 × 7.05 m</text>
       <rect x="525" y="473" width="60" height="6" fill="#222"/>
     </g>
 
     <!-- Příjezd (draggable) -->
-    <g class="draggable" data-name="příjezd">
+    <g class="draggable" data-name="driveway">
       <polygon points="383,476 614,476 789,502 782,583 383,535" fill="#cccccc" opacity="0.55"/>
-      <text x="555" y="510" class="lbl-sm">příjezd</text>
-      <text x="555" y="525" class="dim">4,5 m × ~22 m</text>
+      <text x="555" y="510" class="lbl-sm">driveway</text>
+      <text x="555" y="525" class="dim">4.5 m × ~22 m</text>
     </g>
 
     <!-- Brána -->
-    <g class="draggable" data-name="brána">
+    <g class="draggable" data-name="gate">
       <line x1="789" y1="502" x2="782" y2="583" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round"/>
-      <text x="800" y="540" class="lbl-sm" font-weight="700" text-anchor="start">BRÁNA</text>
-      <text x="800" y="554" class="dim" text-anchor="start">~4,5 m</text>
+      <text x="800" y="540" class="lbl-sm" font-weight="700" text-anchor="start">GATE</text>
+      <text x="800" y="554" class="dim" text-anchor="start">~4.5 m</text>
     </g>
 
     <!-- Nádrž (draggable) -->
-    <g class="draggable" data-name="nádrž dešťová">
+    <g class="draggable" data-name="rain tank">
       <circle cx="700" cy="500" r="11" fill="#3a7ab8" opacity="0.78" stroke="#1f3a5f" stroke-width="1.5"/>
       <text x="700" y="503" class="lbl-sm-w" font-weight="700">N</text>
     </g>
 
     <!-- Sauna group (draggable) -->
-    <g class="draggable" data-name="sauna+softub">
+    <g class="draggable" data-name="sauna+hot tub">
       <rect x="81" y="18" width="72" height="54" fill="#8b6f47" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>
       <text x="117" y="40" class="lbl-w">SAUNA</text>
       <text x="117" y="54" class="dim" fill="#fff">4×3 m</text>
       <rect x="153" y="18" width="36" height="54" fill="#b89870" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>
-      <text x="171" y="50" class="lbl-sm" transform="rotate(-90, 171, 50)">předsíň</text>
+      <text x="171" y="50" class="lbl-sm" transform="rotate(-90, 171, 50)">anteroom</text>
       <rect x="81" y="72" width="108" height="54" fill="#cdc1ad" opacity="0.4" stroke="#7a5e3e" stroke-width="1" stroke-dasharray="4,3"/>
-      <text x="80" y="138" class="lbl-sm" fill="#5a4828" text-anchor="start">přístřešek</text>
+      <text x="80" y="138" class="lbl-sm" fill="#5a4828" text-anchor="start">shelter</text>
       <ellipse cx="135" cy="99" rx="32" ry="20" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
       <text x="135" y="103" class="lbl-sm" font-weight="bold" fill="#1f3a5f">Softub</text>
     </g>
 
     <!-- Chodníček -->
-    <g class="draggable" data-name="chodníček">
+    <g class="draggable" data-name="sidewalk">
       <path d="M 175 126 Q 185 150 187 180 L 187 209" fill="none" stroke="#cdc1ad" stroke-width="11" stroke-linecap="round" opacity="0.7"/>
     </g>
 
@@ -189,29 +189,29 @@
       <rect x="455" y="18" width="144" height="90" fill="#c8a878" opacity="0.55" stroke="#7a5e3e" stroke-width="1.5" stroke-dasharray="6,3"/>
       <text x="527" y="55" class="lbl">pergola + grill</text>
       <text x="527" y="72" class="dim">8 × 5 m</text>
-      <text x="527" y="92" class="lbl-sm" fill="#5a4828">u severního plotu</text>
+      <text x="527" y="92" class="lbl-sm" fill="#5a4828">by north fence</text>
     </g>
 
     <!-- Záhon 1 (draggable) -->
-    <g class="draggable" data-name="záhon 1">
+    <g class="draggable" data-name="raised bed 1">
       <rect x="18" y="200" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
-      <text x="31" y="240" class="lbl-sm-w" transform="rotate(-90, 31, 240)">záhon 1</text>
+      <text x="31" y="240" class="lbl-sm-w" transform="rotate(-90, 31, 240)">raised bed 1</text>
       <text x="55" y="240" class="dim" text-anchor="start">1,5 × 4 m</text>
     </g>
 
     <!-- Záhon 2 (draggable) -->
-    <g class="draggable" data-name="záhon 2">
+    <g class="draggable" data-name="raised bed 2">
       <rect x="18" y="290" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
-      <text x="31" y="330" class="lbl-sm-w" transform="rotate(-90, 31, 330)">záhon 2</text>
+      <text x="31" y="330" class="lbl-sm-w" transform="rotate(-90, 31, 330)">raised bed 2</text>
       <text x="55" y="330" class="dim" text-anchor="start">1,5 × 4 m</text>
     </g>
 
     <!-- Sad (draggable) -->
-    <g class="draggable" data-name="sad">
+    <g class="draggable" data-name="orchard">
       <g clip-path="url(#plotShape)">
         <rect x="0" y="380" width="100" height="200" fill="#7fa66f" opacity="0.4"/>
       </g>
-      <text x="50" y="490" class="lbl" transform="rotate(-90, 50, 490)">ovocný sad</text>
+      <text x="50" y="490" class="lbl" transform="rotate(-90, 50, 490)">orchard</text>
       <text x="115" y="490" class="dim" text-anchor="start">~5,5 × 11 m</text>
       <circle cx="20" cy="400" r="9" fill="#5a8a5a"/>
       <circle cx="75" cy="430" r="9" fill="#5a8a5a"/>
