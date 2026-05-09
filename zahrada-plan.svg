@@ -154,11 +154,28 @@
     <text x="800" y="540" class="lbl-sm" font-weight="700" text-anchor="start">GATE</text>
     <text x="800" y="554" class="dim" text-anchor="start">~4.5 m</text>
 
-    <!-- Nádrž dešťová (E.09) — východně parkování, čtverec 2,5 × 2.5 m -->
+    <!-- Rain tank (E.09) — east of parking, 2.5 × 2.5 m, underground -->
     <rect x="720" y="400" width="45" height="45" fill="#3a7ab8" opacity="0.78" stroke="#1f3a5f" stroke-width="1.5"/>
-        <text x="742" y="420" class="lbl-sm" fill="#fff" font-weight="700">tank</text>
-    <text x="742" y="433" class="lbl-sm" fill="#fff">dešťová</text>
-    <text x="742" y="446" class="dim" fill="#fff">2,5 × 2.5 m</text>
+    <text x="742" y="420" class="lbl-sm" fill="#fff" font-weight="700">rain tank</text>
+    <text x="742" y="433" class="dim" fill="#fff">2.5 × 2.5 m</text>
+
+    <!-- Pond (ellipse, x=30 m, z=15 m, 5.6 × 4 m) — east of house, between east terrace and pergola -->
+    <ellipse cx="540" cy="270" rx="50" ry="36" fill="#3a7ab8" opacity="0.65" stroke="#5a4a30" stroke-width="1.5"/>
+    <text x="540" y="268" class="lbl-sm" fill="#fff" font-weight="700">pond</text>
+    <text x="540" y="280" class="dim" fill="#fff">5.6 × 4 m</text>
+
+    <!-- Fire pit + seating (NE, x=36, z=8) -->
+    <circle cx="648" cy="144" r="14" fill="#5a4030" opacity="0.85" stroke="#3a2818" stroke-width="1"/>
+    <circle cx="648" cy="144" r="9" fill="#ff7733" opacity="0.7"/>
+    <text x="648" y="170" class="lbl-sm" fill="#5a4828">fire pit</text>
+
+    <!-- Trees along east fence (privacy from neighbor) -->
+    <circle cx="765" cy="144" r="9" fill="#4d7a4d"/>
+    <circle cx="765" cy="216" r="9" fill="#4d7a4d"/>
+    <circle cx="765" cy="288" r="9" fill="#4d7a4d"/>
+    <circle cx="765" cy="360" r="9" fill="#4d7a4d"/>
+    <circle cx="756" cy="594" r="9" fill="#4d7a4d"/>
+    <circle cx="756" cy="630" r="9" fill="#4d7a4d"/>
 
     <!-- SAUNA + anteroom jako jeden 4×3 m blok (východní strana v ose dům Z) -->
     <rect x="117" y="18" width="72" height="54" fill="#8b6f47" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>

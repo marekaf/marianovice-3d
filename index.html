@@ -248,8 +248,8 @@ const axes = new THREE.AxesHelper(5);
 axes.visible = false;
 scene.add(axes);
 
-// ───────────────────────── TERÉN (svah JZ→SV, 4 m výškový rozdíl) ─────────────────────────
-// JZ corner (1.15, 30.41) = nejvýše (y=4), SV corner (44.16, 0) = nejníže (y=0)
+// ───────────────────────── TERRAIN (slope SW→NE, 4 m elevation diff) ─────────────────────────
+// SW corner (1.15, 30.41) = highest (y=4), NE corner (44.16, 0) = lowest (y=0)
 // Plane equation: y = -0.062 x + 0.044 z + 2.733
 function terrainHeight(x, z) {
   return Math.max(0, -0.062 * x + 0.044 * z + 2.733);
@@ -287,7 +287,7 @@ function addBox(plotX, plotY, w, d, h, color, opts = {}) {
   return mesh;
 }
 
-// Extruded polygon (dům) — osazený na terénu dle centroidu
+// Extruded polygon (house) — placed on terrain by centroid
 function addExtrudedPoly(verts2d, h, color) {
   const shape = makePolyShape(verts2d);
   const geom = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: false });
@@ -303,7 +303,7 @@ function addExtrudedPoly(verts2d, h, color) {
   return { mesh, baseY: terrainHeight(cx, cz) };
 }
 
-// Open structure (carport/pergola): střecha + 4 sloupky, na terénu
+// Open structure (carport/pergola): roof + 4 posts on terrain
 function addOpenStructure(plotX, plotY, w, d, h, roofColor, postColor = 0x5a3e25, opacity = 0.55) {
   const group = new THREE.Group();
   const cx = plotX + w/2;
@@ -330,7 +330,7 @@ function addOpenStructure(plotX, plotY, w, d, h, roofColor, postColor = 0x5a3e25
   return group;
 }
 
-// Tree (kmen + koruna) na terénu
+// Tree (trunk + canopy) on terrain
 function addTree(plotX, plotY, height = 4, canopyColor = 0x5a8a5a) {
   const trunkH = height * 0.35;
   const baseY = terrainHeight(plotX, plotY);
@@ -351,7 +351,7 @@ function addTree(plotX, plotY, height = 4, canopyColor = 0x5a8a5a) {
   treesGroup.add(canopy);
 }
 
-// Platform (terasa, chodníček) sledující terén — top surface only
+// Platform (terrace, sidewalk) following terrain — top surface only
 function addTerrainPlatform(verts2d, thickness, color, opts = {}) {
   const shape = makePolyShape(verts2d);
   const geom = new THREE.ShapeGeometry(shape);
@@ -373,7 +373,7 @@ function addTerrainPlatform(verts2d, thickness, color, opts = {}) {
   return mesh;
 }
 
-// Fence segment (wall) na terénu
+// Fence segment (wall) on terrain
 function addFenceSegment(x1, z1, x2, z2, h = 1.8) {
   const dx = x2 - x1, dz = z2 - z1;
   const len = Math.sqrt(dx*dx + dz*dz);
@@ -442,7 +442,7 @@ function addBush(plotX, plotY, size = 1, color = 0x5a8a5a) {
   }
 }
 
-// ───────────────────────── POZEMEK (GROUND) ─────────────────────────
+// ───────────────────────── FENCE (GROUND) ─────────────────────────
 const plotVerts = [
   [0, 0],            // SZ
   [44.16, 0],        // SV
@@ -453,7 +453,7 @@ const plotVerts = [
 const plotShape = makePolyShape(plotVerts);
 const plotGeom = new THREE.ShapeGeometry(plotShape);
 plotGeom.rotateX(-Math.PI/2);
-// Aplikuj svah na vertex Y
+// Apply slope to vertex Y
 const groundPos = plotGeom.attributes.position;
 for (let i = 0; i < groundPos.count; i++) {
   const x = groundPos.getX(i);
@@ -470,8 +470,8 @@ const ground = new THREE.Mesh(
 ground.receiveShadow = true;
 scene.add(ground);
 
-// ───────────────────────── DŮM ─────────────────────────
-const dumVerts = [
+// ───────────────────────── HOUSE ─────────────────────────
+const houseVerts = [
   [10.48, 7.18],   // NW
   [21.28, 7.18],   // NE
   [21.28, 11.58],
@@ -487,11 +487,11 @@ const dumVerts = [
 ];
 const wallH = 2.8;
 const roofRise = 5;
-addExtrudedPoly(dumVerts, wallH, 0xd4b896);
+addExtrudedPoly(houseVerts, wallH, 0xd4b896);
 
-// Sedlová střecha (sedlový štít na S a J — ridge running E-W is wrong; per studie štít na jih, takže ridge S-N or E-W?)
+// Sedlová střecha (sedlový štít na S a J — ridge running E-W is wrong; per studie štít na south, takže ridge S-N or E-W?)
 // Studie: "Dominantní sedlový štít" v jižním pohledu = gable at south face. Ridge runs perpendicular to gable face, tj. ridge S-N.
-// Roof over dům bounding box: x = 10.48..21.28, z = 7.18..26.43. Ridge centered along x (peak runs N-S along z).
+// Roof over house bounding box: x = 10.48..21.28, z = 7.18..26.43. Ridge centered along x (peak runs N-S along z).
 function makeGableRoof(xMin, xMax, zMin, zMax, wallTop, peakHeight) {
   const xMid = (xMin + xMax) / 2;
   const peakY = wallTop + peakHeight;
@@ -518,12 +518,12 @@ function makeGableRoof(xMin, xMax, zMin, zMax, wallTop, peakHeight) {
 }
 
 // Roof setup
-const dumCentroidX = (10.48 + 21.28) / 2;
-const dumCentroidZ = (7.18 + 26.43) / 2;
-const dumTerrainY = terrainHeight(dumCentroidX, dumCentroidZ);
+const houseCentroidX = (10.48 + 21.28) / 2;
+const houseCentroidZ = (7.18 + 26.43) / 2;
+const houseTerrainY = terrainHeight(houseCentroidX, houseCentroidZ);
 const roofMat = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, roughness: 0.5, metalness: 0.3, side: THREE.DoubleSide });
 
-// Pultová střecha — sklon NS (north high, south low)
+// Shed roof — slope NS (north high, south low)
 function makePultRoofNS(xMin, xMax, zMin, zMax, lowY, highY) {
   const verts = [
     xMin, highY, zMin,
@@ -540,7 +540,7 @@ function makePultRoofNS(xMin, xMax, zMin, zMax, lowY, highY) {
 }
 const makePultRoof = makePultRoofNS;  // alias
 
-// Pultová střecha — sklon WE (west low, east high)
+// Shed roof — slope WE (west low, east high)
 function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
   const verts = [
     xMin, lowY,  zMin,
@@ -556,30 +556,30 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
   return geom;
 }
 
-// MAIN CORE (x=14.78-21.28) — jednolita sedlová střecha
-const mainGableGeom = makeGableRoof(14.78, 21.28, 7.18, 26.43, dumTerrainY + wallH, roofRise);
+// MAIN CORE (x=14.78-21.28) — single gable roof
+const mainGableGeom = makeGableRoof(14.78, 21.28, 7.18, 26.43, houseTerrainY + wallH, roofRise);
 const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
-// Severní výstupek (x=10.48-14.78, z=7.18-15.93) — pultová s malým sklonem (W low, E high)
-const nWingRoofGeom = makePultRoofWE(10.48, 14.78, 7.18, 15.93, dumTerrainY + wallH, dumTerrainY + wallH + 0.9);
+// North wing (x=10.48-14.78, z=7.18-15.93) — shed roof, small slope W low / E high
+const nWingRoofGeom = makePultRoofWE(10.48, 14.78, 7.18, 15.93, houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
 const nWingRoofMesh = new THREE.Mesh(nWingRoofGeom, roofMat);
 nWingRoofMesh.castShadow = true;
 roofGroup.add(nWingRoofMesh);
 
-// Jižní výstupek (x=10.48-14.78, z=19.18-26.43) — pultová
-const sWingRoofGeom = makePultRoofWE(10.48, 14.78, 19.18, 26.43, dumTerrainY + wallH, dumTerrainY + wallH + 0.9);
+// South wing (x=10.48-14.78, z=19.18-26.43) — shed roof
+const sWingRoofGeom = makePultRoofWE(10.48, 14.78, 19.18, 26.43, houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
 const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
 sWingRoofMesh.castShadow = true;
 roofGroup.add(sWingRoofMesh);
 
-// Atrium (x=10.48-14.78, z=15.93-19.18) — bez střechy (open)
+// Atrium (x=10.48-14.78, z=15.93-19.18) — no roof (open)
 
-// ───────────────────────── GARÁŽ + KRYTÝ STÁNÍ ─────────────────────────
+// ───────────────────────── GARAGE + COVERED PARKING ─────────────────────────
 addBox(27.63, 19.4, 7.18, 7.05, 3, 0x888888);
 
-// Pultová střecha na garáži (sever vyšší → jih nižší)
+// Shed roof on garage (north higher → south lower)
 {
   const garageBaseY = terrainHeight(27.63 + 3.59, 19.4 + 3.525);
   const lowY = garageBaseY + 3;
@@ -591,7 +591,7 @@ addBox(27.63, 19.4, 7.18, 7.05, 3, 0x888888);
   roofGroup.add(m);
 }
 
-// Garage doors (jižní stěna garáže, vně) na terénu
+// Garage doors (south wall of garage, outside) on terrain
 const garageDoorBaseY = terrainHeight(27.63 + 7.18/2, 19.4 + 7.05);
 const garageDoor = new THREE.Mesh(
   new THREE.BoxGeometry(3.3, 2.2, 0.08),
@@ -599,7 +599,7 @@ const garageDoor = new THREE.Mesh(
 );
 garageDoor.position.set(27.63 + 7.18/2, garageDoorBaseY + 1.1, 19.4 + 7.05 + 0.04);
 scene.add(garageDoor);
-// Horizontální linie sekcí na bráně
+// Horizontal section lines on garage door
 for (let i = 1; i < 5; i++) {
   const line = new THREE.Mesh(
     new THREE.BoxGeometry(3.32, 0.03, 0.02),
@@ -609,9 +609,9 @@ for (let i = 1; i < 5; i++) {
   scene.add(line);
 }
 
-// Carport (přístřešek pro auto) mezi domem a garáží — pultová střecha
+// Carport between house and garage — shed roof
 addOpenStructure(21.28, 19.4, 6.35, 7.05, 2.5, 0xcdc1ad);
-// Pultová střecha nad carportem (replace flat roof slab)
+// Shed roof over carport
 {
   const baseY = terrainHeight(21.28 + 3.175, 19.4 + 3.525);
   const lowY = baseY + 2.5;
@@ -626,37 +626,37 @@ addOpenStructure(21.28, 19.4, 6.35, 7.05, 2.5, 0xcdc1ad);
 // 2× parkování (nízká plocha)
 addBox(34.81, 22.84, 4.33, 3.61, 0.05, 0xbdbdbd);
 
-// ───────────────────────── SAUNA + SOFTUB + PŘÍSTŘEŠEK ─────────────────────────
+// ───────────────────────── SAUNA + HOT TUB + SHELTER ─────────────────────────
 addBox(6.5, 1, 4, 3, 3, 0x8b6f47);
 
-// Přístřešek západně sauny
+// Přístřešek westně sauny
 addOpenStructure(3.5, 1, 3, 3, 2.5, 0xcdc1ad);
 
-// Softub pod přístřeškem (ø 1,8 m) — na terénu
-const softubBaseY = terrainHeight(5, 2.5);
+// Hot tub under shelter (ø 1.8 m) — on terrain
+const hotTubBaseY = terrainHeight(5, 2.5);
 const softub = new THREE.Mesh(
   new THREE.CylinderGeometry(0.9, 0.9, 0.8, 32),
   new THREE.MeshStandardMaterial({ color: 0x5dade2, roughness: 0.4 })
 );
-softub.position.set(5, softubBaseY + 0.4, 2.5);
+softub.position.set(5, hotTubBaseY + 0.4, 2.5);
 softub.castShadow = true;
 scene.add(softub);
 
 // ───────────────────────── PERGOLA ─────────────────────────
 addOpenStructure(25.28, 1, 7, 5, 2.5, 0xc8a878);
 
-// ───────────────────────── TERASY (sledují terén) ─────────────────────────
+// ───────────────────────── TERRACES (sledují terén) ─────────────────────────
 // Terasa V — wood platform inside zub + extending east, 4 × 11 m
 addTerrainPlatform([
   [20.58, 11.58], [24.58, 11.58], [24.58, 22.53], [20.58, 22.53]
 ], 0.15, 0xa87d4a);
 
-// Terasa Z — sidewalk podél západní strany domu
+// Terasa Z — sidewalk podél westní strany domu
 addTerrainPlatform([
   [9.48, 7.18], [10.48, 7.18], [10.48, 26.43], [9.48, 26.43]
 ], 0.15, 0xa87d4a);
 
-// Terasa Z — atrium uvnitř západního zubu
+// Terasa Z — atrium uvnitř westního zubu
 addTerrainPlatform([
   [10.48, 15.93], [14.78, 15.93], [14.78, 19.18], [10.48, 19.18]
 ], 0.15, 0xa87d4a);
@@ -666,44 +666,44 @@ addTerrainPlatform([
   [9.5, 4], [10.5, 4], [10.5, 7.17], [9.5, 7.17]
 ], 0.1, 0xcdc1ad);
 
-// ───────────────────────── PŘÍJEZD ─────────────────────────
-const prijezdShape = new THREE.Shape();
-prijezdShape.moveTo(21.28, -26.44);
-prijezdShape.lineTo(34.11, -26.44);
-prijezdShape.lineTo(43.83, -27.89);
-prijezdShape.lineTo(43.44, -32.39);
-prijezdShape.lineTo(21.28, -29.72);
-prijezdShape.closePath();
-const prijezdGeom = new THREE.ShapeGeometry(prijezdShape);
-prijezdGeom.rotateX(-Math.PI/2);
+// ───────────────────────── DRIVEWAY ─────────────────────────
+const drivewayShape = new THREE.Shape();
+drivewayShape.moveTo(21.28, -26.44);
+drivewayShape.lineTo(34.11, -26.44);
+drivewayShape.lineTo(43.83, -27.89);
+drivewayShape.lineTo(43.44, -32.39);
+drivewayShape.lineTo(21.28, -29.72);
+drivewayShape.closePath();
+const drivewayGeom = new THREE.ShapeGeometry(drivewayShape);
+drivewayGeom.rotateX(-Math.PI/2);
 // Vertices follow terrain
-const prijPos = prijezdGeom.attributes.position;
-for (let i = 0; i < prijPos.count; i++) {
-  const x = prijPos.getX(i);
-  const z = prijPos.getZ(i);
-  prijPos.setY(i, terrainHeight(x, z) + 0.05);
+const drivewayPos = drivewayGeom.attributes.position;
+for (let i = 0; i < drivewayPos.count; i++) {
+  const x = drivewayPos.getX(i);
+  const z = drivewayPos.getZ(i);
+  drivewayPos.setY(i, terrainHeight(x, z) + 0.05);
 }
-prijPos.needsUpdate = true;
-prijezdGeom.computeVertexNormals();
-const prijezd = new THREE.Mesh(
-  prijezdGeom,
+drivewayPos.needsUpdate = true;
+drivewayGeom.computeVertexNormals();
+const driveway = new THREE.Mesh(
+  drivewayGeom,
   new THREE.MeshStandardMaterial({ color: 0xa8a8a0, roughness: 0.92 })
 );
-prijezd.receiveShadow = true;
-scene.add(prijezd);
+driveway.receiveShadow = true;
+scene.add(driveway);
 
-// ───────────────────────── NÁDRŽ DEŠŤOVÁ — pod zemí, viditelný jen poklop ─────────────────────────
+// ───────────────────────── RAIN TANK — underground, only manhole visible ─────────────────────────
 {
   const cx = 40 + 1.25, cz = 22.2 + 1.25;
   const baseY = terrainHeight(cx, cz);
-  // Manhole / poklop
+  // Manhole / cover
   const manhole = new THREE.Mesh(
     new THREE.CylinderGeometry(0.45, 0.45, 0.05, 24),
     new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6, metalness: 0.4 })
   );
   manhole.position.set(cx, baseY + 0.025, cz);
   scene.add(manhole);
-  // Středový kruh
+  // Center circle
   const inner = new THREE.Mesh(
     new THREE.CylinderGeometry(0.32, 0.32, 0.06, 24),
     new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.8 })
@@ -712,31 +712,31 @@ scene.add(prijezd);
   scene.add(inner);
 }
 
-// ───────────────────────── VYVÝŠENÉ ZÁHONY (4 ks, 2 řady × 2) ─────────────────────────
-addBox(1, 10, 1.5, 4, 0.4, 0x7a5a3a);   // bed 1 (W řada, sever)
-addBox(1, 15, 1.5, 4, 0.4, 0x7a5a3a);   // bed 2 (W řada, jih)
-addBox(3, 10, 1.5, 4, 0.4, 0x7a5a3a);   // bed 3 (V řada, sever)
-addBox(3, 15, 1.5, 4, 0.4, 0x7a5a3a);   // bed 4 (V řada, jih)
+// ───────────────────────── RAISED BEDS (4 pcs, 2 rows × 2) ─────────────────────────
+addBox(1, 10, 1.5, 4, 0.4, 0x7a5a3a);   // bed 1 (W řada, north)
+addBox(1, 15, 1.5, 4, 0.4, 0x7a5a3a);   // bed 2 (W řada, south)
+addBox(3, 10, 1.5, 4, 0.4, 0x7a5a3a);   // bed 3 (V řada, north)
+addBox(3, 15, 1.5, 4, 0.4, 0x7a5a3a);   // bed 4 (V řada, south)
 
-// ───────────────────────── OVOCNÝ SAD ─────────────────────────
+// ───────────────────────── ORCHARD ─────────────────────────
 [
   [1.2, 22], [4, 23.5], [1.2, 26], [4, 27.5],
   [1.2, 30], [4, 31]
 ].forEach(([x, y]) => addTree(x, y, 4 + Math.random()));
 
-// ───────────────────────── STROMY PODÉL SEVERNÍHO PLOTU ─────────────────────────
+// ───────────────────────── TREES ALONG NORTH FENCE ─────────────────────────
 [
   [13, 1.2], [17, 1.5], [21, 1.0],
   [34, 1.3], [38, 1.6], [41, 1.2], [43, 1.4]
 ].forEach(([x, y]) => addTree(x, y, 4.5 + Math.random() * 1.5, 0x4d7a4d));
 
-// ───────────────────────── STROMY PODÉL VÝCHODNÍHO PLOTU (proti sousedce) ─────────────────────────
+// ───────────────────────── TREES ALONG EAST FENCE ─────────────────────────
 [
   [42.5, 8], [42.5, 12], [42.5, 16], [42.5, 20],
   [42, 33], [42, 35]
 ].forEach(([x, y]) => addTree(x, y, 4 + Math.random() * 1.5, 0x4d7a4d));
 
-// Pruh trvalek u severního plotu (různé barvy a velikosti, hustěji)
+// Perennial strip u northního plotu (různé barvy a velikosti, hustěji)
 const perennialColors = [0xa86a8c, 0x9b8ec4, 0xc4a25a, 0x8eb88e, 0xd87a7a, 0xa8c47a, 0xa3e0a3];
 for (let i = 0; i < 35; i++) {
   const x = 5 + Math.random() * 38;
@@ -755,11 +755,11 @@ for (let i = 0; i < 35; i++) {
   treesGroup.add(c);
 }
 
-// ───────────────────────── OHNIŠTĚ V SV ROHU + LAVIČKY ─────────────────────────
+// ───────────────────────── FIREPIT IN NE CORNER + BENCHES ─────────────────────────
 {
   const ox = 36, oz = 8;
   const baseY = terrainHeight(ox, oz);
-  // Kamenný kruh ohniště
+  // Fire pit stone ring
   const ring = new THREE.Mesh(
     new THREE.CylinderGeometry(0.65, 0.75, 0.35, 16),
     new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.95 })
@@ -768,14 +768,14 @@ for (let i = 0; i < 35; i++) {
   ring.castShadow = true;
   ring.receiveShadow = true;
   scene.add(ring);
-  // Vnitřek (tmavší, jakože popel)
+  // Inside (darker, like ashes)
   const inside = new THREE.Mesh(
     new THREE.CylinderGeometry(0.55, 0.55, 0.05, 16),
     new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 1 })
   );
   inside.position.set(ox, baseY + 0.36, oz);
   scene.add(inside);
-  // "Plamen" — světélkující koule
+  // "Flame" — emissive sphere
   const flame = new THREE.Mesh(
     new THREE.SphereGeometry(0.3, 8, 6),
     new THREE.MeshStandardMaterial({
@@ -786,7 +786,7 @@ for (let i = 0; i < 35; i++) {
   );
   flame.position.set(ox, baseY + 0.55, oz);
   scene.add(flame);
-  // 3 lavičky kolem (dřevěné kmeny/trámy)
+  // 3 benches around (wooden logs/beams)
   const benchOffsets = [
     { x: -1.7, z: 0, ry: 0 },
     { x: 0.85, z: -1.4, ry: Math.PI / 3 },
@@ -807,7 +807,7 @@ for (let i = 0; i < 35; i++) {
   }
 }
 
-// ───────────────────────── VODNÍ PLOCHA — elipsa, větší, blíž garáži ─────────────────────────
+// ───────────────────────── POND — ellipse, bigger, closer to garage ─────────────────────────
 {
   const cx = 30, cz = 15;
   const baseY = terrainHeight(cx, cz);
@@ -822,7 +822,7 @@ for (let i = 0; i < 35; i++) {
   rim.position.set(cx, baseY + 0.12, cz);
   rim.receiveShadow = true;
   scene.add(rim);
-  // Vodní hladina — elipsa
+  // Water surface — elipsa
   const water = new THREE.Mesh(
     new THREE.CylinderGeometry(1, 1, 0.06, 48),
     new THREE.MeshStandardMaterial({
@@ -837,7 +837,7 @@ for (let i = 0; i < 35; i++) {
   water.position.set(cx, baseY + 0.22, cz);
   water.receiveShadow = true;
   scene.add(water);
-  // Lekníny — pár plovoucích
+  // Water lilies — few floating
   for (let i = 0; i < 4; i++) {
     const ang = Math.random() * Math.PI * 2;
     const r = Math.random() * 0.7;
@@ -850,7 +850,7 @@ for (let i = 0; i < 35; i++) {
     lily.position.set(lx, baseY + 0.27, lz);
     scene.add(lily);
   }
-  // Drobné kameny kolem elipsy
+  // Small stones around elipsy
   for (let i = 0; i < 14; i++) {
     const ang = (i / 14) * Math.PI * 2 + 0.2;
     const sx = cx + Math.cos(ang) * (rimRX + 0.3);
@@ -865,12 +865,12 @@ for (let i = 0; i < 35; i++) {
   }
 }
 
-// ───────────────────────── OKNA / HS PORTÁLY DOMU ─────────────────────────
+// ───────────────────────── HOUSE WINDOWS / HS DOORS ─────────────────────────
 {
-  const ty = dumTerrainY;
+  const ty = houseTerrainY;
   const winMat = new THREE.MeshStandardMaterial({ color: 0x2a4a6a, roughness: 0.05, metalness: 0.7, transparent: true, opacity: 0.55 });
   const frameMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6 });
-  // HS portály na východě (v zubu, x=20.58) — floor-to-near-ceiling 2.27 m, sill = 0
+  // HS sliding doors on east (in notch) — floor to near-ceiling 2.27 m, sill = 0
   // HS1 = 3290×2270, HS2 = 5160×2270
   const hsPortal = (cy, w, h) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, w), winMat);
@@ -879,41 +879,41 @@ for (let i = 0; i < 35; i++) {
   };
   hsPortal(13.5, 3.29, 2.27);  // HS1
   hsPortal(18.5, 5.16, 2.27);  // HS2
-  // O6 v ložnici na východní stěně (severovýchod) — 900×2270, sill ~0.3 m
-  const lozWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 0.9), winMat);
-  lozWin.position.set(21.28 + 0.03, ty + 0.3 + 1.135, 8.5);
-  scene.add(lozWin);
-  // Severní okno uprostřed severní stěny — výška 2270, sill ~0.3 m
+  // Bedroom panorama window on east wall (NE) — 2.0×2.27 m, sill 0.3 m
+  const bedWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 2.0), winMat);
+  bedWin.position.set(21.28 + 0.03, ty + 0.3 + 1.135, 9.5);
+  scene.add(bedWin);
+  // North window in middle of north wall — height 2270, sill ~0.3 m
   const o6 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.27, 0.06), winMat);
   o6.position.set((10.48 + 21.28) / 2, ty + 0.3 + 1.135, 7.18 - 0.03);
   scene.add(o6);
-  // Západní okna (mimo atrium z=15.93-19.18) — O3 1600×2270, sill ~0.3 m
+  // West windows (outside atrium z=15.93-19.18) — O3 1600×2270, sill ~0.3 m
   for (const z of [10.5, 13.5, 22, 24.5]) {
     const w = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 1.6), winMat);
     w.position.set(10.48 - 0.03, ty + 0.3 + 1.135, z);
     scene.add(w);
   }
-  // Okno (portál) z obýváku do atria — na vnitřní stěně atria (x=14.78), outward = -x do atria
+  // Window (portal) from living room to atrium — on inner atrium wall (x=14.78), outward = -x into atrium
   const atriumWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 2.5), winMat);
   atriumWin.position.set(14.78 - 0.03, ty + 1.2 + 0.3, 17.55);
   scene.add(atriumWin);
-  // Jižní okna O1 (900×1250, koupelna 1.03 + tech 1.02) — sill 0.9 m → top 2.15 m
+  // South windows O1 (900×1250, bathroom + utility) — sill 0.9 m → top 2.15 m
   for (const x of [13.5, 16.5]) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.25, 0.06), winMat);
     m.position.set(x, ty + 0.9 + 0.625, 26.43 + 0.03);
     scene.add(m);
   }
-  // Vstupní dveře — na východní stěně dům south part (z carportu do zádveří)
+  // Entry doors — on east wall of south part (from carport to vestibule)
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 1.42), frameMat);
   d2.position.set(21.28 + 0.03, ty + 1.075, 22);
   scene.add(d2);
 }
 
-// ───────────────────────── KOMÍN (uvnitř půdorysu domu, MIMO atrium, jižně) ─────────────────────────
+// ───────────────────────── CHIMNEY (inside house footprint, NOT in atrium, south side) ─────────────────────────
 {
-  // Atrium: x=10.48-14.78, z=15.93-19.18. Komín v jižní části dům (obývák)
-  const cx = 17, cz = 22, ch = wallH + roofRise + 1.0;  // peak + 1 m nad
-  const baseY = dumTerrainY;
+  // Atrium: x=10.48-14.78, z=15.93-19.18. Chimney in south part (living room)
+  const cx = 17, cz = 22, ch = wallH + roofRise + 1.0;  // peak + 1 m above
+  const baseY = houseTerrainY;
   const chimney = new THREE.Mesh(
     new THREE.BoxGeometry(0.6, ch, 0.6),
     new THREE.MeshStandardMaterial({ color: 0xb8a98a, roughness: 0.85 })
@@ -929,10 +929,10 @@ for (let i = 0; i < 35; i++) {
   scene.add(cap);
 }
 
-// ───────────────────────── FALCOVANÝ PLECH — main core sedlová (x=14.78-21.28) ─────────────────────────
+// ───────────────────────── STANDING SEAM METAL ROOF — main core gable ─────────────────────────
 {
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.45, metalness: 0.5 });
-  const wallTopY = dumTerrainY + wallH;
+  const wallTopY = houseTerrainY + wallH;
   const ridgeY = wallTopY + roofRise;
   const xMin = 14.78, xMax = 21.28, xMid = (xMin + xMax) / 2;
   const slopeLen = Math.sqrt((xMid - xMin) ** 2 + roofRise ** 2);
@@ -951,8 +951,8 @@ for (let i = 0; i < 35; i++) {
   }
 }
 
-// ───────────────────────── NÁBYTEK / DEKORACE ─────────────────────────
-// Stůl + 4 židle na terase V (nad zubem, jižní část terasy)
+// ───────────────────────── FURNITURE / DECOR ─────────────────────────
+// Table + 4 chairs on east terrace
 {
   const tx = 22.5, tz = 18, baseY = terrainHeight(tx, tz) + 0.15;
   // Table
@@ -992,7 +992,7 @@ for (let i = 0; i < 35; i++) {
   }
 }
 
-// Lehátko u Softub
+// Lounger by hot tub
 {
   const lx = 7.5, lz = 5.5, baseY = terrainHeight(lx, lz);
   const lounger = new THREE.Mesh(
@@ -1004,7 +1004,7 @@ for (let i = 0; i < 35; i++) {
   furnitureGroup.add(lounger);
 }
 
-// Auta v garáži (2 kusy)
+// Cars in garage (2 pcs)
 {
   const cars = [
     { x: 29, z: 22, color: 0x222288 },
@@ -1039,7 +1039,7 @@ for (let i = 0; i < 35; i++) {
   }
 }
 
-// Auto na 2× parkování (jen 1 demonstrativně)
+// Car on 2-spot parking (1 shown)
 {
   const cx = 36, cz = 24.6;
   const baseY = terrainHeight(cx, cz);
@@ -1058,29 +1058,29 @@ for (let i = 0; i < 35; i++) {
   furnitureGroup.add(cabin);
 }
 
-// ───────────────────────── KEŘE KOLEM DOMU (mimo sidewalk) ─────────────────────────
+// ───────────────────────── BUSHES AROUND HOUSE ─────────────────────────
 const bushPositions = [
-  // U západního plotu, mezi domem a sadem (nikoli na sidewalk)
+  // Along west fence, between house and orchard (not on sidewalk)
   [7, 11, 0.7, 0x6a8e5a],
   [7, 14, 0.6, 0x7a9a6a],
   [7, 18, 0.7, 0x6a8e5a],
   [7, 22, 0.6, 0x7a9a6a],
-  // U vodní plochy (mimo rim, který je do x=27.2-32.8, z=13-17)
+  // By the pond (outside rim x=27.2-32.8, z=13-17)
   [25.5, 12.5, 0.55, 0x9aae6a],
   [34.5, 12.5, 0.55, 0x9aae6a],
   [25.5, 17.8, 0.55, 0x9aae6a],
   [34.5, 17.8, 0.55, 0x9aae6a],
-  // U sauny (jižně, mimo struktury)
+  // By sauna (south, outside structures)
   [4, 6, 0.5, 0x6a8e5a],
   [11.5, 6, 0.5, 0x6a8e5a],
 ];
 bushPositions.forEach(([x, z, s, c]) => addBush(x, z, s, c));
 
-// Conifery v severním pruhu (v kombinaci s listnáčemi, MIMO sauna+pergola)
-addConifer(11.5, 1.4, 5);   // open mezi sauna (x<10.5) a pergola (x>25.28)
-addConifer(35.5, 1.6, 4.5); // open mezi pergola (x<32.28) a east plot
+// Conifers in north strip (mixed with deciduous, NOT in sauna/pergola)
+addConifer(11.5, 1.4, 5);   // open between sauna (x<10.5) and pergola (x>25.28)
+addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
 
-// ───────────────────────── KOUŘ Z OHNIŠTĚ (animované koule) ─────────────────────────
+// ───────────────────────── SMOKE FROM FIREPIT (animated spheres) ─────────────────────────
 const smokeParticles = [];
 {
   for (let i = 0; i < 6; i++) {
@@ -1095,16 +1095,16 @@ const smokeParticles = [];
   }
 }
 
-// ───────────────────────── DROBNÉ TRAVNÍ TUFTS (vizuální detail) ─────────────────────────
+// ───────────────────────── SMALL GRASS TUFTS (visual detail) ─────────────────────────
 const grassPositions = [];
 for (let i = 0; i < 80; i++) {
   const tx = 5 + Math.random() * 35;
   const tz = 4 + Math.random() * 32;
-  // Vyhnout se buildings (dům, garáž, atd.) — jednoduchý rough check
-  if (tx > 9 && tx < 22 && tz > 5 && tz < 27) continue; // dům
+  // Avoid buildings (house, garage, etc.) — rough check
+  if (tx > 9 && tx < 22 && tz > 5 && tz < 27) continue; // house
   if (tx > 21 && tx < 35 && tz > 19 && tz < 27) continue; // carport+garáž
   if (tx > 25 && tx < 32 && tz > 0 && tz < 7) continue; // pergola
-  if (tx > 0 && tx < 6 && tz > 18 && tz < 35) continue; // sad
+  if (tx > 0 && tx < 6 && tz > 18 && tz < 35) continue; // orchard
   if (tx > 28 && tx < 35 && tz > 7 && tz < 13) continue; // water
   grassPositions.push([tx, tz]);
 }
@@ -1123,10 +1123,10 @@ grassPositions.forEach(([x, z]) => {
   treesGroup.add(tuft);
 });
 
-// ───────────────────────── PLOT (FENCE) ─────────────────────────
-// East boundary has BRÁNA gap at y=27.89 to 32.39 along E_kink → JV
-addFenceSegment(0, 0, 44.16, 0);              // sever
-addFenceSegment(44.16, 0, 44.16, 23.38);      // východ horní
+// ───────────────────────── FENCE ─────────────────────────
+// East boundary has GATE gap at y=27.89 to 32.39 along E_kink → JV
+addFenceSegment(0, 0, 44.16, 0);              // north
+addFenceSegment(44.16, 0, 44.16, 23.38);      // east horní
 // East lower with brána gap
 function lerp2(a, b, t) {
   return [a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t];
@@ -1135,30 +1135,30 @@ const eL1 = [44.16, 23.38], eL2 = [43.11, 35.41];
 const totalEL = Math.sqrt((eL2[0]-eL1[0])**2 + (eL2[1]-eL1[1])**2); // ≈12.08
 const tBranaT = (27.89 - 23.38) / (35.41 - 23.38);  // ≈ 0.375
 const tBranaB = (32.39 - 23.38) / (35.41 - 23.38);  // ≈ 0.749
-const branaT = lerp2(eL1, eL2, tBranaT);
-const branaB = lerp2(eL1, eL2, tBranaB);
-addFenceSegment(eL1[0], eL1[1], branaT[0], branaT[1]);  // east lower 1 (před bránou)
-addFenceSegment(branaB[0], branaB[1], eL2[0], eL2[1]);  // east lower 2 (za bránou)
-addFenceSegment(43.11, 35.41, 1.15, 30.41);   // jih
-addFenceSegment(1.15, 30.41, 0, 0);           // západ
+const gateT = lerp2(eL1, eL2, tBranaT);
+const gateB = lerp2(eL1, eL2, tBranaB);
+addFenceSegment(eL1[0], eL1[1], gateT[0], gateT[1]);  // east lower 1 (before gate)
+addFenceSegment(gateB[0], gateB[1], eL2[0], eL2[1]);  // east lower 2 (after gate)
+addFenceSegment(43.11, 35.41, 1.15, 30.41);   // south
+addFenceSegment(1.15, 30.41, 0, 0);           // west
 
-// Brána (open gates indication) na terénu
-const branaCenterX = (branaT[0] + branaB[0]) / 2;
-const branaCenterZ = (branaT[1] + branaB[1]) / 2;
-const branaBaseY = terrainHeight(branaCenterX, branaCenterZ);
+// Gate (open indication) on terrain
+const gateCenterX = (gateT[0] + gateB[0]) / 2;
+const gateCenterZ = (gateT[1] + gateB[1]) / 2;
+const gateBaseY = terrainHeight(gateCenterX, gateCenterZ);
 const gate1 = new THREE.Mesh(
   new THREE.BoxGeometry(0.08, 1.5, 2.2),
   new THREE.MeshStandardMaterial({ color: 0x3a3a3a })
 );
-gate1.position.set(branaCenterX - 0.6, branaBaseY + 0.75, branaCenterZ - 1);
+gate1.position.set(gateCenterX - 0.6, gateBaseY + 0.75, gateCenterZ - 1);
 gate1.rotation.y = -0.3;
 scene.add(gate1);
 const gate2 = gate1.clone();
-gate2.position.set(branaCenterX + 0.6, branaBaseY + 0.75, branaCenterZ + 1);
+gate2.position.set(gateCenterX + 0.6, gateBaseY + 0.75, gateCenterZ + 1);
 gate2.rotation.y = 0.3;
 scene.add(gate2);
 
-// ───────────────────────── KAMERA PRESETS ─────────────────────────
+// ───────────────────────── CAMERA PRESETS ─────────────────────────
 const targetCenter = new THREE.Vector3(22, 0, 17);
 window.setPreset = function(name) {
   const positions = {
@@ -1235,7 +1235,7 @@ document.querySelectorAll('#timeBar .seasons button').forEach(b => {
 updateTimeLabel();
 updateDayLabel();
 
-// ───────────────────────── HOVER POPISKY (raycaster) ─────────────────────────
+// ───────────────────────── HOVER LABELS (raycaster) ─────────────────────────
 const tooltip = document.getElementById('tooltip');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
