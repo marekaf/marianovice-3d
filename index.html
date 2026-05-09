@@ -42,8 +42,8 @@
   <button onclick="setPreset('east')">From east (gate)</button>
   <button onclick="setPreset('north')">From north</button>
   <button onclick="setPreset('south')">From south (orchard)</button>
-  <button onclick="setPreset('ground')">Walking eye level</button>
-  <button onclick="startTour()" style="background:#e07b3b">▶ Walking tour</button>
+  <button onclick="setPreset('ground')">Eye level (1.7 m)</button>
+  <button onclick="startTour()" style="background:#e07b3b">▶ Garden walk</button>
 </div>
 
 <div id="toggles">
@@ -1179,6 +1179,11 @@ window.setPreset = function(name) {
   };
   const p = positions[name];
   const t = targets[name];
+  // Eye level — adjust Y to actual terrain height + 1.7 m
+  if (name === 'ground') {
+    p[1] = terrainHeight(p[0], p[2]) + 1.7;
+    t[1] = terrainHeight(t[0], t[2]) + 1.7;
+  }
   camera.position.set(...p);
   controls.target.set(...t);
   controls.update();
@@ -1346,51 +1351,41 @@ window.addEventListener('resize', () => {
 // ───────────────────────── WALKING TOUR (POV walkthrough) ─────────────────────────
 // Each waypoint: p = [x, z] walker position, la = [x, z] look-at (always horizontal — same eye level)
 // Path stays on driveway/sidewalks (avoids walking through garage/walls)
+// Garden-only walk (no interior of house)
 const tourPath = [
   // Approach + gate
   { p: [50, 28],   la: [40, 28],   dur: 3,   label: 'Approaching from east' },
-  { p: [44, 28],   la: [28, 26],   dur: 3,   label: 'At the gate' },
-  // Driveway (south of garage)
-  { p: [38, 28],   la: [25, 26],   dur: 3,   label: 'Driveway' },
-  // Quick glance at garage door
-  { p: [29, 28],   la: [30, 24],   dur: 2,   label: 'Garage door (quick glance)' },
-  // Walking into carport from south
-  { p: [25, 25],   la: [22, 22],   dur: 2,   label: 'Into carport' },
-  { p: [22, 22.5], la: [18, 19],   dur: 2,   label: 'At entry door' },
-  // Through house living room
-  { p: [19, 19],   la: [22, 14],   dur: 3,   label: 'Living room — east HS doors' },
-  { p: [17, 17.5], la: [12, 17.5], dur: 3,   label: 'Toward atrium portal' },
-  // Atrium
-  { p: [13, 17.5], la: [10, 17.5], dur: 3,   label: 'In the atrium' },
-  { p: [11, 17.5], la: [22, 17.5], dur: 2,   label: 'Atrium — looking back' },
-  // Exit atrium west
-  { p: [9, 17.5],  la: [5, 17.5],  dur: 2,   label: 'Exit to west garden' },
-  // West garden + orchard
-  { p: [6, 22],    la: [3, 28],    dur: 3,   label: 'West garden' },
-  { p: [4, 28],    la: [3, 33],    dur: 3,   label: 'In the orchard' },
-  // Across south to east
-  { p: [10, 30],   la: [22, 30],   dur: 3,   label: 'Walking south of garage' },
-  // Past garage on east, toward fire pit
-  { p: [30, 30],   la: [38, 25],   dur: 3,   label: 'Past garage to east garden' },
-  { p: [38, 22],   la: [42, 18],   dur: 3,   label: 'East trees (privacy)' },
+  { p: [44, 28],   la: [22, 28],   dur: 3,   label: 'At the gate' },
+  // Driveway south of garage
+  { p: [38, 28],   la: [25, 28],   dur: 3,   label: 'Driveway' },
+  { p: [29, 29],   la: [30, 24],   dur: 2,   label: 'Garage door (glance)' },
+  // South of house, walking west
+  { p: [22, 30],   la: [10, 30],   dur: 3,   label: 'South of the house' },
+  { p: [10, 30],   la: [3, 30],    dur: 2,   label: 'Toward orchard' },
+  // Orchard
+  { p: [4, 30],    la: [3, 35],    dur: 3,   label: 'In the orchard' },
+  // North along west side
+  { p: [4, 22],    la: [4, 14],    dur: 3,   label: 'West side — raised beds' },
+  // Sauna NW
+  { p: [5, 8],     la: [5, 4],     dur: 3,   label: 'At sauna + hot tub' },
+  // Walk east along north strip
+  { p: [12, 5],    la: [22, 4],    dur: 3,   label: 'North strip — perennials' },
+  { p: [22, 4],    la: [28, 4],    dur: 2,   label: 'Toward pergola' },
+  { p: [28, 5],    la: [33, 6],    dur: 2,   label: 'At pergola + grill' },
   // Fire pit
-  { p: [37, 12],   la: [36, 8],    dur: 3,   label: 'Approaching fire pit' },
-  { p: [36, 8],    la: [33, 6],    dur: 3,   label: 'At fire pit' },
-  // Pergola via north
-  { p: [30, 5],    la: [25, 4],    dur: 2,   label: 'At pergola + grill' },
-  // North strip to sauna
-  { p: [20, 4],    la: [10, 4],    dur: 3,   label: 'North strip toward sauna' },
-  { p: [10, 5],    la: [5, 4],     dur: 3,   label: 'At sauna + hot tub' },
-  // Back along sauna chodnicek to terasa Z
-  { p: [10, 8],    la: [12, 18],   dur: 2,   label: 'Toward west terrace' },
-  // South again to pond
-  { p: [22, 14],   la: [30, 15],   dur: 3,   label: 'Toward pond' },
-  { p: [27, 16],   la: [32, 15],   dur: 3,   label: 'At the pond' },
-  // East terrace
-  { p: [25, 14],   la: [22, 14],   dur: 2,   label: 'East terrace' },
-  // Final overview from SE
-  { p: [30, 22],   la: [18, 15],   dur: 3,   label: 'Final overview' },
-  { p: [30, 22],   la: [18, 15],   dur: 0.1, label: 'End' },
+  { p: [34, 8],    la: [36, 8],    dur: 3,   label: 'At fire pit' },
+  // East trees
+  { p: [40, 12],   la: [42, 18],   dur: 3,   label: 'East trees (privacy)' },
+  // Pond
+  { p: [33, 14],   la: [30, 15],   dur: 2,   label: 'Approaching pond' },
+  { p: [27, 17],   la: [30, 15],   dur: 3,   label: 'At the pond' },
+  // East terrace from outside
+  { p: [25, 14],   la: [22, 14],   dur: 2,   label: 'View of east terrace' },
+  // Walk back along east side toward gate
+  { p: [28, 22],   la: [30, 27],   dur: 3,   label: 'East garden' },
+  // Final overview
+  { p: [35, 30],   la: [22, 17],   dur: 3,   label: 'Final overview' },
+  { p: [35, 30],   la: [22, 17],   dur: 0.1, label: 'End' },
 ];
 
 let tourActive = false;

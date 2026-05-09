@@ -20,3 +20,7 @@ Interactive 3D model of a residential garden.
 - Vanilla HTML + JS
 - Three.js loaded from CDN
 - No build step — just open in a browser
+
+## License
+
+MIT — see [LICENSE](LICENSE).
