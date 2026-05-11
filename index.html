@@ -1564,7 +1564,9 @@ function animate() {
   treesGroup.rotation.z = Math.sin(t * 0.5) * 0.005;
   if (fpState.active) fpUpdate();
   tourUpdate();
-  controls.update();
+  // Skip controls.update() during tour/FP — OrbitControls.update() calls camera.lookAt(target)
+  // which would override our custom lookAt and point camera at controls.target (house center)
+  if (!tourActive && !fpState.active) controls.update();
   renderer.render(scene, camera);
 }
 animate();
