@@ -1505,15 +1505,9 @@ window.startTour = function() {
   tourIndex = 0;
   tourSegStart = clock.getElapsedTime();
   controls.enabled = false;
-  // Reset target so OrbitControls doesn't try to look at old (e.g. house center) on next frame
-  const first = tourPath[0];
-  const py = terrainHeight(first.p[0], first.p[1]) + 1.7;
-  camera.position.set(first.p[0], py, first.p[1]);
-  camera.lookAt(first.la[0], py, first.la[1]);
-  controls.target.set(first.la[0], py, first.la[1]);
   document.getElementById('toggleFP').checked = false;
   fpState.active = false;
-  console.log('[tour] started v4 — garden walk, always look outward');
+  console.log('[tour] started v5');
 };
 
 function tourUpdate() {
@@ -1527,6 +1521,10 @@ function tourUpdate() {
     tourSegStart = now;
     if (tourIndex >= tourPath.length - 1) {
       tourActive = false;
+      // Reset OrbitControls target so it doesn't snap camera back to house center
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      controls.target.copy(camera.position).add(dir.multiplyScalar(20));
       controls.enabled = true;
       tourLabel.style.opacity = 0;
       return;
@@ -1542,8 +1540,6 @@ function tourUpdate() {
   // LookAt at SAME eye level as walker — purely horizontal view, no looking up/down
   camera.position.set(px, py, pz);
   camera.lookAt(lax, py, laz);
-  // Sync OrbitControls target so it doesn't override the look direction
-  controls.target.set(lax, py, laz);
   // Show label
   tourLabel.textContent = `${tourIndex + 1}/${tourPath.length - 1} · ${seg.label}`;
   tourLabel.style.opacity = 0.9;
