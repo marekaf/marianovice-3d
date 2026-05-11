@@ -330,6 +330,55 @@ function addOpenStructure(plotX, plotY, w, d, h, roofColor, postColor = 0x5a3e25
   return group;
 }
 
+// Lamellar pergola — open slat structure (wood beams with gaps, allows light through)
+function addLamellarPergola(plotX, plotY, w, d, h, slatColor = 0x6e4f31, postColor = 0x5a3e25) {
+  const cx = plotX + w/2;
+  const cz = plotY + d/2;
+  const baseY = terrainHeight(cx, cz);
+  const slatMat = new THREE.MeshStandardMaterial({ color: slatColor, roughness: 0.85 });
+  // 4 corner posts
+  for (const [ox, oz] of [[0,0],[w,0],[0,d],[w,d]]) {
+    const post = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, h, 0.15),
+      new THREE.MeshStandardMaterial({ color: postColor, roughness: 0.7 })
+    );
+    const pY = terrainHeight(plotX + ox, plotY + oz);
+    post.position.set(plotX + ox, pY + h/2, plotY + oz);
+    post.castShadow = true;
+    scene.add(post);
+  }
+  // Top beams along long axis (W-E if d > w, else N-S)
+  const longAxis = d >= w ? 'z' : 'x';
+  const slatSpacing = 0.32;
+  if (longAxis === 'z') {
+    // Slats run W-E, spaced along Z
+    const numSlats = Math.max(2, Math.floor(d / slatSpacing));
+    for (let i = 0; i < numSlats; i++) {
+      const z = plotY + (i + 0.5) * (d / numSlats);
+      const slat = new THREE.Mesh(
+        new THREE.BoxGeometry(w + 0.05, 0.08, 0.1),
+        slatMat
+      );
+      slat.position.set(cx, baseY + h - 0.04, z);
+      slat.castShadow = true;
+      scene.add(slat);
+    }
+  } else {
+    // Slats run N-S, spaced along X
+    const numSlats = Math.max(2, Math.floor(w / slatSpacing));
+    for (let i = 0; i < numSlats; i++) {
+      const x = plotX + (i + 0.5) * (w / numSlats);
+      const slat = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.08, d + 0.05),
+        slatMat
+      );
+      slat.position.set(x, baseY + h - 0.04, cz);
+      slat.castShadow = true;
+      scene.add(slat);
+    }
+  }
+}
+
 // Tree (trunk + canopy) on terrain
 function addTree(plotX, plotY, height = 4, canopyColor = 0x5a8a5a) {
   const trunkH = height * 0.35;
@@ -577,13 +626,14 @@ roofGroup.add(sWingRoofMesh);
 // Atrium (x=10.48-14.78, z=15.93-19.18) — no roof (open)
 
 // ───────────────────────── GARAGE + COVERED PARKING ─────────────────────────
-addBox(27.63, 19.4, 7.18, 7.05, 3, 0x888888);
+// Garage walls 2.3m (front low eave), pult roof rises to 3.5m at back
+addBox(27.63, 19.4, 7.18, 7.05, 2.3, 0x888888);
 
-// Shed roof on garage (north higher → south lower)
+// Pult roof on garage: front (south, low) +2.3m, back (north, high) +3.5m — slope 1.2m
 {
   const garageBaseY = terrainHeight(27.63 + 3.59, 19.4 + 3.525);
-  const lowY = garageBaseY + 3;
-  const highY = garageBaseY + 3.6;
+  const lowY = garageBaseY + 2.3;
+  const highY = garageBaseY + 3.5;
   const geom = makePultRoof(27.63, 27.63 + 7.18, 19.4, 19.4 + 7.05, lowY, highY);
   const mat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.6, metalness: 0.3, side: THREE.DoubleSide });
   const m = new THREE.Mesh(geom, mat);
@@ -609,19 +659,8 @@ for (let i = 1; i < 5; i++) {
   scene.add(line);
 }
 
-// Carport between house and garage — shed roof
-addOpenStructure(21.28, 19.4, 6.35, 7.05, 2.5, 0xcdc1ad);
-// Shed roof over carport
-{
-  const baseY = terrainHeight(21.28 + 3.175, 19.4 + 3.525);
-  const lowY = baseY + 2.5;
-  const highY = baseY + 3.0;
-  const geom = makePultRoof(21.28, 21.28 + 6.35, 19.4, 19.4 + 7.05, lowY, highY);
-  const mat = new THREE.MeshStandardMaterial({ color: 0x8a7a5a, roughness: 0.7, side: THREE.DoubleSide });
-  const m = new THREE.Mesh(geom, mat);
-  m.castShadow = true;
-  roofGroup.add(m);
-}
+// Carport between house and garage — lamellar pergola (open wood slats, per studie)
+addLamellarPergola(21.28, 19.4, 6.35, 7.05, 2.5);
 
 // 2× parkování (nízká plocha)
 addBox(34.81, 22.84, 4.33, 3.61, 0.05, 0xbdbdbd);
@@ -643,7 +682,7 @@ softub.castShadow = true;
 scene.add(softub);
 
 // ───────────────────────── PERGOLA ─────────────────────────
-addOpenStructure(25.28, 1, 7, 5, 2.5, 0xc8a878);
+addLamellarPergola(25.28, 1, 7, 5, 2.5, 0x8a6840);
 
 // ───────────────────────── TERRACES (sledují terén) ─────────────────────────
 // Terasa V — wood platform inside zub + extending east, 4 × 11 m
@@ -1351,53 +1390,55 @@ window.addEventListener('resize', () => {
 // ───────────────────────── WALKING TOUR (POV walkthrough) ─────────────────────────
 // Each waypoint: p = [x, z] walker position, la = [x, z] look-at (always horizontal — same eye level)
 // Path stays on driveway/sidewalks (avoids walking through garage/walls)
-// Garden-only walk — small steps, look at the feature you're walking past
+// Garden-only walk — every look-at points OUTWARD from house (toward fence/feature)
+// House bounding: x=10.48-21.28, z=7.18-26.43; centered ~(16, 17)
 const tourPath = [
-  // Approach
-  { p: [50, 28], la: [44, 28], dur: 2,   label: 'Approaching from east' },
-  { p: [46, 28], la: [40, 28], dur: 2,   label: 'At the gate' },
-  // On driveway, glance at garage on right
-  { p: [40, 28], la: [33, 24], dur: 2,   label: 'Driveway, garage on right' },
-  // Continue past garage
-  { p: [33, 29], la: [25, 30], dur: 2,   label: 'Past the garage' },
-  // South side of plot, walking west
-  { p: [25, 30], la: [12, 30], dur: 3,   label: 'South side of plot' },
-  { p: [15, 30], la: [4, 30],  dur: 3,   label: 'Toward orchard' },
-  // In orchard, look at trees
-  { p: [6, 30],  la: [3, 33],  dur: 3,   label: 'Among orchard trees' },
-  // Turn north, walk up west side
-  { p: [4, 24],  la: [3, 16],  dur: 3,   label: 'Heading north along west side' },
-  // At raised beds
-  { p: [4, 16],  la: [2, 13],  dur: 2,   label: 'By the raised beds' },
-  // Continue north toward sauna
-  { p: [5, 11],  la: [6, 6],   dur: 2,   label: 'Toward sauna' },
+  // Outside east, look at gate
+  { p: [50, 30], la: [44, 30], dur: 2,   label: 'Approaching from east' },
+  { p: [46, 30], la: [42, 32], dur: 2,   label: 'At the gate, neighbor trees' },
+  // On driveway, look DOWN at driveway pavement / south fence
+  { p: [42, 30], la: [42, 33], dur: 2,   label: 'On driveway, south fence' },
+  // Walking west on driveway, look at garage south wall
+  { p: [36, 30], la: [33, 27], dur: 2,   label: 'Garage south wall' },
+  // Past garage south, look south at fence
+  { p: [28, 32], la: [22, 33], dur: 2,   label: 'South side of plot' },
+  // Continue south side
+  { p: [18, 32], la: [10, 33], dur: 3,   label: 'Walking south' },
+  // SW corner — look at orchard
+  { p: [8, 31],  la: [3, 32],  dur: 2,   label: 'SW corner, orchard ahead' },
+  // In orchard, look at trees south
+  { p: [4, 30],  la: [3, 34],  dur: 3,   label: 'In the orchard' },
+  // Walking north along west fence, look at fence/sad
+  { p: [3, 24],  la: [1, 20],  dur: 3,   label: 'West fence side' },
+  // Raised beds — look at beds close
+  { p: [4, 17],  la: [2, 14],  dur: 2,   label: 'Raised beds' },
+  // Continue north along west, look toward sauna
+  { p: [4, 12],  la: [5, 5],   dur: 2,   label: 'Toward sauna' },
   // At sauna + hot tub
-  { p: [7, 8],   la: [4, 4],   dur: 3,   label: 'At sauna + hot tub' },
-  // Past sauna, walking east
-  { p: [11, 5],  la: [16, 3],  dur: 2,   label: 'Past sauna, looking at perennials' },
-  // North strip
-  { p: [17, 4],  la: [25, 3],  dur: 2,   label: 'North strip' },
-  // Approaching pergola
-  { p: [24, 4],  la: [28, 4],  dur: 2,   label: 'Approaching pergola' },
-  // At pergola
-  { p: [28, 5],  la: [29, 3],  dur: 2,   label: 'At pergola + grill' },
-  // Toward fire pit
-  { p: [32, 7],  la: [36, 8],  dur: 2,   label: 'Toward fire pit' },
+  { p: [3, 6],   la: [6, 3],   dur: 3,   label: 'Sauna + hot tub' },
+  // Walk east past sauna, look at perennials north
+  { p: [10, 3],  la: [18, 1],  dur: 2,   label: 'North strip — perennials' },
+  // Continue east, look at pergola
+  { p: [18, 3],  la: [28, 2],  dur: 2,   label: 'Toward pergola' },
+  // At pergola — look at pergola structure
+  { p: [27, 4],  la: [30, 2],  dur: 2,   label: 'At pergola + grill' },
+  // Past pergola, look at fire pit
+  { p: [33, 6],  la: [36, 8],  dur: 2,   label: 'Toward fire pit' },
   // At fire pit
-  { p: [35, 9],  la: [36, 8],  dur: 3,   label: 'At fire pit' },
-  // Walk south, east trees on left
-  { p: [38, 13], la: [42, 16], dur: 3,   label: 'East trees (privacy)' },
-  // Toward pond
-  { p: [34, 16], la: [30, 15], dur: 2,   label: 'Approaching pond' },
-  // At pond
-  { p: [27, 17], la: [30, 15], dur: 3,   label: 'At the pond' },
-  // East terrace from outside (look at HS doors)
-  { p: [25, 14], la: [22, 14], dur: 2,   label: 'East terrace (HS doors)' },
-  // Walk back south
-  { p: [28, 22], la: [33, 28], dur: 2,   label: 'Toward driveway' },
-  // Final
-  { p: [38, 28], la: [22, 17], dur: 3,   label: 'Final overview' },
-  { p: [38, 28], la: [22, 17], dur: 0.1, label: 'End' },
+  { p: [35, 9],  la: [37, 8],  dur: 3,   label: 'At fire pit' },
+  // East trees, look at neighbor trees
+  { p: [38, 13], la: [43, 15], dur: 2,   label: 'East trees (privacy)' },
+  // Walk south along east, look east
+  { p: [38, 19], la: [43, 22], dur: 2,   label: 'East side trees' },
+  // Approach pond from east
+  { p: [33, 17], la: [30, 16], dur: 2,   label: 'Pond ahead' },
+  // At pond — look at water lilies (down)
+  { p: [29, 16], la: [31, 15], dur: 3,   label: 'At the pond, lilies' },
+  // Walk past pond south
+  { p: [31, 22], la: [37, 28], dur: 2,   label: 'East garden' },
+  // Final overview from SE
+  { p: [40, 32], la: [22, 17], dur: 3,   label: 'Final overview' },
+  { p: [40, 32], la: [22, 17], dur: 0.1, label: 'End' },
 ];
 
 let tourActive = false;
