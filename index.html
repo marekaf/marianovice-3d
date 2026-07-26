@@ -1438,50 +1438,43 @@ window.addEventListener('resize', () => {
 
 // ───────────────────────── WALKING TOUR (POV walkthrough) ─────────────────────────
 // Each waypoint: p = [x, z] walker position, la = [x, z] look-at (always horizontal — same eye level)
-// Path stays on driveway/sidewalks (avoids walking through garage/walls)
-// Garden walk — look at FEATURES close-up; walker positioned so house is OUTSIDE camera FOV (50°)
+// Walker stays inside the plot; every look-at frames a garden feature from viewing distance
+// (never the fence up close), with the house kept out of or at the edge of the frame.
+// Position and look-at each follow a Catmull-Rom spline through the waypoints — continuous
+// walking speed, no stop-start at waypoints; dur = seconds to reach the NEXT waypoint.
 const tourPath = [
-  // Driveway entry, look south (away from house)
-  { p: [44, 30], la: [44, 33], dur: 2,   label: 'At the gate' },
-  { p: [38, 30], la: [38, 33], dur: 2,   label: 'On driveway' },
-  // South side walking west — house is BEHIND walker (north), camera looks south
-  { p: [30, 32], la: [30, 34], dur: 2,   label: 'South side' },
-  { p: [20, 32], la: [20, 34], dur: 2,   label: 'Mid south side' },
-  { p: [12, 32], la: [12, 34], dur: 2,   label: 'Continuing west' },
-  // SW corner — orchard ahead
-  { p: [6, 30],  la: [3, 33],  dur: 2,   label: 'SW corner — orchard ahead' },
-  // In orchard, look at trees
-  { p: [3, 28],  la: [3, 33],  dur: 3,   label: 'In the orchard — trees' },
-  // Raised beds close-up (walker east of beds, looking west)
-  { p: [4, 18],  la: [2, 14],  dur: 3,   label: 'By the raised beds' },
-  // Toward sauna (walker south, sauna north)
-  { p: [4, 10],  la: [5, 5],   dur: 2,   label: 'Toward sauna' },
-  // AT sauna — walker south, sauna+hot tub north
-  { p: [7, 6],   la: [4, 3],   dur: 3,   label: 'At sauna + hot tub' },
-  // Past sauna, perennials north
-  { p: [12, 5],  la: [16, 2],  dur: 2,   label: 'Perennials by north fence' },
-  // Approaching pergola
-  { p: [22, 5],  la: [28, 3],  dur: 2,   label: 'Approaching pergola' },
-  // AT pergola — walker south, pergola north
-  { p: [28, 7],  la: [28, 3],  dur: 3,   label: 'At pergola + grill' },
-  // Toward fire pit
-  { p: [32, 9],  la: [36, 8],  dur: 2,   label: 'Toward fire pit' },
-  // AT fire pit
-  { p: [35, 10], la: [36, 8],  dur: 3,   label: 'At fire pit' },
-  // East trees (walker west of east fence, look east)
-  { p: [38, 14], la: [42, 16], dur: 2,   label: 'East trees (privacy)' },
-  // Approach pond from south
-  { p: [33, 20], la: [30, 15], dur: 2,   label: 'Approaching pond' },
-  // AT pond — walker south, pond north
-  { p: [30, 19], la: [30, 15], dur: 3,   label: 'At the pond' },
-  // Final overview at SE
-  { p: [40, 28], la: [22, 17], dur: 3,   label: 'Final overview' },
-  { p: [40, 28], la: [22, 17], dur: 0.1, label: 'End' },
+  { p: [42.5, 29.8], la: [34, 27.5],   dur: 2.5, label: 'At the gate' },
+  { p: [38, 29],     la: [31.2, 26.6], dur: 2.5, label: 'Driveway — garage' },
+  { p: [33, 30.5],   la: [24, 32.5],   dur: 2.5, label: 'South lawn' },
+  { p: [26, 31],     la: [4, 30.5],    dur: 2.5, label: 'Toward the orchard' },
+  { p: [14, 31],     la: [2, 28.5],    dur: 3,   label: 'Orchard ahead' },
+  { p: [7, 29],      la: [2.75, 24],   dur: 3,   label: 'In the orchard' },
+  { p: [6, 21],      la: [2, 14],      dur: 2.5, label: 'Raised beds ahead' },
+  { p: [6.5, 13],    la: [2.75, 12],   dur: 3,   label: 'At the raised beds' },
+  { p: [7, 8],       la: [5, 3],       dur: 2.5, label: 'Toward the sauna' },
+  { p: [8.5, 6],     la: [5, 2.5],     dur: 3,   label: 'Sauna + hot tub' },
+  { p: [12, 4.5],    la: [17, 1.5],    dur: 2.5, label: 'Perennials by north fence' },
+  { p: [19, 4.5],    la: [27, 2.5],    dur: 2.5, label: 'Approaching pergola' },
+  { p: [24, 6.5],    la: [28.5, 3.5],  dur: 3,   label: 'At pergola + grill' },
+  { p: [30, 7.5],    la: [36, 8],      dur: 2.5, label: 'Toward fire pit' },
+  { p: [34, 9.5],    la: [36, 8],      dur: 3,   label: 'At fire pit' },
+  { p: [38, 12],     la: [42.3, 14],   dur: 2.5, label: 'East trees (privacy)' },
+  { p: [34, 12],     la: [30.8, 14.4], dur: 3,   label: 'At the pond' },
+  { p: [35, 18],     la: [40.5, 23.5], dur: 2.5, label: 'Parking + rain tank' },
+  { p: [39, 26],     la: [43.6, 30.1], dur: 2.5, label: 'Back at the gate' },
+  { p: [40, 25],     la: [35.5, 9.5],  dur: 3,   label: 'Final overview' },
 ];
+// Waypoints must be distinct — duplicates make the centripetal Catmull-Rom divide by zero (NaN camera)
+
+const tourCurves = {
+  walk: new THREE.CatmullRomCurve3(tourPath.map(w => new THREE.Vector3(w.p[0], 0, w.p[1])), false, 'centripetal'),
+  look: new THREE.CatmullRomCurve3(tourPath.map(w => new THREE.Vector3(w.la[0], 0, w.la[1])), false, 'centripetal'),
+  cum: tourPath.reduce((acc, w) => (acc.push(acc[acc.length - 1] + w.dur), acc), [0]),
+};
 
 let tourActive = false;
 let tourIndex = 0;
-let tourSegStart = 0;
+let tourStart = 0;
 const tourLabel = document.createElement('div');
 tourLabel.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.75);color:white;padding:8px 16px;border-radius:6px;font-size:14px;z-index:200;pointer-events:none;opacity:0;transition:opacity 0.3s;';
 document.body.appendChild(tourLabel);
@@ -1490,7 +1483,7 @@ window.startTour = function() {
   if (tourActive) return;
   tourActive = true;
   tourIndex = 0;
-  tourSegStart = clock.getElapsedTime();
+  tourStart = clock.getElapsedTime();
   controls.enabled = false;
   document.getElementById('toggleFP').checked = false;
   fpState.active = false;
@@ -1498,36 +1491,31 @@ window.startTour = function() {
 
 function tourUpdate() {
   if (!tourActive) return;
-  const now = clock.getElapsedTime();
-  const seg = tourPath[tourIndex];
-  const next = tourPath[Math.min(tourIndex + 1, tourPath.length - 1)];
-  const elapsed = now - tourSegStart;
-  if (elapsed > seg.dur) {
-    tourIndex++;
-    tourSegStart = now;
-    if (tourIndex >= tourPath.length - 1) {
-      tourActive = false;
-      // Reset OrbitControls target so it doesn't snap camera back to house center
-      const dir = new THREE.Vector3();
-      camera.getWorldDirection(dir);
-      controls.target.copy(camera.position).add(dir.multiplyScalar(20));
-      controls.enabled = true;
-      tourLabel.style.opacity = 0;
-      return;
-    }
+  const n = tourPath.length;
+  const elapsed = clock.getElapsedTime() - tourStart;
+  if (elapsed >= tourCurves.cum[n - 1]) {
+    tourActive = false;
+    // Reset OrbitControls target so it doesn't snap camera back to house center
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    controls.target.copy(camera.position).add(dir.multiplyScalar(20));
+    controls.enabled = true;
+    tourLabel.style.opacity = 0;
+    return;
   }
-  const t = Math.min(1, elapsed / seg.dur);
-  const easeT = t * t * (3 - 2 * t);  // smoothstep
-  const px = seg.p[0] + (next.p[0] - seg.p[0]) * easeT;
-  const pz = seg.p[1] + (next.p[1] - seg.p[1]) * easeT;
-  const lax = seg.la[0] + (next.la[0] - seg.la[0]) * easeT;
-  const laz = seg.la[1] + (next.la[1] - seg.la[1]) * easeT;
-  const py = terrainHeight(px, pz) + 1.7;
+  while (elapsed >= tourCurves.cum[tourIndex + 1]) tourIndex++;
+  const seg = tourPath[tourIndex];
+  const localT = (elapsed - tourCurves.cum[tourIndex]) / seg.dur;
+  // Spline parameter: waypoint i sits at u = i/(n-1)
+  const u = Math.min(1, (tourIndex + localT) / (n - 1));
+  const pos = tourCurves.walk.getPoint(u);
+  const la = tourCurves.look.getPoint(u);
+  const py = terrainHeight(pos.x, pos.z) + 1.7;
   // LookAt at SAME eye level as walker — purely horizontal view, no looking up/down
-  camera.position.set(px, py, pz);
-  camera.lookAt(lax, py, laz);
+  camera.position.set(pos.x, py, pos.z);
+  camera.lookAt(la.x, py, la.z);
   // Show label
-  tourLabel.textContent = `${tourIndex + 1}/${tourPath.length - 1} · ${seg.label}`;
+  tourLabel.textContent = `${tourIndex + 1}/${n - 1} · ${seg.label}`;
   tourLabel.style.opacity = 0.9;
 }
 
