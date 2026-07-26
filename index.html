@@ -88,9 +88,16 @@
 }
 </script>
 
+<script src="layout.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Layout (footprints in meters) comes from layout.js — x → east, y → south (z here)
+const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
+const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
+const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
+const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
 
 // ───────────────────────── SCENE ─────────────────────────
 const scene = new THREE.Scene();
@@ -492,13 +499,7 @@ function addBush(plotX, plotY, size = 1, color = 0x5a8a5a) {
 }
 
 // ───────────────────────── FENCE (GROUND) ─────────────────────────
-const plotVerts = [
-  [0, 0],            // SZ
-  [44.16, 0],        // SV
-  [44.16, 23.38],    // E_kink
-  [43.11, 35.41],    // JV
-  [1.15, 30.41]      // JZ
-];
+const plotVerts = GARDEN.plot.vertices;  // NW, NE, E_kink, SE, SW
 const plotShape = makePolyShape(plotVerts);
 const plotGeom = new THREE.ShapeGeometry(plotShape);
 plotGeom.rotateX(-Math.PI/2);
@@ -520,20 +521,9 @@ ground.receiveShadow = true;
 scene.add(ground);
 
 // ───────────────────────── HOUSE ─────────────────────────
-const houseVerts = [
-  [10.48, 7.18],   // NW
-  [21.28, 7.18],   // NE
-  [21.28, 11.58],
-  [20.58, 11.58],  // E zub start
-  [20.58, 22.53],
-  [21.28, 22.53],  // E zub end
-  [21.28, 26.43],  // SE
-  [10.48, 26.43],  // SW
-  [10.48, 19.18],
-  [14.78, 19.18],  // W zub start
-  [14.78, 15.93],
-  [10.48, 15.93],  // W zub end
-];
+const houseVerts = EL.house.parts.find(p => p.kind === 'polygon').points;
+// bbox [x0,y0,x1,y1], coreX = gable core x-range, atrium [x0,y0,x1,y1] (open, no roof)
+const { bbox: HB, coreX: HC, atrium: HA } = EL.house.meta;
 const wallH = 2.8;
 const roofRise = 5;
 addExtrudedPoly(houseVerts, wallH, 0xd4b896);
@@ -567,8 +557,8 @@ function makeGableRoof(xMin, xMax, zMin, zMax, wallTop, peakHeight) {
 }
 
 // Roof setup
-const houseCentroidX = (10.48 + 21.28) / 2;
-const houseCentroidZ = (7.18 + 26.43) / 2;
+const houseCentroidX = (HB[0] + HB[2]) / 2;
+const houseCentroidZ = (HB[1] + HB[3]) / 2;
 const houseTerrainY = terrainHeight(houseCentroidX, houseCentroidZ);
 const roofMat = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, roughness: 0.5, metalness: 0.3, side: THREE.DoubleSide });
 
@@ -605,32 +595,34 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
   return geom;
 }
 
-// MAIN CORE (x=14.78-21.28) — single gable roof
-const mainGableGeom = makeGableRoof(14.78, 21.28, 7.18, 26.43, houseTerrainY + wallH, roofRise);
+// MAIN CORE — single gable roof
+const mainGableGeom = makeGableRoof(HC[0], HC[1], HB[1], HB[3], houseTerrainY + wallH, roofRise);
 const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
-// North wing (x=10.48-14.78, z=7.18-15.93) — shed roof, small slope W low / E high
-const nWingRoofGeom = makePultRoofWE(10.48, 14.78, 7.18, 15.93, houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+// North wing (west of core, north of atrium) — shed roof, small slope W low / E high
+const nWingRoofGeom = makePultRoofWE(HB[0], HC[0], HB[1], HA[1], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
 const nWingRoofMesh = new THREE.Mesh(nWingRoofGeom, roofMat);
 nWingRoofMesh.castShadow = true;
 roofGroup.add(nWingRoofMesh);
 
-// South wing (x=10.48-14.78, z=19.18-26.43) — shed roof
-const sWingRoofGeom = makePultRoofWE(10.48, 14.78, 19.18, 26.43, houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+// South wing (west of core, south of atrium) — shed roof
+const sWingRoofGeom = makePultRoofWE(HB[0], HC[0], HA[3], HB[3], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
 const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
 sWingRoofMesh.castShadow = true;
 roofGroup.add(sWingRoofMesh);
 
-// Atrium (x=10.48-14.78, z=15.93-19.18) — no roof (open)
+// Atrium — no roof (open)
 
 // ───────────────────────── GARAGE + CARPORT (shared asymmetric gable roof) ─────────────────────────
+const GA = rectOf('garage');
+const CP = rectOf('carport');
 // Garage walls 2.3 m
-addBox(27.63, 19.4, 7.18, 7.05, 2.3, 0x888888);
+addBox(GA.x, GA.y, GA.w, GA.d, 2.3, 0x888888);
 
 // Asymmetric gable roof over CARPORT + GARAGE
-// Ridge at x=27.63 (junction between carport and garage), eaves at x=21.28 and x=34.81
+// Ridge at the carport/garage junction, eaves at carport W edge and garage E edge
 function makeAsymGableRoof(xMin, xMid, xMax, zMin, zMax, eaveY, peakHeight) {
   const peakY = eaveY + peakHeight;
   const v = [
@@ -654,8 +646,8 @@ function makeAsymGableRoof(xMin, xMid, xMax, zMin, zMax, eaveY, peakHeight) {
   return g;
 }
 {
-  const baseY = terrainHeight(27.63, 22.9);
-  const geom = makeAsymGableRoof(21.28, 27.63, 34.81, 19.4, 26.45, baseY + 2.3, 1.2);
+  const baseY = terrainHeight(GA.x, GA.y + GA.d / 2);
+  const geom = makeAsymGableRoof(CP.x, GA.x, GA.x + GA.w, GA.y, GA.y + GA.d, baseY + 2.3, 1.2);
   const m = new THREE.Mesh(geom, roofMat);
   m.castShadow = true;
   roofGroup.add(m);
@@ -664,49 +656,53 @@ function makeAsymGableRoof(xMin, xMid, xMax, zMin, zMax, eaveY, peakHeight) {
 // Standing seam metal (falcovaný plech) on the carport+garage gable
 {
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.45, metalness: 0.5 });
-  const baseY = terrainHeight(27.63, 22.9);
+  const baseY = terrainHeight(GA.x, GA.y + GA.d / 2);
   const eaveY = baseY + 2.3;
   const peakY = baseY + 2.3 + 1.2;
-  const xMid = 27.63;
-  // Left slope (carport): xMin=21.28 to xMid=27.63
-  const leftLen = Math.sqrt((xMid - 21.28) ** 2 + 1.2 ** 2);
-  const leftAng = Math.atan2(1.2, xMid - 21.28);
-  // Right slope (garage): xMid=27.63 to xMax=34.81
-  const rightLen = Math.sqrt((34.81 - xMid) ** 2 + 1.2 ** 2);
-  const rightAng = Math.atan2(1.2, 34.81 - xMid);
-  for (let zs = 19.4 + 0.2; zs < 26.45; zs += 0.4) {
+  const xMid = GA.x;
+  const xMax = GA.x + GA.w;
+  // Left slope (carport)
+  const leftLen = Math.sqrt((xMid - CP.x) ** 2 + 1.2 ** 2);
+  const leftAng = Math.atan2(1.2, xMid - CP.x);
+  // Right slope (garage)
+  const rightLen = Math.sqrt((xMax - xMid) ** 2 + 1.2 ** 2);
+  const rightAng = Math.atan2(1.2, xMax - xMid);
+  for (let zs = GA.y + 0.2; zs < GA.y + GA.d; zs += 0.4) {
     const l = new THREE.Mesh(new THREE.BoxGeometry(leftLen, 0.06, 0.04), stripeMat);
-    l.position.set((21.28 + xMid) / 2, (eaveY + peakY) / 2 + 0.03, zs);
+    l.position.set((CP.x + xMid) / 2, (eaveY + peakY) / 2 + 0.03, zs);
     l.rotation.z = leftAng;
     roofGroup.add(l);
     const r = new THREE.Mesh(new THREE.BoxGeometry(rightLen, 0.06, 0.04), stripeMat);
-    r.position.set((xMid + 34.81) / 2, (eaveY + peakY) / 2 + 0.03, zs);
+    r.position.set((xMid + xMax) / 2, (eaveY + peakY) / 2 + 0.03, zs);
     r.rotation.z = -rightAng;
     roofGroup.add(r);
   }
 }
 
 // Garage doors (south wall of garage, outside) on terrain
-const garageDoorBaseY = terrainHeight(27.63 + 7.18/2, 19.4 + 7.05);
+const doorRect = EL.garage.parts.filter(p => p.kind === 'rect')[1];
+const garageDoorX = doorRect.x + doorRect.w / 2;
+const garageDoorZ = GA.y + GA.d;
+const garageDoorBaseY = terrainHeight(garageDoorX, garageDoorZ);
 const garageDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(3.3, 2.2, 0.08),
+  new THREE.BoxGeometry(doorRect.w, 2.2, 0.08),
   new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 })
 );
-garageDoor.position.set(27.63 + 7.18/2, garageDoorBaseY + 1.1, 19.4 + 7.05 + 0.04);
+garageDoor.position.set(garageDoorX, garageDoorBaseY + 1.1, garageDoorZ + 0.04);
 scene.add(garageDoor);
 // Horizontal section lines on garage door
 for (let i = 1; i < 5; i++) {
   const line = new THREE.Mesh(
-    new THREE.BoxGeometry(3.32, 0.03, 0.02),
+    new THREE.BoxGeometry(doorRect.w + 0.02, 0.03, 0.02),
     new THREE.MeshStandardMaterial({ color: 0x111111 })
   );
-  line.position.set(27.63 + 7.18/2, garageDoorBaseY + 0.4 * i, 19.4 + 7.05 + 0.09);
+  line.position.set(garageDoorX, garageDoorBaseY + 0.4 * i, garageDoorZ + 0.09);
   scene.add(line);
 }
 
 // Carport between house and garage — open posts on west side (garage walls support east side)
 // Roof above is part of asymmetric gable shared with garage
-[[21.28, 19.4], [21.28, 26.45]].forEach(([px, pz]) => {
+[[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
   const baseY = terrainHeight(px, pz);
   const post = new THREE.Mesh(
     new THREE.BoxGeometry(0.15, 2.3, 0.15),
@@ -718,55 +714,49 @@ for (let i = 1; i < 5; i++) {
 });
 
 // 2× parkování (nízká plocha)
-addBox(34.81, 22.84, 4.33, 3.61, 0.05, 0xbdbdbd);
+const PK = rectOf('parking');
+addBox(PK.x, PK.y, PK.w, PK.d, 0.05, 0xbdbdbd);
 
 // ───────────────────────── SAUNA + HOT TUB + SHELTER ─────────────────────────
-addBox(6.5, 1, 4, 3, 3, 0x8b6f47);
+const SA = rectOf('sauna');
+addBox(SA.x, SA.y, SA.w, SA.d, 3, 0x8b6f47);
 
 // Přístřešek westně sauny
-addOpenStructure(3.5, 1, 3, 3, 2.5, 0xcdc1ad);
+const SH = rectOf('saunaShelter');
+addOpenStructure(SH.x, SH.y, SH.w, SH.d, 2.5, 0xcdc1ad);
 
 // Hot tub under shelter (ø 1.8 m) — on terrain
-const hotTubBaseY = terrainHeight(5, 2.5);
+const ST = circlesOf('softub')[0];
+const hotTubBaseY = terrainHeight(ST.cx, ST.cy);
 const softub = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.9, 0.9, 0.8, 32),
+  new THREE.CylinderGeometry(ST.r, ST.r, 0.8, 32),
   new THREE.MeshStandardMaterial({ color: 0x5dade2, roughness: 0.4 })
 );
-softub.position.set(5, hotTubBaseY + 0.4, 2.5);
+softub.position.set(ST.cx, hotTubBaseY + 0.4, ST.cy);
 softub.castShadow = true;
 scene.add(softub);
 
 // ───────────────────────── PERGOLA ─────────────────────────
-addLamellarPergola(25.28, 1, 7, 5, 2.5, 0x8a6840);
+const PG = rectOf('pergola');
+addLamellarPergola(PG.x, PG.y, PG.w, PG.d, 2.5, 0x8a6840);
 
 // ───────────────────────── TERRACES (sledují terén) ─────────────────────────
-// Terasa V — wood platform inside zub + extending east, 4 × 11 m
-addTerrainPlatform([
-  [20.58, 11.58], [24.58, 11.58], [24.58, 22.53], [20.58, 22.53]
-], 0.15, 0xa87d4a);
+// Terasa V — wood platform inside zub + extending east
+addTerrainPlatform(rectVerts(rectOf('eastTerrace')), 0.15, 0xa87d4a);
 
-// Terasa Z — sidewalk podél westní strany domu
-addTerrainPlatform([
-  [9.48, 7.18], [10.48, 7.18], [10.48, 26.43], [9.48, 26.43]
-], 0.15, 0xa87d4a);
-
-// Terasa Z — atrium uvnitř westního zubu
-addTerrainPlatform([
-  [10.48, 15.93], [14.78, 15.93], [14.78, 19.18], [10.48, 19.18]
-], 0.15, 0xa87d4a);
+// Terasa Z — sidewalk podél westní strany domu + atrium uvnitř westního zubu
+const [wtSidewalk, wtAtrium] = EL.westTerrace.parts.filter(p => p.kind === 'rect');
+addTerrainPlatform(rectVerts(wtSidewalk), 0.15, 0xa87d4a);
+addTerrainPlatform(rectVerts(wtAtrium), 0.15, 0xa87d4a);
 
 // Chodníček sauna → terasa Z
-addTerrainPlatform([
-  [9.5, 4], [10.5, 4], [10.5, 7.17], [9.5, 7.17]
-], 0.1, 0xcdc1ad);
+addTerrainPlatform(rectVerts(rectOf('saunaPath')), 0.1, 0xcdc1ad);
 
 // ───────────────────────── DRIVEWAY ─────────────────────────
+const drivewayPts = EL.driveway.parts.find(p => p.kind === 'polygon').points;
 const drivewayShape = new THREE.Shape();
-drivewayShape.moveTo(21.28, -26.44);
-drivewayShape.lineTo(34.11, -26.44);
-drivewayShape.lineTo(43.83, -27.89);
-drivewayShape.lineTo(43.44, -32.39);
-drivewayShape.lineTo(21.28, -29.72);
+drivewayShape.moveTo(drivewayPts[0][0], -drivewayPts[0][1]);
+for (let i = 1; i < drivewayPts.length; i++) drivewayShape.lineTo(drivewayPts[i][0], -drivewayPts[i][1]);
 drivewayShape.closePath();
 const drivewayGeom = new THREE.ShapeGeometry(drivewayShape);
 drivewayGeom.rotateX(-Math.PI/2);
@@ -788,7 +778,8 @@ scene.add(driveway);
 
 // ───────────────────────── RAIN TANK — underground, only manhole visible ─────────────────────────
 {
-  const cx = 40 + 1.25, cz = 22.2 + 1.25;
+  const RT = rectOf('rainTank');
+  const cx = RT.x + RT.w / 2, cz = RT.y + RT.d / 2;
   const baseY = terrainHeight(cx, cz);
   // Manhole / cover
   const manhole = new THREE.Mesh(
@@ -807,28 +798,19 @@ scene.add(driveway);
 }
 
 // ───────────────────────── RAISED BEDS (4 pcs, 2 rows × 2) ─────────────────────────
-addBox(1, 10, 1.5, 4, 0.4, 0x7a5a3a);   // bed 1 (W řada, north)
-addBox(1, 15, 1.5, 4, 0.4, 0x7a5a3a);   // bed 2 (W řada, south)
-addBox(3, 10, 1.5, 4, 0.4, 0x7a5a3a);   // bed 3 (V řada, north)
-addBox(3, 15, 1.5, 4, 0.4, 0x7a5a3a);   // bed 4 (V řada, south)
+['raisedBed1', 'raisedBed2', 'raisedBed3', 'raisedBed4'].forEach(id => {
+  const b = rectOf(id);
+  addBox(b.x, b.y, b.w, b.d, 0.4, 0x7a5a3a);
+});
 
 // ───────────────────────── ORCHARD ─────────────────────────
-[
-  [1.2, 22], [4, 23.5], [1.2, 26], [4, 27.5],
-  [1.2, 30], [4, 31]
-].forEach(([x, y]) => addTree(x, y, 4 + Math.random()));
+circlesOf('orchard').forEach(c => addTree(c.cx, c.cy, 4 + Math.random()));
 
 // ───────────────────────── TREES ALONG NORTH FENCE ─────────────────────────
-[
-  [13, 1.2], [17, 1.5], [21, 1.0],
-  [34, 1.3], [38, 1.6], [41, 1.2], [43, 1.4]
-].forEach(([x, y]) => addTree(x, y, 4.5 + Math.random() * 1.5, 0x4d7a4d));
+circlesOf('northTrees').forEach(c => addTree(c.cx, c.cy, 4.5 + Math.random() * 1.5, 0x4d7a4d));
 
 // ───────────────────────── TREES ALONG EAST FENCE ─────────────────────────
-[
-  [42.5, 8], [42.5, 12], [42.5, 16], [42.5, 20],
-  [42, 33], [42, 35]
-].forEach(([x, y]) => addTree(x, y, 4 + Math.random() * 1.5, 0x4d7a4d));
+circlesOf('eastTrees').forEach(c => addTree(c.cx, c.cy, 4 + Math.random() * 1.5, 0x4d7a4d));
 
 // Perennial strip u northního plotu (různé barvy a velikosti, hustěji)
 const perennialColors = [0xa86a8c, 0x9b8ec4, 0xc4a25a, 0x8eb88e, 0xd87a7a, 0xa8c47a, 0xa3e0a3];
@@ -851,7 +833,8 @@ for (let i = 0; i < 35; i++) {
 
 // ───────────────────────── FIREPIT IN NE CORNER + BENCHES ─────────────────────────
 {
-  const ox = 36, oz = 8;
+  const FP = circlesOf('firePit')[0];
+  const ox = FP.cx, oz = FP.cy;
   const baseY = terrainHeight(ox, oz);
   // Fire pit stone ring
   const ring = new THREE.Mesh(
@@ -903,10 +886,11 @@ for (let i = 0; i < 35; i++) {
 
 // ───────────────────────── POND — ellipse, bigger, closer to garage ─────────────────────────
 {
-  const cx = 30, cz = 15;
+  const PN = EL.pond.parts.find(p => p.kind === 'ellipse');
+  const cx = PN.cx, cz = PN.cy;
   const baseY = terrainHeight(cx, cz);
-  const rimRX = 2.8, rimRZ = 2.0;     // ellipse 5,6 × 4 m
-  const waterRX = 2.55, waterRZ = 1.75;
+  const rimRX = PN.rx, rimRZ = PN.ry;
+  const waterRX = rimRX - 0.25, waterRZ = rimRZ - 0.25;
   // Kamenné lemování — elipsa
   const rim = new THREE.Mesh(
     new THREE.CylinderGeometry(1, 1, 0.25, 48),
@@ -966,40 +950,41 @@ for (let i = 0; i < 35; i++) {
   const frameMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6 });
   // HS sliding doors on east (in notch) — floor to near-ceiling 2.27 m, sill = 0
   // HS1 = 3290×2270, HS2 = 5160×2270
+  const EN = EL.house.meta.eNotch;
   const hsPortal = (cy, w, h) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, w), winMat);
-    m.position.set(20.58 + 0.03, ty + h/2 + 0.05, cy);  // sill ~5 cm
+    m.position.set(EN[0] + 0.03, ty + h/2 + 0.05, cy);  // sill ~5 cm
     scene.add(m);
   };
   hsPortal(13.5, 3.29, 2.27);  // HS1
   hsPortal(18.5, 5.16, 2.27);  // HS2
   // Bedroom panorama window on east wall (NE) — 2.0×2.27 m, sill 0.3 m
   const bedWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 2.0), winMat);
-  bedWin.position.set(21.28 + 0.03, ty + 0.3 + 1.135, 9.5);
+  bedWin.position.set(HB[2] + 0.03, ty + 0.3 + 1.135, 9.5);
   scene.add(bedWin);
   // North window in middle of north wall — height 2270, sill ~0.3 m
   const o6 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.27, 0.06), winMat);
-  o6.position.set((10.48 + 21.28) / 2, ty + 0.3 + 1.135, 7.18 - 0.03);
+  o6.position.set((HB[0] + HB[2]) / 2, ty + 0.3 + 1.135, HB[1] - 0.03);
   scene.add(o6);
-  // West windows (outside atrium z=15.93-19.18) — O3 1600×2270, sill ~0.3 m
+  // West windows (outside atrium) — O3 1600×2270, sill ~0.3 m
   for (const z of [10.5, 13.5, 22, 24.5]) {
     const w = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 1.6), winMat);
-    w.position.set(10.48 - 0.03, ty + 0.3 + 1.135, z);
+    w.position.set(HB[0] - 0.03, ty + 0.3 + 1.135, z);
     scene.add(w);
   }
-  // Window (portal) from living room to atrium — on inner atrium wall (x=14.78), outward = -x into atrium
+  // Window (portal) from living room to atrium — on inner atrium wall, outward = -x into atrium
   const atriumWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 2.5), winMat);
-  atriumWin.position.set(14.78 - 0.03, ty + 1.2 + 0.3, 17.55);
+  atriumWin.position.set(HA[2] - 0.03, ty + 1.2 + 0.3, 17.55);
   scene.add(atriumWin);
   // South windows O1 (900×1250, bathroom + utility) — sill 0.9 m → top 2.15 m
   for (const x of [13.5, 16.5]) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.25, 0.06), winMat);
-    m.position.set(x, ty + 0.9 + 0.625, 26.43 + 0.03);
+    m.position.set(x, ty + 0.9 + 0.625, HB[3] + 0.03);
     scene.add(m);
   }
   // Entry doors — on east wall of south part (from carport to vestibule)
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 1.42), frameMat);
-  d2.position.set(21.28 + 0.03, ty + 1.075, 22);
+  d2.position.set(HB[2] + 0.03, ty + 1.075, 22);
   scene.add(d2);
 }
 
@@ -1028,10 +1013,10 @@ for (let i = 0; i < 35; i++) {
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.45, metalness: 0.5 });
   const wallTopY = houseTerrainY + wallH;
   const ridgeY = wallTopY + roofRise;
-  const xMin = 14.78, xMax = 21.28, xMid = (xMin + xMax) / 2;
+  const xMin = HC[0], xMax = HC[1], xMid = (xMin + xMax) / 2;
   const slopeLen = Math.sqrt((xMid - xMin) ** 2 + roofRise ** 2);
   const slopeAngle = Math.atan2(roofRise, xMid - xMin);
-  const zMin = 7.18, zMax = 26.43;
+  const zMin = HB[1], zMax = HB[3];
 
   for (let zs = zMin + 0.2; zs < zMax; zs += 0.4) {
     const left = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.06, 0.04), stripeMat);
@@ -1218,23 +1203,24 @@ grassPositions.forEach(([x, z]) => {
 });
 
 // ───────────────────────── FENCE ─────────────────────────
-// East boundary has GATE gap at y=27.89 to 32.39 along E_kink → JV
-addFenceSegment(0, 0, 44.16, 0);              // north
-addFenceSegment(44.16, 0, 44.16, 23.38);      // east horní
+// East boundary has GATE gap along E_kink → JV (gate line from layout)
+const [pNW, pNE, pEK, pSE, pSW] = plotVerts;
+addFenceSegment(pNW[0], pNW[1], pNE[0], pNE[1]);   // north
+addFenceSegment(pNE[0], pNE[1], pEK[0], pEK[1]);   // east horní
 // East lower with brána gap
 function lerp2(a, b, t) {
   return [a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t];
 }
-const eL1 = [44.16, 23.38], eL2 = [43.11, 35.41];
-const totalEL = Math.sqrt((eL2[0]-eL1[0])**2 + (eL2[1]-eL1[1])**2); // ≈12.08
-const tBranaT = (27.89 - 23.38) / (35.41 - 23.38);  // ≈ 0.375
-const tBranaB = (32.39 - 23.38) / (35.41 - 23.38);  // ≈ 0.749
+const GT = EL.gate.parts.find(p => p.kind === 'line');
+const eL1 = pEK, eL2 = pSE;
+const tBranaT = (GT.y1 - eL1[1]) / (eL2[1] - eL1[1]);
+const tBranaB = (GT.y2 - eL1[1]) / (eL2[1] - eL1[1]);
 const gateT = lerp2(eL1, eL2, tBranaT);
 const gateB = lerp2(eL1, eL2, tBranaB);
 addFenceSegment(eL1[0], eL1[1], gateT[0], gateT[1]);  // east lower 1 (before gate)
 addFenceSegment(gateB[0], gateB[1], eL2[0], eL2[1]);  // east lower 2 (after gate)
-addFenceSegment(43.11, 35.41, 1.15, 30.41);   // south
-addFenceSegment(1.15, 30.41, 0, 0);           // west
+addFenceSegment(pSE[0], pSE[1], pSW[0], pSW[1]);      // south
+addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);      // west
 
 // Gate (open indication) on terrain
 const gateCenterX = (gateT[0] + gateB[0]) / 2;
@@ -1352,20 +1338,28 @@ function addHoverTarget(plotX, plotY, w, d, h, name) {
   scene.add(m);
   namedObjects.push(m);
 }
-addHoverTarget(10.48, 7.18, 10.8, 19.25, 6, 'House 10.8 × 19.25 m');
-addHoverTarget(27.63, 19.4, 7.18, 7.05, 3, 'Garage 7.18 × 7.05 m');
-addHoverTarget(21.28, 19.4, 6.35, 7.05, 2.5, 'Carport 6.35 × 7.05 m');
-addHoverTarget(6.5, 1, 4, 3, 3, 'Sauna 4 × 3 m');
-addHoverTarget(3.5, 1, 3, 3, 2.5, 'Sauna shelter');
-addHoverTarget(25.28, 1, 7, 5, 2.5, 'Pergola + grill 7 × 5 m');
-addHoverTarget(20.58, 11.58, 4, 10.95, 0.4, 'East terrace 4 × 11 m');
-addHoverTarget(9.48, 7.18, 1, 19.25, 0.4, 'West terrace — sidewalk');
-addHoverTarget(34.81, 22.84, 4.33, 3.61, 0.3, '2× parking');
-addHoverTarget(35, 7, 3, 3, 0.5, 'Fire pit + seating');
-addHoverTarget(27.5, 13, 5.5, 4, 0.3, 'Pond');
-addHoverTarget(40, 22.2, 2.5, 2.5, 0.1, 'Rainwater tank (underground)');
-addHoverTarget(1, 10, 3.5, 9, 0.4, 'Raised beds (4×)');
-addHoverTarget(0, 21, 5.5, 11, 0.5, 'Orchard');
+const hoverRect = (id, h) => { const r = rectOf(id); addHoverTarget(r.x, r.y, r.w, r.d, h, EL[id].name); };
+addHoverTarget(HB[0], HB[1], HB[2] - HB[0], HB[3] - HB[1], 6, EL.house.name);
+hoverRect('garage', 3);
+hoverRect('carport', 2.5);
+hoverRect('sauna', 3);
+hoverRect('saunaShelter', 2.5);
+hoverRect('pergola', 2.5);
+hoverRect('eastTerrace', 0.4);
+addHoverTarget(wtSidewalk.x, wtSidewalk.y, wtSidewalk.w, wtSidewalk.d, 0.4, 'West terrace — sidewalk');
+hoverRect('parking', 0.3);
+{
+  const fp = circlesOf('firePit')[0];
+  addHoverTarget(fp.cx - 1, fp.cy - 1, 3, 3, 0.5, EL.firePit.name);
+  const pn = EL.pond.parts.find(p => p.kind === 'ellipse');
+  addHoverTarget(pn.cx - pn.rx, pn.cy - pn.ry, 2 * pn.rx, 2 * pn.ry, 0.3, EL.pond.name);
+  const beds = ['raisedBed1', 'raisedBed2', 'raisedBed3', 'raisedBed4'].map(rectOf);
+  const bx = Math.min(...beds.map(b => b.x)), by = Math.min(...beds.map(b => b.y));
+  const bw = Math.max(...beds.map(b => b.x + b.w)) - bx, bd = Math.max(...beds.map(b => b.y + b.d)) - by;
+  addHoverTarget(bx, by, bw, bd, 0.4, 'Raised beds (4×)');
+}
+hoverRect('rainTank', 0.1);
+hoverRect('orchard', 0.5);
 
 window.addEventListener('mousemove', e => {
   mouse.x = (e.clientX / innerWidth) * 2 - 1;
@@ -1500,7 +1494,6 @@ window.startTour = function() {
   controls.enabled = false;
   document.getElementById('toggleFP').checked = false;
   fpState.active = false;
-  console.log('[tour] started v5');
 };
 
 function tourUpdate() {

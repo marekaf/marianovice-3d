@@ -8,10 +8,9 @@
       <path d="M 180 0 L 0 0 0 180" fill="none" stroke="#a0a0a0" stroke-width="1"/>
     </pattern>
     <clipPath id="plotShape">
-      <polygon points="0,0 794.88,0 794.88,420.84 776.0,637.4 20.7,547.4"/>
+      <polygon points="0,0 794.88,0 794.88,420.84 775.98,637.38 20.7,547.38"/>
     </clipPath>
   </defs>
-
   <style>
     text { font-family: -apple-system, sans-serif; fill: #2a2a2a; }
     .title { font-size: 18px; font-weight: 700; text-anchor: middle; }
@@ -25,225 +24,179 @@
     .dim { font-size: 9px; fill: #b22; text-anchor: middle; font-style: italic; }
     .axis { font-size: 9px; fill: #555; text-anchor: middle; font-weight: 600; }
   </style>
-
   <rect x="0" y="0" width="1100" height="880" fill="white"/>
-
   <text x="550" y="28" class="title">Garden schematic plan</text>
-  <text x="550" y="46" class="subtitle">Pentagon · grid 2×2 m (columns 1-22, rows a-p) · scale 1:55</text>
-
+  <text x="550" y="46" class="subtitle">Pentagon plot · grid 2 × 2 m (columns 1–22, rows a–r)</text>
   <g transform="translate(80, 110)">
-    <!-- Grid (2m cells) clipped to plot -->
-    <g clip-path="url(#plotShape)">
-      <rect x="-50" y="-10" width="900" height="700" fill="url(#majorgrid)"/>
-    </g>
-
-    <polygon points="0,0 794.88,0 794.88,420.84 776.0,637.4 20.7,547.4"
-             fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
-
-    <!-- Sloupce 1-22 (top axis, každé 2m = 36 px) -->
-    <g font-family="-apple-system, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="600">
-      <text x="18" y="-6">1</text><text x="54" y="-6">2</text><text x="90" y="-6">3</text><text x="126" y="-6">4</text><text x="162" y="-6">5</text>
-      <text x="198" y="-6">6</text><text x="234" y="-6">7</text><text x="270" y="-6">8</text><text x="306" y="-6">9</text><text x="342" y="-6">10</text>
-      <text x="378" y="-6">11</text><text x="414" y="-6">12</text><text x="450" y="-6">13</text><text x="486" y="-6">14</text><text x="522" y="-6">15</text>
-      <text x="558" y="-6">16</text><text x="594" y="-6">17</text><text x="630" y="-6">18</text><text x="666" y="-6">19</text><text x="702" y="-6">20</text>
-      <text x="738" y="-6">21</text><text x="774" y="-6">22</text>
-    </g>
-
-    <!-- Řádky a-p (left axis, každé 2m = 36 px) -->
-    <g font-family="-apple-system, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="600">
-      <text x="-10" y="22">a</text><text x="-10" y="58">b</text><text x="-10" y="94">c</text><text x="-10" y="130">d</text><text x="-10" y="166">e</text>
-      <text x="-10" y="202">f</text><text x="-10" y="238">g</text><text x="-10" y="274">h</text><text x="-10" y="310">i</text><text x="-10" y="346">j</text>
-      <text x="-10" y="382">k</text><text x="-10" y="418">l</text><text x="-10" y="454">m</text><text x="-10" y="490">n</text><text x="-10" y="526">o</text>
-      <text x="-10" y="562">p</text>
-    </g>
-
-    <!-- Délky stran -->
-    <text x="397" y="-22" class="strana">↔ 44.16 m (north)</text>
-    <text x="813" y="200" class="strana" transform="rotate(90, 813, 200)">↔ 23.38 m</text>
-    <text x="813" y="525" class="strana" transform="rotate(85, 813, 525)">↔ 12.08 m</text>
-    <text x="400" y="617" class="strana">↔ 42.27 m (south)</text>
-    <text x="-32" y="280" class="strana" transform="rotate(-90, -32, 280)">↔ 30.44 m (W)</text>
-
-    <!-- Kóty vzdáleností domu/garáže od hranic (červeně) -->
+    <g clip-path="url(#plotShape)"><rect x="-50" y="-10" width="900" height="700" fill="url(#majorgrid)"/></g>
+    <polygon points="0,0 794.88,0 794.88,420.84 775.98,637.38 20.7,547.38" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
+    <g class="axis-labels" font-size="9" fill="#555" text-anchor="middle" font-weight="600"><text x="18" y="-6">1</text><text x="54" y="-6">2</text><text x="90" y="-6">3</text><text x="126" y="-6">4</text><text x="162" y="-6">5</text><text x="198" y="-6">6</text><text x="234" y="-6">7</text><text x="270" y="-6">8</text><text x="306" y="-6">9</text><text x="342" y="-6">10</text><text x="378" y="-6">11</text><text x="414" y="-6">12</text><text x="450" y="-6">13</text><text x="486" y="-6">14</text><text x="522" y="-6">15</text><text x="558" y="-6">16</text><text x="594" y="-6">17</text><text x="630" y="-6">18</text><text x="666" y="-6">19</text><text x="702" y="-6">20</text><text x="738" y="-6">21</text><text x="774" y="-6">22</text></g>
+    <g class="axis-labels" font-size="9" fill="#555" text-anchor="middle" font-weight="600"><text x="-10" y="22">a</text><text x="-10" y="58">b</text><text x="-10" y="94">c</text><text x="-10" y="130">d</text><text x="-10" y="166">e</text><text x="-10" y="202">f</text><text x="-10" y="238">g</text><text x="-10" y="274">h</text><text x="-10" y="310">i</text><text x="-10" y="346">j</text><text x="-10" y="382">k</text><text x="-10" y="418">l</text><text x="-10" y="454">m</text><text x="-10" y="490">n</text><text x="-10" y="526">o</text><text x="-10" y="562">p</text><text x="-10" y="598">q</text><text x="-10" y="634">r</text></g>
+    <text x="397.08" y="-21.96" class="strana">↔ 44.16 m (north)</text>
+    <text x="813.06" y="199.98" class="strana" transform="rotate(90, 813.06, 199.98)">↔ 23.38 m</text>
+    <text x="813.06" y="525.06" class="strana" transform="rotate(85, 813.06, 525.06)">↔ 12.08 m</text>
+    <text x="399.96" y="617.04" class="strana">↔ 42.27 m (south)</text>
+    <text x="-32.04" y="280.08" class="strana" transform="rotate(-90, -32.04, 280.08)">↔ 30.44 m (west)</text>
     <g stroke="#b22" stroke-width="0.6" fill="#b22">
-      <!-- 7.18 m od S (od dům NW nahoru k severnímu plotu) -->
-      <line x1="189" y1="0" x2="189" y2="129" stroke-dasharray="3,2"/>
+      <line x1="189" y1="0" x2="189" y2="129.06" stroke-dasharray="3,2"/>
       <line x1="186" y1="0" x2="192" y2="0" stroke-width="1"/>
-      <line x1="186" y1="129" x2="192" y2="129" stroke-width="1"/>
-      <text x="195" y="68" font-size="9" font-style="italic" font-family="-apple-system">7.18 m</text>
-
-      <!-- 10.48 m od Z (kolmo na západní plot, od dům JZ rohu) -->
-      <line x1="18" y1="482" x2="189" y2="476" stroke-dasharray="3,2"/>
-      <line x1="15" y1="475" x2="21" y2="489" stroke-width="1"/>
-      <line x1="186" y1="469" x2="192" y2="483" stroke-width="1"/>
-      <text x="103" y="471" font-size="9" font-style="italic" text-anchor="middle" font-family="-apple-system">10.48 m</text>
-
-      <!-- 5.05 m od J (kolmo na jižní plot, od dům SW rohu) -->
-      <line x1="189" y1="476" x2="178" y2="566" stroke-dasharray="3,2"/>
-      <line x1="186" y1="476" x2="192" y2="476" stroke-width="1"/>
-      <line x1="175" y1="566" x2="181" y2="566" stroke-width="1"/>
-      <text x="200" y="525" font-size="9" font-style="italic" font-family="-apple-system">5.05 m</text>
-
-      <!-- 9.35 m od V (od garáž NW vpravo k východnímu plotu) -->
-      <line x1="626" y1="349" x2="794" y2="349" stroke-dasharray="3,2"/>
-      <line x1="626" y1="346" x2="626" y2="352" stroke-width="1"/>
-      <line x1="794" y1="346" x2="794" y2="352" stroke-width="1"/>
-      <text x="710" y="345" font-size="9" font-style="italic" text-anchor="middle" font-family="-apple-system">9.35 m</text>
+      <line x1="186" y1="129.06" x2="192" y2="129.06" stroke-width="1"/>
+      <text x="194.94" y="68.04" font-size="9" font-style="italic" stroke="none" text-anchor="start">7.18 m</text>
+      <line x1="18" y1="482.04" x2="189" y2="475.92" stroke-dasharray="3,2"/>
+      <line x1="18.11" y1="485.04" x2="17.89" y2="479.04" stroke-width="1"/>
+      <line x1="189.11" y1="478.92" x2="188.89" y2="472.92" stroke-width="1"/>
+      <text x="102.96" y="471.06" font-size="9" font-style="italic" stroke="none" text-anchor="middle">10.48 m</text>
+      <line x1="189" y1="475.92" x2="178.02" y2="565.92" stroke-dasharray="3,2"/>
+      <line x1="186.02" y1="475.56" x2="191.98" y2="476.28" stroke-width="1"/>
+      <line x1="175.04" y1="565.56" x2="181" y2="566.28" stroke-width="1"/>
+      <text x="199.98" y="525.06" font-size="9" font-style="italic" stroke="none" text-anchor="start">5.05 m</text>
+      <line x1="626.04" y1="349.02" x2="793.98" y2="349.02" stroke-dasharray="3,2"/>
+      <line x1="626.04" y1="352.02" x2="626.04" y2="346.02" stroke-width="1"/>
+      <line x1="793.98" y1="352.02" x2="793.98" y2="346.02" stroke-width="1"/>
+      <text x="709.92" y="345.06" font-size="9" font-style="italic" stroke="none" text-anchor="middle">9.35 m</text>
     </g>
-
-    <!-- HOUSE (10,8 × 19.25 m, 2 notchy) — od buňky 6e do 13l -->
-    <path d="M 189 129
-             L 383 129
-             L 383 208
-             L 370 208
-             L 370 406
-             L 383 406
-             L 383 476
-             L 189 476
-             L 189 345
-             L 266 345
-             L 266 287
-             L 189 287
-             Z"
-          fill="#d4b896" opacity="0.95" stroke="#7a5e3e" stroke-width="2.5"/>
-    <text x="286" y="320" class="lbl" font-size="20" font-weight="700">HOUSE</text>
-    <text x="286" y="343" class="lbl">10,8 × 19.25 m</text>
-
-    <!-- TERASA Z (sidewalk 1 m kolem západní strany domu + atrium uvnitř notchu) -->
-    <!-- Sidewalk strip podél celé západní strany domu -->
-    <rect x="171" y="129" width="18" height="347" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
-    <!-- Atrium část (uvnitř západního notchu) -->
-    <rect x="189" y="287" width="77" height="58" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
-    <text x="227" y="312" class="lbl-sm">west terrace</text>
-    <text x="227" y="326" class="dim">atrium + 1 m sidewalk</text>
-
-    <!-- Terasa V (4 × 11 m, zasunutá do východního notchu — W část 0.7 m uvnitř notchu, zbytek 3.3 m východně) -->
-    <rect x="370" y="208" width="72" height="198" fill="#a87d4a" opacity="0.78" stroke="#5a3e25" stroke-width="1.2"/>
-    <text x="406" y="295" class="lbl-w">east terrace</text>
-    <text x="406" y="311" class="lbl-sm-w">(E.02)</text>
-    <text x="406" y="327" class="dim" fill="#fff">4 × 11 m</text>
-
-
-    <!-- Carport (shelter for car, 6,35 × 7.05 m) -->
-    <rect x="383" y="349" width="114" height="127" fill="#bdbdbd" opacity="0.5" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
-    <text x="440" y="408" class="lbl-sm">shelter</text>
-    <text x="440" y="422" class="lbl-sm">for car</text>
-    <text x="440" y="438" class="dim">6,35 × 7.05 m</text>
-
-    <!-- GARAGE (7,18 × 7.05 m, NW 9.35 m od V hranice) -->
-    <rect x="497" y="349" width="129" height="127" fill="#888" opacity="0.88" stroke="#3a3a3a" stroke-width="2"/>
-    <text x="561" y="408" class="lbl-w" font-size="14" font-weight="700">GARAGE</text>
-    <text x="561" y="426" class="dim" fill="#fff">~7,2 × 7.05 m</text>
-
-    <!-- Garážová vrata -->
-    <rect x="531" y="473" width="60" height="6" fill="#222"/>
-
-    <!-- Parkování (2 stání) východně garáže — spodní strana zarovnaná s garáží -->
-    <rect x="626" y="411" width="78" height="65" fill="none" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
-    <line x1="665" y1="411" x2="665" y2="476" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
-    <text x="665" y="445" class="lbl-sm" fill="#666">2× parkování</text>
-    <text x="665" y="460" class="dim">~4,3 × 3.6 m</text>
-
-    <!-- Příjezd 4.5 m (uvnitř pozemku, paralelní s jižním plotem) -->
-    <polygon points="383,476 614,476 789,502 782,583 383,535" fill="#cccccc" opacity="0.55"/>
-    <text x="555" y="510" class="lbl-sm">driveway</text>
-    <text x="555" y="525" class="dim">4.5 m × ~22 m</text>
-
-    <!-- GATE 4.5 m -->
-    <line x1="789" y1="502" x2="782" y2="583" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round"/>
-    <text x="800" y="540" class="lbl-sm" font-weight="700" text-anchor="start">GATE</text>
-    <text x="800" y="554" class="dim" text-anchor="start">~4.5 m</text>
-
-    <!-- Rain tank (E.09) — east of parking, 2.5 × 2.5 m, underground -->
-    <rect x="720" y="400" width="45" height="45" fill="#3a7ab8" opacity="0.78" stroke="#1f3a5f" stroke-width="1.5"/>
-    <text x="742" y="420" class="lbl-sm" fill="#fff" font-weight="700">rain tank</text>
-    <text x="742" y="433" class="dim" fill="#fff">2.5 × 2.5 m</text>
-
-    <!-- Pond (ellipse, x=30 m, z=15 m, 5.6 × 4 m) — east of house, between east terrace and pergola -->
-    <ellipse cx="540" cy="270" rx="50" ry="36" fill="#3a7ab8" opacity="0.65" stroke="#5a4a30" stroke-width="1.5"/>
-    <text x="540" y="268" class="lbl-sm" fill="#fff" font-weight="700">pond</text>
-    <text x="540" y="280" class="dim" fill="#fff">5.6 × 4 m</text>
-
-    <!-- Fire pit + seating (NE, x=36, z=8) -->
-    <circle cx="648" cy="144" r="14" fill="#5a4030" opacity="0.85" stroke="#3a2818" stroke-width="1"/>
-    <circle cx="648" cy="144" r="9" fill="#ff7733" opacity="0.7"/>
-    <text x="648" y="170" class="lbl-sm" fill="#5a4828">fire pit</text>
-
-    <!-- Trees along east fence (privacy from neighbor) -->
-    <circle cx="765" cy="144" r="9" fill="#4d7a4d"/>
-    <circle cx="765" cy="216" r="9" fill="#4d7a4d"/>
-    <circle cx="765" cy="288" r="9" fill="#4d7a4d"/>
-    <circle cx="765" cy="360" r="9" fill="#4d7a4d"/>
-    <circle cx="756" cy="594" r="9" fill="#4d7a4d"/>
-    <circle cx="756" cy="630" r="9" fill="#4d7a4d"/>
-
-    <!-- SAUNA + anteroom jako jeden 4×3 m blok (východní strana v ose dům Z) -->
-    <rect x="117" y="18" width="72" height="54" fill="#8b6f47" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>
-    <text x="153" y="42" class="lbl-w">SAUNA</text>
-    <text x="153" y="58" class="dim" fill="#fff">total 7 × 3 m</text>
-
-    <!-- Přístřešek ZÁPADNĚ od sauny (kryje Softub) -->
-    <rect x="63" y="18" width="54" height="54" fill="#cdc1ad" opacity="0.4" stroke="#7a5e3e" stroke-width="1" stroke-dasharray="4,3"/>
-    <text x="90" y="84" class="lbl-sm" fill="#5a4828">shelter</text>
-
-    <!-- Softub na ZÁPADNÍ straně sauny (pod přístřeškem) — ø 1.8 m -->
-    <ellipse cx="90" cy="45" rx="16" ry="16" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
-    <text x="90" y="49" class="lbl-sm" font-weight="bold" fill="#1f3a5f">Softub</text>
-
-    <!-- Chodníček od sauny — od jižní strany sauny (x=180, y=72) k terase Z (y=129), 1 m široký -->
-    <rect x="171" y="72" width="18" height="57" fill="#cdc1ad" opacity="0.7"/>
-
-    <!-- PERGOLA + grill 7×5 m -->
-    <rect x="455" y="18" width="126" height="90" fill="#c8a878" opacity="0.55" stroke="#7a5e3e" stroke-width="1.5" stroke-dasharray="6,3"/>
-    <text x="518" y="55" class="lbl">pergola + grill</text>
-    <text x="518" y="72" class="dim">7 × 5 m</text>
-    <text x="518" y="92" class="lbl-sm" fill="#5a4828">by north fence</text>
-
-    <!-- Raised beds — 4 pcs in 2 rows (každý 1,5 × 4 m) -->
-    <rect x="18" y="180" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
-    <text x="31" y="220" class="lbl-sm-w" transform="rotate(-90, 31, 220)">raised bed 1</text>
-    <rect x="18" y="270" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
-    <text x="31" y="310" class="lbl-sm-w" transform="rotate(-90, 31, 310)">raised bed 2</text>
-    <rect x="54" y="180" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
-    <text x="67" y="220" class="lbl-sm-w" transform="rotate(-90, 67, 220)">raised bed 3</text>
-    <rect x="54" y="270" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
-    <text x="67" y="310" class="lbl-sm-w" transform="rotate(-90, 67, 310)">raised bed 4</text>
-    <text x="92" y="270" class="dim" text-anchor="start">každý 1,5 × 4 m</text>
-
-    <!-- Ovocný sad (jihozápad) -->
-    <g clip-path="url(#plotShape)">
-      <rect x="0" y="380" width="100" height="200" fill="#7fa66f" opacity="0.4"/>
+    <g class="el" data-id="house"><title>House 10.8 × 19.25 m</title>
+      <polygon points="188.64,129.24 383.04,129.24 383.04,208.44 370.44,208.44 370.44,405.54 383.04,405.54 383.04,475.74 188.64,475.74 188.64,345.24 266.04,345.24 266.04,286.74 188.64,286.74" fill="#d4b896" opacity="0.95" stroke="#7a5e3e" stroke-width="2.5"/>
+      <text x="286.02" y="320.04" class="lbl" font-size="20" font-weight="700">HOUSE</text>
+      <text x="286.02" y="343.08" class="lbl">10.8 × 19.25 m</text>
     </g>
-    <text x="50" y="490" class="lbl" transform="rotate(-90, 50, 490)">orchard</text>
-    <text x="115" y="490" class="dim" text-anchor="start">~5,5 × 11 m</text>
-    <circle cx="20" cy="400" r="9" fill="#5a8a5a"/>
-    <circle cx="75" cy="430" r="9" fill="#5a8a5a"/>
-    <circle cx="20" cy="460" r="9" fill="#5a8a5a"/>
-    <circle cx="75" cy="490" r="9" fill="#5a8a5a"/>
-    <circle cx="20" cy="520" r="9" fill="#5a8a5a"/>
-    <circle cx="75" cy="555" r="9" fill="#5a8a5a"/>
+    <g class="el" data-id="westTerrace"><title>West terrace — atrium + 1 m sidewalk</title>
+      <rect x="170.64" y="129.24" width="18" height="346.5" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
+      <rect x="188.64" y="286.74" width="77.4" height="58.5" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
+      <text x="226.98" y="311.94" class="lbl-sm">west terrace</text>
+      <text x="226.98" y="325.98" class="dim">atrium + 1 m sidewalk</text>
+    </g>
+    <g class="el" data-id="eastTerrace"><title>East terrace 4 × 11 m</title>
+      <rect x="370.44" y="208.44" width="72" height="197.1" fill="#a87d4a" opacity="0.78" stroke="#5a3e25" stroke-width="1.2"/>
+      <text x="406.08" y="295.02" class="lbl-w">east terrace</text>
+      <text x="406.08" y="311.04" class="lbl-sm-w">(E.02)</text>
+      <text x="406.08" y="327.06" class="dim" fill="#fff">4 × 11 m</text>
+    </g>
+    <g class="el" data-id="saunaPath"><title>Path sauna → west terrace</title>
+      <rect x="171" y="72" width="18" height="57.06" fill="#cdc1ad" opacity="0.7"/>
+    </g>
+    <g class="el" data-id="carport"><title>Carport 6.35 × 7.05 m</title>
+      <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#bdbdbd" opacity="0.5" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
+      <text x="439.92" y="414" class="lbl-sm">carport</text>
+      <text x="439.92" y="437.94" class="dim">6.35 × 7.05 m</text>
+    </g>
+    <g class="el" data-id="garage"><title>Garage 7.18 × 7.05 m</title>
+      <rect x="497.34" y="349.2" width="129.24" height="126.9" fill="#888" opacity="0.88" stroke="#3a3a3a" stroke-width="2"/>
+      <rect x="532.26" y="473.04" width="59.4" height="5.94" fill="#222"/>
+      <text x="561.06" y="408.06" class="lbl-w" font-size="14" font-weight="700">GARAGE</text>
+      <text x="561.06" y="426.06" class="dim" fill="#fff">7.18 × 7.05 m</text>
+    </g>
+    <g class="el" data-id="parking"><title>2× parking ~4.3 × 3.6 m</title>
+      <rect x="626.58" y="411.12" width="77.94" height="64.98" fill="none" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
+      <line x1="665.46" y1="411.12" x2="665.46" y2="476.1" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="664.92" y="444.96" class="lbl-sm" fill="#666">2× parking</text>
+      <text x="664.92" y="460.08" class="dim">~4.3 × 3.6 m</text>
+    </g>
+    <g class="el" data-id="driveway"><title>Driveway 4.5 m × ~22 m</title>
+      <polygon points="383.04,475.92 613.98,475.92 788.94,502.02 781.92,583.02 383.04,534.96" fill="#cccccc" opacity="0.55"/>
+      <text x="554.94" y="509.94" class="lbl-sm">driveway</text>
+      <text x="554.94" y="525.06" class="dim">4.5 m × ~22 m</text>
+    </g>
+    <g class="el" data-id="gate"><title>Gate ~4.5 m</title>
+      <line x1="788.94" y1="502.02" x2="781.92" y2="583.02" fill="none" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round"/>
+      <text x="799.92" y="540" class="lbl-sm" font-weight="700" text-anchor="start">GATE</text>
+      <text x="799.92" y="554.04" class="dim" text-anchor="start">~4.5 m</text>
+    </g>
+    <g class="el" data-id="rainTank"><title>Rainwater tank 2.5 × 2.5 m (underground)</title>
+      <rect x="720" y="399.6" width="45" height="45" fill="#3a7ab8" opacity="0.78" stroke="#1f3a5f" stroke-width="1.5"/>
+      <text x="741.96" y="419.94" class="lbl-sm" fill="#fff" font-weight="700">rain tank</text>
+      <text x="741.96" y="433.08" class="dim" fill="#fff">2.5 × 2.5 m</text>
+    </g>
+    <g class="el" data-id="pond"><title>Pond 5.6 × 4 m</title>
+      <ellipse cx="540" cy="270" rx="50.4" ry="36" fill="#3a7ab8" opacity="0.65" stroke="#5a4a30" stroke-width="1.5"/>
+      <text x="540" y="268.02" class="lbl-sm" fill="#fff" font-weight="700">pond</text>
+      <text x="540" y="280.08" class="dim" fill="#fff">5.6 × 4 m</text>
+    </g>
+    <g class="el" data-id="firePit"><title>Fire pit + seating</title>
+      <circle cx="648" cy="144" r="14.04" fill="#5a4030" opacity="0.85" stroke="#3a2818" stroke-width="1"/>
+      <circle cx="648" cy="144" r="9" fill="#ff7733" opacity="0.7"/>
+      <text x="648" y="169.92" class="lbl-sm" fill="#5a4828">fire pit</text>
+    </g>
+    <g class="el" data-id="northTrees"><title>Trees along north fence</title>
+      <circle cx="234" cy="21.6" r="9" fill="#4d7a4d"/>
+      <circle cx="306" cy="27" r="9" fill="#4d7a4d"/>
+      <circle cx="378" cy="18" r="9" fill="#4d7a4d"/>
+      <circle cx="612" cy="23.4" r="9" fill="#4d7a4d"/>
+      <circle cx="684" cy="28.8" r="9" fill="#4d7a4d"/>
+      <circle cx="738" cy="21.6" r="9" fill="#4d7a4d"/>
+      <circle cx="774" cy="25.2" r="9" fill="#4d7a4d"/>
+    </g>
+    <g class="el" data-id="eastTrees"><title>Trees along east fence (privacy)</title>
+      <circle cx="765" cy="144" r="9" fill="#4d7a4d"/>
+      <circle cx="765" cy="216" r="9" fill="#4d7a4d"/>
+      <circle cx="765" cy="288" r="9" fill="#4d7a4d"/>
+      <circle cx="765" cy="360" r="9" fill="#4d7a4d"/>
+      <circle cx="756" cy="594" r="9" fill="#4d7a4d"/>
+      <circle cx="756" cy="630" r="9" fill="#4d7a4d"/>
+    </g>
+    <g class="el" data-id="sauna"><title>Sauna 4 × 3 m</title>
+      <rect x="117" y="18" width="72" height="54" fill="#8b6f47" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>
+      <text x="153" y="41.94" class="lbl-w">SAUNA</text>
+      <text x="153" y="57.96" class="dim" fill="#fff">4 × 3 m</text>
+    </g>
+    <g class="el" data-id="saunaShelter"><title>Sauna shelter 3 × 3 m (covers hot tub)</title>
+      <rect x="63" y="18" width="54" height="54" fill="#cdc1ad" opacity="0.4" stroke="#7a5e3e" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="90" y="84.06" class="lbl-sm" fill="#5a4828">shelter</text>
+    </g>
+    <g class="el" data-id="softub"><title>Softub hot tub ø 1.8 m</title>
+      <circle cx="90" cy="45" r="16.2" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
+      <text x="90" y="48.96" class="lbl-sm" fill="#1f3a5f" font-weight="700">Softub</text>
+    </g>
+    <g class="el" data-id="pergola"><title>Pergola + grill 7 × 5 m</title>
+      <rect x="455.04" y="18" width="126" height="90" fill="#c8a878" opacity="0.55" stroke="#7a5e3e" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="518.04" y="55.08" class="lbl">pergola + grill</text>
+      <text x="518.04" y="72" class="dim">7 × 5 m</text>
+      <text x="518.04" y="91.98" class="lbl-sm" fill="#5a4828">by north fence</text>
+    </g>
+    <g class="el" data-id="raisedBed1"><title>Raised bed 1 (1.5 × 4 m)</title>
+      <rect x="18" y="180" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
+      <text x="30.96" y="219.96" class="lbl-sm-w" transform="rotate(-90, 30.96, 219.96)">raised bed 1</text>
+    </g>
+    <g class="el" data-id="raisedBed2"><title>Raised bed 2 (1.5 × 4 m)</title>
+      <rect x="18" y="270" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
+      <text x="30.96" y="309.96" class="lbl-sm-w" transform="rotate(-90, 30.96, 309.96)">raised bed 2</text>
+    </g>
+    <g class="el" data-id="raisedBed3"><title>Raised bed 3 (1.5 × 4 m)</title>
+      <rect x="54" y="180" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
+      <text x="66.96" y="219.96" class="lbl-sm-w" transform="rotate(-90, 66.96, 219.96)">raised bed 3</text>
+    </g>
+    <g class="el" data-id="raisedBed4"><title>Raised bed 4 (1.5 × 4 m)</title>
+      <rect x="54" y="270" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
+      <text x="66.96" y="309.96" class="lbl-sm-w" transform="rotate(-90, 66.96, 309.96)">raised bed 4</text>
+      <text x="91.98" y="270" class="dim" text-anchor="start">each 1.5 × 4 m</text>
+    </g>
+    <g class="el" data-id="orchard"><title>Orchard ~5.5 × 11 m</title>
+      <g clip-path="url(#plotShape)"><rect x="0" y="379.98" width="100.08" height="199.98" fill="#7fa66f" opacity="0.4"/></g>
+      <circle cx="21.6" cy="396" r="9" fill="#5a8a5a"/>
+      <circle cx="72" cy="423" r="9" fill="#5a8a5a"/>
+      <circle cx="21.6" cy="468" r="9" fill="#5a8a5a"/>
+      <circle cx="72" cy="495" r="9" fill="#5a8a5a"/>
+      <circle cx="21.6" cy="540" r="9" fill="#5a8a5a"/>
+      <circle cx="72" cy="558" r="9" fill="#5a8a5a"/>
+      <text x="50.04" y="489.96" class="lbl" transform="rotate(-90, 50.04, 489.96)">orchard</text>
+      <text x="115.02" y="489.96" class="dim" text-anchor="start">~5.5 × 11 m</text>
+    </g>
   </g>
-
-  <!-- Compass -->
   <g transform="translate(1020, 110)">
     <circle cx="0" cy="0" r="30" fill="white" stroke="#555" stroke-width="1.5"/>
     <path d="M 0 -24 L 6 4 L 0 -7 L -6 4 Z" fill="#2a2a2a"/>
     <path d="M 0 7 L 6 -4 L 0 24 L -6 -4 Z" fill="#999"/>
-    <text x="0" y="-36" class="compass">S</text>
-    <text x="0" y="44" class="compass">J</text>
-    <text x="-40" y="5" class="compass">Z</text>
-    <text x="40" y="5" class="compass">V</text>
+    <text x="0" y="-36" class="compass">N</text>
+    <text x="0" y="44" class="compass">S</text>
+    <text x="-40" y="5" class="compass">W</text>
+    <text x="40" y="5" class="compass">E</text>
   </g>
-
-  <!-- Scale bar -->
   <g transform="translate(80, 815)">
     <rect x="0" y="0" width="90" height="10" fill="#2a2a2a"/>
     <rect x="90" y="0" width="90" height="10" fill="white" stroke="#2a2a2a" stroke-width="1"/>
     <text x="0" y="28" class="lbl-sm" text-anchor="start">0</text>
     <text x="90" y="28" class="lbl-sm">5 m</text>
     <text x="180" y="28" class="lbl-sm">10 m</text>
-    <text x="240" y="28" class="lbl-sm" text-anchor="start" fill="#888">1:55</text>
   </g>
-
-  <text x="80" y="858" class="lbl-sm" text-anchor="start" fill="#888">Buňky lze adresovat jako "{sloupec}{řádek}", např. "12g" = sloupec 12, řádek g. Sloupce 2 m široké, rows 2 m vysoké.</text>
+  <text x="80" y="858" class="lbl-sm" text-anchor="start" fill="#888">Cells are addressed as "{column}{row}", e.g. "12g" = column 12, row g. Each cell is 2 × 2 m.</text>
 </svg>
