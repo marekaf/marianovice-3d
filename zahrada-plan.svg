@@ -26,7 +26,7 @@
   </style>
   <rect x="0" y="0" width="1100" height="880" fill="white"/>
   <text x="550" y="28" class="title">Garden schematic plan</text>
-  <text x="550" y="46" class="subtitle">Pentagon plot · grid 2 × 2 m (columns 1–22, rows a–r)</text>
+  <text x="550" y="46" class="subtitle">Pentagon plot 1429.25 m² · grid 2 × 2 m (columns 1–22, rows a–r)</text>
   <g transform="translate(80, 110)">
     <g clip-path="url(#plotShape)"><rect x="-50" y="-10" width="900" height="700" fill="url(#majorgrid)"/></g>
     <polygon points="0,0 794.88,0 794.88,420.84 775.98,637.38 20.7,547.38" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
@@ -57,8 +57,8 @@
     </g>
     <g class="el" data-id="house"><title>House 10.8 × 19.25 m</title>
       <polygon points="188.64,129.24 383.04,129.24 383.04,208.44 370.44,208.44 370.44,405.54 383.04,405.54 383.04,475.74 188.64,475.74 188.64,345.24 266.04,345.24 266.04,286.74 188.64,286.74" fill="#d4b896" opacity="0.95" stroke="#7a5e3e" stroke-width="2.5"/>
-      <text x="286.02" y="320.04" class="lbl" font-size="20" font-weight="700">HOUSE</text>
-      <text x="286.02" y="343.08" class="lbl">10.8 × 19.25 m</text>
+      <text x="324.54" y="320.04" class="lbl" font-size="20" font-weight="700">HOUSE</text>
+      <text x="324.54" y="343.08" class="lbl">10.8 × 19.25 m</text>
     </g>
     <g class="el" data-id="westTerrace"><title>West terrace — atrium + 1 m sidewalk</title>
       <rect x="170.64" y="129.24" width="18" height="346.5" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
@@ -70,7 +70,7 @@
       <rect x="370.44" y="208.44" width="72" height="197.1" fill="#a87d4a" opacity="0.78" stroke="#5a3e25" stroke-width="1.2"/>
       <text x="406.08" y="295.02" class="lbl-w">east terrace</text>
       <text x="406.08" y="311.04" class="lbl-sm-w">(E.02)</text>
-      <text x="406.08" y="327.06" class="dim" fill="#fff">4 × 11 m</text>
+      <text x="406.08" y="327.06" class="dim" fill="#fff">4 × 10.95 m</text>
     </g>
     <g class="el" data-id="saunaPath"><title>Path sauna → west terrace</title>
       <rect x="171" y="72" width="18" height="57.06" fill="#cdc1ad" opacity="0.7"/>
@@ -90,7 +90,7 @@
       <rect x="626.58" y="411.12" width="77.94" height="64.98" fill="none" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
       <line x1="665.46" y1="411.12" x2="665.46" y2="476.1" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
       <text x="664.92" y="444.96" class="lbl-sm" fill="#666">2× parking</text>
-      <text x="664.92" y="460.08" class="dim">~4.3 × 3.6 m</text>
+      <text x="664.92" y="460.08" class="dim">4.33 × 3.61 m</text>
     </g>
     <g class="el" data-id="driveway"><title>Driveway 4.5 m × ~22 m</title>
       <polygon points="383.04,475.92 613.98,475.92 788.94,502.02 781.92,583.02 383.04,534.96" fill="#cccccc" opacity="0.55"/>
@@ -142,6 +142,7 @@
     <g class="el" data-id="saunaShelter"><title>Sauna shelter 3 × 3 m (covers hot tub)</title>
       <rect x="63" y="18" width="54" height="54" fill="#cdc1ad" opacity="0.4" stroke="#7a5e3e" stroke-width="1" stroke-dasharray="4,3"/>
       <text x="90" y="84.06" class="lbl-sm" fill="#5a4828">shelter</text>
+      <text x="90" y="97.2" class="dim">3 × 3 m</text>
     </g>
     <g class="el" data-id="softub"><title>Softub hot tub ø 1.8 m</title>
       <circle cx="90" cy="45" r="16.2" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
@@ -191,6 +192,34 @@
     <text x="-40" y="5" class="compass">W</text>
     <text x="40" y="5" class="compass">E</text>
   </g>
+  <g transform="translate(902, 190)" font-size="8.5" fill="#2a2a2a">
+    <text x="0" y="0" font-weight="700" font-size="10">ELEMENT SCHEDULE</text>
+    <text x="0" y="15" fill="#555" font-weight="600">element</text><text x="88" y="15" fill="#555" font-weight="600">size (m)</text><text x="170" y="15" fill="#555" font-weight="600" text-anchor="end">m²</text><text x="193" y="15" fill="#555" font-weight="600" text-anchor="end">cell</text>
+    <line x1="0" y1="19" x2="193" y2="19" stroke="#bbb" stroke-width="0.8"/>
+    <text x="0" y="30">House</text><text x="88" y="30">10.8 × 19.25</text><text x="170" y="30" text-anchor="end">186.26</text><text x="193" y="30" text-anchor="end">6d</text>
+    <text x="0" y="42">West terrace</text><text x="88" y="42">1 × 19.25</text><text x="170" y="42" text-anchor="end">19.25</text><text x="193" y="42" text-anchor="end">5d</text>
+    <text x="0" y="54">East terrace</text><text x="88" y="54">4 × 10.95</text><text x="170" y="54" text-anchor="end">43.8</text><text x="193" y="54" text-anchor="end">11f</text>
+    <text x="0" y="66">Sauna path</text><text x="88" y="66">1 × 3.17</text><text x="170" y="66" text-anchor="end">3.17</text><text x="193" y="66" text-anchor="end">5c</text>
+    <text x="0" y="78">Carport</text><text x="88" y="78">6.35 × 7.05</text><text x="170" y="78" text-anchor="end">44.77</text><text x="193" y="78" text-anchor="end">11j</text>
+    <text x="0" y="90">Garage</text><text x="88" y="90">7.18 × 7.05</text><text x="170" y="90" text-anchor="end">50.62</text><text x="193" y="90" text-anchor="end">14j</text>
+    <text x="0" y="102">2× parking</text><text x="88" y="102">4.33 × 3.61</text><text x="170" y="102" text-anchor="end">15.63</text><text x="193" y="102" text-anchor="end">18l</text>
+    <text x="0" y="114">Driveway</text><text x="88" y="114">22.55 × 5.95</text><text x="170" y="114" text-anchor="end">96.66</text><text x="193" y="114" text-anchor="end">11n</text>
+    <text x="0" y="126">Gate</text><text x="88" y="126">4.52 long</text><text x="170" y="126" text-anchor="end">—</text><text x="193" y="126" text-anchor="end">22n</text>
+    <text x="0" y="138">Rainwater tank</text><text x="88" y="138">2.5 × 2.5</text><text x="170" y="138" text-anchor="end">6.25</text><text x="193" y="138" text-anchor="end">21l</text>
+    <text x="0" y="150">Pond</text><text x="88" y="150">5.6 × 4</text><text x="170" y="150" text-anchor="end">17.59</text><text x="193" y="150" text-anchor="end">14g</text>
+    <text x="0" y="162">Fire pit + seating</text><text x="88" y="162">ø 1.56</text><text x="170" y="162" text-anchor="end">1.91</text><text x="193" y="162" text-anchor="end">18d</text>
+    <text x="0" y="174">North trees</text><text x="88" y="174">7 trees</text><text x="170" y="174" text-anchor="end">—</text><text x="193" y="174" text-anchor="end">7a</text>
+    <text x="0" y="186">East trees</text><text x="88" y="186">6 trees</text><text x="170" y="186" text-anchor="end">—</text><text x="193" y="186" text-anchor="end">21d</text>
+    <text x="0" y="198">Sauna</text><text x="88" y="198">4 × 3</text><text x="170" y="198" text-anchor="end">12</text><text x="193" y="198" text-anchor="end">4a</text>
+    <text x="0" y="210">Sauna shelter</text><text x="88" y="210">3 × 3</text><text x="170" y="210" text-anchor="end">9</text><text x="193" y="210" text-anchor="end">2a</text>
+    <text x="0" y="222">Softub hot tub</text><text x="88" y="222">ø 1.8</text><text x="170" y="222" text-anchor="end">2.54</text><text x="193" y="222" text-anchor="end">3a</text>
+    <text x="0" y="234">Pergola + grill</text><text x="88" y="234">7 × 5</text><text x="170" y="234" text-anchor="end">35</text><text x="193" y="234" text-anchor="end">13a</text>
+    <text x="0" y="246">Raised bed 1</text><text x="88" y="246">1.5 × 4</text><text x="170" y="246" text-anchor="end">6</text><text x="193" y="246" text-anchor="end">1f</text>
+    <text x="0" y="258">Raised bed 2</text><text x="88" y="258">1.5 × 4</text><text x="170" y="258" text-anchor="end">6</text><text x="193" y="258" text-anchor="end">1h</text>
+    <text x="0" y="270">Raised bed 3</text><text x="88" y="270">1.5 × 4</text><text x="170" y="270" text-anchor="end">6</text><text x="193" y="270" text-anchor="end">2f</text>
+    <text x="0" y="282">Raised bed 4</text><text x="88" y="282">1.5 × 4</text><text x="170" y="282" text-anchor="end">6</text><text x="193" y="282" text-anchor="end">2h</text>
+    <text x="0" y="294">Orchard</text><text x="88" y="294">5.56 × 11.11</text><text x="170" y="294" text-anchor="end">61.77</text><text x="193" y="294" text-anchor="end">1k</text>
+  </g>
   <g transform="translate(80, 815)">
     <rect x="0" y="0" width="90" height="10" fill="#2a2a2a"/>
     <rect x="90" y="0" width="90" height="10" fill="white" stroke="#2a2a2a" stroke-width="1"/>
@@ -198,5 +227,5 @@
     <text x="90" y="28" class="lbl-sm">5 m</text>
     <text x="180" y="28" class="lbl-sm">10 m</text>
   </g>
-  <text x="80" y="858" class="lbl-sm" text-anchor="start" fill="#888">Cells are addressed as "{column}{row}", e.g. "12g" = column 12, row g. Each cell is 2 × 2 m.</text>
+  <text x="80" y="858" class="lbl-sm" text-anchor="start" fill="#888">Cells are addressed as "{column}{row}", e.g. "12g" = column 12, row g. Each cell is 2 × 2 m. Generated from layout.js (node generate-svg.js).</text>
 </svg>
