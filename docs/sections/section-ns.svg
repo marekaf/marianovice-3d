@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 440" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
+  <defs>
+    <pattern id="earth" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="7" height="7" fill="#f0e8d6"/>
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#d9c9a6" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <style>
+    text { font-family: -apple-system, sans-serif; fill: #2a2a2a; }
+    .title { font-size: 18px; font-weight: 700; text-anchor: middle; }
+    .subtitle { font-size: 11px; fill: #666; text-anchor: middle; }
+    .lbl { font-size: 12px; text-anchor: middle; }
+    .lbl-w { font-size: 12px; text-anchor: middle; fill: white; }
+    .lbl-sm { font-size: 10px; text-anchor: middle; }
+    .lbl-sm-w { font-size: 10px; text-anchor: middle; fill: white; }
+    .strana { font-size: 10px; fill: #557; font-weight: 600; text-anchor: middle; }
+    .dim { font-size: 9px; fill: #b22; text-anchor: middle; font-style: italic; }
+  </style>
+  <rect x="0" y="0" width="1100" height="440" fill="white"/>
+  <text x="550" y="28" class="title">Section B–B (N–S, x=30.0 m)</text>
+  <text x="550" y="46" class="subtitle">výškové měřítko 2× (heights exaggerated 2×) · horizontal 18 px/m as in the plan</text>
+  <text x="251" y="84" class="strana" text-anchor="start">SEVER (N)</text>
+  <text x="848.26" y="84" class="strana" text-anchor="end">JIH (S)</text>
+  <polygon points="245,328.57 254,327.78 263,326.99 272,326.2 281,325.4 290,324.61 299,323.82 308,323.03 317,322.24 326,321.44 335,320.65 344,319.86 353,319.07 362,318.28 371,317.48 380,316.69 389,315.9 398,315.11 407,314.32 416,313.52 425,312.73 434,311.94 443,311.15 452,310.36 461,309.56 470,308.77 479,307.98 488,314.08 497,319.12 506,322.23 515,322.81 524,320.65 533,315.96 542,309.32 551,301.64 560,300.85 569,300.06 578,299.27 587,298.48 596,297.68 605,296.89 614,296.1 623,295.31 632,294.52 641,293.72 650,292.93 659,292.14 668,291.35 677,290.56 686,289.76 695,288.97 704,288.18 713,287.39 722,286.6 731,285.8 740,285.01 749,284.22 758,283.43 767,282.64 776,281.84 785,281.05 794,280.26 803,279.47 812,278.68 821,277.88 830,277.09 839,276.3 848,275.51 854.26,274.96 854.26,384 245,384" fill="url(#earth)" stroke="none"/>
+  <path d="M 263 326.99 Q 275 264.73 287 322 Q 299 278.82 311 319.88 Q 323 265.91 335 320.65 L 335 320.65 L 330.5 321.05 L 326 321.44 L 321.5 321.84 L 317 322.24 L 312.5 322.63 L 308 323.03 L 303.5 323.42 L 299 323.82 L 294.5 324.22 L 290 324.61 L 285.5 325.01 L 281 325.4 L 276.5 325.8 L 272 326.2 L 267.5 326.59 L 263 326.99 Z" fill="#6a8e5a" opacity="0.35" stroke="#4a6e3a" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="265.7" y1="326.75" x2="265.7" y2="233.03" stroke="#7a5e3e" stroke-width="3.5"/>
+  <line x1="350.3" y1="319.31" x2="350.3" y2="233.03" stroke="#7a5e3e" stroke-width="3.5"/>
+  <rect x="263" y="233.03" width="90" height="3.6" fill="#c8a878" stroke="#7a5e3e" stroke-width="1"/>
+  <line x1="270.2" y1="233.03" x2="270.2" y2="227.99" stroke="#7a5e3e" stroke-width="2.5"/>
+  <line x1="281" y1="233.03" x2="281" y2="227.99" stroke="#7a5e3e" stroke-width="2.5"/>
+  <line x1="291.8" y1="233.03" x2="291.8" y2="227.99" stroke="#7a5e3e" stroke-width="2.5"/>
+  <line x1="302.6" y1="233.03" x2="302.6" y2="227.99" stroke="#7a5e3e" stroke-width="2.5"/>
+  <line x1="313.4" y1="233.03" x2="313.4" y2="227.99" stroke="#7a5e3e" stroke-width="2.5"/>
+  <line x1="324.2" y1="233.03" x2="324.2" y2="227.99" stroke="#7a5e3e" stroke-width="2.5"/>
+  <line x1="335" y1="233.03" x2="335" y2="227.99" stroke="#7a5e3e" stroke-width="2.5"/>
+  <line x1="345.8" y1="233.03" x2="345.8" y2="227.99" stroke="#7a5e3e" stroke-width="2.5"/>
+  <path d="M 374.6 317.17 Q 390.8 254.54 407 311.44 Q 423.2 267.89 439.4 311.46 L 439.4 311.46 L 434.9 311.86 L 430.4 312.26 L 425.9 312.65 L 421.4 313.05 L 416.9 313.44 L 412.4 313.84 L 407.9 314.24 L 403.4 314.63 L 398.9 315.03 L 394.4 315.42 L 389.9 315.82 L 385.4 316.22 L 380.9 316.61 L 376.4 317.01 L 374.6 317.17 Z" fill="#8fa05a" opacity="0.75" stroke="#6a7a3a" stroke-width="1"/>
+  <path d="M 461.4 309.53 Q 465.8 247.94 470.2 305.87 Q 474.6 263.37 479 307.98 L 479 307.98 L 474.5 308.38 L 470 308.77 L 465.5 309.17 L 461.4 309.53 Z" fill="#8fa05a" opacity="0.75" stroke="#6a7a3a" stroke-width="1"/>
+  <path d="M 551 301.64 Q 559 239.74 567 297.36 Q 575 254.53 583 298.83 L 583 298.83 L 578.5 299.22 L 574 299.62 L 569.5 300.02 L 565 300.41 L 560.5 300.81 L 556 301.2 L 551.5 301.6 L 551 301.64 Z" fill="#8fa05a" opacity="0.75" stroke="#6a7a3a" stroke-width="1"/>
+  <path d="M 565.4 300.38 Q 572.15 238.58 578.9 296.31 Q 585.65 253.59 592.4 298 L 592.4 298 L 587.9 298.4 L 583.4 298.79 L 578.9 299.19 L 574.4 299.58 L 569.9 299.98 L 565.4 300.38 Z" fill="#8fa05a" opacity="0.75" stroke="#6a7a3a" stroke-width="1"/>
+  <rect x="594.2" y="183.24" width="126.9" height="122.54" fill="#888" opacity="0.92" stroke="#3a3a3a" stroke-width="2"/>
+  <rect x="594.2" y="183.24" width="126.9" height="4.32" fill="#3a3a3a"/>
+  <rect x="717.86" y="221.18" width="3.24" height="73.8" fill="#222"/>
+  <line x1="594.2" y1="168.98" x2="721.1" y2="168.98" stroke="#3a3a3a" stroke-width="1.2" stroke-dasharray="6,4"/>
+  <text x="657.65" y="255.38" class="lbl-w" font-weight="700">GARAGE</text>
+  <text x="589.2" y="215.18" class="dim" text-anchor="end">wall 2.3 m</text>
+  <text x="657.65" y="162.98" class="dim">ridge +3.5 m — za řezem (x=27.63)</text>
+  <polygon points="720.92,283.81 725.42,283.42 729.92,283.02 734.42,282.62 738.92,282.23 743.42,281.83 747.92,281.44 752.42,281.04 756.92,280.64 761.42,280.25 765.92,279.85 770.42,279.46 774.92,279.06 779.42,278.66 783.92,278.27 788.42,277.87 792.92,277.48 797.42,277.08 797.42,280.68 792.92,281.08 788.42,281.47 783.92,281.87 779.42,282.26 774.92,282.66 770.42,283.06 765.92,283.45 761.42,283.85 756.92,284.24 752.42,284.64 747.92,285.04 743.42,285.43 738.92,285.83 734.42,286.22 729.92,286.62 725.42,287.02 720.92,287.41" fill="#cccccc" opacity="0.9" stroke="#888" stroke-width="0.6"/>
+  <path d="M 802.69 279.5 Q 813.75 217.32 824.81 274.67 Q 835.86 231.58 846.92 275.6 L 846.92 275.6 L 842.42 276 L 837.92 276.4 L 833.42 276.79 L 828.92 277.19 L 824.42 277.58 L 819.92 277.98 L 815.42 278.38 L 810.92 278.77 L 806.42 279.17 L 802.69 279.5 Z" fill="#8fa05a" opacity="0.75" stroke="#6a7a3a" stroke-width="1"/>
+  <polyline points="245,328.57 254,327.78 263,326.99 272,326.2 281,325.4 290,324.61 299,323.82 308,323.03 317,322.24 326,321.44 335,320.65 344,319.86 353,319.07 362,318.28 371,317.48 380,316.69 389,315.9 398,315.11 407,314.32 416,313.52 425,312.73 434,311.94 443,311.15 452,310.36 461,309.56 470,308.77 479,307.98 488,314.08 497,319.12 506,322.23 515,322.81 524,320.65 533,315.96 542,309.32 551,301.64 560,300.85 569,300.06 578,299.27 587,298.48 596,297.68 605,296.89 614,296.1 623,295.31 632,294.52 641,293.72 650,292.93 659,292.14 668,291.35 677,290.56 686,289.76 695,288.97 704,288.18 713,287.39 722,286.6 731,285.8 740,285.01 749,284.22 758,283.43 767,282.64 776,281.84 785,281.05 794,280.26 803,279.47 812,278.68 821,277.88 830,277.09 839,276.3 848,275.51 854.26,274.96" fill="none" stroke="#4a3a28" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="482.6,310.21 482.6,310.48 484.4,311.71 486.2,312.91 488,314.08 489.8,315.2 491.6,316.28 493.4,317.29 495.2,318.24 497,319.12 498.8,319.92 500.6,320.64 502.4,321.27 504.2,321.8 506,322.23 507.8,322.56 509.6,322.79 511.4,322.91 513.2,322.91 515,322.81 516.8,322.6 518.6,322.27 520.4,321.84 522.2,321.3 524,320.65 525.8,319.9 527.6,319.05 529.4,318.11 531.2,317.07 533,315.96 534.8,314.76 536.6,313.49 538.4,312.16 540.2,310.77 540.2,310.21" fill="#3a7ab8" opacity="0.65"/>
+  <line x1="482.6" y1="310.21" x2="540.2" y2="310.21" stroke="#1f3a5f" stroke-width="1.2"/>
+  <line x1="245.9" y1="328.49" x2="245.9" y2="270.89" stroke="#6b4f2f" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="245.9" cy="312.29" r="2.2" fill="#8a6a42"/>
+  <circle cx="245.9" cy="294.29" r="2.2" fill="#8a6a42"/>
+  <circle cx="245.9" cy="276.29" r="2.2" fill="#8a6a42"/>
+  <line x1="853.36" y1="275.04" x2="853.36" y2="217.44" stroke="#6b4f2f" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="853.36" cy="258.84" r="2.2" fill="#8a6a42"/>
+  <circle cx="853.36" cy="240.84" r="2.2" fill="#8a6a42"/>
+  <circle cx="853.36" cy="222.84" r="2.2" fill="#8a6a42"/>
+  <g stroke="#555" stroke-width="2" stroke-linecap="round" fill="none">
+    <circle cx="790.4" cy="224.38" r="5" fill="#555" stroke="none"/>
+    <line x1="790.4" y1="229.38" x2="790.4" y2="258.58"/>
+    <line x1="790.4" y1="258.58" x2="785.4" y2="280.58"/>
+    <line x1="790.4" y1="258.58" x2="795.4" y2="280.58"/>
+    <line x1="790.4" y1="235.38" x2="784.4" y2="251.38"/>
+    <line x1="790.4" y1="235.38" x2="796.4" y2="251.38"/>
+  </g>
+  <text x="799.4" y="233.38" class="dim" text-anchor="start">1.7 m</text>
+  <line x1="246.8" y1="267.81" x2="246.8" y2="256.81" stroke="#999" stroke-width="0.8"/>
+  <text x="246.8" y="253.81" class="lbl-sm" text-anchor="start">fence</text>
+  <text x="251" y="282.97" class="dim" text-anchor="start">1.6 m</text>
+  <line x1="308" y1="224.99" x2="308" y2="209.99" stroke="#999" stroke-width="0.8"/>
+  <text x="308" y="206.99" class="lbl-sm">pergola + grill — climbers Z5 za řezem</text>
+  <text x="359" y="278.03" class="dim" text-anchor="start">2.5 m</text>
+  <line x1="407" y1="277.12" x2="407" y2="264.12" stroke="#999" stroke-width="0.8"/>
+  <text x="407" y="261.12" class="lbl-sm">prairie island Z3</text>
+  <line x1="471.8" y1="271.41" x2="471.8" y2="236.41" stroke="#999" stroke-width="0.8"/>
+  <text x="471.8" y="233.41" class="lbl-sm">pond fringe Z2</text>
+  <text x="515" y="305.21" class="lbl-sm" fill="#1f3a5f">pond</text>
+  <text x="515" y="376" class="dim">depth 0.5 m · water −0.15 m</text>
+  <line x1="578.9" y1="261.99" x2="578.9" y2="240.99" stroke="#999" stroke-width="0.8"/>
+  <text x="578.9" y="237.99" class="lbl-sm">shade bed Z10</text>
+  <line x1="752.6" y1="277.3" x2="752.6" y2="264.3" stroke="#999" stroke-width="0.8"/>
+  <text x="752.6" y="261.3" class="lbl-sm">driveway</text>
+  <line x1="831.8" y1="239.73" x2="831.8" y2="212.73" stroke="#999" stroke-width="0.8"/>
+  <text x="831.8" y="209.73" class="lbl-sm">arrival strip Z6</text>
+  <text x="858.26" y="229.36" class="dim" text-anchor="start">1.6 m</text>
+  <rect x="201" y="324" width="8" height="36" fill="#2a2a2a" stroke="#2a2a2a" stroke-width="0.8"/>
+  <rect x="201" y="288" width="8" height="36" fill="white" stroke="#2a2a2a" stroke-width="0.8"/>
+  <rect x="201" y="252" width="8" height="36" fill="#2a2a2a" stroke="#2a2a2a" stroke-width="0.8"/>
+  <rect x="201" y="216" width="8" height="36" fill="white" stroke="#2a2a2a" stroke-width="0.8"/>
+  <rect x="201" y="180" width="8" height="36" fill="#2a2a2a" stroke="#2a2a2a" stroke-width="0.8"/>
+  <rect x="201" y="144" width="8" height="36" fill="white" stroke="#2a2a2a" stroke-width="0.8"/>
+  <rect x="201" y="108" width="8" height="36" fill="#2a2a2a" stroke="#2a2a2a" stroke-width="0.8"/>
+  <rect x="201" y="72" width="8" height="36" fill="white" stroke="#2a2a2a" stroke-width="0.8"/>
+  <text x="196" y="363" class="lbl-sm" text-anchor="end">0</text>
+  <text x="196" y="291" class="lbl-sm" text-anchor="end">2</text>
+  <text x="196" y="219" class="lbl-sm" text-anchor="end">4</text>
+  <text x="196" y="147" class="lbl-sm" text-anchor="end">6</text>
+  <text x="196" y="75" class="lbl-sm" text-anchor="end">8</text>
+  <text x="205" y="64" class="lbl-sm">m (2×)</text>
+  <rect x="245" y="402" width="90" height="8" fill="#2a2a2a"/>
+  <rect x="335" y="402" width="90" height="8" fill="white" stroke="#2a2a2a" stroke-width="1"/>
+  <text x="245" y="422" class="lbl-sm" text-anchor="start">0</text>
+  <text x="335" y="422" class="lbl-sm">5 m</text>
+  <text x="425" y="422" class="lbl-sm">10 m</text>
+  <text x="245" y="436" class="lbl-sm" text-anchor="start" fill="#888">Generated from layout.js (node generate-sections.js).</text>
+</svg>
