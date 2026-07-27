@@ -302,7 +302,7 @@ const CUT_BLEND = 1.8;
 const cutRects = [
   { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
   { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
-  { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965 }, // level apron in front of the garage door
+  { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965, blend: 3.5 }, // level apron in front of the garage door
 ];
 const cutSmoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
 const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
@@ -310,9 +310,10 @@ function gradedHeight(x, z) {
   const base = basePlaneHeight(x, z);
   let h = base;
   for (const r of cutRects) {
+    const blend = r.blend ?? CUT_BLEND;
     const d = cutRectDist(r, x, z);
-    if (d >= CUT_BLEND) continue;
-    const t = cutSmoothstep(d / CUT_BLEND);
+    if (d >= blend) continue;
+    const t = cutSmoothstep(d / blend);
     h = Math.min(h, r.level + (base - r.level) * t);
   }
   return h;
@@ -1033,21 +1034,56 @@ addTerrainPlatform(rectVerts(rectOf('saunaPath')), 0.1, 0xcdc1ad, { map: woodTex
 
 // ───────────────────────── DRIVEWAY ─────────────────────────
 const drivewayPts = EL.driveway.parts.find(p => p.kind === 'polygon').points;
-const drivewayShape = new THREE.Shape();
-drivewayShape.moveTo(drivewayPts[0][0], -drivewayPts[0][1]);
-for (let i = 1; i < drivewayPts.length; i++) drivewayShape.lineTo(drivewayPts[i][0], -drivewayPts[i][1]);
-drivewayShape.closePath();
-const drivewayGeom = new THREE.ShapeGeometry(drivewayShape);
-drivewayGeom.rotateX(-Math.PI/2);
-// Vertices follow terrain
-const drivewayPos = drivewayGeom.attributes.position;
-for (let i = 0; i < drivewayPos.count; i++) {
-  const x = drivewayPos.getX(i);
-  const z = drivewayPos.getZ(i);
-  drivewayPos.setY(i, terrainHeight(x, z) + 0.05);
-}
-drivewayPos.needsUpdate = true;
-drivewayGeom.computeVertexNormals();
+// Dense 0.5 m grid clipped to the driveway polygon — must follow the graded apron relief
+const drivewayGeom = (() => {
+  const inDw = (x, z) => {
+    let inside = false;
+    for (let i = 0, j = drivewayPts.length - 1; i < drivewayPts.length; j = i++) {
+      const [xi, zi] = drivewayPts[i], [xj, zj] = drivewayPts[j];
+      if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+  const xs = drivewayPts.map(p => p[0]), zs = drivewayPts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+  const step = 0.5, nx = Math.ceil((x1 - x0) / step), nz = Math.ceil((z1 - z0) / step);
+  const verts = [], idx = [], vid = new Map();
+  const clampPt = (x, z) => {
+    if (inDw(x, z)) return [x, z];
+    let best = null, bd = Infinity;
+    for (let i = 0, j = drivewayPts.length - 1; i < drivewayPts.length; j = i++) {
+      const [ax, az] = drivewayPts[j], [bx2, bz2] = drivewayPts[i];
+      const dx = bx2 - ax, dz = bz2 - az, L2 = dx * dx + dz * dz;
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+      const px = ax + t * dx, pz = az + t * dz, d = (px - x) ** 2 + (pz - z) ** 2;
+      if (d < bd) { bd = d; best = [px, pz]; }
+    }
+    return best;
+  };
+  const vAt = (i, j) => {
+    const k = i * (nz + 1) + j;
+    if (vid.has(k)) return vid.get(k);
+    const [x, z] = clampPt(x0 + i * step, z0 + j * step);
+    const id = verts.length / 3;
+    verts.push(x, terrainHeight(x, z) + 0.05, z);
+    vid.set(k, id);
+    return id;
+  };
+  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+    const cx = x0 + (i + 0.5) * step, cz = z0 + (j + 0.5) * step;
+    if (!inDw(cx, cz)) continue;
+    const a = vAt(i, j), b = vAt(i + 1, j), c = vAt(i + 1, j + 1), d = vAt(i, j + 1);
+    idx.push(a, c, b, a, d, c);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const pos = g.attributes.position, uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i); uv[i * 2 + 1] = pos.getZ(i); }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return g;
+})();
 const driveway = new THREE.Mesh(
   drivewayGeom,
   new THREE.MeshStandardMaterial({ color: 0xf2f2ee, map: asphaltTex, roughness: 0.92 })
