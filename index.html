@@ -1429,7 +1429,7 @@ const waterNormal = (() => {
   atriumWin.position.set(HA[2] - 0.03, ty + 1.2 + 0.3, 17.55);
   scene.add(atriumWin);
   // South windows O1 (900×1250, bathroom + utility) — sill 0.9 m → top 2.15 m
-  for (const x of [13.5, 16.5]) {
+  for (const x of [16.05, 19.3]) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.25, 0.06), winMat);
     m.position.set(x, ty + 0.9 + 0.625, HB[3] + 0.03);
     scene.add(m);
