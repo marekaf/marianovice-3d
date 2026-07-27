@@ -861,6 +861,23 @@ roofGroup.add(sWingRoofMesh);
   }
 }
 
+// Standing-seam stripes on both wing shed roofs (same style as the main roof)
+{
+  const stripeMatW = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
+  const wallTopY = houseTerrainY + wallH;
+  const xMin = HB[0] - 0.45, xMax = HC[0];
+  const len = Math.hypot(xMax - xMin, 0.9);
+  const ang = Math.atan2(0.9, xMax - xMin);
+  for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
+    for (let zs = z0 + 0.2; zs < z1; zs += 0.4) {
+      const st = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), stripeMatW);
+      st.position.set((xMin + xMax) / 2, wallTopY + 0.45 + 0.03, zs);
+      st.rotation.z = ang;
+      roofGroup.add(st);
+    }
+  }
+}
+
 // Atrium — no roof (open)
 
 // ───────────────────────── GARAGE (pult roof) + CARPORT (shallow plate) ─────────────────────────
@@ -1096,33 +1113,35 @@ const drivewayGeom = (() => {
   const xs = drivewayPts.map(p => p[0]), zs = drivewayPts.map(p => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const step = 0.5, nx = Math.ceil((x1 - x0) / step), nz = Math.ceil((z1 - z0) / step);
-  const verts = [], idx = [], vid = new Map();
-  const clampPt = (x, z) => {
-    if (inDw(x, z)) return [x, z];
-    let best = null, bd = Infinity;
+  const verts = [], idx = [];
+  const clipCell = (poly) => {
+    let out = poly;
     for (let i = 0, j = drivewayPts.length - 1; i < drivewayPts.length; j = i++) {
       const [ax, az] = drivewayPts[j], [bx2, bz2] = drivewayPts[i];
-      const dx = bx2 - ax, dz = bz2 - az, L2 = dx * dx + dz * dz;
-      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
-      const px = ax + t * dx, pz = az + t * dz, d = (px - x) ** 2 + (pz - z) ** 2;
-      if (d < bd) { bd = d; best = [px, pz]; }
+      const inp = out; out = [];
+      const side = (px, pz) => (bx2 - ax) * (pz - az) - (bz2 - az) * (px - ax);
+      for (let k = 0; k < inp.length; k++) {
+        const [cx1, cz1] = inp[k], [cx2, cz2] = inp[(k + 1) % inp.length];
+        const s1 = side(cx1, cz1), s2 = side(cx2, cz2);
+        if (s1 <= 0) out.push([cx1, cz1]);
+        if ((s1 < 0) !== (s2 < 0)) {
+          const t = s1 / (s1 - s2);
+          out.push([cx1 + (cx2 - cx1) * t, cz1 + (cz2 - cz1) * t]);
+        }
+      }
+      if (!out.length) break;
     }
-    return best;
+    return out;
   };
-  const vAt = (i, j) => {
-    const k = i * (nz + 1) + j;
-    if (vid.has(k)) return vid.get(k);
-    const [x, z] = clampPt(x0 + i * step, z0 + j * step);
-    const id = verts.length / 3;
-    verts.push(x, terrainHeight(x, z) + 0.05, z);
-    vid.set(k, id);
-    return id;
-  };
+  const addV = (x, z) => { const id = verts.length / 3; verts.push(x, terrainHeight(x, z) + 0.05, z); return id; };
   for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
-    const cx = x0 + (i + 0.5) * step, cz = z0 + (j + 0.5) * step;
-    if (!inDw(cx, cz)) continue;
-    const a = vAt(i, j), b = vAt(i + 1, j), c = vAt(i + 1, j + 1), d = vAt(i, j + 1);
-    idx.push(a, c, b, a, d, c);
+    const cell = clipCell([
+      [x0 + i * step, z0 + j * step], [x0 + (i + 1) * step, z0 + j * step],
+      [x0 + (i + 1) * step, z0 + (j + 1) * step], [x0 + i * step, z0 + (j + 1) * step],
+    ]);
+    if (cell.length < 3) continue;
+    const vids = cell.map(([x, z]) => addV(x, z));
+    for (let k = 1; k < vids.length - 1; k++) idx.push(vids[0], vids[k + 1], vids[k]);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
