@@ -107,6 +107,10 @@
       <text x="741.96" y="419.94" class="lbl-sm" fill="#fff" font-weight="700">rain tank</text>
       <text x="741.96" y="433.08" class="dim" fill="#fff">2.5 × 2.5 m</text>
     </g>
+    <g class="el" data-id="pondFringe"><title>Pond fringe — Léto u vody (Z2)</title>
+      <ellipse cx="549" cy="277.2" rx="79.2" ry="61.2" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="601.2" y="232.2" class="lbl-sm" fill="#3a5a28">pond fringe Z2</text>
+    </g>
     <g class="el" data-id="pond"><title>Pond 5.6 × 4 m</title>
       <ellipse cx="540" cy="270" rx="50.4" ry="36" fill="#3a7ab8" opacity="0.65" stroke="#5a4a30" stroke-width="1.5"/>
       <text x="540" y="268.02" class="lbl-sm" fill="#fff" font-weight="700">pond</text>
@@ -171,6 +175,10 @@
       <text x="66.96" y="309.96" class="lbl-sm-w" transform="rotate(-90, 66.96, 309.96)">raised bed 4</text>
       <text x="91.98" y="270" class="dim" text-anchor="start">each 1.5 × 4 m</text>
     </g>
+    <g class="el" data-id="orchardMeadow"><title>Orchard meadow understory (Z12)</title>
+      <g clip-path="url(#plotShape)"><rect x="3.6" y="383.4" width="93.6" height="190.8" fill="#b5c98a" opacity="0.35" stroke="#8aa85a" stroke-width="1" stroke-dasharray="5,3"/></g>
+      <text x="86.4" y="442.8" class="lbl-sm" fill="#3a5a28" transform="rotate(-90, 86.4, 442.8)">meadow Z12</text>
+    </g>
     <g class="el" data-id="orchard"><title>Orchard ~5.5 × 11 m</title>
       <g clip-path="url(#plotShape)"><rect x="0" y="379.98" width="100.08" height="199.98" fill="#7fa66f" opacity="0.4"/></g>
       <circle cx="21.6" cy="396" r="9" fill="#5a8a5a"/>
@@ -181,6 +189,53 @@
       <circle cx="72" cy="558" r="9" fill="#5a8a5a"/>
       <text x="50.04" y="489.96" class="lbl" transform="rotate(-90, 50.04, 489.96)">orchard</text>
       <text x="115.02" y="489.96" class="dim" text-anchor="start">~5.5 × 11 m</text>
+    </g>
+    <g class="el" data-id="bedTerrace"><title>Terrace bed — Citrónový sorbet (Z1)</title>
+      <rect x="442.8" y="208.8" width="43.2" height="140.4" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="466.2" y="279" class="lbl-sm" fill="#3a5a28" transform="rotate(-90, 466.2, 279)">terrace bed Z1</text>
+    </g>
+    <g class="el" data-id="prairieIsland"><title>Prairie island — Oudolf mix (Z3)</title>
+      <rect x="513" y="129.6" width="81" height="64.8" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="553.5" y="164.7" class="lbl-sm" fill="#3a5a28">prairie island Z3</text>
+    </g>
+    <g class="el" data-id="saunaBed"><title>Sauna surround — shrubs + aromatics (Z4)</title>
+      <rect x="10.8" y="14.4" width="46.8" height="57.6" fill="#6a8e5a" opacity="0.4" stroke="#4a6e3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <rect x="36" y="75.6" width="108" height="28.8" fill="#6a8e5a" opacity="0.4" stroke="#4a6e3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="34.2" y="45" class="lbl-sm" fill="#3a5a28" transform="rotate(-90, 34.2, 45)">sauna bed Z4</text>
+    </g>
+    <g class="el" data-id="pergolaBeds"><title>Pergola climbers + underplanting (Z5)</title>
+      <rect x="417.6" y="18" width="36" height="72" fill="#6a8e5a" opacity="0.4" stroke="#4a6e3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <rect x="583.2" y="18" width="36" height="72" fill="#6a8e5a" opacity="0.4" stroke="#4a6e3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="435.6" y="102.6" class="lbl-sm" fill="#3a5a28">climbers Z5</text>
+    </g>
+    <g class="el" data-id="arrivalStrip"><title>Arrival strip — Citrónový sorbet (Z6)</title>
+      <polygon points="383.4,539.1 777.6,585.9 774.9,630 383.4,583.2" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="540" y="574.2" class="lbl-sm" fill="#3a5a28">arrival strip Z6</text>
+    </g>
+    <g class="el" data-id="eastUnderstory"><title>East privacy understory — Růžové mámení (Z7)</title>
+      <rect x="741.6" y="81" width="50.4" height="297" fill="#6a8e5a" opacity="0.4" stroke="#4a6e3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="754.2" y="226.8" class="lbl-sm" fill="#3a5a28" transform="rotate(-90, 754.2, 226.8)">east understory Z7</text>
+    </g>
+    <g class="el" data-id="atriumPots"><title>Atrium planters — Amelanchier + shade pots (Z8)</title>
+      <circle cx="203.4" cy="295.2" r="6.3" fill="#6a8e5a" opacity="0.8"/>
+      <circle cx="244.8" cy="297" r="10.8" fill="#6a8e5a" opacity="0.8"/>
+      <circle cx="250.2" cy="333" r="6.3" fill="#6a8e5a" opacity="0.8"/>
+    </g>
+    <g class="el" data-id="northFoundation"><title>North foundation bed — Kvetoucí stín (Z9a)</title>
+      <rect x="192.6" y="100.8" width="190.8" height="27" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="288" y="117.9" class="lbl-sm" fill="#3a5a28">north bed Z9a</text>
+    </g>
+    <g class="el" data-id="southFoundation"><title>South foundation bed — peonies, roses, lilac (Z9b)</title>
+      <rect x="189" y="478.8" width="194.4" height="32.4" fill="#6a8e5a" opacity="0.4" stroke="#4a6e3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="288" y="499.5" class="lbl-sm" fill="#3a5a28">peony bed Z9b</text>
+    </g>
+    <g class="el" data-id="garageFaceBed"><title>Garage north-face bed — Růžové mámení (Z10)</title>
+      <rect x="444.6" y="320.4" width="180" height="27" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="493.2" y="338.4" class="lbl-sm" fill="#3a5a28">shade bed Z10</text>
+    </g>
+    <g class="el" data-id="rainGarden"><title>NE rain garden — Léto u vody swale (Z11)</title>
+      <rect x="687.6" y="39.6" width="72" height="68.4" fill="#7aa88a" opacity="0.45" stroke="#4a7a6a" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="723.6" y="78.3" class="lbl-sm" fill="#3a5a28">rain garden Z11</text>
     </g>
   </g>
   <g transform="translate(1020, 110)">
@@ -206,19 +261,32 @@
     <text x="0" y="114">Driveway</text><text x="88" y="114">22.55 × 5.95</text><text x="170" y="114" text-anchor="end">96.66</text><text x="193" y="114" text-anchor="end">11n</text>
     <text x="0" y="126">Gate</text><text x="88" y="126">4.52 long</text><text x="170" y="126" text-anchor="end">—</text><text x="193" y="126" text-anchor="end">22n</text>
     <text x="0" y="138">Rainwater tank</text><text x="88" y="138">2.5 × 2.5</text><text x="170" y="138" text-anchor="end">6.25</text><text x="193" y="138" text-anchor="end">21l</text>
-    <text x="0" y="150">Pond</text><text x="88" y="150">5.6 × 4</text><text x="170" y="150" text-anchor="end">17.59</text><text x="193" y="150" text-anchor="end">14g</text>
-    <text x="0" y="162">Fire pit + seating</text><text x="88" y="162">ø 1.56</text><text x="170" y="162" text-anchor="end">1.91</text><text x="193" y="162" text-anchor="end">18d</text>
-    <text x="0" y="174">North trees</text><text x="88" y="174">7 trees</text><text x="170" y="174" text-anchor="end">—</text><text x="193" y="174" text-anchor="end">7a</text>
-    <text x="0" y="186">East trees</text><text x="88" y="186">6 trees</text><text x="170" y="186" text-anchor="end">—</text><text x="193" y="186" text-anchor="end">21d</text>
-    <text x="0" y="198">Sauna</text><text x="88" y="198">4 × 3</text><text x="170" y="198" text-anchor="end">12</text><text x="193" y="198" text-anchor="end">4a</text>
-    <text x="0" y="210">Sauna shelter</text><text x="88" y="210">3 × 3</text><text x="170" y="210" text-anchor="end">9</text><text x="193" y="210" text-anchor="end">2a</text>
-    <text x="0" y="222">Softub hot tub</text><text x="88" y="222">ø 1.8</text><text x="170" y="222" text-anchor="end">2.54</text><text x="193" y="222" text-anchor="end">3a</text>
-    <text x="0" y="234">Pergola + grill</text><text x="88" y="234">7 × 5</text><text x="170" y="234" text-anchor="end">35</text><text x="193" y="234" text-anchor="end">13a</text>
-    <text x="0" y="246">Raised bed 1</text><text x="88" y="246">1.5 × 4</text><text x="170" y="246" text-anchor="end">6</text><text x="193" y="246" text-anchor="end">1f</text>
-    <text x="0" y="258">Raised bed 2</text><text x="88" y="258">1.5 × 4</text><text x="170" y="258" text-anchor="end">6</text><text x="193" y="258" text-anchor="end">1h</text>
-    <text x="0" y="270">Raised bed 3</text><text x="88" y="270">1.5 × 4</text><text x="170" y="270" text-anchor="end">6</text><text x="193" y="270" text-anchor="end">2f</text>
-    <text x="0" y="282">Raised bed 4</text><text x="88" y="282">1.5 × 4</text><text x="170" y="282" text-anchor="end">6</text><text x="193" y="282" text-anchor="end">2h</text>
-    <text x="0" y="294">Orchard</text><text x="88" y="294">5.56 × 11.11</text><text x="170" y="294" text-anchor="end">61.77</text><text x="193" y="294" text-anchor="end">1k</text>
+    <text x="0" y="150">Pond fringe</text><text x="88" y="150">8.8 × 6.8</text><text x="170" y="150" text-anchor="end">29.41</text><text x="193" y="150" text-anchor="end">14g</text>
+    <text x="0" y="162">Pond</text><text x="88" y="162">5.6 × 4</text><text x="170" y="162" text-anchor="end">17.59</text><text x="193" y="162" text-anchor="end">14g</text>
+    <text x="0" y="174">Fire pit + seating</text><text x="88" y="174">ø 1.56</text><text x="170" y="174" text-anchor="end">1.91</text><text x="193" y="174" text-anchor="end">18d</text>
+    <text x="0" y="186">North trees</text><text x="88" y="186">7 pcs</text><text x="170" y="186" text-anchor="end">—</text><text x="193" y="186" text-anchor="end">7a</text>
+    <text x="0" y="198">East trees</text><text x="88" y="198">6 pcs</text><text x="170" y="198" text-anchor="end">—</text><text x="193" y="198" text-anchor="end">21d</text>
+    <text x="0" y="210">Sauna</text><text x="88" y="210">4 × 3</text><text x="170" y="210" text-anchor="end">12</text><text x="193" y="210" text-anchor="end">4a</text>
+    <text x="0" y="222">Sauna shelter</text><text x="88" y="222">3 × 3</text><text x="170" y="222" text-anchor="end">9</text><text x="193" y="222" text-anchor="end">2a</text>
+    <text x="0" y="234">Softub hot tub</text><text x="88" y="234">ø 1.8</text><text x="170" y="234" text-anchor="end">2.54</text><text x="193" y="234" text-anchor="end">3a</text>
+    <text x="0" y="246">Pergola + grill</text><text x="88" y="246">7 × 5</text><text x="170" y="246" text-anchor="end">35</text><text x="193" y="246" text-anchor="end">13a</text>
+    <text x="0" y="258">Raised bed 1</text><text x="88" y="258">1.5 × 4</text><text x="170" y="258" text-anchor="end">6</text><text x="193" y="258" text-anchor="end">1f</text>
+    <text x="0" y="270">Raised bed 2</text><text x="88" y="270">1.5 × 4</text><text x="170" y="270" text-anchor="end">6</text><text x="193" y="270" text-anchor="end">1h</text>
+    <text x="0" y="282">Raised bed 3</text><text x="88" y="282">1.5 × 4</text><text x="170" y="282" text-anchor="end">6</text><text x="193" y="282" text-anchor="end">2f</text>
+    <text x="0" y="294">Raised bed 4</text><text x="88" y="294">1.5 × 4</text><text x="170" y="294" text-anchor="end">6</text><text x="193" y="294" text-anchor="end">2h</text>
+    <text x="0" y="306">Orchard meadow</text><text x="88" y="306">5.2 × 10.6</text><text x="170" y="306" text-anchor="end">55.12</text><text x="193" y="306" text-anchor="end">1k</text>
+    <text x="0" y="318">Orchard</text><text x="88" y="318">5.56 × 11.11</text><text x="170" y="318" text-anchor="end">61.77</text><text x="193" y="318" text-anchor="end">1k</text>
+    <text x="0" y="330">Terrace bed</text><text x="88" y="330">2.4 × 7.8</text><text x="170" y="330" text-anchor="end">18.72</text><text x="193" y="330" text-anchor="end">13f</text>
+    <text x="0" y="342">Prairie island</text><text x="88" y="342">4.5 × 3.6</text><text x="170" y="342" text-anchor="end">16.2</text><text x="193" y="342" text-anchor="end">15d</text>
+    <text x="0" y="354">Sauna bed</text><text x="88" y="354">2.6 × 3.2</text><text x="170" y="354" text-anchor="end">8.32</text><text x="193" y="354" text-anchor="end">1a</text>
+    <text x="0" y="366">Pergola beds</text><text x="88" y="366">2 × 4</text><text x="170" y="366" text-anchor="end">8</text><text x="193" y="366" text-anchor="end">12a</text>
+    <text x="0" y="378">Arrival strip</text><text x="88" y="378">21.9 × 5.05</text><text x="170" y="378" text-anchor="end">53.67</text><text x="193" y="378" text-anchor="end">11o</text>
+    <text x="0" y="390">East understory</text><text x="88" y="390">2.8 × 16.5</text><text x="170" y="390" text-anchor="end">46.2</text><text x="193" y="390" text-anchor="end">21c</text>
+    <text x="0" y="402">Atrium pots</text><text x="88" y="402">3 pcs</text><text x="170" y="402" text-anchor="end">—</text><text x="193" y="402" text-anchor="end">6h</text>
+    <text x="0" y="414">North bed</text><text x="88" y="414">10.6 × 1.5</text><text x="170" y="414" text-anchor="end">15.9</text><text x="193" y="414" text-anchor="end">6c</text>
+    <text x="0" y="426">Peony bed</text><text x="88" y="426">10.8 × 1.8</text><text x="170" y="426" text-anchor="end">19.44</text><text x="193" y="426" text-anchor="end">6n</text>
+    <text x="0" y="438">Garage bed</text><text x="88" y="438">10 × 1.5</text><text x="170" y="438" text-anchor="end">15</text><text x="193" y="438" text-anchor="end">13i</text>
+    <text x="0" y="450">Rain garden</text><text x="88" y="450">4 × 3.8</text><text x="170" y="450" text-anchor="end">15.2</text><text x="193" y="450" text-anchor="end">20b</text>
   </g>
   <g transform="translate(80, 815)">
     <rect x="0" y="0" width="90" height="10" fill="#2a2a2a"/>

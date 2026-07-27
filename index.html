@@ -1358,6 +1358,85 @@ bushPositions.forEach(([x, z, s, c]) => addBush(x, z, s, c));
 addConifer(11.5, 1.4, 5);   // open between sauna (x<10.5) and pergola (x>25.28)
 addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
 
+// ───────────────────────── PLANTING ZONES (Flera review) — vegetation scattered per meta.plant ─────────────────────────
+{
+  const inPoly = (pts, x, z) => {
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, zi] = pts[i], [xj, zj] = pts[j];
+      if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+  for (const el of GARDEN.elements.filter(e => e.meta && e.meta.plant)) {
+    const rects = el.parts.filter(p => p.kind === 'rect');
+    const poly = el.parts.find(p => p.kind === 'polygon');
+    const ell = el.parts.find(p => p.kind === 'ellipse');
+    const zoneCircles = el.parts.filter(p => p.kind === 'circle');
+    const excl = el.meta.exclude ? EL[el.meta.exclude].parts.find(p => p.kind === 'ellipse') : null;
+    if (zoneCircles.length && !rects.length && !poly && !ell) {
+      zoneCircles.forEach(c => addBush(c.cx, c.cy, Math.max(0.35, c.r), 0x5f8452));
+      continue;
+    }
+    let area = 0, sample;
+    if (rects.length) {
+      area = rects.reduce((s, r) => s + r.w * r.d, 0);
+      sample = () => {
+        let t = Math.random() * area, r = rects[rects.length - 1];
+        for (const q of rects) { if (t < q.w * q.d) { r = q; break; } t -= q.w * q.d; }
+        return [r.x + Math.random() * r.w, r.y + Math.random() * r.d];
+      };
+    } else if (poly) {
+      const xs = poly.points.map(p => p[0]), zs = poly.points.map(p => p[1]);
+      const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+      for (let i = 0; i < poly.points.length; i++) {
+        const [ax, az] = poly.points[i], [bx, bz] = poly.points[(i + 1) % poly.points.length];
+        area += ax * bz - bx * az;
+      }
+      area = Math.abs(area) / 2;
+      sample = () => {
+        for (let k = 0; k < 30; k++) {
+          const x = x0 + Math.random() * (x1 - x0), z = z0 + Math.random() * (z1 - z0);
+          if (inPoly(poly.points, x, z)) return [x, z];
+        }
+        return null;
+      };
+    } else if (ell) {
+      area = Math.PI * ell.rx * ell.ry - (excl ? Math.PI * excl.rx * excl.ry : 0);
+      sample = () => {
+        for (let k = 0; k < 30; k++) {
+          const a = Math.random() * 2 * Math.PI, rr = Math.sqrt(Math.random());
+          const x = ell.cx + rr * ell.rx * Math.cos(a), z = ell.cy + rr * ell.ry * Math.sin(a);
+          if (excl && ((x - excl.cx) / (excl.rx + 0.3)) ** 2 + ((z - excl.cy) / (excl.ry + 0.3)) ** 2 < 1) continue;
+          return [x, z];
+        }
+        return null;
+      };
+    } else continue;
+    const kind = el.meta.plant;
+    const nPer = kind === 'shrubs' ? 0 : Math.round(area * (kind === 'meadow' ? 1.6 : 1.1));
+    const nShr = kind === 'perennials' || kind === 'meadow' ? 0 : Math.round(area / (kind === 'shrubs' ? 2.5 : 5));
+    for (let i = 0; i < nPer; i++) {
+      const pt = sample();
+      if (!pt) continue;
+      const r = (kind === 'meadow' ? 0.1 : 0.2) + Math.random() * (kind === 'meadow' ? 0.15 : 0.3);
+      const baseY = terrainHeight(pt[0], pt[1]);
+      const c = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 8, 6),
+        new THREE.MeshStandardMaterial({ color: perennialColors[Math.floor(Math.random() * perennialColors.length)], roughness: 0.85 })
+      );
+      c.position.set(pt[0], baseY + r * 0.7, pt[1]);
+      c.castShadow = true;
+      treesGroup.add(c);
+    }
+    for (let i = 0; i < nShr; i++) {
+      const pt = sample();
+      if (!pt) continue;
+      addBush(pt[0], pt[1], 0.45 + Math.random() * 0.35, 0x5f8452);
+    }
+  }
+}
+
 // ───────────────────────── SMOKE FROM FIREPIT (animated spheres) ─────────────────────────
 const smokeParticles = [];
 {

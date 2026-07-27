@@ -121,6 +121,16 @@ const GARDEN = {
       ]
     },
     {
+      id: "pondFringe",
+      name: "Pond fringe — Léto u vody (Z2)",
+      short: "Pond fringe",
+      meta: { plant: "perennials", exclude: "pond" },
+      parts: [
+        { kind: "ellipse", cx: 30.5, cy: 15.4, rx: 4.4, ry: 3.4, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 33.4, y: 12.9, text: "pond fringe Z2" }
+      ]
+    },
+    {
       id: "pond",
       name: "Pond 5.6 × 4 m",
       parts: [
@@ -235,6 +245,16 @@ const GARDEN = {
       ]
     },
     {
+      id: "orchardMeadow",
+      name: "Orchard meadow understory (Z12)",
+      short: "Orchard meadow",
+      meta: { plant: "meadow" },
+      parts: [
+        { kind: "rect", x: 0.2, y: 21.3, w: 5.2, d: 10.6, clipToPlot: true, fill: "#b5c98a", opacity: 0.35, stroke: "#8aa85a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 4.8, y: 24.6, text: "meadow Z12", rotate: -90 }
+      ]
+    },
+    {
       id: "orchard",
       name: "Orchard ~5.5 × 11 m",
       parts: [
@@ -247,6 +267,119 @@ const GARDEN = {
         { kind: "circle", cx: 4, cy: 31, r: 0.5, fill: "#5a8a5a" },
         { kind: "text", x: 2.78, y: 27.22, text: "orchard", cls: "lbl", rotate: -90 },
         { kind: "text", x: 6.39, y: 27.22, text: "~5.5 × 11 m", cls: "dim", anchor: "start" }
+      ]
+    },
+    {
+      id: "bedTerrace",
+      name: "Terrace bed — Citrónový sorbet (Z1)",
+      short: "Terrace bed",
+      meta: { plant: "perennials" },
+      parts: [
+        { kind: "rect", x: 24.6, y: 11.6, w: 2.4, d: 7.8, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 25.9, y: 15.5, text: "terrace bed Z1", rotate: -90 }
+      ]
+    },
+    {
+      id: "prairieIsland",
+      name: "Prairie island — Oudolf mix (Z3)",
+      short: "Prairie island",
+      meta: { plant: "perennials" },
+      parts: [
+        { kind: "rect", x: 28.5, y: 7.2, w: 4.5, d: 3.6, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 30.75, y: 9.15, text: "prairie island Z3" }
+      ]
+    },
+    {
+      id: "saunaBed",
+      name: "Sauna surround — shrubs + aromatics (Z4)",
+      short: "Sauna bed",
+      meta: { plant: "mixed" },
+      parts: [
+        { kind: "rect", x: 0.6, y: 0.8, w: 2.6, d: 3.2, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 2, y: 4.2, w: 6, d: 1.6, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 1.9, y: 2.5, text: "sauna bed Z4", rotate: -90 }
+      ]
+    },
+    {
+      id: "pergolaBeds",
+      name: "Pergola climbers + underplanting (Z5)",
+      short: "Pergola beds",
+      meta: { plant: "mixed" },
+      parts: [
+        { kind: "rect", x: 23.2, y: 1, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 32.4, y: 1, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 24.2, y: 5.7, text: "climbers Z5" }
+      ]
+    },
+    {
+      id: "arrivalStrip",
+      name: "Arrival strip — Citrónový sorbet (Z6)",
+      short: "Arrival strip",
+      meta: { plant: "perennials" },
+      parts: [
+        { kind: "polygon", points: [[21.3, 29.95], [43.2, 32.55], [43.05, 35], [21.3, 32.4]], fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 30, y: 31.9, text: "arrival strip Z6" }
+      ]
+    },
+    {
+      id: "eastUnderstory",
+      name: "East privacy understory — Růžové mámení (Z7)",
+      short: "East understory",
+      meta: { plant: "shrubs" },
+      parts: [
+        { kind: "rect", x: 41.2, y: 4.5, w: 2.8, d: 16.5, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 41.9, y: 12.6, text: "east understory Z7", rotate: -90 }
+      ]
+    },
+    {
+      id: "atriumPots",
+      name: "Atrium planters — Amelanchier + shade pots (Z8)",
+      short: "Atrium pots",
+      meta: { plant: "shrubs" },
+      parts: [
+        { kind: "circle", cx: 11.3, cy: 16.4, r: 0.35, fill: "#6a8e5a", opacity: 0.8 },
+        { kind: "circle", cx: 13.6, cy: 16.5, r: 0.6, fill: "#6a8e5a", opacity: 0.8 },
+        { kind: "circle", cx: 13.9, cy: 18.5, r: 0.35, fill: "#6a8e5a", opacity: 0.8 }
+      ]
+    },
+    {
+      id: "northFoundation",
+      name: "North foundation bed — Kvetoucí stín (Z9a)",
+      short: "North bed",
+      meta: { plant: "perennials" },
+      parts: [
+        { kind: "rect", x: 10.7, y: 5.6, w: 10.6, d: 1.5, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 16, y: 6.55, text: "north bed Z9a" }
+      ]
+    },
+    {
+      id: "southFoundation",
+      name: "South foundation bed — peonies, roses, lilac (Z9b)",
+      short: "Peony bed",
+      meta: { plant: "mixed" },
+      parts: [
+        { kind: "rect", x: 10.5, y: 26.6, w: 10.8, d: 1.8, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 16, y: 27.75, text: "peony bed Z9b" }
+      ]
+    },
+    {
+      id: "garageFaceBed",
+      name: "Garage north-face bed — Růžové mámení (Z10)",
+      short: "Garage bed",
+      meta: { plant: "perennials" },
+      parts: [
+        { kind: "rect", x: 24.7, y: 17.8, w: 10, d: 1.5, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 27.4, y: 18.8, text: "shade bed Z10" }
+      ]
+    },
+    {
+      id: "rainGarden",
+      name: "NE rain garden — Léto u vody swale (Z11)",
+      short: "Rain garden",
+      meta: { plant: "perennials" },
+      parts: [
+        { kind: "rect", x: 38.2, y: 2.2, w: 4, d: 3.8, fill: "#7aa88a", opacity: 0.45, stroke: "#4a7a6a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 40.2, y: 4.35, text: "rain garden Z11" }
       ]
     }
   ]
