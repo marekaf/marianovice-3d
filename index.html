@@ -98,6 +98,7 @@ const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
 const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
+const FPC = GARDEN.elements.find(e => e.id === 'firePit').parts.find(pt => pt.kind === 'circle');
 const inPlot = (x, z) => { let inside = false; const pts = GARDEN.plot.vertices; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, zi] = pts[i], [xj, zj] = pts[j]; if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside; } return inside; };
 
 // ───────────────────────── SCENE ─────────────────────────
@@ -1034,6 +1035,33 @@ scene.add(softub);
 const PG = rectOf('pergola');
 addLamellarPergola(PG.x, PG.y, PG.w, PG.d, 2.5, 0x8a6840);
 
+// Pergola: paved floor + table for 8-10
+addTerrainPlatform([[25.48, 1.2], [32.08, 1.2], [32.08, 5.8], [25.48, 5.8]], 0.08, 0xd8d2c8);
+{
+  const tx = 28.8, tz = 3.5, baseY = terrainHeight(tx, tz) + 0.08;
+  const wood = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.5 });
+  const top = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.07, 1.0), wood);
+  top.position.set(tx, baseY + 0.75, tz);
+  top.castShadow = true;
+  furnitureGroup.add(top);
+  for (const [dx, dz] of [[-1.25, -0.4], [1.25, -0.4], [-1.25, 0.4], [1.25, 0.4]]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.75, 0.07), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+    leg.position.set(tx + dx, baseY + 0.375, tz + dz);
+    furnitureGroup.add(leg);
+  }
+  for (const dz of [-0.85, 0.85]) {
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.06, 0.35), wood);
+    bench.position.set(tx, baseY + 0.46, tz + dz);
+    bench.castShadow = true;
+    furnitureGroup.add(bench);
+    for (const dx of [-1.1, 1.1]) {
+      const bl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.44, 0.3), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+      bl.position.set(tx + dx, baseY + 0.22, tz + dz);
+      furnitureGroup.add(bl);
+    }
+  }
+}
+
 // ───────────────────────── TERRACES (sledují terén) ─────────────────────────
 // Terasa V — level deck at house floor, aligned with the HS sliding-door sills
 const deckTop = houseBaseY + 0.05;
@@ -1764,7 +1792,7 @@ const smokeParticles = [];
       new THREE.SphereGeometry(0.2, 8, 6),
       new THREE.MeshStandardMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.4 })
     );
-    p.position.set(36, terrainHeight(36, 8) + 1, 8);
+    p.position.set(FPC.cx, terrainHeight(FPC.cx, FPC.cy) + 1, FPC.cy);
     p.userData = { phase: i / 6 };
     scene.add(p);
     smokeParticles.push(p);
@@ -2059,8 +2087,8 @@ const tourPath = [
   { p: [12, 4.5],    la: [17, 1.5],    dur: 2.5, label: 'Perennials by north fence' },
   { p: [19, 4.5],    la: [27, 2.5],    dur: 2.5, label: 'Approaching pergola' },
   { p: [24, 6.5],    la: [28.5, 3.5],  dur: 3,   label: 'At pergola + grill' },
-  { p: [30, 7.5],    la: [36, 8],      dur: 2.5, label: 'Toward fire pit' },
-  { p: [34, 9.5],    la: [36, 8],      dur: 3,   label: 'At fire pit' },
+  { p: [30, 7.5],    la: [37.5, 6.6],  dur: 2.5, label: 'Toward fire pit' },
+  { p: [34.5, 9],    la: [37.5, 6.6],  dur: 3,   label: 'At fire pit' },
   { p: [38, 12],     la: [42.3, 14],   dur: 2.5, label: 'East trees (privacy)' },
   { p: [34, 12],     la: [30.8, 14.4], dur: 3,   label: 'At the pond' },
   { p: [35, 18],     la: [40.5, 23.5], dur: 2.5, label: 'Parking + rain tank' },
@@ -2128,12 +2156,12 @@ function animate() {
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
   // Smoke particles rising and fading
-  const smokeBaseY = terrainHeight(36, 8);
+  const smokeBaseY = terrainHeight(FPC.cx, FPC.cy);
   for (const p of smokeParticles) {
     const phase = (t * 0.4 + p.userData.phase) % 1;
     p.position.y = smokeBaseY + 0.6 + phase * 4;
-    p.position.x = 36 + Math.sin(t + p.userData.phase * 6) * 0.4;
-    p.position.z = 8 + Math.cos(t * 0.5 + p.userData.phase * 6) * 0.3;
+    p.position.x = FPC.cx + Math.sin(t + p.userData.phase * 6) * 0.4;
+    p.position.z = FPC.cy + Math.cos(t * 0.5 + p.userData.phase * 6) * 0.3;
     p.material.opacity = 0.5 * (1 - phase);
     p.scale.setScalar(1 + phase * 1.5);
   }

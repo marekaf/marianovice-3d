@@ -145,9 +145,9 @@ const GARDEN = {
       id: "firePit",
       name: "Fire pit + seating",
       parts: [
-        { kind: "circle", cx: 36, cy: 8, r: 0.78, fill: "#5a4030", opacity: 0.85, stroke: "#3a2818", sw: 1 },
-        { kind: "circle", cx: 36, cy: 8, r: 0.5, fill: "#ff7733", opacity: 0.7 },
-        { kind: "text", x: 36, y: 9.44, text: "fire pit", cls: "lbl-sm", fill: "#5a4828" }
+        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.78, fill: "#5a4030", opacity: 0.85, stroke: "#3a2818", sw: 1 },
+        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.5, fill: "#ff7733", opacity: 0.7 },
+        { kind: "text", x: 37.5, y: 8.1, text: "fire pit", cls: "lbl-sm", fill: "#5a4828" }
       ]
     },
     {
@@ -208,6 +208,8 @@ const GARDEN = {
       name: "Pergola + grill 7 × 5 m",
       parts: [
         { kind: "rect", x: 25.28, y: 1, w: 7, d: 5, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
+        { kind: "rect", x: 25.48, y: 1.2, w: 6.6, d: 4.6, fill: "#d8d2c8", opacity: 0.9 },
+        { kind: "rect", x: 27.4, y: 3, w: 2.8, d: 1, fill: "#8a6a4a" },
         { kind: "text", x: 28.78, y: 3.06, text: "pergola + grill", cls: "lbl" },
         { kind: "text", x: 28.78, y: 4, text: "7 × 5 m", cls: "dim" },
         { kind: "text", x: 28.78, y: 5.11, text: "by north fence", cls: "lbl-sm", fill: "#5a4828" }
