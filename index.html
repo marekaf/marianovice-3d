@@ -820,19 +820,23 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
 }
 
 // MAIN CORE — single gable roof, 0.45 m eave overhang on all sides
-const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH, roofRise);
+// Eave overhang continues the štít pitch: eave drops below wall top by overhang × slope
+const gableSlope = roofRise / ((HC[1] - HC[0]) / 2);
+const eaveDrop = 0.45 * gableSlope;
+const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH - eaveDrop, roofRise + eaveDrop);
 const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
 // North wing (west of core, north of atrium) — shed roof, small slope W low / E high
-const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1], HA[1], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+const wingDrop = 0.45 * (0.9 / (HC[0] - HB[0]));
+const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1], HA[1], houseTerrainY + wallH - wingDrop, houseTerrainY + wallH + 0.9 + wingDrop);
 const nWingRoofMesh = new THREE.Mesh(nWingRoofGeom, roofMat);
 nWingRoofMesh.castShadow = true;
 roofGroup.add(nWingRoofMesh);
 
 // South wing (west of core, south of atrium) — shed roof
-const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3], HB[3], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3], HB[3], houseTerrainY + wallH - wingDrop, houseTerrainY + wallH + 0.9 + wingDrop);
 const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
 sWingRoofMesh.castShadow = true;
 roofGroup.add(sWingRoofMesh);
@@ -1553,12 +1557,13 @@ const waterNormal = (() => {
 // ───────────────────────── STANDING SEAM METAL ROOF — main core gable ─────────────────────────
 {
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
-  const wallTopY = houseTerrainY + wallH;
-  const ridgeY = wallTopY + roofRise;
-  // Same extended eave bounds as the gable geometry so stripes lie on the roof planes
+  const wallTopY = houseTerrainY + wallH - eaveDrop;
+  const ridgeY = houseTerrainY + wallH + roofRise;
+  // Same extended eave bounds and pitch as the gable geometry so stripes lie on the roof planes
   const xMin = HC[0] - 0.45, xMax = HC[1] + 0.45, xMid = (xMin + xMax) / 2;
-  const slopeLen = Math.sqrt((xMid - xMin) ** 2 + roofRise ** 2);
-  const slopeAngle = Math.atan2(roofRise, xMid - xMin);
+  const rise = roofRise + eaveDrop;
+  const slopeLen = Math.sqrt((xMid - xMin) ** 2 + rise ** 2);
+  const slopeAngle = Math.atan2(rise, xMid - xMin);
   const zMin = HB[1], zMax = HB[3];
 
   for (let zs = zMin + 0.2; zs < zMax; zs += 0.4) {
