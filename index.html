@@ -923,6 +923,16 @@ for (let i = 1; i < 5; i++) {
   scene.add(line);
 }
 
+// Garage personnel door 900×2150 on the west wall (under the carport)
+{
+  const d = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 2.15, 0.9),
+    new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 })
+  );
+  d.position.set(GA.x - 0.03, garageFloorY + 2.15 / 2, 20.65);
+  scene.add(d);
+}
+
 // Carport between house and garage — open posts on west side (garage walls support east side)
 [[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
   const baseY = terrainHeight(px, pz);
@@ -1354,11 +1364,11 @@ const waterNormal = (() => {
   const o6 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.27, 0.06), winMat);
   o6.position.set((HB[0] + HB[2]) / 2, ty + 0.3 + 1.135, HB[1] - 0.03);
   scene.add(o6);
-  // West windows (outside atrium) — O3 1600 wide; south pair sill 0.9 so glass clears the uphill grade
-  for (const { z, sill, h } of [{ z: 10.5, sill: 0.3, h: 2.27 }, { z: 13.5, sill: 0.3, h: 2.27 }, { z: 22, sill: 0.9, h: 1.67 }, { z: 24.5, sill: 0.9, h: 1.67 }]) {
-    const w = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, 1.6), winMat);
-    w.position.set(HB[0] - 0.03, ty + sill + h / 2, z);
-    scene.add(w);
+  // West windows per OKNA schedule: offices 1600×2270, guest room + bathroom 1250×2270, all h 2.27
+  for (const { z, w } of [{ z: 10.5, w: 1.6 }, { z: 13.5, w: 1.6 }, { z: 22, w: 1.25 }, { z: 24.5, w: 1.25 }]) {
+    const win = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, w), winMat);
+    win.position.set(HB[0] - 0.03, ty + 0.3 + 2.27 / 2, z);
+    scene.add(win);
   }
   // Window (portal) from living room to atrium — on inner atrium wall, outward = -x into atrium
   const atriumWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 2.5), winMat);

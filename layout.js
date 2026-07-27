@@ -80,6 +80,7 @@ const GARDEN = {
       parts: [
         { kind: "rect", x: 27.63, y: 19.4, w: 7.18, d: 7.05, fill: "#888", opacity: 0.88, stroke: "#3a3a3a", sw: 2 },
         { kind: "rect", x: 28.72, y: 26.28, w: 5, d: 0.33, fill: "#222" },
+        { kind: "rect", x: 27.5, y: 20.2, w: 0.26, d: 0.9, fill: "#222" },
         { kind: "text", x: 31.17, y: 22.67, text: "GARAGE", cls: "lbl-w", size: 14, weight: 700 },
         { kind: "text", x: 31.17, y: 23.67, text: "7.18 × 7.05 m", cls: "dim", fill: "#fff" }
       ]

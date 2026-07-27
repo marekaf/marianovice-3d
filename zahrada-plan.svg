@@ -90,6 +90,7 @@
     <g class="el" data-id="garage"><title>Garage 7.18 × 7.05 m</title>
       <rect x="497.34" y="349.2" width="129.24" height="126.9" fill="#888" opacity="0.88" stroke="#3a3a3a" stroke-width="2"/>
       <rect x="516.96" y="473.04" width="90" height="5.94" fill="#222"/>
+      <rect x="495" y="363.6" width="4.68" height="16.2" fill="#222"/>
       <text x="561.06" y="408.06" class="lbl-w" font-size="14" font-weight="700">GARAGE</text>
       <text x="561.06" y="426.06" class="dim" fill="#fff">7.18 × 7.05 m</text>
     </g>
