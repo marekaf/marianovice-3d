@@ -374,13 +374,22 @@ const GARDEN = {
       ]
     },
     {
+      id: "facadeClimbers",
+      name: "Facade climbers — garage E wall + atrium walls",
+      short: "Facade climbers",
+      parts: [
+        { kind: "rect", x: 34.86, y: 19.6, w: 0.25, d: 6.6, fill: "#5a8a4a", opacity: 0.85 },
+        { kind: "rect", x: 10.7, y: 15.98, w: 3.9, d: 0.25, fill: "#5a8a4a", opacity: 0.85 },
+        { kind: "rect", x: 10.7, y: 18.95, w: 3.9, d: 0.25, fill: "#5a8a4a", opacity: 0.85 }
+      ]
+    },
+    {
       id: "zasivarna",
       name: "Zašívárna — hidden bench (blue/red)",
       short: "Zašívárna",
       parts: [
-        { kind: "rect", x: 31.4, y: 18.8, w: 1.1, d: 0.5, fill: "#3a6ab8", stroke: "#2a4a88", sw: 0.8 },
-        { kind: "rect", x: 32.5, y: 18.8, w: 0.7, d: 0.5, fill: "#c0392b", stroke: "#8a2a1e", sw: 0.8 },
-        { kind: "text", x: 32.3, y: 18.45, text: "zašívárna", cls: "lbl-sm", fill: "#2a4a88" }
+        { kind: "rect", x: 31.4, y: 18.3, w: 1.8, d: 0.5, fill: "#c0392b", stroke: "#8a2a1e", sw: 0.8 },
+        { kind: "text", x: 32.3, y: 17.95, text: "zašívárna", cls: "lbl-sm", fill: "#8a2a1e" }
       ]
     },
     {

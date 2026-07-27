@@ -1473,22 +1473,55 @@ const waterNormal = (() => {
   }
 }
 
-// Zašívárna — hidden bench on the garage north side (Flera-style, blue/red)
+// Zašívárna — hidden red bench off the garage north wall (Flera-style)
 {
-  const bx = 32.3, bz = 19.05, baseY = terrainHeight(bx, bz);
-  const seatBlue = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.5), new THREE.MeshStandardMaterial({ color: 0x3a6ab8, roughness: 0.4, metalness: 0.3 }));
-  seatBlue.position.set(bx - 0.35, baseY + 0.45, bz);
-  const seatRed = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.07, 0.5), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 }));
-  seatRed.position.set(bx + 0.55, baseY + 0.45, bz);
-  const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.06), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 }));
+  const bx = 32.3, bz = 18.55, baseY = terrainHeight(bx, bz);
+  const redMat = new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 });
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.07, 0.5), redMat);
+  seat.position.set(bx, baseY + 0.45, bz);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.06), redMat);
   back.position.set(bx, baseY + 0.75, bz + 0.22);
-  for (const m of [seatBlue, seatRed, back]) { m.castShadow = true; furnitureGroup.add(m); }
+  for (const m of [seat, back]) { m.castShadow = true; furnitureGroup.add(m); }
   for (const lx of [bx - 0.8, bx + 0.8]) {
     const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.44), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 }));
     leg.position.set(lx, baseY + 0.21, bz);
     furnitureGroup.add(leg);
   }
 }
+
+// Facade climbers — vine clusters flattened against the wall (garage E + atrium N/S walls)
+function addWallClimber(x1, z1, x2, z2, nx, nz, h = 2.2) {
+  const len = Math.hypot(x2 - x1, z2 - z1);
+  const n = Math.max(2, Math.round(len / 1.1));
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n;
+    const wx = x1 + (x2 - x1) * t, wz = z1 + (z2 - z1) * t;
+    const baseY = terrainHeight(wx, wz);
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.035, h, 5),
+      new THREE.MeshStandardMaterial({ color: 0x4a3a28, roughness: 0.9 })
+    );
+    stem.position.set(wx + nx * 0.08, baseY + h / 2, wz + nz * 0.08);
+    treesGroup.add(stem);
+    const blobs = 3 + Math.floor(Math.random() * 3);
+    for (let b = 0; b < blobs; b++) {
+      const by = baseY + 0.5 + Math.random() * (h - 0.6);
+      const r = 0.22 + Math.random() * 0.2;
+      const leaf = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 8, 6),
+        new THREE.MeshStandardMaterial({ color: b % 2 ? 0x5a8a4a : 0x4d7a40, roughness: 0.9 })
+      );
+      leaf.scale.set(1, 1, 0.45);
+      if (Math.abs(nx) > 0) leaf.scale.set(0.45, 1, 1);
+      leaf.position.set(wx + nx * (0.14 + r * 0.3) + (Math.abs(nz) ? (Math.random() - 0.5) * 0.6 : 0), by, wz + nz * (0.14 + r * 0.3) + (Math.abs(nx) ? (Math.random() - 0.5) * 0.6 : 0));
+      leaf.castShadow = true;
+      treesGroup.add(leaf);
+    }
+  }
+}
+addWallClimber(34.81, 19.7, 34.81, 26.2, 1, 0);         // garage east wall, foliage facing east
+addWallClimber(10.8, 15.93, 14.6, 15.93, 0, 1, 2.4);    // atrium north wall, foliage into atrium
+addWallClimber(10.8, 19.18, 14.6, 19.18, 0, -1, 2.4);   // atrium south wall, foliage into atrium
 
 // Lounger by hot tub
 {
