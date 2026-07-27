@@ -303,7 +303,19 @@ const cutRects = [
   { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
   { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
   { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965, blend: 3.5 }, // level apron in front of the garage door
+  { x0: 10.48, z0: 6.73, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
+  { x0: 10.48, z0: 26.43, x1: 21.28, z1: 26.88, level: 2.345, blend: 0.6 }, // drip strip — south wall
+  { x0: 21.28, z0: 7.18, x1: 21.73, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
 ];
+// Pond basin — smooth bowl carved to the pond's downhill edge level
+const PBOWL = (() => {
+  const e = EL.pond.parts.find(pt => pt.kind === "ellipse");
+  const edge = Math.min(...Array.from({ length: 16 }, (_, i) => {
+    const a = i / 16 * Math.PI * 2;
+    return basePlaneHeight(e.cx + Math.cos(a) * e.rx, e.cy + Math.sin(a) * e.ry);
+  }));
+  return { cx: e.cx, cz: e.cy, rx: e.rx, rz: e.ry, edge, depth: 0.55 };
+})();
 const cutSmoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
 const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
 function gradedHeight(x, z) {
@@ -315,6 +327,11 @@ function gradedHeight(x, z) {
     if (d >= blend) continue;
     const t = cutSmoothstep(d / blend);
     h = Math.min(h, r.level + (base - r.level) * t);
+  }
+  const prr = Math.sqrt(((x - PBOWL.cx) / PBOWL.rx) ** 2 + ((z - PBOWL.cz) / PBOWL.rz) ** 2);
+  if (prr < 1.3) {
+    if (prr <= 1) h = Math.min(h, PBOWL.edge - PBOWL.depth * 0.5 * (1 + Math.cos(prr * Math.PI)));
+    else h = Math.min(h, PBOWL.edge + (base - PBOWL.edge) * cutSmoothstep((prr - 1) / 0.3));
   }
   return h;
 }
@@ -822,6 +839,28 @@ const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
 sWingRoofMesh.castShadow = true;
 roofGroup.add(sWingRoofMesh);
 
+// Wing roof fills — close the triangular gaps under the shed roofs (like the garage)
+{
+  const wallTopY = houseTerrainY + wallH;
+  const wallFillMat = new THREE.MeshStandardMaterial({ color: 0xd4b896, roughness: 0.7, side: THREE.DoubleSide });
+  const tri = (ax, ay, az, bx, by, bz, cx2, cy2, cz2) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([ax, ay, az, bx, by, bz, cx2, cy2, cz2], 3));
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, wallFillMat);
+    m.castShadow = true;
+    scene.add(m);
+  };
+  for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
+    tri(HB[0], wallTopY, z0, HC[0], wallTopY, z0, HC[0], wallTopY + 0.9, z0);
+    tri(HB[0], wallTopY, z1, HC[0], wallTopY, z1, HC[0], wallTopY + 0.9, z1);
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, z1 - z0), wallFillMat);
+    band.position.set(HC[0] - 0.03, wallTopY + 0.45, (z0 + z1) / 2);
+    band.castShadow = true;
+    scene.add(band);
+  }
+}
+
 // Atrium — no roof (open)
 
 // ───────────────────────── GARAGE (pult roof) + CARPORT (shallow plate) ─────────────────────────
@@ -1101,6 +1140,17 @@ const driveway = new THREE.Mesh(
 driveway.receiveShadow = true;
 scene.add(driveway);
 
+// Gravel drip strips (okapový chodníček) in the dug band along exposed house walls
+{
+  const gravelMat = new THREE.MeshStandardMaterial({ color: 0xb8b0a2, roughness: 1 });
+  for (const [x0, z0, x1, z1] of [[10.48, 6.73, 21.28, 7.18], [10.48, 26.43, 21.28, 26.88], [21.28, 7.18, 21.73, 11.58]]) {
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.05, z1 - z0), gravelMat);
+    strip.position.set((x0 + x1) / 2, 2.345 + 0.03, (z0 + z1) / 2);
+    strip.receiveShadow = true;
+    scene.add(strip);
+  }
+}
+
 // ───────────────────────── RAIN TANK — underground, only manhole visible ─────────────────────────
 {
   const RT = rectOf('rainTank');
@@ -1286,18 +1336,10 @@ const waterNormal = (() => {
     const a = i / 12 * Math.PI * 2;
     return terrainHeight(cx + Math.cos(a) * rimRX, cz + Math.sin(a) * rimRZ);
   }));
-  // Kamenné lemování — elipsa
-  const rim = new THREE.Mesh(
-    new THREE.CylinderGeometry(1, 1, 0.25, 48),
-    new THREE.MeshStandardMaterial({ color: 0x6a6a6a, roughness: 0.9 })
-  );
-  rim.scale.set(rimRX, 1, rimRZ);
-  rim.position.set(cx, edgeMin + 0.12, cz);
-  rim.receiveShadow = true;
-  scene.add(rim);
-  // Water surface — elipsa, top at edgeMin + 0.21 (below rim top)
+  // Water sunk into the carved bowl; irregular stone lip instead of a cylinder rim
+  const waterY = PBOWL.edge - 0.1;
   const water = new THREE.Mesh(
-    new THREE.CylinderGeometry(1, 1, 0.06, 48),
+    new THREE.CylinderGeometry(1, 1, 0.04, 48),
     new THREE.MeshStandardMaterial({
       color: 0xffffff,
       map: waterMap,
@@ -1306,25 +1348,37 @@ const waterNormal = (() => {
       roughness: 0.1,
       metalness: 0.6,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.88
     })
   );
-  water.scale.set(waterRX, 1, waterRZ);
-  water.position.set(cx, edgeMin + 0.18, cz);
+  water.scale.set(rimRX * 0.82, 1, rimRZ * 0.82);
+  water.position.set(cx, waterY, cz);
   water.receiveShadow = true;
   scene.add(water);
   // Water lilies — few floating
   for (let i = 0; i < 4; i++) {
     const ang = Math.random() * Math.PI * 2;
-    const r = Math.random() * 0.7;
-    const lx = cx + Math.cos(ang) * r * waterRX;
-    const lz = cz + Math.sin(ang) * r * waterRZ;
+    const r = Math.random() * 0.6;
     const lily = new THREE.Mesh(
       new THREE.CylinderGeometry(0.25, 0.25, 0.02, 12),
       new THREE.MeshStandardMaterial({ color: 0x4a8a3a, roughness: 0.9 })
     );
-    lily.position.set(lx, edgeMin + 0.22, lz);
+    lily.position.set(cx + Math.cos(ang) * r * rimRX * 0.8, waterY + 0.03, cz + Math.sin(ang) * r * rimRZ * 0.8);
     scene.add(lily);
+  }
+  // Irregular stone lip on the bank around the waterline
+  const stoneMat = new THREE.MeshStandardMaterial({ color: 0x7a7a76, roughness: 0.95 });
+  for (let i = 0; i < 19; i++) {
+    const ang = (i / 19) * Math.PI * 2 + Math.random() * 0.18;
+    const rr = 1.0 + Math.random() * 0.1;
+    const sx = cx + Math.cos(ang) * rimRX * rr;
+    const sz = cz + Math.sin(ang) * rimRZ * rr;
+    const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.16 + Math.random() * 0.14, 0), stoneMat);
+    stone.scale.set(1, 0.55 + Math.random() * 0.25, 1);
+    stone.rotation.set(Math.random(), Math.random() * 3, Math.random());
+    stone.position.set(sx, terrainHeight(sx, sz) + 0.06, sz);
+    stone.castShadow = true;
+    scene.add(stone);
   }
   // Small stones around elipsy
   for (let i = 0; i < 14; i++) {
