@@ -1475,11 +1475,11 @@ const waterNormal = (() => {
     g.position.set(x, sillY + h / 2, wallZ + dir * 0.05);
     scene.add(g);
   };
-  // HS sliding portals in the east notch — HS1 3290×2270, HS2 5160×2270, sill ~5 cm
-  winX(EN[0], 1, 13.5, 3.29, 2.27, ty + 0.05);
-  winX(EN[0], 1, 18.5, 5.16, 2.27, ty + 0.05);
-  // Bedroom panorama window on east wall (NE) — 2.0×2.27, sill 0.3
-  winX(HB[2], 1, 9.5, 2.0, 2.27, ty + 0.3);
+  // East notch: kitchen window 2300×1350 (sill 0.9) north, HS portal 5160×2270 to the floor — both clear of the carport line z<19.4
+  winX(EN[0], 1, 12.9, 2.3, 1.35, ty + 0.9);
+  winX(EN[0], 1, 16.78, 5.16, 2.27, ty + 0.05);
+  // Bedroom window on east wall (NE) — 2000×1750, sill 0.8
+  winX(HB[2], 1, 9.5, 2.0, 1.75, ty + 0.8);
   // North window in middle of north wall — 900×2270, sill 0.3
   winZ((HB[0] + HB[2]) / 2, HB[1], -1, 0.9, 2.27, ty + 0.3);
   // West windows per OKNA: offices 1600×2270, guest+bathroom 1250×2270, all sill 0.3
