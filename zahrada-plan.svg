@@ -90,6 +90,7 @@
     <g class="el" data-id="garage"><title>Garage 7.18 × 7.05 m</title>
       <rect x="497.34" y="349.2" width="129.24" height="126.9" fill="#888" opacity="0.88" stroke="#3a3a3a" stroke-width="2"/>
       <rect x="516.96" y="473.04" width="90" height="5.94" fill="#222"/>
+      <rect x="495" y="363.6" width="4.68" height="16.2" fill="#222"/>
       <text x="561.06" y="408.06" class="lbl-w" font-size="14" font-weight="700">GARAGE</text>
       <text x="561.06" y="426.06" class="dim" fill="#fff">7.18 × 7.05 m</text>
     </g>
@@ -239,10 +240,14 @@
       <rect x="444.6" y="320.4" width="180" height="27" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1" stroke-dasharray="5,3"/>
       <text x="493.2" y="338.4" class="lbl-sm" fill="#3a5a28">shade bed Z10</text>
     </g>
+    <g class="el" data-id="facadeClimbers"><title>Facade climbers — garage E wall + atrium walls</title>
+      <rect x="627.48" y="352.8" width="4.5" height="118.8" fill="#5a8a4a" opacity="0.85"/>
+      <rect x="192.6" y="287.64" width="70.2" height="4.5" fill="#5a8a4a" opacity="0.85"/>
+      <rect x="192.6" y="341.1" width="70.2" height="4.5" fill="#5a8a4a" opacity="0.85"/>
+    </g>
     <g class="el" data-id="zasivarna"><title>Zašívárna — hidden bench (blue/red)</title>
-      <rect x="565.2" y="338.4" width="19.8" height="9" fill="#3a6ab8" stroke="#2a4a88" stroke-width="0.8"/>
-      <rect x="585" y="338.4" width="12.6" height="9" fill="#c0392b" stroke="#8a2a1e" stroke-width="0.8"/>
-      <text x="581.4" y="332.1" class="lbl-sm" fill="#2a4a88">zašívárna</text>
+      <rect x="565.2" y="329.4" width="32.4" height="9" fill="#c0392b" stroke="#8a2a1e" stroke-width="0.8"/>
+      <text x="581.4" y="323.1" class="lbl-sm" fill="#8a2a1e">zašívárna</text>
     </g>
     <g class="el" data-id="rainGarden"><title>NE rain garden — Léto u vody swale (Z11)</title>
       <rect x="687.6" y="39.6" width="72" height="68.4" fill="#7aa88a" opacity="0.45" stroke="#4a7a6a" stroke-width="1" stroke-dasharray="5,3"/>
@@ -315,10 +320,11 @@
     <text x="0" y="414">North bed</text><text x="88" y="414">10.6 × 1.5</text><text x="170" y="414" text-anchor="end">15.9</text><text x="193" y="414" text-anchor="end">6c</text>
     <text x="0" y="426">Peony bed</text><text x="88" y="426">10.8 × 1.8</text><text x="170" y="426" text-anchor="end">19.44</text><text x="193" y="426" text-anchor="end">6n</text>
     <text x="0" y="438">Garage bed</text><text x="88" y="438">10 × 1.5</text><text x="170" y="438" text-anchor="end">15</text><text x="193" y="438" text-anchor="end">13i</text>
-    <text x="0" y="450">Zašívárna</text><text x="88" y="450">1.1 × 0.5</text><text x="170" y="450" text-anchor="end">0.55</text><text x="193" y="450" text-anchor="end">16j</text>
-    <text x="0" y="462">Rain garden</text><text x="88" y="462">4 × 3.8</text><text x="170" y="462" text-anchor="end">15.2</text><text x="193" y="462" text-anchor="end">20b</text>
-    <text x="0" y="474">Path lights</text><text x="88" y="474">7 pcs</text><text x="170" y="474" text-anchor="end">—</text><text x="193" y="474" text-anchor="end">5c</text>
-    <text x="0" y="486">Garden spots</text><text x="88" y="486">3 pcs</text><text x="170" y="486" text-anchor="end">—</text><text x="193" y="486" text-anchor="end">13d</text>
+    <text x="0" y="450">Facade climbers</text><text x="88" y="450">0.25 × 6.6</text><text x="170" y="450" text-anchor="end">1.65</text><text x="193" y="450" text-anchor="end">6h</text>
+    <text x="0" y="462">Zašívárna</text><text x="88" y="462">1.8 × 0.5</text><text x="170" y="462" text-anchor="end">0.9</text><text x="193" y="462" text-anchor="end">16j</text>
+    <text x="0" y="474">Rain garden</text><text x="88" y="474">4 × 3.8</text><text x="170" y="474" text-anchor="end">15.2</text><text x="193" y="474" text-anchor="end">20b</text>
+    <text x="0" y="486">Path lights</text><text x="88" y="486">7 pcs</text><text x="170" y="486" text-anchor="end">—</text><text x="193" y="486" text-anchor="end">5c</text>
+    <text x="0" y="498">Garden spots</text><text x="88" y="498">3 pcs</text><text x="170" y="498" text-anchor="end">—</text><text x="193" y="498" text-anchor="end">13d</text>
   </g>
   <g>
     <rect x="80" y="756" width="620" height="70" fill="white" stroke="#2a2a2a" stroke-width="1"/>

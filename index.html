@@ -302,7 +302,7 @@ const CUT_BLEND = 1.8;
 const cutRects = [
   { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
   { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
-  { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965 }, // level apron in front of the garage door
+  { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965, blend: 3.5 }, // level apron in front of the garage door
 ];
 const cutSmoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
 const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
@@ -310,9 +310,10 @@ function gradedHeight(x, z) {
   const base = basePlaneHeight(x, z);
   let h = base;
   for (const r of cutRects) {
+    const blend = r.blend ?? CUT_BLEND;
     const d = cutRectDist(r, x, z);
-    if (d >= CUT_BLEND) continue;
-    const t = cutSmoothstep(d / CUT_BLEND);
+    if (d >= blend) continue;
+    const t = cutSmoothstep(d / blend);
     h = Math.min(h, r.level + (base - r.level) * t);
   }
   return h;
@@ -922,6 +923,16 @@ for (let i = 1; i < 5; i++) {
   scene.add(line);
 }
 
+// Garage personnel door 900×2150 on the west wall (under the carport)
+{
+  const d = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 2.15, 0.9),
+    new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 })
+  );
+  d.position.set(GA.x - 0.03, garageFloorY + 2.15 / 2, 20.65);
+  scene.add(d);
+}
+
 // Carport between house and garage — open posts on west side (garage walls support east side)
 [[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
   const baseY = terrainHeight(px, pz);
@@ -1033,21 +1044,56 @@ addTerrainPlatform(rectVerts(rectOf('saunaPath')), 0.1, 0xcdc1ad, { map: woodTex
 
 // ───────────────────────── DRIVEWAY ─────────────────────────
 const drivewayPts = EL.driveway.parts.find(p => p.kind === 'polygon').points;
-const drivewayShape = new THREE.Shape();
-drivewayShape.moveTo(drivewayPts[0][0], -drivewayPts[0][1]);
-for (let i = 1; i < drivewayPts.length; i++) drivewayShape.lineTo(drivewayPts[i][0], -drivewayPts[i][1]);
-drivewayShape.closePath();
-const drivewayGeom = new THREE.ShapeGeometry(drivewayShape);
-drivewayGeom.rotateX(-Math.PI/2);
-// Vertices follow terrain
-const drivewayPos = drivewayGeom.attributes.position;
-for (let i = 0; i < drivewayPos.count; i++) {
-  const x = drivewayPos.getX(i);
-  const z = drivewayPos.getZ(i);
-  drivewayPos.setY(i, terrainHeight(x, z) + 0.05);
-}
-drivewayPos.needsUpdate = true;
-drivewayGeom.computeVertexNormals();
+// Dense 0.5 m grid clipped to the driveway polygon — must follow the graded apron relief
+const drivewayGeom = (() => {
+  const inDw = (x, z) => {
+    let inside = false;
+    for (let i = 0, j = drivewayPts.length - 1; i < drivewayPts.length; j = i++) {
+      const [xi, zi] = drivewayPts[i], [xj, zj] = drivewayPts[j];
+      if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+  const xs = drivewayPts.map(p => p[0]), zs = drivewayPts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+  const step = 0.5, nx = Math.ceil((x1 - x0) / step), nz = Math.ceil((z1 - z0) / step);
+  const verts = [], idx = [], vid = new Map();
+  const clampPt = (x, z) => {
+    if (inDw(x, z)) return [x, z];
+    let best = null, bd = Infinity;
+    for (let i = 0, j = drivewayPts.length - 1; i < drivewayPts.length; j = i++) {
+      const [ax, az] = drivewayPts[j], [bx2, bz2] = drivewayPts[i];
+      const dx = bx2 - ax, dz = bz2 - az, L2 = dx * dx + dz * dz;
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+      const px = ax + t * dx, pz = az + t * dz, d = (px - x) ** 2 + (pz - z) ** 2;
+      if (d < bd) { bd = d; best = [px, pz]; }
+    }
+    return best;
+  };
+  const vAt = (i, j) => {
+    const k = i * (nz + 1) + j;
+    if (vid.has(k)) return vid.get(k);
+    const [x, z] = clampPt(x0 + i * step, z0 + j * step);
+    const id = verts.length / 3;
+    verts.push(x, terrainHeight(x, z) + 0.05, z);
+    vid.set(k, id);
+    return id;
+  };
+  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+    const cx = x0 + (i + 0.5) * step, cz = z0 + (j + 0.5) * step;
+    if (!inDw(cx, cz)) continue;
+    const a = vAt(i, j), b = vAt(i + 1, j), c = vAt(i + 1, j + 1), d = vAt(i, j + 1);
+    idx.push(a, c, b, a, d, c);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const pos = g.attributes.position, uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i); uv[i * 2 + 1] = pos.getZ(i); }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return g;
+})();
 const driveway = new THREE.Mesh(
   drivewayGeom,
   new THREE.MeshStandardMaterial({ color: 0xf2f2ee, map: asphaltTex, roughness: 0.92 })
@@ -1318,11 +1364,11 @@ const waterNormal = (() => {
   const o6 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.27, 0.06), winMat);
   o6.position.set((HB[0] + HB[2]) / 2, ty + 0.3 + 1.135, HB[1] - 0.03);
   scene.add(o6);
-  // West windows (outside atrium) — O3 1600 wide; south pair sill 0.9 so glass clears the uphill grade
-  for (const { z, sill, h } of [{ z: 10.5, sill: 0.3, h: 2.27 }, { z: 13.5, sill: 0.3, h: 2.27 }, { z: 22, sill: 0.9, h: 1.67 }, { z: 24.5, sill: 0.9, h: 1.67 }]) {
-    const w = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, 1.6), winMat);
-    w.position.set(HB[0] - 0.03, ty + sill + h / 2, z);
-    scene.add(w);
+  // West windows per OKNA schedule: offices 1600×2270, guest room + bathroom 1250×2270, all h 2.27
+  for (const { z, w } of [{ z: 10.5, w: 1.6 }, { z: 13.5, w: 1.6 }, { z: 22, w: 1.25 }, { z: 24.5, w: 1.25 }]) {
+    const win = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, w), winMat);
+    win.position.set(HB[0] - 0.03, ty + 0.3 + 2.27 / 2, z);
+    scene.add(win);
   }
   // Window (portal) from living room to atrium — on inner atrium wall, outward = -x into atrium
   const atriumWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 2.5), winMat);
@@ -1437,22 +1483,55 @@ const waterNormal = (() => {
   }
 }
 
-// Zašívárna — hidden bench on the garage north side (Flera-style, blue/red)
+// Zašívárna — hidden red bench off the garage north wall (Flera-style)
 {
-  const bx = 32.3, bz = 19.05, baseY = terrainHeight(bx, bz);
-  const seatBlue = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.5), new THREE.MeshStandardMaterial({ color: 0x3a6ab8, roughness: 0.4, metalness: 0.3 }));
-  seatBlue.position.set(bx - 0.35, baseY + 0.45, bz);
-  const seatRed = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.07, 0.5), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 }));
-  seatRed.position.set(bx + 0.55, baseY + 0.45, bz);
-  const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.06), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 }));
+  const bx = 32.3, bz = 18.55, baseY = terrainHeight(bx, bz);
+  const redMat = new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 });
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.07, 0.5), redMat);
+  seat.position.set(bx, baseY + 0.45, bz);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.06), redMat);
   back.position.set(bx, baseY + 0.75, bz + 0.22);
-  for (const m of [seatBlue, seatRed, back]) { m.castShadow = true; furnitureGroup.add(m); }
+  for (const m of [seat, back]) { m.castShadow = true; furnitureGroup.add(m); }
   for (const lx of [bx - 0.8, bx + 0.8]) {
     const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.44), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 }));
     leg.position.set(lx, baseY + 0.21, bz);
     furnitureGroup.add(leg);
   }
 }
+
+// Facade climbers — vine clusters flattened against the wall (garage E + atrium N/S walls)
+function addWallClimber(x1, z1, x2, z2, nx, nz, h = 2.2) {
+  const len = Math.hypot(x2 - x1, z2 - z1);
+  const n = Math.max(2, Math.round(len / 1.1));
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n;
+    const wx = x1 + (x2 - x1) * t, wz = z1 + (z2 - z1) * t;
+    const baseY = terrainHeight(wx, wz);
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.035, h, 5),
+      new THREE.MeshStandardMaterial({ color: 0x4a3a28, roughness: 0.9 })
+    );
+    stem.position.set(wx + nx * 0.08, baseY + h / 2, wz + nz * 0.08);
+    treesGroup.add(stem);
+    const blobs = 3 + Math.floor(Math.random() * 3);
+    for (let b = 0; b < blobs; b++) {
+      const by = baseY + 0.5 + Math.random() * (h - 0.6);
+      const r = 0.22 + Math.random() * 0.2;
+      const leaf = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 8, 6),
+        new THREE.MeshStandardMaterial({ color: b % 2 ? 0x5a8a4a : 0x4d7a40, roughness: 0.9 })
+      );
+      leaf.scale.set(1, 1, 0.45);
+      if (Math.abs(nx) > 0) leaf.scale.set(0.45, 1, 1);
+      leaf.position.set(wx + nx * (0.14 + r * 0.3) + (Math.abs(nz) ? (Math.random() - 0.5) * 0.6 : 0), by, wz + nz * (0.14 + r * 0.3) + (Math.abs(nx) ? (Math.random() - 0.5) * 0.6 : 0));
+      leaf.castShadow = true;
+      treesGroup.add(leaf);
+    }
+  }
+}
+addWallClimber(34.81, 19.7, 34.81, 26.2, 1, 0);         // garage east wall, foliage facing east
+addWallClimber(10.8, 15.93, 14.6, 15.93, 0, 1, 2.4);    // atrium north wall, foliage into atrium
+addWallClimber(10.8, 19.18, 14.6, 19.18, 0, -1, 2.4);   // atrium south wall, foliage into atrium
 
 // Lounger by hot tub
 {
