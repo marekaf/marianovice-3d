@@ -37,7 +37,7 @@ def smoothstep01(t):
 CUT_Z = 2.46  # graded cut for the level west decks
 APRON_Z = -0.062 * 15.88 + 0.044 * 16.805 + 2.733 - 0.5  # garage floor level
 DRIP_Z = 2.345  # drip-strip dig level along the facade
-DRIP_BANDS = [(10.48, 21.28, 6.73, 7.18), (10.48, 21.28, 26.43, 26.88), (21.28, 21.73, 7.18, 11.58)]
+DRIP_BANDS = [(10.48, 21.28, 6.68, 7.18), (10.48, 21.28, 26.43, 26.93), (21.28, 21.78, 7.18, 11.58)]
 
 
 def ground_h(x, y):
@@ -927,6 +927,27 @@ MAT["gravel_light"] = mat_pbr("gravel_light", "gravel_floor_02", scale=1.0,
 for di, (bx0, bx1, by0, by1) in enumerate(DRIP_BANDS):
     draped_poly("drip%d" % di, [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1)], 0.03,
                 MAT["gravel_light"], subdiv=3)
+# marmolit sokl band: level top above floor, bottom under the gravel grade
+MAT["sokl"] = mat_pbr("sokl", "plastered_wall_02", scale=2.0,
+                      tint=hexc("#6f6960"), tint_fac=0.85, tint_mode="MIX")
+SOKL_TOP = ft + 0.25
+for run_a0, run_a1, run_c, run_axis, run_dir in [
+    (10.48, 21.28, 7.18, "x", -1), (10.48, 21.28, 26.43, "x", 1), (7.18, 11.58, 21.28, "y", 1),
+]:
+    n_seg = int(math.ceil(run_a1 - run_a0))
+    for si in range(n_seg):
+        mid = run_a0 + (run_a1 - run_a0) * (si + 0.5) / n_seg
+        seg0 = run_a0 + (run_a1 - run_a0) * si / n_seg
+        seg1 = run_a0 + (run_a1 - run_a0) * (si + 1) / n_seg
+        px, py = (mid, run_c + run_dir * 0.25) if run_axis == "x" else (run_c + run_dir * 0.25, mid)
+        z_lo = ground_h(px, py) - 0.15
+        if run_axis == "x":
+            box_p("sokl_x%d_%d" % (int(run_c), si), seg0, run_c + min(0, run_dir * 0.05), seg1,
+                  run_c + max(0, run_dir * 0.05), z_lo, SOKL_TOP, MAT["sokl"])
+        else:
+            box_p("sokl_y%d_%d" % (int(run_c), si), run_c + min(0, run_dir * 0.05), seg0,
+                  run_c + max(0, run_dir * 0.05), seg1, z_lo, SOKL_TOP, MAT["sokl"])
+
 box_p("chimney", 16.7, 21.7, 17.3, 22.3, ft + 3.5, ft + 6.0, MAT["garage_walls"])
 
 
