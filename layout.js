@@ -5,6 +5,7 @@ const GARDEN = {
   m2px: 18,
   gridCellM: 2,
   title: "Garden schematic plan",
+  docMeta: { project: "Zahrada Mariánovice", place: "Mariánovice, Benešov", author: "M. Bartík", drawing: "Situace — osazovací koncept", revision: "R1" },
   plot: {
     vertices: [[0, 0], [44.16, 0], [44.16, 23.38], [43.11, 35.41], [1.15, 30.41]],
     sideLabels: [
@@ -380,6 +381,36 @@ const GARDEN = {
       parts: [
         { kind: "rect", x: 38.2, y: 2.2, w: 4, d: 3.8, fill: "#7aa88a", opacity: 0.45, stroke: "#4a7a6a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 40.2, y: 4.35, text: "rain garden Z11" }
+      ]
+    },
+    {
+      id: "pathLights",
+      name: "Path lights — bollards",
+      short: "Path lights",
+      meta: { light: "bollard" },
+      parts: [
+        { kind: "circle", cx: 23, cy: 26.85, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 29, cy: 26.85, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 35, cy: 26.95, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 41, cy: 27.85, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 9.1, cy: 4.5, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 9.1, cy: 6.5, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 24.2, cy: 21.9, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "text", x: 26, y: 27.7, text: "path lights", cls: "lbl-sm", fill: "#8a6a1a" }
+      ]
+    },
+    {
+      id: "gardenSpots",
+      name: "Garden spotlights — tree/pond uplights",
+      short: "Garden spots",
+      meta: { light: "spot" },
+      parts: [
+        { kind: "circle", cx: 41.4, cy: 33.6, r: 0.22, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 41.4, cy: 33.6, r: 0.07, fill: "#8a6a1a" },
+        { kind: "circle", cx: 33.8, cy: 13.6, r: 0.22, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 33.8, cy: 13.6, r: 0.07, fill: "#8a6a1a" },
+        { kind: "circle", cx: 25, cy: 6.3, r: 0.22, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 25, cy: 6.3, r: 0.07, fill: "#8a6a1a" }
       ]
     }
   ]
