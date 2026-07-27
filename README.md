@@ -16,6 +16,10 @@ Interactive 3D model of a residential garden.
 - [`editor.html`](editor.html) — interactive 2D editor (drag-drop on a grid, mouse or touch); exports an updated `layout.js` or SVG
 - [`plan.js`](plan.js) — renders the 2D SVG plan from `layout.js`
 - [`zahrada-plan.svg`](zahrada-plan.svg) — static 2D plan, generated: `node generate-svg.js`
+- [`planting.js`](planting.js) — planting data (Flera mixes, densities, per-zone assignments) consumed by the plansheet generator
+- [`generate-plansheets.js`](generate-plansheets.js) — writes `docs/plansheets/*.svg`, `docs/bloom-calendar.svg` and `docs/vykaz-vymer.md`: `node generate-plansheets.js`
+- [`generate-sections.js`](generate-sections.js) — writes section/elevation drawings `docs/sections/*.svg`: `node generate-sections.js`
+- [`build-book.js`](build-book.js) — assembles the A4-landscape project book `docs/project-book.pdf` (Chrome headless print): `node build-book.js`
 
 ## Tech
 
