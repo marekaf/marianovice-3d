@@ -304,9 +304,9 @@ const cutRects = [
   { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
   { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
   { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965, blend: 3.5 }, // level apron in front of the garage door
-  { x0: 10.48, z0: 6.73, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
-  { x0: 10.48, z0: 26.43, x1: 21.28, z1: 26.88, level: 2.345, blend: 0.6 }, // drip strip — south wall
-  { x0: 21.28, z0: 7.18, x1: 21.73, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
+  { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
+  { x0: 10.48, z0: 26.43, x1: 21.28, z1: 26.93, level: 2.345, blend: 0.6 }, // drip strip — south wall
+  { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
 ];
 // Pond basin — smooth bowl carved to the pond's downhill edge level
 const PBOWL = (() => {
@@ -1195,14 +1195,40 @@ const driveway = new THREE.Mesh(
 driveway.receiveShadow = true;
 scene.add(driveway);
 
-// Gravel drip strips (okapový chodníček) in the dug band along exposed house walls
+// Gravel drip strips (okapový chodníček) — 0.5 m kačírek draped on the graded terrain,
+// following the slope down to the low east side; laps onto the marmolit sokl
 {
-  const gravelMat = new THREE.MeshStandardMaterial({ color: 0xb8b0a2, roughness: 1 });
-  for (const [x0, z0, x1, z1] of [[10.48, 6.73, 21.28, 7.18], [10.48, 26.43, 21.28, 26.88], [21.28, 7.18, 21.73, 11.58]]) {
-    const strip = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.05, z1 - z0), gravelMat);
-    strip.position.set((x0 + x1) / 2, 2.345 + 0.03, (z0 + z1) / 2);
-    strip.receiveShadow = true;
-    scene.add(strip);
+  for (const [x0, z0, x1, z1] of [[10.48, 6.68, 21.28, 7.18], [10.48, 26.43, 21.28, 26.93], [21.28, 7.18, 21.78, 11.58]]) {
+    addTerrainPlatform([[x0, z0], [x1, z0], [x1, z1], [x0, z1]], 0.04, 0xb8b0a2);
+  }
+  // Marmolit sokl band — level top above floor, bottom follows the dug grade under the gravel
+  const soklMat = new THREE.MeshStandardMaterial({ color: 0x6f6960, roughness: 0.95 });
+  const soklTop = houseBaseY + 0.25;
+  const runs = [
+    { a0: 10.48, a1: 21.28, c: 7.18, axis: 'x', dir: -1 },
+    { a0: 10.48, a1: 21.28, c: 26.43, axis: 'x', dir: 1 },
+    { a0: 7.18, a1: 11.58, c: 21.28, axis: 'z', dir: 1 },
+  ];
+  for (const r of runs) {
+    const len = r.a1 - r.a0;
+    const n = Math.ceil(len);
+    for (let i = 0; i < n; i++) {
+      const mid = r.a0 + len * (i + 0.5) / n;
+      const sx = r.axis === 'x' ? mid : r.c + r.dir * 0.25;
+      const sz = r.axis === 'x' ? r.c + r.dir * 0.25 : mid;
+      const gy = terrainHeight(sx, sz) - 0.15;
+      const h = Math.max(0.2, soklTop - gy);
+      const seg = new THREE.Mesh(
+        r.axis === 'x' ? new THREE.BoxGeometry(len / n + 0.02, h, 0.05) : new THREE.BoxGeometry(0.05, h, len / n + 0.02),
+        soklMat
+      );
+      seg.position.set(
+        r.axis === 'x' ? mid : r.c + r.dir * 0.025,
+        soklTop - h / 2,
+        r.axis === 'x' ? r.c + r.dir * 0.025 : mid
+      );
+      scene.add(seg);
+    }
   }
 }
 
