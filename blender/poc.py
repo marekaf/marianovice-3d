@@ -289,9 +289,9 @@ def mat_blade(name):
 
 
 MAT = {
-    "soil": mat_pbr("soil", "leafy_grass", scale=0.45, tint=hexc("#2e6e26"), tint_fac=0.9, tint_mode="MIX", spec=0.0),
+    "soil": mat_pbr("soil", "leafy_grass", scale=0.45, tint=hexc("#3f7a33"), tint_fac=0.55, tint_mode="MIX", spec=0.0),
     "meadow": mat_pbr("meadow", "leafy_grass", scale=0.35, tint=hexc("#4f7f38"), tint_fac=0.8, tint_mode="MIX", spec=0.0),
-    "walls": mat_pbr("walls", "plastered_wall_02", scale=0.6, tint=hexc("#b08350"), tint_fac=0.95, tint_mode="MIX"),
+    "walls": mat_pbr("walls", "plastered_wall_02", scale=0.6, tint=hexc("#c29a6d"), tint_fac=0.7, tint_mode="MIX"),
     "garage_walls": mat_pbr("garage_walls", "plastered_wall_02", scale=0.6, tint=hexc("#b4b6b8"), tint_fac=0.75, tint_mode="MIX"),
     "roof": mat_pbr("roof", "metal_plate_02", scale=0.8, tint=hexc("#7c838a"), tint_fac=0.7, tint_mode="MIX", metal=0.6),
     "wood": mat_wood("wood", hexc("#7a5a3a"), hexc("#5e4229")),
@@ -1959,7 +1959,8 @@ CAMS = {
 
 # ---------------- render ----------------
 scene.render.engine = "CYCLES"
-scene.view_settings.view_transform = "Standard"
+scene.view_settings.view_transform = "AgX"
+scene.view_settings.look = "AgX - Base Contrast"
 scene.render.resolution_x = 1920
 scene.render.resolution_y = 1080
 scene.render.resolution_percentage = 100
