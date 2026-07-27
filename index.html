@@ -98,6 +98,7 @@ const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
 const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
+const inPlot = (x, z) => { let inside = false; const pts = GARDEN.plot.vertices; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, zi] = pts[i], [xj, zj] = pts[j]; if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside; } return inside; };
 
 // ───────────────────────── SCENE ─────────────────────────
 const scene = new THREE.Scene();
@@ -799,19 +800,19 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
 }
 
 // MAIN CORE — single gable roof, 0.45 m eave overhang on all sides
-const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1] - 0.45, HB[3] + 0.45, houseTerrainY + wallH, roofRise);
+const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH, roofRise);
 const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
 // North wing (west of core, north of atrium) — shed roof, small slope W low / E high
-const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1] - 0.45, HA[1] + 0.45, houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1], HA[1], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
 const nWingRoofMesh = new THREE.Mesh(nWingRoofGeom, roofMat);
 nWingRoofMesh.castShadow = true;
 roofGroup.add(nWingRoofMesh);
 
 // South wing (west of core, south of atrium) — shed roof
-const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3] - 0.45, HB[3] + 0.45, houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3], HB[3], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
 const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
 sWingRoofMesh.castShadow = true;
 roofGroup.add(sWingRoofMesh);
@@ -1370,7 +1371,7 @@ const waterNormal = (() => {
   const xMin = HC[0] - 0.45, xMax = HC[1] + 0.45, xMid = (xMin + xMax) / 2;
   const slopeLen = Math.sqrt((xMid - xMin) ** 2 + roofRise ** 2);
   const slopeAngle = Math.atan2(roofRise, xMid - xMin);
-  const zMin = HB[1] - 0.45, zMax = HB[3] + 0.45;
+  const zMin = HB[1], zMax = HB[3];
 
   for (let zs = zMin + 0.2; zs < zMax; zs += 0.4) {
     const left = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.06, 0.04), stripeMat);
@@ -1563,7 +1564,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
     const nShr = kind === 'perennials' || kind === 'meadow' ? 0 : Math.round(area / (kind === 'shrubs' ? 2.5 : 5));
     for (let i = 0; i < nPer; i++) {
       const pt = sample();
-      if (!pt) continue;
+      if (!pt || !inPlot(pt[0], pt[1])) continue;
       const r = (kind === 'meadow' ? 0.1 : 0.2) + Math.random() * (kind === 'meadow' ? 0.15 : 0.3);
       const baseY = terrainHeight(pt[0], pt[1]);
       const c = new THREE.Mesh(
@@ -1576,7 +1577,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
     }
     for (let i = 0; i < nShr; i++) {
       const pt = sample();
-      if (!pt) continue;
+      if (!pt || !inPlot(pt[0], pt[1])) continue;
       addBush(pt[0], pt[1], 0.45 + Math.random() * 0.35, 0x5f8452);
     }
   }
@@ -1602,6 +1603,7 @@ const grassPositions = [];
 for (let i = 0; i < 80; i++) {
   const tx = 5 + Math.random() * 35;
   const tz = 4 + Math.random() * 32;
+  if (!inPlot(tx, tz)) continue;
   // Avoid buildings (house, garage, etc.) — rough check
   if (tx > 9 && tx < 22 && tz > 5 && tz < 27) continue; // house
   if (tx > 21 && tx < 35 && tz > 19 && tz < 27) continue; // carport+garáž
