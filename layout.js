@@ -98,7 +98,7 @@ const GARDEN = {
       id: "driveway",
       name: "Driveway 4.5 m × ~22 m",
       parts: [
-        { kind: "polygon", points: [[21.28, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
+        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
         { kind: "text", x: 30.83, y: 28.33, text: "driveway", cls: "lbl-sm" },
         { kind: "text", x: 30.83, y: 29.17, text: "4.5 m × ~22 m", cls: "dim" }
       ]
