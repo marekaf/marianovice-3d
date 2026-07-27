@@ -12,332 +12,134 @@
   .toolbar .coord { background: #444; padding: 4px 10px; border-radius: 4px; font-family: monospace; font-size: 13px; }
   #svgWrap { padding: 20px; display: flex; justify-content: center; }
   svg { background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.1); max-width: 100%; height: auto; }
-  .draggable { cursor: move; transition: filter 0.15s; }
-  .draggable:hover { filter: drop-shadow(0 0 6px rgba(93, 173, 226, 0.7)); }
-  .draggable.dragging { filter: drop-shadow(0 0 8px rgba(255, 100, 0, 0.8)); opacity: 0.85; }
+  .el[data-draggable] { cursor: move; transition: filter 0.15s; }
+  .el[data-draggable]:hover { filter: drop-shadow(0 0 6px rgba(93, 173, 226, 0.7)); }
+  .el.dragging { filter: drop-shadow(0 0 8px rgba(255, 100, 0, 0.8)); opacity: 0.85; }
 </style>
 </head>
 <body>
 
 <div class="toolbar">
-  <button id="exportBtn">⬇ Export SVG</button>
+  <button id="exportSvgBtn">⬇ Export SVG</button>
+  <button id="exportLayoutBtn">⬇ Export layout.js</button>
   <button id="resetBtn">↺ Reset</button>
-  <span class="info">Drag elements with the mouse. Snap to 2 m grid.</span>
+  <span class="info">Drag elements with mouse or touch. Snap to 1 m.</span>
   <span class="coord" id="coord">—</span>
 </div>
 
-<div id="svgWrap">
+<div id="svgWrap"></div>
 
-<svg id="plan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 880" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
-  <defs>
-    <pattern id="cellgrid" width="36" height="36" patternUnits="userSpaceOnUse">
-      <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#d0d0d0" stroke-width="0.6"/>
-    </pattern>
-    <pattern id="majorgrid" x="0" y="0" width="180" height="180" patternUnits="userSpaceOnUse">
-      <rect width="180" height="180" fill="url(#cellgrid)"/>
-      <path d="M 180 0 L 0 0 0 180" fill="none" stroke="#909090" stroke-width="1"/>
-    </pattern>
-    <clipPath id="plotShape">
-      <polygon points="0,0 794.88,0 794.88,420.84 776.0,637.4 20.7,547.4"/>
-    </clipPath>
-  </defs>
-
-  <style>
-    text { font-family: -apple-system, sans-serif; fill: #2a2a2a; }
-    .title { font-size: 18px; font-weight: 700; text-anchor: middle; }
-    .subtitle { font-size: 11px; fill: #666; text-anchor: middle; }
-    .lbl { font-size: 12px; text-anchor: middle; }
-    .lbl-w { font-size: 12px; text-anchor: middle; fill: white; }
-    .lbl-sm { font-size: 10px; text-anchor: middle; }
-    .lbl-sm-w { font-size: 10px; text-anchor: middle; fill: white; }
-    .compass { font-size: 14px; font-weight: 700; text-anchor: middle; }
-    .strana { font-size: 10px; fill: #557; font-weight: 600; text-anchor: middle; }
-    .dim { font-size: 9px; fill: #b22; text-anchor: middle; font-style: italic; }
-    .axis { font-size: 9px; fill: #555; text-anchor: middle; font-weight: 600; }
-  </style>
-
-  <rect x="0" y="0" width="1100" height="880" fill="white"/>
-
-  <text x="550" y="28" class="title">Garden schematic plan</text>
-  <text x="550" y="46" class="subtitle">Pentagon · grid 2×2 m (columns 1-23, rows a-q) · scale 1:55</text>
-
-  <g transform="translate(80, 110)">
-    <g clip-path="url(#plotShape)">
-      <rect x="-50" y="-10" width="900" height="700" fill="url(#majorgrid)"/>
-    </g>
-
-    <polygon points="0,0 794.88,0 794.88,420.84 776.0,637.4 20.7,547.4"
-             fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
-
-    <!-- Columns 1-22 -->
-    <g font-size="9" fill="#555" text-anchor="middle" font-weight="600">
-      <text x="18" y="-6">1</text><text x="54" y="-6">2</text><text x="90" y="-6">3</text>
-      <text x="126" y="-6">4</text><text x="162" y="-6">5</text><text x="198" y="-6">6</text>
-      <text x="234" y="-6">7</text><text x="270" y="-6">8</text><text x="306" y="-6">9</text>
-      <text x="342" y="-6">10</text><text x="378" y="-6">11</text><text x="414" y="-6">12</text>
-      <text x="450" y="-6">13</text><text x="486" y="-6">14</text><text x="522" y="-6">15</text>
-      <text x="558" y="-6">16</text><text x="594" y="-6">17</text><text x="630" y="-6">18</text>
-      <text x="666" y="-6">19</text><text x="702" y="-6">20</text><text x="738" y="-6">21</text>
-      <text x="774" y="-6">22</text>
-    </g>
-
-    <!-- Rows a-q -->
-    <g font-size="9" fill="#555" text-anchor="middle" font-weight="600">
-      <text x="-10" y="22">a</text><text x="-10" y="58">b</text><text x="-10" y="94">c</text>
-      <text x="-10" y="130">d</text><text x="-10" y="166">e</text><text x="-10" y="202">f</text>
-      <text x="-10" y="238">g</text><text x="-10" y="274">h</text><text x="-10" y="310">i</text>
-      <text x="-10" y="346">j</text><text x="-10" y="382">k</text><text x="-10" y="418">l</text>
-      <text x="-10" y="454">m</text><text x="-10" y="490">n</text><text x="-10" y="526">o</text>
-      <text x="-10" y="562">p</text><text x="-10" y="598">q</text>
-    </g>
-
-    <!-- Side lengths -->
-    <text x="397" y="-22" class="strana">↔ 44.16 m (north)</text>
-    <text x="813" y="200" class="strana" transform="rotate(90, 813, 200)">↔ 23.38 m</text>
-    <text x="813" y="525" class="strana" transform="rotate(85, 813, 525)">↔ 12.08 m</text>
-    <text x="400" y="617" class="strana">↔ 42.27 m (south)</text>
-    <text x="-32" y="280" class="strana" transform="rotate(-90, -32, 280)">↔ 30.44 m (W)</text>
-
-    <!-- HOUSE (FIXED) -->
-    <g id="dum-group">
-      <path d="M 189 129 L 383 129 L 383 208 L 370 208 L 370 406 L 383 406 L 383 476 L 189 476 L 189 345 L 266 345 L 266 287 L 189 287 Z"
-            fill="#d4b896" opacity="0.95" stroke="#7a5e3e" stroke-width="2.5"/>
-      <text x="286" y="320" class="lbl" font-size="20" font-weight="700">HOUSE</text>
-      <text x="286" y="343" class="lbl">10,8 × 19.25 m</text>
-      <rect x="370" y="208" width="13" height="198" fill="#a87d4a" opacity="0.4"/>
-    </g>
-
-    <!-- TERASA Z (draggable as whole) -->
-    <g class="draggable" data-name="west terrace">
-      <rect x="171" y="129" width="18" height="347" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
-      <rect x="189" y="287" width="77" height="58" fill="#a87d4a" opacity="0.55" stroke="#5a3e25" stroke-width="0.8"/>
-      <text x="227" y="312" class="lbl-sm">west terrace</text>
-      <text x="227" y="326" class="dim">atrium + 1 m sidewalk</text>
-    </g>
-
-    <!-- Terasa V (draggable) -->
-    <g class="draggable" data-name="east terrace">
-      <rect x="383" y="208" width="72" height="198" fill="#a87d4a" opacity="0.78" stroke="#5a3e25" stroke-width="1.2"/>
-      <text x="419" y="295" class="lbl-w">east terrace</text>
-      <text x="419" y="311" class="lbl-sm-w">(E.02)</text>
-      <text x="419" y="327" class="dim" fill="#fff">4 × 11 m</text>
-    </g>
-
-    <!-- Stairs/seating (draggable) -->
-    <g class="draggable" data-name="stairs">
-      <rect x="383" y="135" width="72" height="65" fill="#9a9a9a" opacity="0.6"/>
-      <text x="419" y="160" class="lbl-sm">stairs/seating</text>
-      <text x="419" y="176" class="dim">4 × 3.6 m</text>
-    </g>
-
-    <!-- Carport (FIXED) -->
-    <g id="carport-group">
-      <rect x="383" y="349" width="114" height="127" fill="#bdbdbd" opacity="0.5" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
-      <text x="440" y="408" class="lbl-sm">shelter</text>
-      <text x="440" y="422" class="lbl-sm">for car</text>
-      <text x="440" y="438" class="dim">6,35 × 7.05 m</text>
-    </g>
-
-    <!-- Garáž (FIXED) -->
-    <g id="garaz-group">
-      <rect x="497" y="349" width="117" height="127" fill="#888" opacity="0.88" stroke="#3a3a3a" stroke-width="2"/>
-      <text x="555" y="408" class="lbl-w" font-size="14" font-weight="700">GARAGE</text>
-      <text x="555" y="426" class="dim" fill="#fff">~6,5 × 7.05 m</text>
-      <rect x="525" y="473" width="60" height="6" fill="#222"/>
-    </g>
-
-    <!-- Příjezd (draggable) -->
-    <g class="draggable" data-name="driveway">
-      <polygon points="383,476 614,476 789,502 782,583 383,535" fill="#cccccc" opacity="0.55"/>
-      <text x="555" y="510" class="lbl-sm">driveway</text>
-      <text x="555" y="525" class="dim">4.5 m × ~22 m</text>
-    </g>
-
-    <!-- Brána -->
-    <g class="draggable" data-name="gate">
-      <line x1="789" y1="502" x2="782" y2="583" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round"/>
-      <text x="800" y="540" class="lbl-sm" font-weight="700" text-anchor="start">GATE</text>
-      <text x="800" y="554" class="dim" text-anchor="start">~4.5 m</text>
-    </g>
-
-    <!-- Nádrž (draggable) -->
-    <g class="draggable" data-name="rain tank">
-      <circle cx="700" cy="500" r="11" fill="#3a7ab8" opacity="0.78" stroke="#1f3a5f" stroke-width="1.5"/>
-      <text x="700" y="503" class="lbl-sm-w" font-weight="700">N</text>
-    </g>
-
-    <!-- Sauna group (draggable) -->
-    <g class="draggable" data-name="sauna+hot tub">
-      <rect x="81" y="18" width="72" height="54" fill="#8b6f47" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>
-      <text x="117" y="40" class="lbl-w">SAUNA</text>
-      <text x="117" y="54" class="dim" fill="#fff">4×3 m</text>
-      <rect x="153" y="18" width="36" height="54" fill="#b89870" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>
-      <text x="171" y="50" class="lbl-sm" transform="rotate(-90, 171, 50)">anteroom</text>
-      <rect x="81" y="72" width="108" height="54" fill="#cdc1ad" opacity="0.4" stroke="#7a5e3e" stroke-width="1" stroke-dasharray="4,3"/>
-      <text x="80" y="138" class="lbl-sm" fill="#5a4828" text-anchor="start">shelter</text>
-      <ellipse cx="135" cy="99" rx="32" ry="20" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
-      <text x="135" y="103" class="lbl-sm" font-weight="bold" fill="#1f3a5f">Softub</text>
-    </g>
-
-    <!-- Chodníček -->
-    <g class="draggable" data-name="sidewalk">
-      <path d="M 175 126 Q 185 150 187 180 L 187 209" fill="none" stroke="#cdc1ad" stroke-width="11" stroke-linecap="round" opacity="0.7"/>
-    </g>
-
-    <!-- Pergola (draggable) -->
-    <g class="draggable" data-name="pergola">
-      <rect x="455" y="18" width="144" height="90" fill="#c8a878" opacity="0.55" stroke="#7a5e3e" stroke-width="1.5" stroke-dasharray="6,3"/>
-      <text x="527" y="55" class="lbl">pergola + grill</text>
-      <text x="527" y="72" class="dim">8 × 5 m</text>
-      <text x="527" y="92" class="lbl-sm" fill="#5a4828">by north fence</text>
-    </g>
-
-    <!-- Záhon 1 (draggable) -->
-    <g class="draggable" data-name="raised bed 1">
-      <rect x="18" y="200" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
-      <text x="31" y="240" class="lbl-sm-w" transform="rotate(-90, 31, 240)">raised bed 1</text>
-      <text x="55" y="240" class="dim" text-anchor="start">1,5 × 4 m</text>
-    </g>
-
-    <!-- Záhon 2 (draggable) -->
-    <g class="draggable" data-name="raised bed 2">
-      <rect x="18" y="290" width="27" height="72" fill="#7a5a3a" opacity="0.78"/>
-      <text x="31" y="330" class="lbl-sm-w" transform="rotate(-90, 31, 330)">raised bed 2</text>
-      <text x="55" y="330" class="dim" text-anchor="start">1,5 × 4 m</text>
-    </g>
-
-    <!-- Sad (draggable) -->
-    <g class="draggable" data-name="orchard">
-      <g clip-path="url(#plotShape)">
-        <rect x="0" y="380" width="100" height="200" fill="#7fa66f" opacity="0.4"/>
-      </g>
-      <text x="50" y="490" class="lbl" transform="rotate(-90, 50, 490)">orchard</text>
-      <text x="115" y="490" class="dim" text-anchor="start">~5,5 × 11 m</text>
-      <circle cx="20" cy="400" r="9" fill="#5a8a5a"/>
-      <circle cx="75" cy="430" r="9" fill="#5a8a5a"/>
-      <circle cx="20" cy="460" r="9" fill="#5a8a5a"/>
-      <circle cx="75" cy="490" r="9" fill="#5a8a5a"/>
-      <circle cx="20" cy="520" r="9" fill="#5a8a5a"/>
-      <circle cx="75" cy="555" r="9" fill="#5a8a5a"/>
-    </g>
-  </g>
-
-  <g transform="translate(1020, 110)">
-    <circle cx="0" cy="0" r="30" fill="white" stroke="#555" stroke-width="1.5"/>
-    <path d="M 0 -24 L 6 4 L 0 -7 L -6 4 Z" fill="#2a2a2a"/>
-    <path d="M 0 7 L 6 -4 L 0 24 L -6 -4 Z" fill="#999"/>
-    <text x="0" y="-36" class="compass">S</text>
-    <text x="0" y="44" class="compass">J</text>
-    <text x="-40" y="5" class="compass">Z</text>
-    <text x="40" y="5" class="compass">V</text>
-  </g>
-
-  <g transform="translate(80, 815)">
-    <rect x="0" y="0" width="90" height="10" fill="#2a2a2a"/>
-    <rect x="90" y="0" width="90" height="10" fill="white" stroke="#2a2a2a" stroke-width="1"/>
-    <text x="0" y="28" class="lbl-sm" text-anchor="start">0</text>
-    <text x="90" y="28" class="lbl-sm">5 m</text>
-    <text x="180" y="28" class="lbl-sm">10 m</text>
-    <text x="240" y="28" class="lbl-sm" text-anchor="start" fill="#888">1:55</text>
-  </g>
-</svg>
-
-</div>
-
+<script src="layout.js"></script>
+<script src="plan.js"></script>
 <script>
 (function() {
-  const SCALE = 18;       // 1 m = 18 px
-  const SNAP_M = 2;        // 2 m grid
-  const SNAP_PX = SNAP_M * SCALE;
-
-  const svg = document.getElementById('plan');
+  const SNAP_M = 1;
+  const ROWS = 'abcdefghijklmnopqrstuvwxyz';
+  const wrap = document.getElementById('svgWrap');
   const coordEl = document.getElementById('coord');
-  const SVGNS = 'http://www.w3.org/2000/svg';
 
-  // Init storage of original positions
-  const originals = new Map();
-  document.querySelectorAll('.draggable').forEach(g => {
-    originals.set(g, getCurrentTranslate(g));
-  });
+  let working = structuredClone(GARDEN);
+  const SNAP_PX = SNAP_M * working.m2px;
 
-  function getCurrentTranslate(el) {
-    const t = el.getAttribute('transform') || '';
-    const m = t.match(/translate\(([^,)\s]+)[,\s]+([^)]+)\)/);
-    if (m) return { tx: parseFloat(m[1]), ty: parseFloat(m[2]) };
-    return { tx: 0, ty: 0 };
+  function bboxMin(el) {
+    let mx = Infinity, my = Infinity;
+    for (const p of el.parts) {
+      if (p.kind === 'rect') { mx = Math.min(mx, p.x); my = Math.min(my, p.y); }
+      else if (p.kind === 'polygon') for (const [x, y] of p.points) { mx = Math.min(mx, x); my = Math.min(my, y); }
+      else if (p.kind === 'ellipse') { mx = Math.min(mx, p.cx - p.rx); my = Math.min(my, p.cy - p.ry); }
+      else if (p.kind === 'circle') { mx = Math.min(mx, p.cx - p.r); my = Math.min(my, p.cy - p.r); }
+      else if (p.kind === 'line') { mx = Math.min(mx, p.x1, p.x2); my = Math.min(my, p.y1, p.y2); }
+    }
+    return [mx, my];
   }
 
-  function setTranslate(el, tx, ty) {
-    el.setAttribute('transform', `translate(${tx}, ${ty})`);
+  function cellAddress(x, y) {
+    const c = working.gridCellM;
+    const col = Math.floor(x / c) + 1;
+    const row = ROWS[Math.max(0, Math.floor(y / c))] || '?';
+    return `${col}${row}`;
   }
 
-  function snap(v) {
-    return Math.round(v / SNAP_PX) * SNAP_PX;
+  function shiftElement(el, dx, dy) {
+    for (const p of el.parts) {
+      if (p.kind === 'rect' || p.kind === 'text') { p.x += dx; p.y += dy; }
+      else if (p.kind === 'polygon') p.points = p.points.map(([x, y]) => [x + dx, y + dy]);
+      else if (p.kind === 'ellipse' || p.kind === 'circle') { p.cx += dx; p.cy += dy; }
+      else if (p.kind === 'line') { p.x1 += dx; p.y1 += dy; p.x2 += dx; p.y2 += dy; }
+    }
   }
 
-  // SVG coord transform: client → svg
-  function clientToSvg(clientX, clientY) {
+  function download(name, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function render() {
+    wrap.innerHTML = renderPlanSVG(working);
+    const svg = wrap.querySelector('svg');
+    svg.querySelectorAll('.el').forEach(g => {
+      const el = working.elements.find(e => e.id === g.dataset.id);
+      if (!el || el.fixed) return;
+      g.setAttribute('data-draggable', '');
+      g.addEventListener('pointerdown', ev => startDrag(ev, g, el, svg));
+    });
+  }
+
+  function clientToSvg(svg, clientX, clientY) {
     const pt = svg.createSVGPoint();
     pt.x = clientX; pt.y = clientY;
     return pt.matrixTransform(svg.getScreenCTM().inverse());
   }
 
-  let dragging = null;
+  function startDrag(ev, g, el, svg) {
+    ev.preventDefault();
+    g.setPointerCapture(ev.pointerId);
+    g.classList.add('dragging');
+    const start = clientToSvg(svg, ev.clientX, ev.clientY);
+    let dxPx = 0, dyPx = 0;
 
-  document.querySelectorAll('.draggable').forEach(g => {
-    g.addEventListener('mousedown', e => {
-      dragging = {
-        el: g,
-        startClient: { x: e.clientX, y: e.clientY },
-        startTrans: getCurrentTranslate(g)
-      };
-      g.classList.add('dragging');
-      e.preventDefault();
-    });
+    const onMove = e => {
+      const now = clientToSvg(svg, e.clientX, e.clientY);
+      dxPx = Math.round((now.x - start.x) / SNAP_PX) * SNAP_PX;
+      dyPx = Math.round((now.y - start.y) / SNAP_PX) * SNAP_PX;
+      g.setAttribute('transform', `translate(${dxPx}, ${dyPx})`);
+      const dxM = dxPx / working.m2px, dyM = dyPx / working.m2px;
+      const [bx, by] = bboxMin(el);
+      coordEl.textContent = `${el.id} → ${cellAddress(bx + dxM, by + dyM)} (Δ ${dxM.toFixed(1)}, ${dyM.toFixed(1)} m)`;
+    };
+    const onUp = () => {
+      g.removeEventListener('pointermove', onMove);
+      g.removeEventListener('pointerup', onUp);
+      g.removeEventListener('pointercancel', onUp);
+      g.classList.remove('dragging');
+      if (dxPx || dyPx) {
+        shiftElement(el, dxPx / working.m2px, dyPx / working.m2px);
+        render();
+      }
+    };
+    g.addEventListener('pointermove', onMove);
+    g.addEventListener('pointerup', onUp);
+    g.addEventListener('pointercancel', onUp);
+  }
+
+  document.getElementById('exportSvgBtn').addEventListener('click', () => {
+    download('zahrada-plan.svg', renderPlanSVG(working), 'image/svg+xml');
   });
-
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    const startSvg = clientToSvg(dragging.startClient.x, dragging.startClient.y);
-    const nowSvg = clientToSvg(e.clientX, e.clientY);
-    const dx = nowSvg.x - startSvg.x;
-    const dy = nowSvg.y - startSvg.y;
-    const newTx = snap(dragging.startTrans.tx + dx);
-    const newTy = snap(dragging.startTrans.ty + dy);
-    setTranslate(dragging.el, newTx, newTy);
-    const dxM = (newTx / SCALE).toFixed(1);
-    const dyM = (newTy / SCALE).toFixed(1);
-    coordEl.textContent = `${dragging.el.dataset.name}: posun Δ ${dxM} m × ${dyM} m`;
+  document.getElementById('exportLayoutBtn').addEventListener('click', () => {
+    download('layout.js', serializeLayout(working), 'text/javascript');
   });
-
-  document.addEventListener('mouseup', () => {
-    if (dragging) {
-      dragging.el.classList.remove('dragging');
-      dragging = null;
-    }
-  });
-
-  document.getElementById('exportBtn').addEventListener('click', () => {
-    const clone = svg.cloneNode(true);
-    // Strip draggable class for export cleanliness
-    clone.querySelectorAll('.draggable').forEach(el => el.classList.remove('draggable'));
-    const xml = new XMLSerializer().serializeToString(clone);
-    const blob = new Blob([xml], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'zahrada-plan-edited.svg';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
   document.getElementById('resetBtn').addEventListener('click', () => {
-    document.querySelectorAll('.draggable').forEach(g => {
-      const o = originals.get(g);
-      setTranslate(g, o.tx, o.ty);
-    });
+    working = structuredClone(GARDEN);
     coordEl.textContent = '—';
+    render();
   });
+
+  render();
 })();
 </script>
 
