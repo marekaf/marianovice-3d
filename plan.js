@@ -53,7 +53,7 @@
   </style>`);
     out.push(`  <rect x="0" y="0" width="1100" height="880" fill="white"/>`);
     out.push(`  <text x="550" y="28" class="title">${esc(garden.title)}</text>`);
-    out.push(`  <text x="550" y="46" class="subtitle">Pentagon plot · grid ${garden.gridCellM} × ${garden.gridCellM} m (columns 1–${cols}, rows a–${ROWS[rows - 1]})</text>`);
+    out.push(`  <text x="550" y="46" class="subtitle">Pentagon plot ${r2(polyArea(garden.plot.vertices))} m² · grid ${garden.gridCellM} × ${garden.gridCellM} m (columns 1–${cols}, rows a–${ROWS[rows - 1]})</text>`);
     out.push(`  <g transform="translate(80, 110)">`);
     out.push(`    <g clip-path="url(#plotShape)"><rect x="-50" y="-10" width="900" height="700" fill="url(#majorgrid)"/></g>`);
     out.push(`    <polygon points="${plotPts}" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>`);
@@ -104,6 +104,16 @@
     <text x="-40" y="5" class="compass">W</text>
     <text x="40" y="5" class="compass">E</text>
   </g>`);
+    const rows2 = garden.elements.map((el) => scheduleRow(el, garden.gridCellM));
+    out.push(`  <g transform="translate(902, 190)" font-size="8.5" fill="#2a2a2a">`);
+    out.push(`    <text x="0" y="0" font-weight="700" font-size="10">ELEMENT SCHEDULE</text>`);
+    out.push(`    <text x="0" y="15" fill="#555" font-weight="600">element</text><text x="88" y="15" fill="#555" font-weight="600">size (m)</text><text x="170" y="15" fill="#555" font-weight="600" text-anchor="end">m²</text><text x="193" y="15" fill="#555" font-weight="600" text-anchor="end">cell</text>`);
+    out.push(`    <line x1="0" y1="19" x2="193" y2="19" stroke="#bbb" stroke-width="0.8"/>`);
+    rows2.forEach((r, i) => {
+      const y = 30 + i * 12;
+      out.push(`    <text x="0" y="${y}">${esc(r.name)}</text><text x="88" y="${y}">${esc(r.size)}</text><text x="170" y="${y}" text-anchor="end">${r.area === null ? "—" : r2(r.area)}</text><text x="193" y="${y}" text-anchor="end">${esc(r.cell)}</text>`);
+    });
+    out.push(`  </g>`);
     out.push(`  <g transform="translate(80, 815)">
     <rect x="0" y="0" width="${5 * S}" height="10" fill="#2a2a2a"/>
     <rect x="${5 * S}" y="0" width="${5 * S}" height="10" fill="white" stroke="#2a2a2a" stroke-width="1"/>
@@ -111,13 +121,63 @@
     <text x="${5 * S}" y="28" class="lbl-sm">5 m</text>
     <text x="${10 * S}" y="28" class="lbl-sm">10 m</text>
   </g>`);
-    out.push(`  <text x="80" y="858" class="lbl-sm" text-anchor="start" fill="#888">Cells are addressed as "{column}{row}", e.g. "12g" = column 12, row g. Each cell is ${garden.gridCellM} × ${garden.gridCellM} m.</text>`);
+    out.push(`  <text x="80" y="858" class="lbl-sm" text-anchor="start" fill="#888">Cells are addressed as "{column}{row}", e.g. "12g" = column 12, row g. Each cell is ${garden.gridCellM} × ${garden.gridCellM} m. Generated from layout.js (node generate-svg.js).</text>`);
     out.push(`</svg>`);
     return out.join("\n") + "\n";
   }
 
   function r2(v) {
     return Math.round(v * 100) / 100;
+  }
+
+  function polyArea(points) {
+    let s = 0;
+    for (let i = 0; i < points.length; i++) {
+      const [x1, y1] = points[i];
+      const [x2, y2] = points[(i + 1) % points.length];
+      s += x1 * y2 - x2 * y1;
+    }
+    return Math.abs(s) / 2;
+  }
+
+  function shortName(name) {
+    const s = name
+      .replace(/\s*\(.*$/, "")
+      .replace(/\s+[~ø]?[\d.]+\s*m?\s*×.*$/, "")
+      .replace(/\s+ø\s*[\d.]+.*$/, "")
+      .replace(/\s+~[\d.]+.*$/, "");
+    return (s.length >= 3 ? s : name).slice(0, 20);
+  }
+
+  function scheduleRow(el, cellM) {
+    const shapes = el.parts.filter((p) => p.kind !== "text");
+    const circles = shapes.filter((p) => p.kind === "circle");
+    const first = shapes[0];
+    let size = "";
+    let area = null;
+    let bx = Infinity, by = Infinity;
+    for (const p of shapes) {
+      if (p.kind === "rect") { bx = Math.min(bx, p.x); by = Math.min(by, p.y); }
+      else if (p.kind === "polygon") for (const [x, y] of p.points) { bx = Math.min(bx, x); by = Math.min(by, y); }
+      else if (p.kind === "ellipse") { bx = Math.min(bx, p.cx - p.rx); by = Math.min(by, p.cy - p.ry); }
+      else if (p.kind === "circle") { bx = Math.min(bx, p.cx - p.r); by = Math.min(by, p.cy - p.r); }
+      else if (p.kind === "line") { bx = Math.min(bx, p.x1, p.x2); by = Math.min(by, p.y1, p.y2); }
+    }
+    if (first.kind === "rect") { size = `${r2(first.w)} × ${r2(first.d)}`; area = first.w * first.d; }
+    else if (first.kind === "polygon") {
+      const xs = first.points.map((p) => p[0]), ys = first.points.map((p) => p[1]);
+      size = `${r2(Math.max(...xs) - Math.min(...xs))} × ${r2(Math.max(...ys) - Math.min(...ys))}`;
+      area = polyArea(first.points);
+    }
+    else if (first.kind === "ellipse") { size = `${r2(2 * first.rx)} × ${r2(2 * first.ry)}`; area = Math.PI * first.rx * first.ry; }
+    else if (first.kind === "circle") {
+      if (circles.length > 2) size = `${circles.length} trees`;
+      else { size = `ø ${r2(2 * first.r)}`; area = Math.PI * first.r * first.r; }
+    }
+    else if (first.kind === "line") size = `${r2(Math.hypot(first.x2 - first.x1, first.y2 - first.y1))} long`;
+    const col = Math.floor(bx / cellM) + 1;
+    const row = ROWS[Math.max(0, Math.floor(by / cellM))] || "?";
+    return { name: el.short || shortName(el.name), size, area, cell: `${col}${row}` };
   }
 
   function renderPart(p, px) {

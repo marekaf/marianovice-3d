@@ -29,13 +29,14 @@ const GARDEN = {
       meta: { bbox: [10.48, 7.18, 21.28, 26.43], coreX: [14.78, 21.28], atrium: [10.48, 15.93, 14.78, 19.18], eNotch: [20.58, 11.58, 21.28, 22.53] },
       parts: [
         { kind: "polygon", points: [[10.48, 7.18], [21.28, 7.18], [21.28, 11.58], [20.58, 11.58], [20.58, 22.53], [21.28, 22.53], [21.28, 26.43], [10.48, 26.43], [10.48, 19.18], [14.78, 19.18], [14.78, 15.93], [10.48, 15.93]], fill: "#d4b896", opacity: 0.95, stroke: "#7a5e3e", sw: 2.5 },
-        { kind: "text", x: 15.89, y: 17.78, text: "HOUSE", cls: "lbl", size: 20, weight: 700 },
-        { kind: "text", x: 15.89, y: 19.06, text: "10.8 × 19.25 m", cls: "lbl" }
+        { kind: "text", x: 18.03, y: 17.78, text: "HOUSE", cls: "lbl", size: 20, weight: 700 },
+        { kind: "text", x: 18.03, y: 19.06, text: "10.8 × 19.25 m", cls: "lbl" }
       ]
     },
     {
       id: "westTerrace",
       name: "West terrace — atrium + 1 m sidewalk",
+      short: "West terrace",
       parts: [
         { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 19.25, fill: "#a87d4a", opacity: 0.55, stroke: "#5a3e25", sw: 0.8 },
         { kind: "rect", x: 10.48, y: 15.93, w: 4.3, d: 3.25, fill: "#a87d4a", opacity: 0.55, stroke: "#5a3e25", sw: 0.8 },
@@ -50,12 +51,13 @@ const GARDEN = {
         { kind: "rect", x: 20.58, y: 11.58, w: 4, d: 10.95, fill: "#a87d4a", opacity: 0.78, stroke: "#5a3e25", sw: 1.2 },
         { kind: "text", x: 22.56, y: 16.39, text: "east terrace", cls: "lbl-w" },
         { kind: "text", x: 22.56, y: 17.28, text: "(E.02)", cls: "lbl-sm-w" },
-        { kind: "text", x: 22.56, y: 18.17, text: "4 × 11 m", cls: "dim", fill: "#fff" }
+        { kind: "text", x: 22.56, y: 18.17, text: "4 × 10.95 m", cls: "dim", fill: "#fff" }
       ]
     },
     {
       id: "saunaPath",
       name: "Path sauna → west terrace",
+      short: "Sauna path",
       parts: [
         { kind: "rect", x: 9.5, y: 4, w: 1, d: 3.17, fill: "#cdc1ad", opacity: 0.7 }
       ]
@@ -88,7 +90,7 @@ const GARDEN = {
         { kind: "rect", x: 34.81, y: 22.84, w: 4.33, d: 3.61, stroke: "#888", sw: 1.2, dash: "4,3" },
         { kind: "line", x1: 36.97, y1: 22.84, x2: 36.97, y2: 26.45, stroke: "#888", sw: 1, dash: "3,3" },
         { kind: "text", x: 36.94, y: 24.72, text: "2× parking", cls: "lbl-sm", fill: "#666" },
-        { kind: "text", x: 36.94, y: 25.56, text: "~4.3 × 3.6 m", cls: "dim" }
+        { kind: "text", x: 36.94, y: 25.56, text: "4.33 × 3.61 m", cls: "dim" }
       ]
     },
     {
@@ -139,6 +141,7 @@ const GARDEN = {
     {
       id: "northTrees",
       name: "Trees along north fence",
+      short: "North trees",
       parts: [
         { kind: "circle", cx: 13, cy: 1.2, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 17, cy: 1.5, r: 0.5, fill: "#4d7a4d" },
@@ -152,6 +155,7 @@ const GARDEN = {
     {
       id: "eastTrees",
       name: "Trees along east fence (privacy)",
+      short: "East trees",
       parts: [
         { kind: "circle", cx: 42.5, cy: 8, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 42.5, cy: 12, r: 0.5, fill: "#4d7a4d" },
@@ -175,7 +179,8 @@ const GARDEN = {
       name: "Sauna shelter 3 × 3 m (covers hot tub)",
       parts: [
         { kind: "rect", x: 3.5, y: 1, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4,3" },
-        { kind: "text", x: 5, y: 4.67, text: "shelter", cls: "lbl-sm", fill: "#5a4828" }
+        { kind: "text", x: 5, y: 4.67, text: "shelter", cls: "lbl-sm", fill: "#5a4828" },
+        { kind: "text", x: 5, y: 5.4, text: "3 × 3 m", cls: "dim" }
       ]
     },
     {
