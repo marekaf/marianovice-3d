@@ -104,7 +104,7 @@
     <text x="-40" y="5" class="compass">W</text>
     <text x="40" y="5" class="compass">E</text>
   </g>`);
-    const rows2 = garden.elements.map((el) => scheduleRow(el, garden.gridCellM));
+    const rows2 = garden.elements.map((el) => scheduleRow(el, garden.gridCellM, garden));
     out.push(`  <g transform="translate(902, 190)" font-size="8.5" fill="#2a2a2a">`);
     out.push(`    <text x="0" y="0" font-weight="700" font-size="10">ELEMENT SCHEDULE</text>`);
     out.push(`    <text x="0" y="15" fill="#555" font-weight="600">element</text><text x="88" y="15" fill="#555" font-weight="600">size (m)</text><text x="170" y="15" fill="#555" font-weight="600" text-anchor="end">m²</text><text x="193" y="15" fill="#555" font-weight="600" text-anchor="end">cell</text>`);
@@ -149,7 +149,7 @@
     return (s.length >= 3 ? s : name).slice(0, 20);
   }
 
-  function scheduleRow(el, cellM) {
+  function scheduleRow(el, cellM, garden) {
     const shapes = el.parts.filter((p) => p.kind !== "text");
     const circles = shapes.filter((p) => p.kind === "circle");
     const first = shapes[0];
@@ -169,9 +169,16 @@
       size = `${r2(Math.max(...xs) - Math.min(...xs))} × ${r2(Math.max(...ys) - Math.min(...ys))}`;
       area = polyArea(first.points);
     }
-    else if (first.kind === "ellipse") { size = `${r2(2 * first.rx)} × ${r2(2 * first.ry)}`; area = Math.PI * first.rx * first.ry; }
+    else if (first.kind === "ellipse") {
+      size = `${r2(2 * first.rx)} × ${r2(2 * first.ry)}`;
+      area = Math.PI * first.rx * first.ry;
+      const exId = el.meta && el.meta.exclude;
+      const ex = exId && garden.elements.find((e) => e.id === exId);
+      const exEll = ex && ex.parts.find((p) => p.kind === "ellipse");
+      if (exEll) area -= Math.PI * exEll.rx * exEll.ry;
+    }
     else if (first.kind === "circle") {
-      if (circles.length > 2) size = `${circles.length} trees`;
+      if (circles.length > 2) size = `${circles.length} pcs`;
       else { size = `ø ${r2(2 * first.r)}`; area = Math.PI * first.r * first.r; }
     }
     else if (first.kind === "line") size = `${r2(Math.hypot(first.x2 - first.x1, first.y2 - first.y1))} long`;
