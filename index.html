@@ -298,20 +298,24 @@ function basePlaneHeight(x, z) {
 }
 // Graded cut into the west slope — clamped just under the level west deck (top 2.515),
 // smoothstep bank rising to natural grade; min() leaves downhill areas untouched
-const CUT_LEVEL = 2.46;
 const CUT_BLEND = 1.8;
 const cutRects = [
-  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0 },      // sidewalk strip along the house west wall
-  { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18 }, // atrium
+  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
+  { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
+  { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965 }, // level apron in front of the garage door
 ];
 const cutSmoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
 const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
 function gradedHeight(x, z) {
   const base = basePlaneHeight(x, z);
-  const d = Math.min(...cutRects.map(r => cutRectDist(r, x, z)));
-  if (d >= CUT_BLEND) return base;
-  const t = cutSmoothstep(d / CUT_BLEND);
-  return Math.min(base, CUT_LEVEL + (base - CUT_LEVEL) * t);
+  let h = base;
+  for (const r of cutRects) {
+    const d = cutRectDist(r, x, z);
+    if (d >= CUT_BLEND) continue;
+    const t = cutSmoothstep(d / CUT_BLEND);
+    h = Math.min(h, r.level + (base - r.level) * t);
+  }
+  return h;
 }
 function terrainHeight(x, z) {
   return gradedHeight(x, z);
