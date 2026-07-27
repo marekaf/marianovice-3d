@@ -2,3 +2,5 @@ garden.json
 *.png
 *.blend
 *.blend1
+assets/*
+!assets/MANIFEST.md
