@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
+  <style>
+    text { font-family: -apple-system, sans-serif; fill: #2a2a2a; }
+    .title { font-size: 18px; font-weight: 700; text-anchor: middle; }
+    .subtitle { font-size: 11px; fill: #666; text-anchor: middle; }
+    .lbl { font-size: 12px; text-anchor: middle; }
+    .lbl-sm { font-size: 10px; text-anchor: middle; }
+    .dim { font-size: 9px; fill: #b22; text-anchor: middle; font-style: italic; }
+    .th { font-size: 9px; fill: #555; font-weight: 600; }
+    .td { font-size: 10px; }
+    .td-lat { font-size: 9px; font-style: italic; fill: #666; }
+  </style>
+  <rect x="0" y="0" width="1100" height="780" fill="white"/>
+  <text x="360" y="34" class="title">Orchard meadow understory (Z12)</text>
+  <text x="360" y="54" class="subtitle">květnatá luční směs (regionální) · buňka 1k · 41.36 m²</text>
+  <text x="360" y="70" class="subtitle">Z12 — extenzivní květnatá louka pod ovocnými stromy (výsev, ne sadba); jahodník a svízel u stinného okraje.</text>
+  <defs><clipPath id="bed">
+    <polygon points="241.68,658.62 222.57,153.28 477.43,153.28 477.43,686.72"/>
+  </clipPath></defs>
+  <polygon points="241.68,658.62 222.57,153.28 477.43,153.28 477.43,686.72" fill="#eef1e2" stroke="#6a7a3a" stroke-width="1.5"/>
+  <g clip-path="url(#bed)">
+    <line x1="205.62" y1="120" x2="205.62" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="233.36" y1="120" x2="233.36" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="261.09" y1="120" x2="261.09" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="288.83" y1="120" x2="288.83" y2="720" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="316.57" y1="120" x2="316.57" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="344.3" y1="120" x2="344.3" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="372.04" y1="120" x2="372.04" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="399.77" y1="120" x2="399.77" y2="720" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="427.51" y1="120" x2="427.51" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="455.24" y1="120" x2="455.24" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="482.98" y1="120" x2="482.98" y2="720" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="136.64" x2="510.71" y2="136.64" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="164.38" x2="510.71" y2="164.38" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="192.11" x2="510.71" y2="192.11" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="189.29" y1="219.85" x2="510.71" y2="219.85" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="247.58" x2="510.71" y2="247.58" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="275.32" x2="510.71" y2="275.32" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="303.05" x2="510.71" y2="303.05" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="189.29" y1="330.79" x2="510.71" y2="330.79" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="358.53" x2="510.71" y2="358.53" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="386.26" x2="510.71" y2="386.26" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="414" x2="510.71" y2="414" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="189.29" y1="441.73" x2="510.71" y2="441.73" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="469.47" x2="510.71" y2="469.47" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="497.2" x2="510.71" y2="497.2" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="524.94" x2="510.71" y2="524.94" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="189.29" y1="552.67" x2="510.71" y2="552.67" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="580.41" x2="510.71" y2="580.41" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="608.15" x2="510.71" y2="608.15" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="635.88" x2="510.71" y2="635.88" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="189.29" y1="663.62" x2="510.71" y2="663.62" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="189.29" y1="691.35" x2="510.71" y2="691.35" stroke="#dcdcd2" stroke-width="0.6"/>
+  </g>
+  <circle cx="244.45" cy="192.11" r="27.74" fill="none" stroke="#008300" stroke-width="1.5"/><circle cx="244.45" cy="192.11" r="2" fill="#008300"/>
+  <circle cx="399.77" cy="275.32" r="27.74" fill="none" stroke="#008300" stroke-width="1.5"/><circle cx="399.77" cy="275.32" r="2" fill="#008300"/>
+  <circle cx="244.45" cy="414" r="27.74" fill="none" stroke="#008300" stroke-width="1.5"/><circle cx="244.45" cy="414" r="2" fill="#008300"/>
+  <circle cx="399.77" cy="497.2" r="27.74" fill="none" stroke="#008300" stroke-width="1.5"/><circle cx="399.77" cy="497.2" r="2" fill="#008300"/>
+  <circle cx="244.45" cy="635.88" r="27.74" fill="none" stroke="#008300" stroke-width="1.5"/><circle cx="244.45" cy="635.88" r="2" fill="#008300"/>
+  <circle cx="399.77" cy="691.35" r="27.74" fill="none" stroke="#008300" stroke-width="1.5"/><circle cx="399.77" cy="691.35" r="2" fill="#008300"/>
+  <text x="350" y="420" class="lbl">výsev luční směsi 5 g/m² (0.21 kg)</text>
+  <g transform="translate(189.29, 738)" font-size="10"><rect x="0" y="0" width="27.74" height="6" fill="#2a2a2a"/><rect x="27.74" y="0" width="27.74" height="6" fill="white" stroke="#2a2a2a" stroke-width="0.8"/><text x="0" y="18" style="text-anchor:start">0</text><text x="55.47" y="18" style="text-anchor:middle">1 m</text><text x="85.47" y="18" style="text-anchor:start;fill:#888">rastr 0.5 m (silněji 2 m dle layout.js)</text></g>
+  <text x="700" y="110" class="th" font-size="11">LEGENDA ROLÍ</text>
+  <circle cx="710" cy="134" r="7" fill="none" stroke="#008300" stroke-width="2"/><circle cx="710" cy="134" r="2" fill="#008300"/><text x="726" y="138" class="td">stávající ovocné stromy (kontext)</text>
+  <text x="703" y="158" class="td">◦ cibuloviny — jen v tabulce (414 ks, sázet mezi trvalky)</text>
+  <text x="700" y="192" class="th" font-size="11">VÝKAZ ROSTLIN</text>
+  <text x="700" y="208" class="th">druh</text><text x="916" y="208" class="th">role</text><text x="1016" y="208" class="th" text-anchor="end">ks</text><text x="1054" y="208" class="th" text-anchor="end">ks/m²</text><text x="1090" y="208" class="th" text-anchor="end">bal.</text>
+  <line x1="700" y1="212" x2="1090" y2="212" stroke="#bbb" stroke-width="0.8"/>
+  <text x="700" y="232" class="td">květnatá luční směs (regionální)</text><text x="700" y="242" class="td-lat">výsev 5 g/m²</text>
+  <text x="916" y="232" class="td" style="font-size:9px">výsev</text><text x="1016" y="232" class="td" text-anchor="end">0.21 kg</text><text x="1054" y="232" class="td" text-anchor="end"></text><text x="1090" y="232" class="td" text-anchor="end">osivo</text>
+  <text x="700" y="256" class="td">narcis bílý</text><text x="700" y="266" class="td-lat">Narcissus poeticus</text>
+  <text x="916" y="256" class="td" style="font-size:9px">cibulovina</text><text x="1016" y="256" class="td" text-anchor="end">248</text><text x="1054" y="256" class="td" text-anchor="end">6</text><text x="1090" y="256" class="td" text-anchor="end">cibule</text>
+  <text x="700" y="280" class="td">ladoňkovec</text><text x="700" y="290" class="td-lat">Camassia leichtlinii</text>
+  <text x="916" y="280" class="td" style="font-size:9px">cibulovina</text><text x="1016" y="280" class="td" text-anchor="end">166</text><text x="1054" y="280" class="td" text-anchor="end">4</text><text x="1090" y="280" class="td" text-anchor="end">cibule</text>
+  <text x="700" y="304" class="td">jahodník obecný</text><text x="700" y="314" class="td-lat">Fragaria vesca</text>
+  <text x="916" y="304" class="td" style="font-size:9px">půdopokryvné</text><text x="1016" y="304" class="td" text-anchor="end">40</text><text x="1054" y="304" class="td" text-anchor="end">1</text><text x="1090" y="304" class="td" text-anchor="end">P9</text>
+  <text x="700" y="328" class="td">svízel vonný</text><text x="700" y="338" class="td-lat">Galium odoratum</text>
+  <text x="916" y="328" class="td" style="font-size:9px">půdopokryvné</text><text x="1016" y="328" class="td" text-anchor="end">30</text><text x="1054" y="328" class="td" text-anchor="end">0.7</text><text x="1090" y="328" class="td" text-anchor="end">P9</text>
+  <text x="40" y="770" font-size="10" style="text-anchor:start;fill:#888">Hustota 6.5 trvalek/m², 25 cibulí/m² (Flera); role split 8/50/30/12 % je konvence projektu. Rozmístění teček je algoritmické (seed 431498541), ne osazovací plán 1:1. node generate-plansheets.js</text>
+</svg>

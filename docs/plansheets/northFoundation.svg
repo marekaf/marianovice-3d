@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
+  <style>
+    text { font-family: -apple-system, sans-serif; fill: #2a2a2a; }
+    .title { font-size: 18px; font-weight: 700; text-anchor: middle; }
+    .subtitle { font-size: 11px; fill: #666; text-anchor: middle; }
+    .lbl { font-size: 12px; text-anchor: middle; }
+    .lbl-sm { font-size: 10px; text-anchor: middle; }
+    .dim { font-size: 9px; fill: #b22; text-anchor: middle; font-style: italic; }
+    .th { font-size: 9px; fill: #555; font-weight: 600; }
+    .td { font-size: 10px; }
+    .td-lat { font-size: 9px; font-style: italic; fill: #666; }
+  </style>
+  <rect x="0" y="0" width="1100" height="780" fill="white"/>
+  <text x="360" y="34" class="title">North foundation bed — Kvetoucí stín (Z9a)</text>
+  <text x="360" y="54" class="subtitle">Kvetoucí stín — stín + vlhko (pod stromy, severní zeď) · buňka 6c · 15.9 m²</text>
+  <text x="360" y="70" class="subtitle">Z9a — severní podezdívkový záhon v plné receptuře; drženo mimo okapovou linii střechy.</text>
+  <defs><clipPath id="bed">
+    <polygon points="71.53,380.59 628.47,380.59 628.47,459.41 71.53,459.41"/>
+  </clipPath></defs>
+  <polygon points="71.53,380.59 628.47,380.59 628.47,459.41 71.53,459.41" fill="#eef1e2" stroke="#6a7a3a" stroke-width="1.5"/>
+  <g clip-path="url(#bed)">
+    <line x1="61.02" y1="349.07" x2="61.02" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="87.29" y1="349.07" x2="87.29" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="113.56" y1="349.07" x2="113.56" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="139.83" y1="349.07" x2="139.83" y2="490.93" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="166.1" y1="349.07" x2="166.1" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="192.37" y1="349.07" x2="192.37" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="218.64" y1="349.07" x2="218.64" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="244.92" y1="349.07" x2="244.92" y2="490.93" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="271.19" y1="349.07" x2="271.19" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="297.46" y1="349.07" x2="297.46" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="323.73" y1="349.07" x2="323.73" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="350" y1="349.07" x2="350" y2="490.93" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="376.27" y1="349.07" x2="376.27" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="402.54" y1="349.07" x2="402.54" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="428.81" y1="349.07" x2="428.81" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="455.08" y1="349.07" x2="455.08" y2="490.93" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="481.36" y1="349.07" x2="481.36" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="507.63" y1="349.07" x2="507.63" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="533.9" y1="349.07" x2="533.9" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="560.17" y1="349.07" x2="560.17" y2="490.93" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="586.44" y1="349.07" x2="586.44" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="612.71" y1="349.07" x2="612.71" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="638.98" y1="349.07" x2="638.98" y2="490.93" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="40" y1="375.34" x2="660" y2="375.34" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="40" y1="401.61" x2="660" y2="401.61" stroke="#b8b8ae" stroke-width="1"/>
+    <line x1="40" y1="427.88" x2="660" y2="427.88" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="40" y1="454.15" x2="660" y2="454.15" stroke="#dcdcd2" stroke-width="0.6"/>
+    <line x1="40" y1="480.42" x2="660" y2="480.42" stroke="#dcdcd2" stroke-width="0.6"/>
+  </g>
+  <circle cx="258.96" cy="400.54" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="262.27" cy="425.02" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="240.31" cy="447.15" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="274.29" cy="393.22" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="238.72" cy="398.04" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="290.5" cy="409.49" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="205.68" cy="400.84" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="291.88" cy="433.85" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="301" cy="447.83" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="248.42" cy="415.86" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="276.37" cy="442.16" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="332.55" cy="398.31" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="320.26" cy="441.67" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="254.67" cy="457.58" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="285.87" cy="457.56" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="250.47" cy="384.23" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="216.24" cy="441.04" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="249.64" cy="433.87" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="229.19" cy="431.55" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="280.88" cy="423.9" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="163.75" cy="453.29" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="188.07" cy="440.54" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="131.74" cy="437.96" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="193.54" cy="458.82" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="133.75" cy="456.57" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="131.49" cy="415.8" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="180.24" cy="457.74" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="103.78" cy="407.92" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="105.41" cy="459.15" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="148.88" cy="442.61" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="293.62" cy="392.77" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="273.21" cy="408.6" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="231.39" cy="381.42" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="310.5" cy="382.88" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="310.93" cy="398.16" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="199.02" cy="449.8" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="270.3" cy="458.5" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="264.49" cy="414.02" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="323.65" cy="386.14" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="308.57" cy="424.82" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="225.06" cy="393.85" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="263.86" cy="446.54" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="225.24" cy="454.14" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="173.15" cy="419.56" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="236.99" cy="419.36" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="202.2" cy="434.67" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="294.98" cy="419" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="302.24" cy="458.4" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="202.15" cy="418.5" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="316.09" cy="453.6" r="7.36" fill="#eb6834" stroke="white" stroke-width="1"/>
+  <circle cx="470.85" cy="396.09" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="552.42" cy="381.65" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="611.69" cy="432.76" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="108.53" cy="383.33" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="505.61" cy="459.32" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="627.1" cy="410.16" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="414.73" cy="452.21" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="84.41" cy="456.17" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="450.32" cy="455.99" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="441.77" cy="381.16" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="361.09" cy="451.03" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="516.78" cy="390.65" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="570.47" cy="455.99" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="378.91" cy="382.62" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="530.21" cy="455.13" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="475.35" cy="454.74" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="585.14" cy="380.62" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="128.8" cy="382.02" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="71.7" cy="384.8" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="84.38" cy="400.04" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="352.16" cy="382.87" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="192.94" cy="387.43" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="609.1" cy="383.85" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="551.5" cy="459.21" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="162.1" cy="386.8" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="626.81" cy="444.89" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="399.62" cy="399.65" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="412.72" cy="383.33" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="335.81" cy="453.78" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="72.65" cy="434.12" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="599.33" cy="456.69" r="4.73" fill="#1baf7a" stroke="white" stroke-width="1"/>
+  <circle cx="480" cy="424.67" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="452.64" cy="432.03" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="579.17" cy="405.99" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="386.63" cy="431.56" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="502.4" cy="428.62" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="438.68" cy="411.93" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="574.18" cy="435.65" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="491.13" cy="446.14" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="373.42" cy="408.33" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="420.34" cy="431.83" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="111.69" cy="431.75" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="590.88" cy="421.61" r="5.78" fill="#4a3aa7" stroke="white" stroke-width="1"/>
+  <circle cx="557.73" cy="410.95" r="11.56" fill="#2a78d6" stroke="white" stroke-width="1.2"/>
+  <circle cx="326.53" cy="418.5" r="11.56" fill="#2a78d6" stroke="white" stroke-width="1.2"/>
+  <circle cx="163.05" cy="430.36" r="11.56" fill="#2a78d6" stroke="white" stroke-width="1.2"/>
+  <circle cx="342.73" cy="426.75" r="11.56" fill="#2a78d6" stroke="white" stroke-width="1.2"/>
+  <circle cx="191.15" cy="425.08" r="11.56" fill="#2a78d6" stroke="white" stroke-width="1.2"/>
+  <circle cx="167.05" cy="407.9" r="11.56" fill="#2a78d6" stroke="white" stroke-width="1.2"/>
+  <circle cx="553.41" cy="431.51" r="11.56" fill="#2a78d6" stroke="white" stroke-width="1.2"/>
+  <circle cx="226.65" cy="409.66" r="11.56" fill="#2a78d6" stroke="white" stroke-width="1.2"/>
+  <g transform="translate(40, 508.93)" font-size="10"><rect x="0" y="0" width="26.27" height="6" fill="#2a2a2a"/><rect x="26.27" y="0" width="26.27" height="6" fill="white" stroke="#2a2a2a" stroke-width="0.8"/><text x="0" y="18" style="text-anchor:start">0</text><text x="52.54" y="18" style="text-anchor:middle">1 m</text><text x="82.53999999999999" y="18" style="text-anchor:start;fill:#888">rastr 0.5 m (silněji 2 m dle layout.js)</text></g>
+  <text x="700" y="110" class="th" font-size="11">LEGENDA ROLÍ</text>
+  <circle cx="710" cy="134" r="6.5" fill="#2a78d6" stroke="white" stroke-width="1"/><text x="726" y="138" class="td">kosterní — 8 ks (velké tečky, řídce, střed/pozadí)</text>
+  <circle cx="710" cy="154" r="4.5" fill="#eb6834" stroke="white" stroke-width="1"/><text x="726" y="158" class="td">skupinové — 50 ks (drifty)</text>
+  <circle cx="710" cy="174" r="3" fill="#1baf7a" stroke="white" stroke-width="1"/><text x="726" y="178" class="td">půdopokryvné — 31 ks (okraje)</text>
+  <circle cx="710" cy="194" r="3.5" fill="#4a3aa7" stroke="white" stroke-width="1"/><text x="726" y="198" class="td">vtroušené — 12 ks (rozptýleně)</text>
+  <text x="703" y="218" class="td">◦ cibuloviny — jen v tabulce (397 ks, sázet mezi trvalky)</text>
+  <text x="700" y="252" class="th" font-size="11">VÝKAZ ROSTLIN</text>
+  <text x="700" y="268" class="th">druh</text><text x="916" y="268" class="th">role</text><text x="1016" y="268" class="th" text-anchor="end">ks</text><text x="1054" y="268" class="th" text-anchor="end">ks/m²</text><text x="1090" y="268" class="th" text-anchor="end">bal.</text>
+  <line x1="700" y1="272" x2="1090" y2="272" stroke="#bbb" stroke-width="0.8"/>
+  <text x="700" y="292" class="td">plochoklásek širolistý</text><text x="700" y="302" class="td-lat">Chasmanthium latifolium</text>
+  <text x="916" y="292" class="td" style="font-size:9px">kosterní</text><text x="1016" y="292" class="td" text-anchor="end">5</text><text x="1054" y="292" class="td" text-anchor="end">0.3</text><text x="1090" y="292" class="td" text-anchor="end">C2</text>
+  <text x="700" y="316" class="td">kokořík</text><text x="700" y="326" class="td-lat">Polygonatum × hybridum 'Weihenstephan'</text>
+  <text x="916" y="316" class="td" style="font-size:9px">kosterní</text><text x="1016" y="316" class="td" text-anchor="end">3</text><text x="1054" y="316" class="td" text-anchor="end">0.2</text><text x="1090" y="316" class="td" text-anchor="end">C9</text>
+  <text x="700" y="340" class="td">udatna</text><text x="700" y="350" class="td-lat">Aruncus aethusifolius 'Horatio'</text>
+  <text x="916" y="340" class="td" style="font-size:9px">skupinové</text><text x="1016" y="340" class="td" text-anchor="end">10</text><text x="1054" y="340" class="td" text-anchor="end">0.6</text><text x="1090" y="340" class="td" text-anchor="end">C9</text>
+  <text x="700" y="364" class="td">čemeřice smrdutá</text><text x="700" y="374" class="td-lat">Helleborus foetidus</text>
+  <text x="916" y="364" class="td" style="font-size:9px">skupinové</text><text x="1016" y="364" class="td" text-anchor="end">10</text><text x="1054" y="364" class="td" text-anchor="end">0.6</text><text x="1090" y="364" class="td" text-anchor="end">C9</text>
+  <text x="700" y="388" class="td">dlužicha</text><text x="700" y="398" class="td-lat">Heuchera villosa var. macrorrhiza</text>
+  <text x="916" y="388" class="td" style="font-size:9px">skupinové</text><text x="1016" y="388" class="td" text-anchor="end">10</text><text x="1054" y="388" class="td" text-anchor="end">0.6</text><text x="1090" y="388" class="td" text-anchor="end">C9</text>
+  <text x="700" y="412" class="td">japonská astra</text><text x="700" y="422" class="td-lat">Kalimeris incisa 'Madiva'</text>
+  <text x="916" y="412" class="td" style="font-size:9px">skupinové</text><text x="1016" y="412" class="td" text-anchor="end">10</text><text x="1054" y="412" class="td" text-anchor="end">0.6</text><text x="1090" y="412" class="td" text-anchor="end">C9</text>
+  <text x="700" y="436" class="td">hvězdnice rozkladitá</text><text x="700" y="446" class="td-lat">Aster divaricatus</text>
+  <text x="916" y="436" class="td" style="font-size:9px">skupinové</text><text x="1016" y="436" class="td" text-anchor="end">10</text><text x="1054" y="436" class="td" text-anchor="end">0.6</text><text x="1090" y="436" class="td" text-anchor="end">C9</text>
+  <text x="700" y="460" class="td">škornice</text><text x="700" y="470" class="td-lat">Epimedium × youngianum 'Niveum'</text>
+  <text x="916" y="460" class="td" style="font-size:9px">půdopokryvné</text><text x="1016" y="460" class="td" text-anchor="end">9</text><text x="1054" y="460" class="td" text-anchor="end">0.6</text><text x="1090" y="460" class="td" text-anchor="end">C9</text>
+  <text x="700" y="484" class="td">svízel vonný</text><text x="700" y="494" class="td-lat">Galium odoratum</text>
+  <text x="916" y="484" class="td" style="font-size:9px">půdopokryvné</text><text x="1016" y="484" class="td" text-anchor="end">11</text><text x="1054" y="484" class="td" text-anchor="end">0.7</text><text x="1090" y="484" class="td" text-anchor="end">C9</text>
+  <text x="700" y="508" class="td">ostřice Morrowova</text><text x="700" y="518" class="td-lat">Carex morrowii 'Hazy Green'</text>
+  <text x="916" y="508" class="td" style="font-size:9px">půdopokryvné</text><text x="1016" y="508" class="td" text-anchor="end">11</text><text x="1054" y="508" class="td" text-anchor="end">0.7</text><text x="1090" y="508" class="td" text-anchor="end">C9</text>
+  <text x="700" y="532" class="td">orlíček</text><text x="700" y="542" class="td-lat">Aquilegia vulgaris 'White Barlow'</text>
+  <text x="916" y="532" class="td" style="font-size:9px">vtroušené</text><text x="1016" y="532" class="td" text-anchor="end">7</text><text x="1054" y="532" class="td" text-anchor="end">0.4</text><text x="1090" y="532" class="td" text-anchor="end">C9</text>
+  <text x="700" y="556" class="td">hrachor jarní</text><text x="700" y="566" class="td-lat">Lathyrus vernus</text>
+  <text x="916" y="556" class="td" style="font-size:9px">vtroušené</text><text x="1016" y="556" class="td" text-anchor="end">5</text><text x="1054" y="556" class="td" text-anchor="end">0.3</text><text x="1090" y="556" class="td" text-anchor="end">C9</text>
+  <text x="700" y="580" class="td">puškinie</text><text x="700" y="590" class="td-lat">Puschkinia scilloides</text>
+  <text x="916" y="580" class="td" style="font-size:9px">cibulovina</text><text x="1016" y="580" class="td" text-anchor="end">99</text><text x="1054" y="580" class="td" text-anchor="end">6.2</text><text x="1090" y="580" class="td" text-anchor="end">cibule</text>
+  <text x="700" y="604" class="td">narcis</text><text x="700" y="614" class="td-lat">Narcissus 'Thalia'</text>
+  <text x="916" y="604" class="td" style="font-size:9px">cibulovina</text><text x="1016" y="604" class="td" text-anchor="end">99</text><text x="1054" y="604" class="td" text-anchor="end">6.2</text><text x="1090" y="604" class="td" text-anchor="end">cibule</text>
+  <text x="700" y="628" class="td">hyacintovec</text><text x="700" y="638" class="td-lat">Hyacinthoides hispanica 'White Triumphator'</text>
+  <text x="916" y="628" class="td" style="font-size:9px">cibulovina</text><text x="1016" y="628" class="td" text-anchor="end">79</text><text x="1054" y="628" class="td" text-anchor="end">5</text><text x="1090" y="628" class="td" text-anchor="end">cibule</text>
+  <text x="700" y="652" class="td">tulipán zelenokvětý</text><text x="700" y="662" class="td-lat">Tulipa viridiflora 'Green Star'</text>
+  <text x="916" y="652" class="td" style="font-size:9px">cibulovina</text><text x="1016" y="652" class="td" text-anchor="end">60</text><text x="1054" y="652" class="td" text-anchor="end">3.8</text><text x="1090" y="652" class="td" text-anchor="end">cibule</text>
+  <text x="700" y="676" class="td">ladoňkovec</text><text x="700" y="686" class="td-lat">Camassia leichtlinii</text>
+  <text x="916" y="676" class="td" style="font-size:9px">cibulovina</text><text x="1016" y="676" class="td" text-anchor="end">60</text><text x="1054" y="676" class="td" text-anchor="end">3.8</text><text x="1090" y="676" class="td" text-anchor="end">cibule</text>
+  <text x="40" y="770" font-size="10" style="text-anchor:start;fill:#888">Hustota 6.5 trvalek/m², 25 cibulí/m² (Flera); role split 8/50/30/12 % je konvence projektu. Rozmístění teček je algoritmické (seed 2843021013), ne osazovací plán 1:1. node generate-plansheets.js</text>
+</svg>
