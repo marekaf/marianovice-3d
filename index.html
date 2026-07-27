@@ -98,6 +98,7 @@ const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
 const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
+const FPC = GARDEN.elements.find(e => e.id === 'firePit').parts.find(pt => pt.kind === 'circle');
 const inPlot = (x, z) => { let inside = false; const pts = GARDEN.plot.vertices; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, zi] = pts[i], [xj, zj] = pts[j]; if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside; } return inside; };
 
 // ───────────────────────── SCENE ─────────────────────────
@@ -771,11 +772,8 @@ function makeGableRoof(xMin, xMax, zMin, zMax, wallTop, peakHeight) {
     xMid, peakY,  zMax,  // 5
   ];
   const indices = [
-    0,1,2,        // front gable (z=zMin)
-    3,5,4,        // back gable (z=zMax)
-    0,3,5, 0,5,2, // left slope
+    0,3,5, 0,5,2, // left slope — gable ends (štít) are facade, drawn separately
     1,2,5, 1,5,4, // right slope
-    // bottom (closes box, optional)
   ];
   const geom = new THREE.BufferGeometry();
   geom.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
@@ -851,6 +849,9 @@ roofGroup.add(sWingRoofMesh);
     m.castShadow = true;
     scene.add(m);
   };
+  const gmidX = (HC[0] + HC[1]) / 2;
+  tri(HC[0], wallTopY, HB[1], HC[1], wallTopY, HB[1], gmidX, wallTopY + roofRise, HB[1]);
+  tri(HC[0], wallTopY, HB[3], HC[1], wallTopY, HB[3], gmidX, wallTopY + roofRise, HB[3]);
   for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
     tri(HB[0], wallTopY, z0, HC[0], wallTopY, z0, HC[0], wallTopY + 0.9, z0);
     tri(HB[0], wallTopY, z1, HC[0], wallTopY, z1, HC[0], wallTopY + 0.9, z1);
@@ -858,6 +859,23 @@ roofGroup.add(sWingRoofMesh);
     band.position.set(HC[0] - 0.03, wallTopY + 0.45, (z0 + z1) / 2);
     band.castShadow = true;
     scene.add(band);
+  }
+}
+
+// Standing-seam stripes on both wing shed roofs (same style as the main roof)
+{
+  const stripeMatW = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
+  const wallTopY = houseTerrainY + wallH;
+  const xMin = HB[0] - 0.45, xMax = HC[0];
+  const len = Math.hypot(xMax - xMin, 0.9);
+  const ang = Math.atan2(0.9, xMax - xMin);
+  for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
+    for (let zs = z0 + 0.2; zs < z1; zs += 0.4) {
+      const st = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), stripeMatW);
+      st.position.set((xMin + xMax) / 2, wallTopY + 0.45 + 0.03, zs);
+      st.rotation.z = ang;
+      roofGroup.add(st);
+    }
   }
 }
 
@@ -1017,21 +1035,51 @@ scene.add(softub);
 const PG = rectOf('pergola');
 addLamellarPergola(PG.x, PG.y, PG.w, PG.d, 2.5, 0x8a6840);
 
+// Pergola: paved floor + table for 8-10
+addTerrainPlatform([[25.48, 1.2], [32.08, 1.2], [32.08, 5.8], [25.48, 5.8]], 0.08, 0xd8d2c8);
+{
+  const tx = 28.8, tz = 3.5, baseY = terrainHeight(tx, tz) + 0.08;
+  const wood = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.5 });
+  const top = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.07, 1.0), wood);
+  top.position.set(tx, baseY + 0.75, tz);
+  top.castShadow = true;
+  furnitureGroup.add(top);
+  for (const [dx, dz] of [[-1.25, -0.4], [1.25, -0.4], [-1.25, 0.4], [1.25, 0.4]]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.75, 0.07), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+    leg.position.set(tx + dx, baseY + 0.375, tz + dz);
+    furnitureGroup.add(leg);
+  }
+  for (const dz of [-0.85, 0.85]) {
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.06, 0.35), wood);
+    bench.position.set(tx, baseY + 0.46, tz + dz);
+    bench.castShadow = true;
+    furnitureGroup.add(bench);
+    for (const dx of [-1.1, 1.1]) {
+      const bl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.44, 0.3), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+      bl.position.set(tx + dx, baseY + 0.22, tz + dz);
+      furnitureGroup.add(bl);
+    }
+  }
+}
+
 // ───────────────────────── TERRACES (sledují terén) ─────────────────────────
 // Terasa V — level deck at house floor, aligned with the HS sliding-door sills
 const deckTop = houseBaseY + 0.05;
 {
-  const ET = rectOf('eastTerrace');
-  const deckTex = woodTex.clone();
-  deckTex.repeat.set(ET.w / 2, ET.d / 2);
-  const deck = new THREE.Mesh(
-    new THREE.BoxGeometry(ET.w, 0.08, ET.d),
-    new THREE.MeshStandardMaterial({ color: 0xa87d4a, map: deckTex, roughness: 0.7 })
-  );
-  deck.position.set(ET.x + ET.w / 2, deckTop - 0.04, ET.y + ET.d / 2);
-  deck.castShadow = true;
-  deck.receiveShadow = true;
-  scene.add(deck);
+  const etRects = EL.eastTerrace.parts.filter(pt => pt.kind === 'rect');
+  const ET = etRects[0];
+  for (const R of etRects) {
+    const deckTex = woodTex.clone();
+    deckTex.repeat.set(R.w / 2, R.d / 2);
+    const deck = new THREE.Mesh(
+      new THREE.BoxGeometry(R.w, 0.08, R.d),
+      new THREE.MeshStandardMaterial({ color: 0xa87d4a, map: deckTex, roughness: 0.7 })
+    );
+    deck.position.set(R.x + R.w / 2, deckTop - 0.04, R.y + R.d / 2);
+    deck.castShadow = true;
+    deck.receiveShadow = true;
+    scene.add(deck);
+  }
   // Support posts on the downhill (east) edge down to terrain
   const deckPostMat = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.85 });
   for (const pz of [ET.y + 0.2, ET.y + ET.d / 2, ET.y + ET.d - 0.2]) {
@@ -1096,33 +1144,40 @@ const drivewayGeom = (() => {
   const xs = drivewayPts.map(p => p[0]), zs = drivewayPts.map(p => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const step = 0.5, nx = Math.ceil((x1 - x0) / step), nz = Math.ceil((z1 - z0) / step);
-  const verts = [], idx = [], vid = new Map();
-  const clampPt = (x, z) => {
-    if (inDw(x, z)) return [x, z];
-    let best = null, bd = Infinity;
+  const verts = [], idx = [];
+  const dwArea = drivewayPts.reduce((a, [px, pz], i) => {
+    const [qx, qz] = drivewayPts[(i + 1) % drivewayPts.length];
+    return a + px * qz - qx * pz;
+  }, 0);
+  const dwSgn = dwArea > 0 ? 1 : -1;
+  const clipCell = (poly) => {
+    let out = poly;
     for (let i = 0, j = drivewayPts.length - 1; i < drivewayPts.length; j = i++) {
       const [ax, az] = drivewayPts[j], [bx2, bz2] = drivewayPts[i];
-      const dx = bx2 - ax, dz = bz2 - az, L2 = dx * dx + dz * dz;
-      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
-      const px = ax + t * dx, pz = az + t * dz, d = (px - x) ** 2 + (pz - z) ** 2;
-      if (d < bd) { bd = d; best = [px, pz]; }
+      const inp = out; out = [];
+      const side = (px, pz) => dwSgn * ((bx2 - ax) * (pz - az) - (bz2 - az) * (px - ax));
+      for (let k = 0; k < inp.length; k++) {
+        const [cx1, cz1] = inp[k], [cx2, cz2] = inp[(k + 1) % inp.length];
+        const s1 = side(cx1, cz1), s2 = side(cx2, cz2);
+        if (s1 >= 0) out.push([cx1, cz1]);
+        if ((s1 < 0) !== (s2 < 0)) {
+          const t = s1 / (s1 - s2);
+          out.push([cx1 + (cx2 - cx1) * t, cz1 + (cz2 - cz1) * t]);
+        }
+      }
+      if (!out.length) break;
     }
-    return best;
+    return out;
   };
-  const vAt = (i, j) => {
-    const k = i * (nz + 1) + j;
-    if (vid.has(k)) return vid.get(k);
-    const [x, z] = clampPt(x0 + i * step, z0 + j * step);
-    const id = verts.length / 3;
-    verts.push(x, terrainHeight(x, z) + 0.05, z);
-    vid.set(k, id);
-    return id;
-  };
+  const addV = (x, z) => { const id = verts.length / 3; verts.push(x, terrainHeight(x, z) + 0.05, z); return id; };
   for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
-    const cx = x0 + (i + 0.5) * step, cz = z0 + (j + 0.5) * step;
-    if (!inDw(cx, cz)) continue;
-    const a = vAt(i, j), b = vAt(i + 1, j), c = vAt(i + 1, j + 1), d = vAt(i, j + 1);
-    idx.push(a, c, b, a, d, c);
+    const cell = clipCell([
+      [x0 + i * step, z0 + j * step], [x0 + (i + 1) * step, z0 + j * step],
+      [x0 + (i + 1) * step, z0 + (j + 1) * step], [x0 + i * step, z0 + (j + 1) * step],
+    ]);
+    if (cell.length < 3) continue;
+    const vids = cell.map(([x, z]) => addV(x, z));
+    for (let k = 1; k < vids.length - 1; k++) idx.push(vids[0], vids[k + 1], vids[k]);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
@@ -1403,36 +1458,39 @@ const waterNormal = (() => {
   // HS sliding doors on east (in notch) — floor to near-ceiling 2.27 m, sill = 0
   // HS1 = 3290×2270, HS2 = 5160×2270
   const EN = EL.house.meta.eNotch;
-  const hsPortal = (cy, w, h) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, w), winMat);
-    m.position.set(EN[0] + 0.03, ty + h/2 + 0.05, cy);  // sill ~5 cm
-    scene.add(m);
+  const frameA = new THREE.MeshStandardMaterial({ color: 0x2b2d30, roughness: 0.4, metalness: 0.5 });
+  const winX = (wallX, dir, z, w, h, sillY) => {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.09, h, w), frameA);
+    f.position.set(wallX + dir * 0.02, sillY + h / 2, z);
+    scene.add(f);
+    const g = new THREE.Mesh(new THREE.BoxGeometry(0.05, h - 0.12, w - 0.12), winMat);
+    g.position.set(wallX + dir * 0.05, sillY + h / 2, z);
+    scene.add(g);
   };
-  hsPortal(13.5, 3.29, 2.27);  // HS1
-  hsPortal(18.5, 5.16, 2.27);  // HS2
-  // Bedroom panorama window on east wall (NE) — 2.0×2.27 m, sill 0.3 m
-  const bedWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 2.0), winMat);
-  bedWin.position.set(HB[2] + 0.03, ty + 0.3 + 1.135, 9.5);
-  scene.add(bedWin);
-  // North window in middle of north wall — height 2270, sill ~0.3 m
-  const o6 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.27, 0.06), winMat);
-  o6.position.set((HB[0] + HB[2]) / 2, ty + 0.3 + 1.135, HB[1] - 0.03);
-  scene.add(o6);
-  // West windows per OKNA schedule: offices 1600×2270, guest room + bathroom 1250×2270, all h 2.27
+  const winZ = (x, wallZ, dir, w, h, sillY) => {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.09), frameA);
+    f.position.set(x, sillY + h / 2, wallZ + dir * 0.02);
+    scene.add(f);
+    const g = new THREE.Mesh(new THREE.BoxGeometry(w - 0.12, h - 0.12, 0.05), winMat);
+    g.position.set(x, sillY + h / 2, wallZ + dir * 0.05);
+    scene.add(g);
+  };
+  // HS sliding portals in the east notch — HS1 3290×2270, HS2 5160×2270, sill ~5 cm
+  winX(EN[0], 1, 13.5, 3.29, 2.27, ty + 0.05);
+  winX(EN[0], 1, 18.5, 5.16, 2.27, ty + 0.05);
+  // Bedroom panorama window on east wall (NE) — 2.0×2.27, sill 0.3
+  winX(HB[2], 1, 9.5, 2.0, 2.27, ty + 0.3);
+  // North window in middle of north wall — 900×2270, sill 0.3
+  winZ((HB[0] + HB[2]) / 2, HB[1], -1, 0.9, 2.27, ty + 0.3);
+  // West windows per OKNA: offices 1600×2270, guest+bathroom 1250×2270, all sill 0.3
   for (const { z, w } of [{ z: 10.5, w: 1.6 }, { z: 13.5, w: 1.6 }, { z: 22, w: 1.25 }, { z: 24.5, w: 1.25 }]) {
-    const win = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, w), winMat);
-    win.position.set(HB[0] - 0.03, ty + 0.3 + 2.27 / 2, z);
-    scene.add(win);
+    winX(HB[0], -1, z, w, 2.27, ty + 0.3);
   }
-  // Window (portal) from living room to atrium — on inner atrium wall, outward = -x into atrium
-  const atriumWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.27, 2.5), winMat);
-  atriumWin.position.set(HA[2] - 0.03, ty + 1.2 + 0.3, 17.55);
-  scene.add(atriumWin);
-  // South windows O1 (900×1250, bathroom + utility) — sill 0.9 m → top 2.15 m
+  // Living-room portal to the atrium
+  winX(HA[2], -1, 17.55, 2.5, 2.27, ty + 0.35);
+  // South windows O1 900×1250 (koupelna + technická), sill 0.9
   for (const x of [16.05, 19.3]) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.25, 0.06), winMat);
-    m.position.set(x, ty + 0.9 + 0.625, HB[3] + 0.03);
-    scene.add(m);
+    winZ(x, HB[3], 1, 0.9, 1.25, ty + 0.9);
   }
   // Entry doors — on east wall of south part (from carport to vestibule)
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 1.42), frameMat);
@@ -1745,7 +1803,7 @@ const smokeParticles = [];
       new THREE.SphereGeometry(0.2, 8, 6),
       new THREE.MeshStandardMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.4 })
     );
-    p.position.set(36, terrainHeight(36, 8) + 1, 8);
+    p.position.set(FPC.cx, terrainHeight(FPC.cx, FPC.cy) + 1, FPC.cy);
     p.userData = { phase: i / 6 };
     scene.add(p);
     smokeParticles.push(p);
@@ -2040,8 +2098,8 @@ const tourPath = [
   { p: [12, 4.5],    la: [17, 1.5],    dur: 2.5, label: 'Perennials by north fence' },
   { p: [19, 4.5],    la: [27, 2.5],    dur: 2.5, label: 'Approaching pergola' },
   { p: [24, 6.5],    la: [28.5, 3.5],  dur: 3,   label: 'At pergola + grill' },
-  { p: [30, 7.5],    la: [36, 8],      dur: 2.5, label: 'Toward fire pit' },
-  { p: [34, 9.5],    la: [36, 8],      dur: 3,   label: 'At fire pit' },
+  { p: [30, 7.5],    la: [37.5, 6.6],  dur: 2.5, label: 'Toward fire pit' },
+  { p: [34.5, 9],    la: [37.5, 6.6],  dur: 3,   label: 'At fire pit' },
   { p: [38, 12],     la: [42.3, 14],   dur: 2.5, label: 'East trees (privacy)' },
   { p: [34, 12],     la: [30.8, 14.4], dur: 3,   label: 'At the pond' },
   { p: [35, 18],     la: [40.5, 23.5], dur: 2.5, label: 'Parking + rain tank' },
@@ -2109,12 +2167,12 @@ function animate() {
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
   // Smoke particles rising and fading
-  const smokeBaseY = terrainHeight(36, 8);
+  const smokeBaseY = terrainHeight(FPC.cx, FPC.cy);
   for (const p of smokeParticles) {
     const phase = (t * 0.4 + p.userData.phase) % 1;
     p.position.y = smokeBaseY + 0.6 + phase * 4;
-    p.position.x = 36 + Math.sin(t + p.userData.phase * 6) * 0.4;
-    p.position.z = 8 + Math.cos(t * 0.5 + p.userData.phase * 6) * 0.3;
+    p.position.x = FPC.cx + Math.sin(t + p.userData.phase * 6) * 0.4;
+    p.position.z = FPC.cy + Math.cos(t * 0.5 + p.userData.phase * 6) * 0.3;
     p.material.opacity = 0.5 * (1 - phase);
     p.scale.setScalar(1 + phase * 1.5);
   }
