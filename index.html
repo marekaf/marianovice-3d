@@ -1149,15 +1149,20 @@ const drivewayGeom = (() => {
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const step = 0.5, nx = Math.ceil((x1 - x0) / step), nz = Math.ceil((z1 - z0) / step);
   const verts = [], idx = [];
-  const dwArea = drivewayPts.reduce((a, [px, pz], i) => {
-    const [qx, qz] = drivewayPts[(i + 1) % drivewayPts.length];
-    return a + px * qz - qx * pz;
-  }, 0);
-  const dwSgn = dwArea > 0 ? 1 : -1;
-  const clipCell = (poly) => {
+  // Concave outline: SH-clipping needs convex clips, so split into convex pieces
+  const dwParts = [
+    [[21.28, 19.4], [27.63, 19.4], [27.63, 26.44], [21.28, 26.44]],
+    [[21.28, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]],
+  ];
+  const clipCell = (poly, clipPts) => {
+    const dwArea = clipPts.reduce((a, [px, pz], i) => {
+      const [qx, qz] = clipPts[(i + 1) % clipPts.length];
+      return a + px * qz - qx * pz;
+    }, 0);
+    const dwSgn = dwArea > 0 ? 1 : -1;
     let out = poly;
-    for (let i = 0, j = drivewayPts.length - 1; i < drivewayPts.length; j = i++) {
-      const [ax, az] = drivewayPts[j], [bx2, bz2] = drivewayPts[i];
+    for (let i = 0, j = clipPts.length - 1; i < clipPts.length; j = i++) {
+      const [ax, az] = clipPts[j], [bx2, bz2] = clipPts[i];
       const inp = out; out = [];
       const side = (px, pz) => dwSgn * ((bx2 - ax) * (pz - az) - (bz2 - az) * (px - ax));
       for (let k = 0; k < inp.length; k++) {
@@ -1174,11 +1179,11 @@ const drivewayGeom = (() => {
     return out;
   };
   const addV = (x, z) => { const id = verts.length / 3; verts.push(x, terrainHeight(x, z) + 0.05, z); return id; };
-  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+  for (const part of dwParts) for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
     const cell = clipCell([
       [x0 + i * step, z0 + j * step], [x0 + (i + 1) * step, z0 + j * step],
       [x0 + (i + 1) * step, z0 + (j + 1) * step], [x0 + i * step, z0 + (j + 1) * step],
-    ]);
+    ], part);
     if (cell.length < 3) continue;
     const vids = cell.map(([x, z]) => addV(x, z));
     for (let k = 1; k < vids.length - 1; k++) idx.push(vids[0], vids[k + 1], vids[k]);
