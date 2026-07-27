@@ -5,7 +5,7 @@ const GARDEN = {
   m2px: 18,
   gridCellM: 2,
   title: "Garden schematic plan",
-  docMeta: { project: "Zahrada Mariánovice", place: "Mariánovice, Benešov", author: "M. Bartík", drawing: "Situace — osazovací koncept", revision: "R1" },
+  docMeta: { project: "Zahrada Mariánovice", place: "Mariánovice, Benešov", drawing: "Situace — osazovací koncept", revision: "R1" },
   plot: {
     vertices: [[0, 0], [44.16, 0], [44.16, 23.38], [43.11, 35.41], [1.15, 30.41]],
     sideLabels: [

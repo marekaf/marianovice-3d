@@ -364,7 +364,7 @@
     <text x="1006" y="832" class="tb-lbl">GRID</text>
     <text x="1006" y="843" class="tb-val">2 × 2 m</text>
     <text x="790" y="857" class="tb-lbl">DRAWN</text>
-    <text x="790" y="868" class="tb-val">M. Bartík</text>
+    <text x="790" y="868" class="tb-val"></text>
     <text x="1006" y="857" class="tb-lbl">NORTH</text>
     <text x="1006" y="868" class="tb-val">↑ sheet top</text>
   </g>
