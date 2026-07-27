@@ -50,6 +50,7 @@ const GARDEN = {
       name: "East terrace 4 × 11 m",
       parts: [
         { kind: "rect", x: 20.58, y: 11.58, w: 4, d: 10.95, fill: "#a87d4a", opacity: 0.78, stroke: "#5a3e25", sw: 1.2 },
+        { kind: "rect", x: 21.28, y: 8.4, w: 3.3, d: 3.18, fill: "#a87d4a", opacity: 0.78, stroke: "#5a3e25", sw: 1.2 },
         { kind: "text", x: 22.56, y: 16.39, text: "east terrace", cls: "lbl-w" },
         { kind: "text", x: 22.56, y: 17.28, text: "(E.02)", cls: "lbl-sm-w" },
         { kind: "text", x: 22.56, y: 18.17, text: "4 × 10.95 m", cls: "dim", fill: "#fff" }
