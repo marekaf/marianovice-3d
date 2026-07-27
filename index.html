@@ -196,6 +196,12 @@ sun.target.position.set(22, 0, 17);
 scene.add(sun.target);
 scene.add(sun);
 
+// Garden lamps — fixtures built later from layout elements with meta.light, lit only at night
+const lampsGroup = new THREE.Group();
+scene.add(lampsGroup);
+const lampLights = [];
+const bulbMat = new THREE.MeshStandardMaterial({ color: 0x332a12, emissive: 0xffd27a, emissiveIntensity: 0 });
+
 // Solar position formula (lat 50°N, day-of-year + hour)
 // Returns { elev, az } in radians; az measured from N clockwise (compass).
 function solarPosition(dayOfYear, hour, latDeg = 50) {
@@ -233,6 +239,8 @@ function updateSun() {
     skyMat.uniforms.bottomColor.value.setHex(0x1a2144);
     sun.color.setHex(0x6080a0);
     ambient.intensity = 0.1;
+    bulbMat.emissiveIntensity = 2;
+    for (const l of lampLights) l.intensity = l.userData.night;
   } else {
     const elevDeg = elev * 180 / Math.PI;
     if (elevDeg < 8) {
@@ -258,6 +266,8 @@ function updateSun() {
       skyMat.uniforms.bottomColor.value.setHex(0xc4d8e8);
     }
     ambient.intensity = 0.15 + Math.min(1, elevDeg / 60) * 0.15;
+    bulbMat.emissiveIntensity = 0;
+    for (const l of lampLights) l.intensity = 0;
   }
   skyMat.uniforms.sunPos.value.set(x, y, z).normalize();
   skyMat.uniforms.sunColor.value.copy(sun.color);
@@ -956,6 +966,38 @@ scene.add(driveway);
   scene.add(inner);
 }
 
+// ───────────────────────── GARDEN LIGHTING (bollards + uplights from layout) ─────────────────────────
+{
+  const lampPostMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6, metalness: 0.4 });
+  const ET = rectOf('eastTerrace');
+  for (const el of GARDEN.elements.filter(e => e.meta && e.meta.light)) {
+    const isBollard = el.meta.light === 'bollard';
+    // r > 0.1 skips the decorative inner dots of the 2D spot symbol
+    for (const c of el.parts.filter(p => p.kind === 'circle' && p.r > 0.1)) {
+      const onDeck = c.cx >= ET.x && c.cx <= ET.x + ET.w && c.cy >= ET.y && c.cy <= ET.y + ET.d;
+      const baseY = onDeck ? deckTop : terrainHeight(c.cx, c.cy);
+      if (isBollard) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.7, 0.08), lampPostMat);
+        post.position.set(c.cx, baseY + 0.35, c.cy);
+        post.castShadow = true;
+        lampsGroup.add(post);
+      } else {
+        const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 16), lampPostMat);
+        disc.position.set(c.cx, baseY + 0.025, c.cy);
+        lampsGroup.add(disc);
+      }
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), bulbMat);
+      bulb.position.set(c.cx, baseY + (isBollard ? 0.65 : 0.1), c.cy);
+      lampsGroup.add(bulb);
+      const light = new THREE.PointLight(0xffd27a, 0, isBollard ? 6 : 10, 2);
+      light.position.set(c.cx, baseY + (isBollard ? 0.65 : 0.15), c.cy);
+      light.userData.night = isBollard ? 6 : 14;
+      lampsGroup.add(light);
+      lampLights.push(light);
+    }
+  }
+}
+
 // ───────────────────────── RAISED BEDS (4 pcs, 2 rows × 2) ─────────────────────────
 ['raisedBed1', 'raisedBed2', 'raisedBed3', 'raisedBed4'].forEach(id => {
   const b = rectOf(id);
@@ -1334,7 +1376,7 @@ addCar(29, 22, 0x224488, 0, garageSlabY);
 addCar(32.5, 22, 0xaa3333, 0, garageSlabY);
 
 // Car on 2-spot parking (1 shown) — length along the pad's x-axis
-addCar(36.5, 24.65, 0x8a8f94, Math.PI / 2);
+addCar(36.4, 22.9, 0x8a8f94, 0);
 
 // ───────────────────────── BUSHES AROUND HOUSE ─────────────────────────
 const bushPositions = [

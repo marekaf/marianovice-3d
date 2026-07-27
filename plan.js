@@ -50,6 +50,13 @@
     .strana { font-size: 10px; fill: #557; font-weight: 600; text-anchor: middle; }
     .dim { font-size: 9px; fill: #b22; text-anchor: middle; font-style: italic; }
     .axis { font-size: 9px; fill: #555; text-anchor: middle; font-weight: 600; }
+    .tb-proj { font-size: 12px; font-weight: 700; letter-spacing: 0.4px; }
+    .tb-sub { font-size: 8px; fill: #555; }
+    .tb-lbl { font-size: 6.5px; fill: #888; font-weight: 600; letter-spacing: 1.2px; }
+    .tb-val { font-size: 9px; }
+    .tb-rev { font-size: 11px; font-weight: 700; }
+    .leg { font-size: 8.5px; }
+    .note { font-size: 8.5px; fill: #888; }
   </style>`);
     out.push(`  <rect x="0" y="0" width="1100" height="880" fill="white"/>`);
     out.push(`  <text x="550" y="28" class="title">${esc(garden.title)}</text>`);
@@ -114,14 +121,16 @@
       out.push(`    <text x="0" y="${y}">${esc(r.name)}</text><text x="88" y="${y}">${esc(r.size)}</text><text x="170" y="${y}" text-anchor="end">${r.area === null ? "—" : r2(r.area)}</text><text x="193" y="${y}" text-anchor="end">${esc(r.cell)}</text>`);
     });
     out.push(`  </g>`);
-    out.push(`  <g transform="translate(80, 815)">
+    out.push(renderLegend());
+    out.push(`  <g transform="translate(80, 842)">
     <rect x="0" y="0" width="${5 * S}" height="10" fill="#2a2a2a"/>
     <rect x="${5 * S}" y="0" width="${5 * S}" height="10" fill="white" stroke="#2a2a2a" stroke-width="1"/>
-    <text x="0" y="28" class="lbl-sm" text-anchor="start">0</text>
-    <text x="${5 * S}" y="28" class="lbl-sm">5 m</text>
-    <text x="${10 * S}" y="28" class="lbl-sm">10 m</text>
+    <text x="0" y="24" class="lbl-sm" text-anchor="start">0</text>
+    <text x="${5 * S}" y="24" class="lbl-sm">5 m</text>
+    <text x="${10 * S}" y="24" class="lbl-sm">10 m</text>
   </g>`);
-    out.push(`  <text x="80" y="858" class="lbl-sm" text-anchor="start" fill="#888">Cells are addressed as "{column}{row}", e.g. "12g" = column 12, row g. Each cell is ${garden.gridCellM} × ${garden.gridCellM} m. Generated from layout.js (node generate-svg.js).</text>`);
+    out.push(`  <text x="300" y="850" class="note">Cells are addressed as "{column}{row}", e.g. "12g" = column 12, row g. Each cell is ${garden.gridCellM} × ${garden.gridCellM} m. Generated from layout.js (node generate-svg.js).</text>`);
+    out.push(renderTitleBlock(garden));
     out.push(`</svg>`);
     return out.join("\n") + "\n";
   }
@@ -178,13 +187,71 @@
       if (exEll) area -= Math.PI * exEll.rx * exEll.ry;
     }
     else if (first.kind === "circle") {
-      if (circles.length > 2) size = `${circles.length} pcs`;
+      // Concentric circles (e.g. spot symbol inner dots) count as one fixture
+      if (circles.length > 2) size = `${new Set(circles.map((c) => `${c.cx},${c.cy}`)).size} pcs`;
       else { size = `ø ${r2(2 * first.r)}`; area = Math.PI * first.r * first.r; }
     }
     else if (first.kind === "line") size = `${r2(Math.hypot(first.x2 - first.x1, first.y2 - first.y1))} long`;
     const col = Math.floor(bx / cellM) + 1;
     const row = ROWS[Math.max(0, Math.floor(by / cellM))] || "?";
     return { name: el.short || shortName(el.name), size, area, cell: `${col}${row}` };
+  }
+
+  const LEGEND_ITEMS = [
+    { label: "house", fill: "#d4b896", stroke: "#7a5e3e" },
+    { label: "garage", fill: "#888888", stroke: "#3a3a3a" },
+    { label: "deck / terrace", fill: "#a87d4a", stroke: "#5a3e25" },
+    { label: "driveway / paving", fill: "#cccccc", stroke: "#9a9a9a" },
+    { label: "water (pond, tank)", fill: "#3a7ab8", stroke: "#1f3a5f" },
+    { label: "raised bed", fill: "#7a5a3a", stroke: "#5a3e25" },
+    { label: "perennial bed", fill: "#8fa05a", stroke: "#6a7a3a", dash: true },
+    { label: "shrub planting", fill: "#6a8e5a", stroke: "#4a6e3a", dash: true },
+    { label: "meadow", fill: "#b5c98a", stroke: "#8aa85a", dash: true },
+    { label: "rain garden", fill: "#7aa88a", stroke: "#4a7a6a", dash: true },
+    { label: "tree", tree: true },
+    { label: "light fixture", light: true },
+  ];
+
+  function renderLegend() {
+    const out = [
+      `  <g>`,
+      `    <rect x="80" y="756" width="620" height="70" fill="white" stroke="#2a2a2a" stroke-width="1"/>`,
+      `    <text x="92" y="771" class="tb-lbl">LEGEND</text>`,
+    ];
+    LEGEND_ITEMS.forEach((it, i) => {
+      const x = 92 + (i % 6) * 101;
+      const y = 792 + Math.floor(i / 6) * 20;
+      if (it.tree) out.push(`    <circle cx="${x + 6}" cy="${y - 4}" r="5" fill="#4d7a4d"/>`);
+      else if (it.light) out.push(`    <circle cx="${x + 6}" cy="${y - 4}" r="5" fill="#ffd54a" stroke="#8a6a1a" stroke-width="1"/><circle cx="${x + 6}" cy="${y - 4}" r="1.7" fill="#8a6a1a"/>`);
+      else out.push(`    <rect x="${x}" y="${y - 9}" width="12" height="10" fill="${it.fill}" fill-opacity="${it.dash ? 0.45 : 0.85}" stroke="${it.stroke}" stroke-width="1"${it.dash ? ` stroke-dasharray="3,2"` : ""}/>`);
+      out.push(`    <text x="${x + 17}" y="${y}" class="leg">${esc(it.label)}</text>`);
+    });
+    out.push(`  </g>`);
+    return out.join("\n");
+  }
+
+  function renderTitleBlock(garden) {
+    const dm = garden.docMeta || {};
+    return [
+      `  <g>`,
+      `    <rect x="780" y="792" width="312" height="80" fill="white" stroke="#2a2a2a" stroke-width="1.5"/>`,
+      `    <line x1="780" y1="822" x2="1092" y2="822" stroke="#2a2a2a" stroke-width="0.6"/>`,
+      `    <line x1="780" y1="848" x2="1092" y2="848" stroke="#2a2a2a" stroke-width="0.6"/>`,
+      `    <line x1="998" y1="792" x2="998" y2="872" stroke="#2a2a2a" stroke-width="0.6"/>`,
+      `    <text x="790" y="807" class="tb-proj">${esc(dm.project || "")}</text>`,
+      `    <text x="790" y="818" class="tb-sub">${esc(dm.place || "")}</text>`,
+      `    <text x="1006" y="802" class="tb-lbl">REVISION</text>`,
+      `    <text x="1006" y="816" class="tb-rev">${esc(dm.revision || "")}</text>`,
+      `    <text x="790" y="832" class="tb-lbl">DRAWING</text>`,
+      `    <text x="790" y="843" class="tb-val">${esc(dm.drawing || "")}</text>`,
+      `    <text x="1006" y="832" class="tb-lbl">GRID</text>`,
+      `    <text x="1006" y="843" class="tb-val">${garden.gridCellM} × ${garden.gridCellM} m</text>`,
+      `    <text x="790" y="857" class="tb-lbl">DRAWN</text>`,
+      `    <text x="790" y="868" class="tb-val">${esc(dm.author || "")}</text>`,
+      `    <text x="1006" y="857" class="tb-lbl">NORTH</text>`,
+      `    <text x="1006" y="868" class="tb-val">↑ sheet top</text>`,
+      `  </g>`,
+    ].join("\n");
   }
 
   function renderPart(p, px) {

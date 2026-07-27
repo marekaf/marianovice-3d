@@ -1,7 +1,9 @@
-.DS_Store
-.vscode/
-.idea/
-*.swp
-*.swo
-.env
-.env.local
+docs/
+planting.js
+plansheets.js
+generate-plansheets.js
+generate-sections.js
+build-book.js
+review.html
+book.html
+project-book.pdf

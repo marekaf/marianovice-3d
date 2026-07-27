@@ -226,6 +226,16 @@ CANOPY = [mat_simple("canopy%d" % i, c, rough=0.85) for i, c in enumerate(
     [hexc("#3f6b3a"), hexc("#4d7a4d"), hexc("#42704a"), hexc("#557f45")])]
 PASTEL = [mat_simple("per%d" % i, c, rough=0.9) for i, c in enumerate(
     [hexc("#b28cb8"), hexc("#8a6fae"), hexc("#c9a44a"), hexc("#d8a0b0"), hexc("#9aa87a")])]
+FLOWER = [mat_simple("flower%d" % i, c, rough=0.8) for i, c in enumerate(
+    [hexc("#e8e8e0"), hexc("#e8c94a"), hexc("#9a7ab8")])]
+MAT["planter"] = mat_simple("planter", hexc("#3a3a3e"), rough=0.6)
+MAT["tuft"] = mat_simple("tuft", hexc("#6f9a4a"), rough=0.8)
+MAT["soil_pot"] = mat_simple("soil_pot", hexc("#3a2f24"), rough=0.95)
+MAT["molinia"] = mat_simple("molinia", hexc("#96a050"), rough=0.7)
+MAT["seed"] = mat_simple("seed", hexc("#c9b06a"), rough=0.8)
+MAT["bollard"] = mat_simple("bollard", hexc("#1c1c1e"), rough=0.4, metal=0.8)
+MAT["bulb"] = mat_simple("bulb", hexc("#2a2419"), rough=0.5, emit=hexc("#ffbe78"), emit_str=6.0)
+MAT["spot_disc"] = mat_simple("spot_disc", hexc("#2a2419"), rough=0.5, emit=hexc("#ffb060"), emit_str=4.0)
 
 
 # ---------------- geometry helpers ----------------
@@ -412,6 +422,55 @@ def point_in_poly(x, y, poly):
     return inside
 
 
+# ---------------- planting zones (meta.plant) ----------------
+def rect_fn(r):
+    x0, y0, x1, y1 = r["x"], r["y"], r["x"] + r["w"], r["y"] + r["d"]
+    return (lambda x, y: x0 <= x <= x1 and y0 <= y <= y1), (x0, y0, x1, y1)
+
+
+def poly_fn(pts):
+    xs = [q[0] for q in pts]
+    ys = [q[1] for q in pts]
+    return (lambda x, y: point_in_poly(x, y, pts)), (min(xs), min(ys), max(xs), max(ys))
+
+
+def ellipse_ring_fn(outer, inner):
+    ocx, ocy, orx, ory = outer
+    icx, icy, irx, iry = inner
+
+    def fn(x, y):
+        if ((x - ocx) / orx) ** 2 + ((y - ocy) / ory) ** 2 > 1.0:
+            return False
+        return ((x - icx) / irx) ** 2 + ((y - icy) / iry) ** 2 >= 1.0
+
+    return fn, (ocx - orx, ocy - ory, ocx + orx, ocy + ory)
+
+
+def clip_to_plot(fn):
+    return lambda x, y: fn(x, y) and point_in_poly(x, y, plot)
+
+
+PLANT_ZONES = [e for e in GARDEN["elements"] if e.get("meta", {}).get("plant")]
+pond_el = next(x for x in els["pond"]["parts"] if x["kind"] == "ellipse")
+ZONE_SHAPES = []  # (zone id, plant, fn, bbox)
+for zone in PLANT_ZONES:
+    if zone["id"] == "atriumPots":
+        continue  # planters on the deck, no ground scatter
+    for prt in zone["parts"]:
+        if prt["kind"] == "rect":
+            fn, bbox = rect_fn(prt)
+        elif prt["kind"] == "polygon":
+            fn, bbox = poly_fn(prt["points"])
+        elif prt["kind"] == "ellipse":
+            fn, bbox = ellipse_ring_fn((prt["cx"], prt["cy"], prt["rx"], prt["ry"]),
+                                       (pond_el["cx"], pond_el["cy"], pond_el["rx"] + 0.3, pond_el["ry"] + 0.3))
+        else:
+            continue
+        ZONE_SHAPES.append((zone["id"], zone["meta"]["plant"], clip_to_plot(fn), bbox))
+BED_SHAPES = [(f, b) for _, p, f, b in ZONE_SHAPES if p != "meadow"]
+MEADOW_SHAPES = [(f, b) for _, p, f, b in ZONE_SHAPES if p == "meadow"]
+
+
 def grass_weight(x, y):
     for x0, y0, x1, y1 in EXCL_RECTS:
         if x0 <= x <= x1 and y0 <= y <= y1:
@@ -422,6 +481,19 @@ def grass_weight(x, y):
     for poly in EXCL_POLYS:
         if point_in_poly(x, y, poly):
             return 0.0
+    for fn, _ in BED_SHAPES:
+        if fn(x, y):
+            return 0.0
+    for fn, _ in MEADOW_SHAPES:
+        if fn(x, y):
+            return 1.5
+    return 1.0
+
+
+def grass_scale(x, y):
+    for fn, _ in MEADOW_SHAPES:
+        if fn(x, y):
+            return 1.55
     return 1.0
 
 
@@ -450,6 +522,8 @@ def build_terrain():
     attr = mesh.attributes.new("grass_w", "FLOAT", "POINT")
     vals = [grass_weight(v.co.x, -v.co.y) for v in mesh.vertices]
     attr.data.foreach_set("value", vals)
+    attr_s = mesh.attributes.new("grass_s", "FLOAT", "POINT")
+    attr_s.data.foreach_set("value", [grass_scale(v.co.x, -v.co.y) for v in mesh.vertices])
     area = 0.0
     n = len(plot)
     for i in range(n):
@@ -536,6 +610,11 @@ def build_grass(blade_ob):
     oinfo.inputs["As Instance"].default_value = True
     rot_n, rot_out = rand_node(ng, "FLOAT_VECTOR", (-0.22, -0.22, 0.0), (0.22, 0.22, 6.2832), 7)
     scl_n, scl_out = rand_node(ng, "FLOAT", 0.6, 1.15, 11)
+    sattr = ng.nodes.new("GeometryNodeInputNamedAttribute")
+    sattr.data_type = "FLOAT"
+    sattr.inputs["Name"].default_value = "grass_s"
+    smul = ng.nodes.new("ShaderNodeMath")
+    smul.operation = "MULTIPLY"
     inst = ng.nodes.new("GeometryNodeInstanceOnPoints")
     join = ng.nodes.new("GeometryNodeJoinGeometry")
     lk = ng.links.new
@@ -545,7 +624,9 @@ def build_grass(blade_ob):
     lk(dist.outputs["Points"], inst.inputs["Points"])
     lk(oinfo.outputs["Geometry"], inst.inputs["Instance"])
     lk(rot_out, inst.inputs["Rotation"])
-    lk(scl_out, inst.inputs["Scale"])
+    lk(scl_out, smul.inputs[0])
+    lk(sattr.outputs["Attribute"], smul.inputs[1])
+    lk(smul.outputs["Value"], inst.inputs["Scale"])
     lk(n_in.outputs["Geometry"], join.inputs[0])
     lk(inst.outputs["Instances"], join.inputs[0])
     lk(join.outputs["Geometry"], n_out.inputs["Geometry"])
@@ -803,15 +884,212 @@ while peren_i < 35:
                scale=(1.0, 1.0, 0.75 + random.random() * 0.3), subdiv=2)
     peren_i += 1
 
-for i, (bx, by) in enumerate([(7, 11), (7, 14), (7, 18), (7, 22), (25.5, 12.5), (34.5, 12.5),
-                              (25.5, 17.8), (34.5, 17.8), (4, 6), (11.5, 6)]):
-    z = ground_h(bx, by)
+def make_bush(name, bx, by, s=1.0):
+    z = terrain_z(bx, by)
     mat = random.choice(CANOPY)
     a = random.random() * 6.28
-    add_sphere("bush%d_a" % i, bx + 0.3 * math.cos(a), by + 0.3 * math.sin(a), z + 0.42, 0.55, mat,
-               scale=(1.1, 1.0, 0.85))
-    add_sphere("bush%d_b" % i, bx - 0.3 * math.cos(a), by - 0.3 * math.sin(a), z + 0.34, 0.42, mat,
-               scale=(1.0, 1.1, 0.9))
+    add_sphere(name + "_a", bx + 0.3 * s * math.cos(a), by + 0.3 * s * math.sin(a), z + 0.42 * s, 0.55 * s,
+               mat, scale=(1.1, 1.0, 0.85))
+    add_sphere(name + "_b", bx - 0.3 * s * math.cos(a), by - 0.3 * s * math.sin(a), z + 0.34 * s, 0.42 * s,
+               mat, scale=(1.0, 1.1, 0.9))
+    if random.random() < 0.5:
+        add_sphere(name + "_c", bx, by + 0.2 * s, z + 0.5 * s, 0.38 * s, mat, scale=(1.0, 1.0, 0.9))
+
+
+for i, (bx, by) in enumerate([(7, 11), (7, 14), (7, 18), (7, 22), (25.5, 12.5), (34.5, 12.5),
+                              (25.5, 17.8), (34.5, 17.8), (4, 6), (11.5, 6)]):
+    make_bush("bush%d" % i, bx, by)
+
+# ---------------- planting-zone vegetation ----------------
+PLANT_PALETTE = PASTEL + [CANOPY[1], CANOPY[3]]
+COUNTS = {"perennial": 0, "tuft": 0, "shrub": 0, "flower": 0, "pot": 0, "molinia": 0, "stalks": 0}
+
+
+def sample_shape(fn, bbox, count):
+    pts = []
+    attempts = 0
+    while len(pts) < count and attempts < count * 80 + 200:
+        attempts += 1
+        x = bbox[0] + random.random() * (bbox[2] - bbox[0])
+        y = bbox[1] + random.random() * (bbox[3] - bbox[1])
+        if fn(x, y):
+            pts.append((x, y))
+    return pts
+
+
+def shape_area(fn, bbox, probes=1200):
+    hits = 0
+    for _ in range(probes):
+        x = bbox[0] + random.random() * (bbox[2] - bbox[0])
+        y = bbox[1] + random.random() * (bbox[3] - bbox[1])
+        if fn(x, y):
+            hits += 1
+    return (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) * hits / probes
+
+
+def make_tuft(name, px, py, z, depth=0.4):
+    bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=0.06, radius2=0.005, depth=depth,
+                                    location=(px, -py, z + depth * 0.45))
+    ob = bpy.context.active_object
+    ob.name = name
+    ob.rotation_euler = ((random.random() - 0.5) * 0.4, (random.random() - 0.5) * 0.4, 0)
+    ob.data.materials.append(MAT["tuft"])
+    COUNTS["tuft"] += 1
+
+
+def scatter_perennials(zid, fn, bbox, area, density=3.0, tufts=0.5):
+    for ci, (cx, cy) in enumerate(sample_shape(fn, bbox, max(1, int(area * density / 3.0)))):
+        for k in range(3):
+            px = cx + (random.random() - 0.5) * 0.7
+            py = cy + (random.random() - 0.5) * 0.7
+            if not fn(px, py):
+                continue
+            rr = 0.12 + random.random() * 0.18
+            z = terrain_z(px, py)
+            add_sphere("%s_p%d_%d" % (zid, ci, k), px, py, z + rr * (0.4 + random.random() * 0.7), rr,
+                       random.choice(PLANT_PALETTE),
+                       scale=(1.0, 1.0, 0.8 + random.random() * 0.6), subdiv=1)
+            COUNTS["perennial"] += 1
+    for ti, (px, py) in enumerate(sample_shape(fn, bbox, max(1, int(area * tufts)))):
+        make_tuft("%s_t%d" % (zid, ti), px, py, terrain_z(px, py))
+
+
+def scatter_shrubs(zid, fn, bbox, area, per_m2=0.4):
+    for i, (px, py) in enumerate(sample_shape(fn, bbox, max(1, int(area * per_m2)))):
+        make_bush("%s_s%d" % (zid, i), px, py, s=0.7 + random.random() * 0.7)
+        COUNTS["shrub"] += 1
+
+
+def scatter_flowers(zid, fn, bbox, area, per_m2=1.0):
+    for i, (px, py) in enumerate(sample_shape(fn, bbox, max(1, int(area * per_m2)))):
+        z = terrain_z(px, py)
+        add_sphere("%s_f%d" % (zid, i), px, py, z + 0.13 + random.random() * 0.12,
+                   0.05 + random.random() * 0.05, random.choice(FLOWER), subdiv=1)
+        COUNTS["flower"] += 1
+
+
+def build_molinia_mesh(name, n_blades=28, n_stalks=6, blade_len=0.55):
+    """Ornamental-grass clump: fountain of curved blade strips + seed-head stalks."""
+    bm = bmesh.new()
+    blade_faces = 0
+    for i in range(n_blades):
+        a = 2 * math.pi * i / n_blades + random.random() * 0.4
+        dx, dy = math.cos(a), math.sin(a)
+        L = blade_len * (0.7 + random.random() * 0.6)
+        ts = [0.0, 0.35, 0.7, 1.0]
+        centers = [(dx * L * (t ** 1.7) * 1.05, dy * L * (t ** 1.7) * 1.05,
+                    L * (1.35 * t - 0.55 * t * t)) for t in ts]
+        nx_, ny_ = -dy, dx
+        prev = None
+        for k, (cx_, cy_, cz_) in enumerate(centers):
+            wk = 0.008 * (1.0 - 0.85 * ts[k])
+            v1 = bm.verts.new((cx_ - nx_ * wk, cy_ - ny_ * wk, cz_))
+            v2 = bm.verts.new((cx_ + nx_ * wk, cy_ + ny_ * wk, cz_))
+            if prev:
+                bm.faces.new((prev[0], prev[1], v2, v1))
+                blade_faces += 1
+            prev = (v1, v2)
+    for i in range(n_stalks):
+        a = random.random() * 2 * math.pi
+        bx_, by_ = math.cos(a) * 0.05, math.sin(a) * 0.05
+        tx = bx_ + (random.random() - 0.5) * 0.3
+        ty = by_ + (random.random() - 0.5) * 0.3
+        hgt = 0.85 + random.random() * 0.35
+        v1 = bm.verts.new((bx_ - 0.006, by_, 0))
+        v2 = bm.verts.new((bx_ + 0.006, by_, 0))
+        v3 = bm.verts.new((tx, ty, hgt))
+        bm.faces.new((v1, v2, v3))
+        hw, hh = 0.012, 0.055
+        vt = bm.verts.new((tx, ty, hgt + hh))
+        vb = bm.verts.new((tx, ty, hgt - hh * 0.4))
+        vm = [bm.verts.new((tx + hw, ty, hgt)), bm.verts.new((tx, ty + hw, hgt)),
+              bm.verts.new((tx - hw, ty, hgt)), bm.verts.new((tx, ty - hw, hgt))]
+        for k in range(4):
+            bm.faces.new((vt, vm[k], vm[(k + 1) % 4]))
+            bm.faces.new((vb, vm[(k + 1) % 4], vm[k]))
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(MAT["molinia"])
+    mesh.materials.append(MAT["seed"])
+    for pi_, poly in enumerate(mesh.polygons):
+        poly.material_index = 0 if pi_ < blade_faces else 1
+    return mesh
+
+
+MOLINIA_MESH = build_molinia_mesh("molinia", 28, 6)
+STALKS_MESH = build_molinia_mesh("stalksOnly", 5, 8, blade_len=0.35)
+MOLINIA_ZONES = {"pondFringe", "prairieIsland", "arrivalStrip"}
+
+
+def place_clump(mesh, name, px, py, s, kind):
+    ob = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(ob)
+    ob.location = (px, -py, terrain_z(px, py) - 0.01)
+    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    ob.scale = (s, s, s * (0.85 + random.random() * 0.35))
+    COUNTS[kind] += 1
+    return ob
+
+
+for zid, plant, zfn, zbbox in ZONE_SHAPES:
+    zarea = shape_area(zfn, zbbox)
+    if plant == "perennials":
+        scatter_perennials(zid, zfn, zbbox, zarea,
+                           density=2.2 if zid in MOLINIA_ZONES else 3.0)
+    elif plant == "shrubs":
+        scatter_shrubs(zid, zfn, zbbox, zarea)
+    elif plant == "mixed":
+        scatter_shrubs(zid, zfn, zbbox, zarea, per_m2=0.25)
+        scatter_perennials(zid, zfn, zbbox, zarea, density=2.0, tufts=0.3)
+    elif plant == "meadow":
+        scatter_flowers(zid, zfn, zbbox, zarea)
+        for mi, (px, py) in enumerate(sample_shape(zfn, zbbox, max(3, int(zarea * 0.15)))):
+            place_clump(STALKS_MESH, "%s_st%d" % (zid, mi), px, py, 0.7 + random.random() * 0.4, "stalks")
+    if zid in MOLINIA_ZONES:
+        for mi, (px, py) in enumerate(sample_shape(zfn, zbbox, max(2, int(zarea * 0.4)))):
+            place_clump(MOLINIA_MESH, "%s_m%d" % (zid, mi), px, py, 0.8 + random.random() * 0.5, "molinia")
+        if zid == "pondFringe":  # denser on the east side
+            efn = (lambda f: (lambda x, y: f(x, y) and x > 30.5))(zfn)
+            for mi, (px, py) in enumerate(sample_shape(efn, zbbox, max(2, int(zarea * 0.3)))):
+                place_clump(MOLINIA_MESH, "%s_me%d" % (zid, mi), px, py, 0.9 + random.random() * 0.5, "molinia")
+
+# atrium pots: planter cylinders on the west-terrace deck
+wt_deck = [x for x in els["westTerrace"]["parts"] if x["kind"] == "rect"][1]
+wcx, wcy = rect_center(wt_deck)
+deck_top = ground_h(wcx, wcy) + 0.15
+pot_parts = sorted((x for x in els["atriumPots"]["parts"] if x["kind"] == "circle"),
+                   key=lambda q: -q["r"])
+for i, potc in enumerate(pot_parts):
+    pcx2, pcy2, pr = potc["cx"], potc["cy"], potc["r"]
+    add_cyl("pot%d" % i, pcx2, pcy2, deck_top + 0.25, pr, 0.5, MAT["planter"])
+    add_cyl("pot%d_soil" % i, pcx2, pcy2, deck_top + 0.48, pr * 0.9, 0.04, MAT["soil_pot"])
+    top = deck_top + 0.5
+    COUNTS["pot"] += 1
+    if i == 0:  # largest: multi-stem shrub
+        mat = random.choice(CANOPY)
+        for k in range(3):
+            a = k * 2.1 + random.random()
+            sxp = pcx2 + 0.15 * math.cos(a)
+            syp = pcy2 + 0.15 * math.sin(a)
+            bpy.ops.mesh.primitive_cylinder_add(vertices=6, radius=0.025, depth=0.8,
+                                                location=(sxp, -syp, top + 0.35))
+            ob = bpy.context.active_object
+            ob.name = "pot%d_stem%d" % (i, k)
+            ob.rotation_euler = ((random.random() - 0.5) * 0.25, (random.random() - 0.5) * 0.25, 0)
+            ob.data.materials.append(MAT["trunk"])
+        for k in range(3):
+            add_sphere("pot%d_can%d" % (i, k), pcx2 + (random.random() - 0.5) * 0.4,
+                       pcy2 + (random.random() - 0.5) * 0.4, top + 0.85 + random.random() * 0.25,
+                       0.28 + random.random() * 0.1, mat, scale=(1.0, 1.0, 0.85))
+    else:
+        for k in range(2):
+            add_sphere("pot%d_per%d" % (i, k), pcx2 + (random.random() - 0.5) * 0.25,
+                       pcy2 + (random.random() - 0.5) * 0.25, top + 0.12, 0.12 + random.random() * 0.05,
+                       random.choice(PLANT_PALETTE), subdiv=1)
+        make_tuft("pot%d_tuft" % i, pcx2, pcy2, top, depth=0.35)
+
+print("PLANTING:", COUNTS)
 
 # ---------------- fence ----------------
 GATE_A = Vector((43.83, 27.89))
@@ -861,6 +1139,55 @@ def build_fence():
 
 build_fence()
 
+
+# ---------------- garden light fixtures ----------------
+def circles_of(el_id):
+    e = els.get(el_id)
+    if not e:
+        return []
+    return [(p["cx"], p["cy"]) for p in e["parts"] if p["kind"] == "circle"]
+
+
+path_lights = circles_of("pathLights") or [
+    (23.0, 26.15), (26.8, 26.15), (30.6, 26.15), (34.4, 26.7),  # driveway north edge
+    (9.25, 4.5), (9.25, 6.7),  # sauna path
+    (24.8, 22.7),  # terrace SE corner
+]
+garden_spots = circles_of("gardenSpots") or [(41.5, 33.5), (33.5, 13.2), (25.0, 5.6)]
+
+for i, (lx, ly) in enumerate(path_lights):
+    z = terrain_z(lx, ly)
+    add_cyl("bollard%d" % i, lx, ly, z + 0.33, 0.045, 0.66, MAT["bollard"], verts=12)
+    add_cyl("bollard%d_head" % i, lx, ly, z + 0.69, 0.05, 0.06, MAT["bulb"], verts=12)
+    ld = bpy.data.lights.new("bollardL%d" % i, type="POINT")
+    ld.energy = 5.0
+    ld.color = (1.0, 0.6, 0.3)
+    ld.shadow_soft_size = 0.05
+    lo = bpy.data.objects.new("bollardL%d" % i, ld)
+    bpy.context.collection.objects.link(lo)
+    lo.location = (lx, -ly, z + 0.78)
+
+for i, (lx, ly) in enumerate(garden_spots):
+    z = terrain_z(lx, ly)
+    add_cyl("spotdisc%d" % i, lx, ly, z + 0.02, 0.09, 0.04, MAT["spot_disc"], verts=16)
+    ld = bpy.data.lights.new("spotL%d" % i, type="SPOT")
+    ld.energy = 15.0
+    ld.color = (1.0, 0.65, 0.35)
+    ld.spot_size = math.radians(75)
+    ld.shadow_soft_size = 0.05
+    lo = bpy.data.objects.new("spotL%d" % i, ld)
+    bpy.context.collection.objects.link(lo)
+    lo.location = (lx, -ly, z + 0.06)
+    lo.rotation_euler = (math.pi, 0, 0)  # aim up
+
+fire_ld = bpy.data.lights.new("fireL", type="POINT")
+fire_ld.energy = 0.0
+fire_ld.color = (1.0, 0.45, 0.15)
+fire_ld.shadow_soft_size = 0.2
+fire_lo = bpy.data.objects.new("fireL", fire_ld)
+bpy.context.collection.objects.link(fire_lo)
+fire_lo.location = (fc["cx"], -fc["cy"], fz + 0.4)
+
 # ---------------- sun + sky ----------------
 lat = math.radians(50.0)
 decl = math.radians(23.45 * math.sin(2 * math.pi * (284 + 172) / 365.0))
@@ -877,41 +1204,88 @@ world = scene.world or bpy.data.worlds.new("World")
 scene.world = world
 world.use_nodes = True
 wnt = world.node_tree
-for nd in list(wnt.nodes):
-    wnt.nodes.remove(nd)
-sky = wnt.nodes.new("ShaderNodeTexSky")
-try:
-    sky.sky_type = "NISHITA"
-except (AttributeError, TypeError):
-    pass
-if hasattr(sky, "sun_elevation"):
-    sky.sun_elevation = elev
-if hasattr(sky, "sun_rotation"):
-    sky.sun_rotation = az
-if hasattr(sky, "sun_disc"):
-    sky.sun_disc = False
-bg = wnt.nodes.new("ShaderNodeBackground")
-bg.inputs["Strength"].default_value = 0.12
-bg_cam = wnt.nodes.new("ShaderNodeBackground")
-bg_cam.inputs["Strength"].default_value = 0.5
-lp = wnt.nodes.new("ShaderNodeLightPath")
-mixsh = wnt.nodes.new("ShaderNodeMixShader")
-out = wnt.nodes.new("ShaderNodeOutputWorld")
-wnt.links.new(sky.outputs["Color"], bg.inputs["Color"])
-wnt.links.new(sky.outputs["Color"], bg_cam.inputs["Color"])
-wnt.links.new(lp.outputs["Is Camera Ray"], mixsh.inputs["Fac"])
-wnt.links.new(bg.outputs["Background"], mixsh.inputs[1])
-wnt.links.new(bg_cam.outputs["Background"], mixsh.inputs[2])
-wnt.links.new(mixsh.outputs["Shader"], out.inputs["Surface"])
 
-sun_dir = Vector((math.sin(az) * math.cos(elev), math.cos(az) * math.cos(elev), math.sin(elev)))
 sun_data = bpy.data.lights.new("Sun", type="SUN")
 sun_data.energy = 4.0
 sun_data.angle = math.radians(0.526)
 sun = bpy.data.objects.new("Sun", sun_data)
 bpy.context.collection.objects.link(sun)
 sun.location = (22, -17, 40)
-sun.rotation_euler = sun_dir.to_track_quat("Z", "Y").to_euler()
+
+
+def aim_sun(elev_r, az_r):
+    d = Vector((math.sin(az_r) * math.cos(elev_r), math.cos(az_r) * math.cos(elev_r), math.sin(elev_r)))
+    sun.rotation_euler = d.to_track_quat("Z", "Y").to_euler()
+
+
+ember = MAT["fire"].node_tree.nodes["Principled BSDF"]
+
+
+def set_lighting(mode):
+    """day: computed 14:00 June sun; golden: ~19:45 WNW low warm; night: dark blue + fixtures."""
+    for nd in list(wnt.nodes):
+        wnt.nodes.remove(nd)
+    out_n = wnt.nodes.new("ShaderNodeOutputWorld")
+    lp = wnt.nodes.new("ShaderNodeLightPath")
+    mixsh = wnt.nodes.new("ShaderNodeMixShader")
+    bg_l = wnt.nodes.new("ShaderNodeBackground")  # lighting rays
+    bg_c = wnt.nodes.new("ShaderNodeBackground")  # camera rays
+    wnt.links.new(lp.outputs["Is Camera Ray"], mixsh.inputs["Fac"])
+    wnt.links.new(bg_l.outputs["Background"], mixsh.inputs[1])
+    wnt.links.new(bg_c.outputs["Background"], mixsh.inputs[2])
+    wnt.links.new(mixsh.outputs["Shader"], out_n.inputs["Surface"])
+    if mode == "night":
+        bg_l.inputs["Color"].default_value = (*hexc("#22344f"), 1.0)
+        bg_l.inputs["Strength"].default_value = 0.35
+        bg_c.inputs["Color"].default_value = (*hexc("#16263f"), 1.0)
+        bg_c.inputs["Strength"].default_value = 1.0
+        sun_data.energy = 0.18
+        sun_data.color = (0.6, 0.72, 1.0)
+        aim_sun(math.radians(50), math.radians(120))
+        ember.inputs["Emission Strength"].default_value = 30.0
+        fire_ld.energy = 40.0
+        return
+    sky2 = wnt.nodes.new("ShaderNodeTexSky")
+    try:
+        sky2.sky_type = "NISHITA"
+    except (AttributeError, TypeError):
+        pass
+    if mode == "golden":
+        e_r, a_r = math.radians(17.0), math.radians(300.0)
+        sun_data.energy = 7.0
+        sun_data.color = (1.0, 0.45, 0.22)
+        cam_strength = 0.4
+        amb_strength = 0.15
+        ember_str, fire_e = 15.0, 10.0
+    else:
+        e_r, a_r = elev, az
+        sun_data.energy = 4.0
+        sun_data.color = (1.0, 1.0, 1.0)
+        cam_strength = 0.5
+        amb_strength = 0.12
+        ember_str, fire_e = 8.0, 0.0
+    if hasattr(sky2, "sun_elevation"):
+        sky2.sun_elevation = e_r
+    if hasattr(sky2, "sun_rotation"):
+        sky2.sun_rotation = a_r
+    if hasattr(sky2, "sun_disc"):
+        sky2.sun_disc = False
+    sky_src = sky2.outputs["Color"]
+    if mode == "golden":
+        warm = wnt.nodes.new("ShaderNodeMix")
+        warm.data_type = "RGBA"
+        warm.blend_type = "MULTIPLY"
+        warm.inputs["Factor"].default_value = 0.8
+        warm.inputs["B"].default_value = (1.0, 0.58, 0.36, 1.0)
+        wnt.links.new(sky2.outputs["Color"], warm.inputs["A"])
+        sky_src = warm.outputs["Result"]
+    wnt.links.new(sky_src, bg_l.inputs["Color"])
+    wnt.links.new(sky_src, bg_c.inputs["Color"])
+    bg_l.inputs["Strength"].default_value = amb_strength
+    bg_c.inputs["Strength"].default_value = cam_strength
+    aim_sun(e_r, a_r)
+    ember.inputs["Emission Strength"].default_value = ember_str
+    fire_ld.energy = fire_e
 
 
 # ---------------- cameras ----------------
@@ -932,10 +1306,17 @@ def add_cam(name, loc, target, lens, fstop=None):
 
 walk_loc = (33.4, -10.4, ground_h(33.4, 10.4) + 1.65)
 walk_tgt = (36.0, -8.0, ground_h(36, 8) + 0.5)
-cams = [
-    ("iso", add_cam("iso", (60, -55, 35), (22, -17, 2), 40)),
-    ("walk", add_cam("walk", walk_loc, walk_tgt, 30, fstop=2.8)),
-]
+deck_e_top = ground_h(22.58, 17.05) + 0.15
+CAMS = {
+    "iso": add_cam("iso", (60, -55, 35), (22, -17, 2), 40),
+    "walk": add_cam("walk", walk_loc, walk_tgt, 30, fstop=2.8),
+    "living": add_cam("living", (20.80, -17.5, ft + 1.5),
+                      (30.5, -14.5, ground_h(30.5, 14.5) + 1.0), 35, fstop=4.0),
+    "terrace": add_cam("terrace", (23.0, -16.0, deck_e_top + 1.6),
+                       (36.0, -8.0, ground_h(36, 8) + 1.0), 30),
+    "arrival": add_cam("arrival", (42.3, -29.3, ground_h(42.3, 29.3) + 1.65),
+                       (30.0, -26.0, ground_h(30, 26) + 1.5), 35),
+}
 
 # ---------------- render ----------------
 scene.render.engine = "CYCLES"
@@ -963,17 +1344,35 @@ except Exception as ex:
     print("Metal unavailable, CPU fallback:", ex)
 print("RENDER DEVICE:", device_used)
 
-scene.camera = cams[0][1]
+JOBS = [
+    ("iso", "render-iso.png", "day", 128, 0.0),
+    ("walk", "render-walk.png", "day", 128, 0.0),
+    ("living", "render-living.png", "day", 128, 0.0),
+    ("terrace", "render-terrace-golden.png", "golden", 128, 0.4),
+    ("arrival", "render-arrival-night.png", "night", 256, 0.3),
+]
+only = []
+for a2 in extra:
+    if a2.startswith("--only="):
+        only = a2.split("=", 1)[1].split(",")
+
+set_lighting("day")
+scene.camera = CAMS["iso"]
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, "garden.blend"))
 print("SAVED", os.path.join(out_dir, "garden.blend"))
 
 if NO_RENDER:
     print("NO-RENDER mode: scene built, skipping renders")
 else:
-    for name, cam in cams:
-        scene.camera = cam
-        scene.render.filepath = os.path.join(out_dir, "render-%s.png" % name)
+    for cname, outfile, mode, smp, expo in JOBS:
+        if only and cname not in only:
+            continue
+        set_lighting(mode)
+        scene.cycles.samples = smp
+        scene.view_settings.exposure = expo
+        scene.camera = CAMS[cname]
+        scene.render.filepath = os.path.join(out_dir, outfile)
         t0 = time.time()
         bpy.ops.render.render(write_still=True)
-        print("RENDER %s done in %.1fs -> %s" % (name, time.time() - t0, scene.render.filepath))
+        print("RENDER %s (%s) done in %.1fs -> %s" % (cname, mode, time.time() - t0, scene.render.filepath))
     print("POC DONE")
