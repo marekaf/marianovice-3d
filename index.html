@@ -98,6 +98,7 @@ const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
 const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
+const inPlot = (x, z) => { let inside = false; const pts = GARDEN.plot.vertices; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, zi] = pts[i], [xj, zj] = pts[j]; if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside; } return inside; };
 
 // ───────────────────────── SCENE ─────────────────────────
 const scene = new THREE.Scene();
@@ -292,8 +293,32 @@ scene.add(axes);
 // ───────────────────────── TERRAIN (slope SW→NE, 4 m elevation diff) ─────────────────────────
 // SW corner (1.15, 30.41) = highest (y=4), NE corner (44.16, 0) = lowest (y=0)
 // Plane equation: y = -0.062 x + 0.044 z + 2.733
-function terrainHeight(x, z) {
+function basePlaneHeight(x, z) {
   return Math.max(0, -0.062 * x + 0.044 * z + 2.733);
+}
+// Graded cut into the west slope — clamped just under the level west deck (top 2.515),
+// smoothstep bank rising to natural grade; min() leaves downhill areas untouched
+const CUT_BLEND = 1.8;
+const cutRects = [
+  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
+  { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
+  { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965 }, // level apron in front of the garage door
+];
+const cutSmoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
+const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
+function gradedHeight(x, z) {
+  const base = basePlaneHeight(x, z);
+  let h = base;
+  for (const r of cutRects) {
+    const d = cutRectDist(r, x, z);
+    if (d >= CUT_BLEND) continue;
+    const t = cutSmoothstep(d / CUT_BLEND);
+    h = Math.min(h, r.level + (base - r.level) * t);
+  }
+  return h;
+}
+function terrainHeight(x, z) {
+  return gradedHeight(x, z);
 }
 
 // ───────────────────────── HELPERS ─────────────────────────
@@ -638,21 +663,68 @@ woodTex.repeat.set(1 / 2, 1 / 2);
 
 // ───────────────────────── FENCE (GROUND) ─────────────────────────
 const plotVerts = GARDEN.plot.vertices;  // NW, NE, E_kink, SE, SW
-const plotShape = makePolyShape(plotVerts);
-const plotGeom = new THREE.ShapeGeometry(plotShape);
-plotGeom.rotateX(-Math.PI/2);
-// Apply slope to vertex Y
-const groundPos = plotGeom.attributes.position;
-for (let i = 0; i < groundPos.count; i++) {
-  const x = groundPos.getX(i);
-  const z = groundPos.getZ(i);
-  groundPos.setY(i, terrainHeight(x, z));
+// Dense 0.7 m grid clipped to the plot pentagon — a 5-vertex ShapeGeometry can't express the graded cut
+function pointInPlot(x, z) {
+  let inside = false;
+  for (let i = 0, j = plotVerts.length - 1; i < plotVerts.length; j = i++) {
+    const [xi, zi] = plotVerts[i], [xj, zj] = plotVerts[j];
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
 }
-groundPos.needsUpdate = true;
-plotGeom.computeVertexNormals();
+function nearestOnPlotEdge(x, z) {
+  let bx = x, bz = z, bd = Infinity;
+  for (let i = 0; i < plotVerts.length; i++) {
+    const [ax, az] = plotVerts[i], [cx, cz] = plotVerts[(i + 1) % plotVerts.length];
+    const ex = cx - ax, ez = cz - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / (ex * ex + ez * ez)));
+    const px = ax + ex * t, pz = az + ez * t;
+    const d = (x - px) ** 2 + (z - pz) ** 2;
+    if (d < bd) { bd = d; bx = px; bz = pz; }
+  }
+  return [bx, bz];
+}
+const groundGeom = (() => {
+  const xs = plotVerts.map(p => p[0]), zs = plotVerts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+  const nx = Math.ceil((x1 - x0) / 0.7), nz = Math.ceil((z1 - z0) / 0.7);
+  const gx = new Float64Array((nx + 1) * (nz + 1)), gz = new Float64Array((nx + 1) * (nz + 1));
+  for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
+    gx[j * (nx + 1) + i] = x0 + (x1 - x0) * i / nx;
+    gz[j * (nx + 1) + i] = z0 + (z1 - z0) * j / nz;
+  }
+  const index = [];
+  const used = new Uint8Array(gx.length);
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const a = j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1;
+    for (const tri of [[a, d, b], [a, c, d]]) {
+      if (!pointInPlot((gx[tri[0]] + gx[tri[1]] + gx[tri[2]]) / 3, (gz[tri[0]] + gz[tri[1]] + gz[tri[2]]) / 3)) continue;
+      index.push(tri[0], tri[1], tri[2]);
+      used[tri[0]] = used[tri[1]] = used[tri[2]] = 1;
+    }
+  }
+  // Boundary triangles keep the exact pentagon silhouette — outside verts snap onto the outline
+  for (let k = 0; k < gx.length; k++) {
+    if (used[k] && !pointInPlot(gx[k], gz[k])) [gx[k], gz[k]] = nearestOnPlotEdge(gx[k], gz[k]);
+  }
+  const pos = new Float32Array(gx.length * 3), uv = new Float32Array(gx.length * 2);
+  for (let k = 0; k < gx.length; k++) {
+    pos[k * 3] = gx[k];
+    pos[k * 3 + 1] = terrainHeight(gx[k], gz[k]);
+    pos[k * 3 + 2] = gz[k];
+    uv[k * 2] = gx[k];
+    uv[k * 2 + 1] = gz[k];
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(index);
+  g.computeVertexNormals();
+  return g;
+})();
 
 const ground = new THREE.Mesh(
-  plotGeom,
+  groundGeom,
   new THREE.MeshStandardMaterial({ color: 0xdfe6d8, map: grassTex, roughness: 0.95 })
 );
 ground.receiveShadow = true;
@@ -732,19 +804,19 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
 }
 
 // MAIN CORE — single gable roof, 0.45 m eave overhang on all sides
-const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1] - 0.45, HB[3] + 0.45, houseTerrainY + wallH, roofRise);
+const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH, roofRise);
 const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
 // North wing (west of core, north of atrium) — shed roof, small slope W low / E high
-const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1] - 0.45, HA[1] + 0.45, houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1], HA[1], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
 const nWingRoofMesh = new THREE.Mesh(nWingRoofGeom, roofMat);
 nWingRoofMesh.castShadow = true;
 roofGroup.add(nWingRoofMesh);
 
 // South wing (west of core, south of atrium) — shed roof
-const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3] - 0.45, HB[3] + 0.45, houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3], HB[3], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
 const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
 sWingRoofMesh.castShadow = true;
 roofGroup.add(sWingRoofMesh);
@@ -835,10 +907,10 @@ const garageDoorX = doorRect.x + doorRect.w / 2;
 const garageDoorZ = GA.y + GA.d;
 const garageDoorBaseY = garageFloorY;
 const garageDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(doorRect.w, 2.1, 0.08),
+  new THREE.BoxGeometry(doorRect.w, 2.05, 0.08),
   new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 })
 );
-garageDoor.position.set(garageDoorX, garageDoorBaseY + 1.05, garageDoorZ + 0.04);
+garageDoor.position.set(garageDoorX, garageDoorBaseY + 1.025, garageDoorZ + 0.04);
 scene.add(garageDoor);
 // Horizontal section lines on garage door
 for (let i = 1; i < 5; i++) {
@@ -1303,7 +1375,7 @@ const waterNormal = (() => {
   const xMin = HC[0] - 0.45, xMax = HC[1] + 0.45, xMid = (xMin + xMax) / 2;
   const slopeLen = Math.sqrt((xMid - xMin) ** 2 + roofRise ** 2);
   const slopeAngle = Math.atan2(roofRise, xMid - xMin);
-  const zMin = HB[1] - 0.45, zMax = HB[3] + 0.45;
+  const zMin = HB[1], zMax = HB[3];
 
   for (let zs = zMin + 0.2; zs < zMax; zs += 0.4) {
     const left = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.06, 0.04), stripeMat);
@@ -1362,6 +1434,23 @@ const waterNormal = (() => {
     back.position.set(tx + dx, baseY + 0.7, tz + dz + (dz > 0 ? -0.2 : 0.2));
     back.rotation.y = ry;
     furnitureGroup.add(back);
+  }
+}
+
+// Zašívárna — hidden bench on the garage north side (Flera-style, blue/red)
+{
+  const bx = 32.3, bz = 19.05, baseY = terrainHeight(bx, bz);
+  const seatBlue = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.5), new THREE.MeshStandardMaterial({ color: 0x3a6ab8, roughness: 0.4, metalness: 0.3 }));
+  seatBlue.position.set(bx - 0.35, baseY + 0.45, bz);
+  const seatRed = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.07, 0.5), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 }));
+  seatRed.position.set(bx + 0.55, baseY + 0.45, bz);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.06), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 }));
+  back.position.set(bx, baseY + 0.75, bz + 0.22);
+  for (const m of [seatBlue, seatRed, back]) { m.castShadow = true; furnitureGroup.add(m); }
+  for (const lx of [bx - 0.8, bx + 0.8]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.44), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 }));
+    leg.position.set(lx, baseY + 0.21, bz);
+    furnitureGroup.add(leg);
   }
 }
 
@@ -1496,7 +1585,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
     const nShr = kind === 'perennials' || kind === 'meadow' ? 0 : Math.round(area / (kind === 'shrubs' ? 2.5 : 5));
     for (let i = 0; i < nPer; i++) {
       const pt = sample();
-      if (!pt) continue;
+      if (!pt || !inPlot(pt[0], pt[1])) continue;
       const r = (kind === 'meadow' ? 0.1 : 0.2) + Math.random() * (kind === 'meadow' ? 0.15 : 0.3);
       const baseY = terrainHeight(pt[0], pt[1]);
       const c = new THREE.Mesh(
@@ -1509,7 +1598,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
     }
     for (let i = 0; i < nShr; i++) {
       const pt = sample();
-      if (!pt) continue;
+      if (!pt || !inPlot(pt[0], pt[1])) continue;
       addBush(pt[0], pt[1], 0.45 + Math.random() * 0.35, 0x5f8452);
     }
   }
@@ -1535,6 +1624,7 @@ const grassPositions = [];
 for (let i = 0; i < 80; i++) {
   const tx = 5 + Math.random() * 35;
   const tz = 4 + Math.random() * 32;
+  if (!inPlot(tx, tz)) continue;
   // Avoid buildings (house, garage, etc.) — rough check
   if (tx > 9 && tx < 22 && tz > 5 && tz < 27) continue; // house
   if (tx > 21 && tx < 35 && tz > 19 && tz < 27) continue; // carport+garáž

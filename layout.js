@@ -79,7 +79,7 @@ const GARDEN = {
       fixed: true,
       parts: [
         { kind: "rect", x: 27.63, y: 19.4, w: 7.18, d: 7.05, fill: "#888", opacity: 0.88, stroke: "#3a3a3a", sw: 2 },
-        { kind: "rect", x: 29.57, y: 26.28, w: 3.3, d: 0.33, fill: "#222" },
+        { kind: "rect", x: 28.72, y: 26.28, w: 5, d: 0.33, fill: "#222" },
         { kind: "text", x: 31.17, y: 22.67, text: "GARAGE", cls: "lbl-w", size: 14, weight: 700 },
         { kind: "text", x: 31.17, y: 23.67, text: "7.18 × 7.05 m", cls: "dim", fill: "#fff" }
       ]
@@ -98,7 +98,7 @@ const GARDEN = {
       id: "driveway",
       name: "Driveway 4.5 m × ~22 m",
       parts: [
-        { kind: "polygon", points: [[21.28, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
+        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
         { kind: "text", x: 30.83, y: 28.33, text: "driveway", cls: "lbl-sm" },
         { kind: "text", x: 30.83, y: 29.17, text: "4.5 m × ~22 m", cls: "dim" }
       ]
@@ -371,6 +371,16 @@ const GARDEN = {
       parts: [
         { kind: "rect", x: 24.7, y: 17.8, w: 10, d: 1.5, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 27.4, y: 18.8, text: "shade bed Z10" }
+      ]
+    },
+    {
+      id: "zasivarna",
+      name: "Zašívárna — hidden bench (blue/red)",
+      short: "Zašívárna",
+      parts: [
+        { kind: "rect", x: 31.4, y: 18.8, w: 1.1, d: 0.5, fill: "#3a6ab8", stroke: "#2a4a88", sw: 0.8 },
+        { kind: "rect", x: 32.5, y: 18.8, w: 0.7, d: 0.5, fill: "#c0392b", stroke: "#8a2a1e", sw: 0.8 },
+        { kind: "text", x: 32.3, y: 18.45, text: "zašívárna", cls: "lbl-sm", fill: "#2a4a88" }
       ]
     },
     {
