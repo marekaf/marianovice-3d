@@ -11,13 +11,14 @@ import os
 import random
 import sys
 import time
-from mathutils import Vector
+from mathutils import Vector, noise
 
 argv = sys.argv
 extra = argv[argv.index("--") + 1:]
 json_path = os.path.abspath(extra[0])
 NO_RENDER = "--no-render" in extra
 out_dir = os.path.dirname(json_path)
+ASSETS = os.path.join(out_dir, "assets")
 with open(json_path) as f:
     GARDEN = json.load(f)
 
@@ -28,20 +29,52 @@ for ob in list(bpy.data.objects):
     bpy.data.objects.remove(ob, do_unlink=True)
 
 
+def smoothstep01(t):
+    t = max(0.0, min(1.0, t))
+    return t * t * (3.0 - 2.0 * t)
+
+
+CUT_Z = 2.46  # graded cut for the level west decks
+APRON_Z = -0.062 * 15.88 + 0.044 * 16.805 + 2.733 - 0.5  # garage floor level
+DRIP_Z = 2.345  # drip-strip dig level along the facade
+DRIP_BANDS = [(10.48, 21.28, 6.68, 7.18), (10.48, 21.28, 26.43, 26.93), (21.28, 21.78, 7.18, 11.58)]
+
+
 def ground_h(x, y):
-    """Terrain height in plan coords (x east, y south)."""
-    return max(0.0, -0.062 * x + 0.044 * y + 2.733)
+    """Terrain height in plan coords (x east, y south), incl. grading cuts."""
+    z = max(0.0, -0.062 * x + 0.044 * y + 2.733)
+    in_a = 6.5 <= x <= 10.6 and 6.7 <= y <= 28.8
+    in_b = 10.48 <= x <= 14.78 and 15.93 <= y <= 19.18
+    if in_a or in_b:
+        s = 1.0 if in_b else smoothstep01((x - 6.5) / 1.8) * smoothstep01((28.8 - y) / 1.8)
+        z -= max(0.0, z - CUT_Z) * s
+    if 24.13 <= x <= 34.81 and 26.45 <= y <= 30.75:  # level apron at the garage door
+        s = smoothstep01((x - 24.13) / 3.5) * smoothstep01((30.75 - y) / 3.5)
+        z -= max(0.0, z - APRON_Z) * s
+    for bx0, bx1, by0, by1 in DRIP_BANDS:
+        if bx0 - 0.6 <= x <= bx1 + 0.6 and by0 - 0.6 <= y <= by1 + 0.6:
+            sx = min(smoothstep01((x - bx0 + 0.6) / 0.6), smoothstep01((bx1 + 0.6 - x) / 0.6))
+            sy = min(smoothstep01((y - by0 + 0.6) / 0.6), smoothstep01((by1 + 0.6 - y) / 0.6))
+            z -= max(0.0, z - DRIP_Z) * min(sx, sy)
+    return z
 
 
-PONDS = [(30.0, 15.0, 2.8, 2.0, 0.45)]
+_pond = next(p for e in GARDEN["elements"] if e["id"] == "pond"
+             for p in e["parts"] if p["kind"] == "ellipse")
+POND = (_pond["cx"], _pond["cy"], _pond["rx"], _pond["ry"])
+POND_EDGE_MIN = min(ground_h(POND[0] + POND[2] * math.cos(a), POND[1] + POND[3] * math.sin(a))
+                    for a in [i * math.pi / 8.0 for i in range(16)])
+POND_WATER_Z = POND_EDGE_MIN - 0.10
 
 
 def terrain_z(x, y):
     z = ground_h(x, y)
-    for cx, cy, rx, ry, depth in PONDS:
-        d2 = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2
-        if d2 < 1.0:
-            z -= depth * (1.0 - d2)
+    cx, cy, rx, ry = POND
+    d2 = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2
+    if d2 < 1.0:
+        rr = math.sqrt(d2)
+        bowl = POND_EDGE_MIN - 0.55 * (0.5 + 0.5 * math.cos(math.pi * rr))
+        z += (min(bowl, z) - z) * smoothstep01((1.0 - rr) / 0.3)
     return z
 
 
@@ -88,6 +121,69 @@ def mat_plaster(name, color, rough=0.85):
     bump.inputs["Strength"].default_value = 0.05
     nt.links.new(noise.outputs["Fac"], bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"], b.inputs["Normal"])
+    return m
+
+
+def find_map(slug, kind):
+    d = os.path.join(ASSETS, "textures", slug)
+    if not os.path.isdir(d):
+        return None
+    for fn in sorted(os.listdir(d)):
+        if kind in fn:
+            return os.path.join(d, fn)
+    return None
+
+
+def mat_pbr(name, slug, scale=1.0, tint=None, tint_fac=0.85, tint_mode="MULTIPLY",
+            rough_fallback=0.8, metal=0.0, nrm=1.0, spec=None):
+    """PBR from downloaded texture set, box-projected in object space (no UVs needed)."""
+    m, nt, b = new_mat(name)
+    b.inputs["Metallic"].default_value = metal
+    if spec is not None:
+        for sname in ("Specular IOR Level", "Specular"):
+            if sname in b.inputs:
+                b.inputs[sname].default_value = spec
+                break
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    mp = nt.nodes.new("ShaderNodeMapping")
+    mp.inputs["Scale"].default_value = (scale, scale, scale)
+    nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
+
+    def img_node(path, ncol=False):
+        n = nt.nodes.new("ShaderNodeTexImage")
+        n.image = bpy.data.images.load(path, check_existing=True)
+        if ncol:
+            n.image.colorspace_settings.name = "Non-Color"
+        n.projection = "BOX"
+        n.projection_blend = 0.3
+        nt.links.new(mp.outputs["Vector"], n.inputs["Vector"])
+        return n
+
+    diff = img_node(find_map(slug, "_diff_"))
+    col_out = diff.outputs["Color"]
+    if tint is not None:
+        mixn = nt.nodes.new("ShaderNodeMix")
+        mixn.data_type = "RGBA"
+        mixn.blend_type = tint_mode
+        # RGBA sockets by index: several inputs share the names A/B/Result
+        mixn.inputs[0].default_value = tint_fac
+        mixn.inputs[7].default_value = (*tint, 1.0)
+        nt.links.new(col_out, mixn.inputs[6])
+        col_out = mixn.outputs[2]
+    nt.links.new(col_out, b.inputs["Base Color"])
+    rpath = find_map(slug, "_rough_")
+    if rpath:
+        rough = img_node(rpath, ncol=True)
+        nt.links.new(rough.outputs["Color"], b.inputs["Roughness"])
+    else:
+        b.inputs["Roughness"].default_value = rough_fallback
+    npath = find_map(slug, "_nor_gl_")
+    if npath:
+        nor = img_node(npath, ncol=True)
+        nmn = nt.nodes.new("ShaderNodeNormalMap")
+        nmn.inputs["Strength"].default_value = nrm
+        nt.links.new(nor.outputs["Color"], nmn.inputs["Color"])
+        nt.links.new(nmn.outputs["Normal"], b.inputs["Normal"])
     return m
 
 
@@ -193,18 +289,23 @@ def mat_blade(name):
 
 
 MAT = {
-    "soil": mat_soil_grass("soil", hexc("#4f7040"), hexc("#3f5a33")),
-    "meadow": mat_soil_grass("meadow", hexc("#6f9a60"), hexc("#8a9a58"), scale=8.0),
-    "walls": mat_plaster("walls", hexc("#d4b896")),
-    "garage_walls": mat_plaster("garage_walls", hexc("#9a9a9a")),
-    "roof": mat_simple("roof", hexc("#8a8f94"), rough=0.35, metal=0.8),
+    "soil": mat_pbr("soil", "leafy_grass", scale=0.45, tint=hexc("#2e6e26"), tint_fac=0.9, tint_mode="MIX", spec=0.0),
+    "meadow": mat_pbr("meadow", "leafy_grass", scale=0.35, tint=hexc("#4f7f38"), tint_fac=0.8, tint_mode="MIX", spec=0.0),
+    "walls": mat_pbr("walls", "plastered_wall_02", scale=0.6, tint=hexc("#b08350"), tint_fac=0.95, tint_mode="MIX"),
+    "garage_walls": mat_pbr("garage_walls", "plastered_wall_02", scale=0.6, tint=hexc("#b4b6b8"), tint_fac=0.75, tint_mode="MIX"),
+    "roof": mat_pbr("roof", "metal_plate_02", scale=0.8, tint=hexc("#7c838a"), tint_fac=0.7, tint_mode="MIX", metal=0.6),
     "wood": mat_wood("wood", hexc("#7a5a3a"), hexc("#5e4229")),
     "deck": mat_planks("deck", hexc("#a87d4a")),
     "path": mat_concrete("path", hexc("#cdc1ad"), hexc("#b7ab96")),
-    "drive": mat_concrete("drive", hexc("#c9c9c6"), hexc("#b2b1ad")),
-    "water": mat_simple("water", hexc("#7fa3bd"), rough=0.02, transmission=1.0, ior=1.33),
+    "drive": mat_pbr("drive", "clean_asphalt", scale=0.4, tint=hexc("#c9c7c2"), tint_fac=0.45, tint_mode="MIX"),
+    "gravel": mat_pbr("gravel", "gravel_floor_02", scale=0.8, tint=hexc("#b8b0a2"), tint_fac=0.4),
+    "rock": mat_pbr("rock", "dark_rock", scale=1.3, tint=hexc("#90897f"), tint_fac=0.5, tint_mode="MIX"),
+    "bark": mat_pbr("bark", "bark_brown_02", scale=1.4),
+    "ash": mat_simple("ash", hexc("#55504a"), rough=1.0),
+    "char": mat_wood("char", hexc("#241c15"), hexc("#0e0b08"), rough=0.9, stretch=(2.0, 2.0, 0.6)),
+    "water": mat_simple("water", hexc("#2b4550"), rough=0.14),
     "glass": mat_simple("glass", hexc("#d5dde2"), rough=0.03, transmission=1.0, ior=1.45),
-    "frame": mat_simple("frame", hexc("#2a2a2a"), rough=0.5, metal=0.3),
+    "frame": mat_simple("frame", hexc("#2b2d30"), rough=0.45, metal=0.4),
     "backing": mat_simple("backing", hexc("#0d1013"), rough=0.9),
     "door_metal": mat_simple("door_metal", hexc("#33383d"), rough=0.4, metal=0.7),
     "groove": mat_simple("groove", hexc("#1c1f22"), rough=0.5, metal=0.5),
@@ -231,11 +332,78 @@ FLOWER = [mat_simple("flower%d" % i, c, rough=0.8) for i, c in enumerate(
 MAT["planter"] = mat_simple("planter", hexc("#3a3a3e"), rough=0.6)
 MAT["tuft"] = mat_simple("tuft", hexc("#6f9a4a"), rough=0.8)
 MAT["soil_pot"] = mat_simple("soil_pot", hexc("#3a2f24"), rough=0.95)
-MAT["molinia"] = mat_simple("molinia", hexc("#96a050"), rough=0.7)
+def mat_molinia_grad(name):
+    """Ornamental grass: green base fading to straw tips, by object-space height."""
+    m, nt, b = new_mat(name)
+    b.inputs["Roughness"].default_value = 0.55
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    mr = nt.nodes.new("ShaderNodeMapRange")
+    mr.inputs["From Max"].default_value = 0.9
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    ramp.color_ramp.elements[0].color = (*hexc("#41602c"), 1.0)
+    e1 = ramp.color_ramp.elements[1]
+    e1.position = 0.55
+    e1.color = (*hexc("#8a9a4a"), 1.0)
+    e2 = ramp.color_ramp.elements.new(1.0)
+    e2.color = (*hexc("#c9b06a"), 1.0)
+    nt.links.new(tc.outputs["Object"], sep.inputs["Vector"])
+    nt.links.new(sep.outputs["Z"], mr.inputs["Value"])
+    nt.links.new(mr.outputs["Result"], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], b.inputs["Base Color"])
+    return m
+
+
+MAT["molinia"] = mat_molinia_grad("molinia")
 MAT["seed"] = mat_simple("seed", hexc("#c9b06a"), rough=0.8)
 MAT["bollard"] = mat_simple("bollard", hexc("#1c1c1e"), rough=0.4, metal=0.8)
 MAT["bulb"] = mat_simple("bulb", hexc("#2a2419"), rough=0.5, emit=hexc("#ffbe78"), emit_str=6.0)
 MAT["spot_disc"] = mat_simple("spot_disc", hexc("#2a2419"), rough=0.5, emit=hexc("#ffb060"), emit_str=4.0)
+
+FLAME_STR = []
+
+
+def mat_flame(name):
+    """Stylized flame: emission gradient over height, fading to transparent at the tip."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    for nd in list(nt.nodes):
+        nt.nodes.remove(nd)
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    em = nt.nodes.new("ShaderNodeEmission")
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    ramp_c = nt.nodes.new("ShaderNodeValToRGB")
+    ramp_c.color_ramp.elements[0].color = (1.0, 0.22, 0.02, 1.0)
+    ec = ramp_c.color_ramp.elements[1]
+    ec.position = 0.5
+    ec.color = (1.0, 0.55, 0.08, 1.0)
+    ec2 = ramp_c.color_ramp.elements.new(1.0)
+    ec2.color = (1.0, 0.85, 0.35, 1.0)
+    ramp_a = nt.nodes.new("ShaderNodeValToRGB")
+    ramp_a.color_ramp.elements[0].color = (1.0, 1.0, 1.0, 1.0)
+    ea = ramp_a.color_ramp.elements[1]
+    ea.position = 0.65
+    ea.color = (0.35, 0.35, 0.35, 1.0)
+    ea2 = ramp_a.color_ramp.elements.new(1.0)
+    ea2.color = (0.0, 0.0, 0.0, 1.0)
+    em.inputs["Strength"].default_value = 6.0
+    FLAME_STR.append(em.inputs["Strength"])
+    nt.links.new(tc.outputs["Generated"], sep.inputs["Vector"])
+    nt.links.new(sep.outputs["Z"], ramp_c.inputs["Fac"])
+    nt.links.new(sep.outputs["Z"], ramp_a.inputs["Fac"])
+    nt.links.new(ramp_c.outputs["Color"], em.inputs["Color"])
+    nt.links.new(ramp_a.outputs["Color"], mix.inputs["Fac"])
+    nt.links.new(tr.outputs["BSDF"], mix.inputs[1])
+    nt.links.new(em.outputs["Emission"], mix.inputs[2])
+    nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
+    return m
+
+
+MAT["flame"] = mat_flame("flame")
 
 
 # ---------------- geometry helpers ----------------
@@ -304,7 +472,7 @@ def draped_poly(name, pts, lift, mat, subdiv=4):
     return link_obj(name, mesh, mat)
 
 
-def gable(name, x0, x1, y0s, y1s, z_eave, z_ridge, ridge_x, mat):
+def gable(name, x0, x1, y0s, y1s, z_eave, z_ridge, ridge_x, mat, end_mat=None):
     ya, yb = -y1s, -y0s
     bm = bmesh.new()
     co = [(x0, ya, z_eave), (ridge_x, ya, z_ridge), (x1, ya, z_eave),
@@ -319,7 +487,13 @@ def gable(name, x0, x1, y0s, y1s, z_eave, z_ridge, ridge_x, mat):
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
-    return link_obj(name, mesh, mat)
+    ob = link_obj(name, mesh, mat)
+    if end_mat is not None:  # gable-end triangles in facade material
+        mesh.materials.append(end_mat)
+        for poly in mesh.polygons:
+            if len(poly.vertices) == 3:
+                poly.material_index = 1
+    return ob
 
 
 def sloped_slab(name, x0, x1, z0, z1, y0s, y1s, thick, mat):
@@ -365,6 +539,68 @@ def post(name, x, y, z0, z1, mat, half=0.05):
     return box_b(name, x - half, x + half, -y - half, -y + half, z0, z1, mat)
 
 
+def make_rock_mesh(name, seed_i):
+    """Irregular boulder: icosphere displaced by 3D noise."""
+    bm = bmesh.new()
+    try:
+        bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
+    except TypeError:
+        bmesh.ops.create_icosphere(bm, subdivisions=2, diameter=1.0)
+    off = Vector((seed_i * 4.13, seed_i * 1.71, seed_i * 2.9))
+    for v in bm.verts:
+        n = noise.noise(v.co * 1.8 + off)
+        n2 = noise.noise(v.co * 5.5 + off)
+        v.co *= 1.0 + 0.30 * n + 0.08 * n2
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(MAT["rock"])
+    for p in mesh.polygons:
+        p.use_smooth = True
+    return mesh
+
+
+ROCK_MESHES = None
+
+
+def place_rock(name, px, py, z, size, squash=0.75):
+    global ROCK_MESHES
+    if ROCK_MESHES is None:
+        ROCK_MESHES = [make_rock_mesh("rockmesh%d" % i, i) for i in range(5)]
+    ob = bpy.data.objects.new(name, random.choice(ROCK_MESHES))
+    bpy.context.collection.objects.link(ob)
+    ob.location = (px, -py, z)
+    ob.rotation_euler = (random.random() * 0.3, random.random() * 0.3, random.random() * 6.283)
+    ob.scale = (size * (0.85 + random.random() * 0.4), size * (0.85 + random.random() * 0.4), size * squash)
+    return ob
+
+
+def circle_pts(cx, cy, r, n=24):
+    return [(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n))
+            for i in range(n)]
+
+
+def wedge_we(name, x0, x1, y0s, y1s, z_base, z_high, mat, high="w"):
+    """Triangular prism: flat z_base, rising to z_high at one x edge, spanning y."""
+    ya, yb = -y1s, -y0s
+    hx = x0 if high == "w" else x1
+    lx = x1 if high == "w" else x0
+    bm = bmesh.new()
+    co = [(hx, ya, z_base), (lx, ya, z_base), (hx, ya, z_high),
+          (hx, yb, z_base), (lx, yb, z_base), (hx, yb, z_high)]
+    vs = [bm.verts.new(cc) for cc in co]
+    bm.faces.new([vs[0], vs[1], vs[2]])
+    bm.faces.new([vs[5], vs[4], vs[3]])
+    bm.faces.new([vs[0], vs[3], vs[4], vs[1]])
+    bm.faces.new([vs[1], vs[4], vs[5], vs[2]])
+    bm.faces.new([vs[2], vs[5], vs[3], vs[0]])
+    bm.normal_update()
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    return link_obj(name, mesh, mat)
+
+
 def roof_seams(prefix, x_eave, z_eave, x_ridge, z_ridge, y0s, y1s, mat, step=0.4):
     ang = math.atan2(z_ridge - z_eave, x_ridge - x_eave)
     ln = math.hypot(x_ridge - x_eave, z_ridge - z_eave)
@@ -401,13 +637,28 @@ dpoly = next(p for p in els["driveway"]["parts"] if p["kind"] == "polygon")["poi
 # ---------------- grass exclusion mask ----------------
 EXCL_RECTS = []
 for eid in ["westTerrace", "eastTerrace", "saunaPath", "parking", "carport", "garage",
-            "sauna", "saunaShelter", "raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
+            "sauna", "saunaShelter", "pergola", "raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
     for prt in els[eid]["parts"]:
         if prt["kind"] == "rect":
             m = 0.15
             EXCL_RECTS.append((prt["x"] - m, prt["y"] - m, prt["x"] + prt["w"] + m, prt["y"] + prt["d"] + m))
+for bx0, bx1, by0, by1 in DRIP_BANDS:
+    EXCL_RECTS.append((bx0 - 0.1, by0 - 0.1, bx1 + 0.1, by1 + 0.1))
 EXCL_POLYS = [hpoly, dpoly]
-EXCL_ELLIPSES = [(30.0, 15.0, 3.1, 2.25), (5.0, 2.5, 1.15, 1.15), (36.0, 8.0, 1.2, 1.2)]
+_fire = next(p for p in els["firePit"]["parts"] if p["kind"] == "circle")
+EXCL_ELLIPSES = [(POND[0], POND[1], POND[2] + 0.35, POND[3] + 0.3), (5.0, 2.5, 1.15, 1.15),
+                 (_fire["cx"], _fire["cy"], 1.25, 1.25)]
+
+
+def _seg_d2(px, py, ax, ay, bx, by):
+    vx, vy = bx - ax, by - ay
+    t = max(0.0, min(1.0, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy)))
+    dx, dy = px - ax - vx * t, py - ay - vy * t
+    return dx * dx + dy * dy
+
+
+DRIVE_SEGS = [(dpoly[i][0], dpoly[i][1], dpoly[(i + 1) % len(dpoly)][0], dpoly[(i + 1) % len(dpoly)][1])
+              for i in range(len(dpoly))]
 
 
 def point_in_poly(x, y, poly):
@@ -481,6 +732,9 @@ def grass_weight(x, y):
     for poly in EXCL_POLYS:
         if point_in_poly(x, y, poly):
             return 0.0
+    for ax, ay, bx, by in DRIVE_SEGS:  # crisp pavement edge: no blades overhanging
+        if _seg_d2(x, y, ax, ay, bx, by) < 0.0144:
+            return 0.0
     for fn, _ in BED_SHAPES:
         if fn(x, y):
             return 0.0
@@ -509,7 +763,7 @@ def build_terrain():
     vs = [bm.verts.new((p[0], -p[1], 0.0)) for p in plot]
     bm.faces.new(vs)
     bmesh.ops.triangulate(bm, faces=bm.faces[:])
-    for _ in range(7):
+    for _ in range(8):
         bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=1, use_grid_fill=True)
     for v in bm.verts:
         v.co.z = terrain_z(v.co.x, -v.co.y)
@@ -536,13 +790,13 @@ def build_terrain():
 
 
 def build_surround():
-    bpy.ops.mesh.primitive_grid_add(x_subdivisions=80, y_subdivisions=80, size=180, location=(22, -17, 0))
+    bpy.ops.mesh.primitive_grid_add(x_subdivisions=220, y_subdivisions=220, size=180, location=(22, -17, 0))
     ob = bpy.context.active_object
     ob.name = "surround"
     for v in ob.data.vertices:
         wx = v.co.x + 22.0
         wy = v.co.y - 17.0
-        v.co.z = ground_h(wx, -wy) - 0.08
+        v.co.z = terrain_z(wx, -wy) - 0.10
     ob.data.materials.append(MAT["meadow"])
 
 
@@ -640,23 +894,60 @@ build_grass(build_blade())
 bb = house["meta"]["bbox"]
 core = house["meta"]["coreX"]
 ft = ground_h((bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2)  # floor level
+DECK_TOP = ft + 0.05
 h_base = min(ground_h(x, y) for x, y in hpoly) - 0.2
 extrude_poly("house_walls", hpoly, h_base, ft + 2.8, MAT["walls"])
 
 ridge_x = (core[0] + core[1]) / 2.0
-OV = 0.45
-gable("house_roof", core[0] - OV, core[1] + OV, bb[1] - OV, bb[3] + OV,
-      ft + 2.8, ft + 5.0, ridge_x, MAT["roof"])
-roof_seams("houseW", core[0] - OV, ft + 2.8, ridge_x, ft + 5.0, bb[1] - OV, bb[3] + OV, MAT["roof"])
-roof_seams("houseE", core[1] + OV, ft + 2.8, ridge_x, ft + 5.0, bb[1] - OV, bb[3] + OV, MAT["roof"])
+OV = 0.45  # east/west eaves only; rake flush with N/S walls
+gable("house_roof", core[0] - OV, core[1] + OV, bb[1], bb[3],
+      ft + 2.8, ft + 5.0, ridge_x, MAT["roof"], end_mat=MAT["walls"])
+roof_seams("houseW", core[0] - OV, ft + 2.8, ridge_x, ft + 5.0, bb[1], bb[3], MAT["roof"])
+roof_seams("houseE", core[1] + OV, ft + 2.8, ridge_x, ft + 5.0, bb[1], bb[3], MAT["roof"])
 
 
 def wing_z(x):
     return ft + 2.8 + (x - 10.48) * (0.9 / 4.3)
 
 
-sloped_slab("wingN", 10.13, 14.78, wing_z(10.13), wing_z(14.78), 6.88, 16.23, 0.12, MAT["roof"])
-sloped_slab("wingS", 10.13, 14.78, wing_z(10.13), wing_z(14.78), 18.88, 26.73, 0.12, MAT["roof"])
+sloped_slab("wingN", 10.13, 14.78, wing_z(10.13), wing_z(14.78), 7.18, 16.23, 0.12, MAT["roof"])
+sloped_slab("wingS", 10.13, 14.78, wing_z(10.13), wing_z(14.78), 18.88, 26.43, 0.12, MAT["roof"])
+roof_seams("wingN", 10.13, wing_z(10.13) + 0.12, 14.78, wing_z(14.78) + 0.12, 7.18, 16.23, MAT["roof"])
+roof_seams("wingS", 10.13, wing_z(10.13) + 0.12, 14.78, wing_z(14.78) + 0.12, 18.88, 26.43, MAT["roof"])
+# wing wall fills: N/S end triangles + band at the core junction (no air gap under sheds)
+for wname, wy0, wy1 in [("wingN", 7.18, 16.23), ("wingS", 18.88, 26.43)]:
+    wedge_we(wname + "_fill_n", 10.48, 14.78, wy0, wy0 + 0.12, ft + 2.8, wing_z(14.78),
+             MAT["walls"], high="e")
+    wedge_we(wname + "_fill_s", 10.48, 14.78, wy1 - 0.12, wy1, ft + 2.8, wing_z(14.78),
+             MAT["walls"], high="e")
+    box_p(wname + "_band", 14.66, wy0, 14.78, wy1, ft + 2.8, wing_z(14.78), MAT["walls"])
+# drip strips: light gravel bands in the dug terrain along the facade
+MAT["gravel_light"] = mat_pbr("gravel_light", "gravel_floor_02", scale=1.0,
+                              tint=hexc("#cfcbc3"), tint_fac=0.45, tint_mode="MIX")
+for di, (bx0, bx1, by0, by1) in enumerate(DRIP_BANDS):
+    draped_poly("drip%d" % di, [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1)], 0.03,
+                MAT["gravel_light"], subdiv=3)
+# marmolit sokl band: level top above floor, bottom under the gravel grade
+MAT["sokl"] = mat_pbr("sokl", "plastered_wall_02", scale=2.0,
+                      tint=hexc("#6f6960"), tint_fac=0.85, tint_mode="MIX")
+SOKL_TOP = ft + 0.25
+for run_a0, run_a1, run_c, run_axis, run_dir in [
+    (10.48, 21.28, 7.18, "x", -1), (10.48, 21.28, 26.43, "x", 1), (7.18, 11.58, 21.28, "y", 1),
+]:
+    n_seg = int(math.ceil(run_a1 - run_a0))
+    for si in range(n_seg):
+        mid = run_a0 + (run_a1 - run_a0) * (si + 0.5) / n_seg
+        seg0 = run_a0 + (run_a1 - run_a0) * si / n_seg
+        seg1 = run_a0 + (run_a1 - run_a0) * (si + 1) / n_seg
+        px, py = (mid, run_c + run_dir * 0.25) if run_axis == "x" else (run_c + run_dir * 0.25, mid)
+        z_lo = ground_h(px, py) - 0.15
+        if run_axis == "x":
+            box_p("sokl_x%d_%d" % (int(run_c), si), seg0, run_c + min(0, run_dir * 0.05), seg1,
+                  run_c + max(0, run_dir * 0.05), z_lo, SOKL_TOP, MAT["sokl"])
+        else:
+            box_p("sokl_y%d_%d" % (int(run_c), si), run_c + min(0, run_dir * 0.05), seg0,
+                  run_c + max(0, run_dir * 0.05), seg1, z_lo, SOKL_TOP, MAT["sokl"])
+
 box_p("chimney", 16.7, 21.7, 17.3, 22.3, ft + 3.5, ft + 6.0, MAT["garage_walls"])
 
 
@@ -683,48 +974,56 @@ def window(name, axis, wall, out_sign, along_c, width, sill, height, door=False)
     layer(name + "_b", 0.005, 0.02, a0, a1, z0, z1, MAT["backing"])
     layer(name + "_g", 0.03, 0.05, a0 + 0.05, a1 - 0.05, z0 + 0.04, z1 - 0.04, MAT["glass"])
     fw = 0.06
-    layer(name + "_fL", 0.02, 0.10, a0, a0 + fw, z0, z1, MAT["frame"])
-    layer(name + "_fR", 0.02, 0.10, a1 - fw, a1, z0, z1, MAT["frame"])
-    layer(name + "_fB", 0.02, 0.10, a0, a1, z0, z0 + fw, MAT["frame"])
-    layer(name + "_fT", 0.02, 0.10, a0, a1, z1 - fw, z1, MAT["frame"])
+    layer(name + "_fL", 0.02, 0.11, a0, a0 + fw, z0, z1, MAT["frame"])
+    layer(name + "_fR", 0.02, 0.11, a1 - fw, a1, z0, z1, MAT["frame"])
+    layer(name + "_fB", 0.02, 0.11, a0, a1, z0, z0 + fw, MAT["frame"])
+    layer(name + "_fT", 0.02, 0.11, a0, a1, z1 - fw, z1, MAT["frame"])
 
 
-window("w_slider1", "x", 20.58, +1, 13.5, 3.29, 0.05, 2.27)
-window("w_slider2", "x", 20.58, +1, 18.5, 5.16, 0.05, 2.27)
-window("w_bedroom", "x", 21.28, +1, 9.5, 2.0, 0.3, 1.5)
+window("w_kitchen", "x", 20.58, +1, 12.9, 2.3, 0.9, 1.35)
+window("w_portal", "x", 20.58, +1, 16.78, 5.16, 0.05, 2.27)
+window("w_bedroom", "x", 21.28, +1, 9.5, 2.0, 0.8, 1.75)
 window("w_north", "y", 7.18, -1, 15.88, 0.9, 0.3, 1.5)
-window("w_west1", "x", 10.48, -1, 10.5, 1.6, 0.3, 1.5)
-window("w_west2", "x", 10.48, -1, 13.5, 1.6, 0.3, 1.5)
-window("w_west3", "x", 10.48, -1, 22.0, 1.6, 0.9, 1.67)
-window("w_west4", "x", 10.48, -1, 24.5, 1.6, 0.9, 1.67)
-window("w_south1", "y", 26.43, +1, 13.5, 0.9, 0.9, 1.25)
-window("w_south2", "y", 26.43, +1, 16.5, 0.9, 0.9, 1.25)
+window("w_west1", "x", 10.48, -1, 10.5, 1.6, 0.3, 2.27)
+window("w_west2", "x", 10.48, -1, 13.5, 1.6, 0.3, 2.27)
+window("w_west3", "x", 10.48, -1, 22.0, 1.25, 0.3, 2.27)
+window("w_west4", "x", 10.48, -1, 24.5, 1.25, 0.3, 2.27)
+window("w_south1", "y", 26.43, +1, 16.05, 0.9, 0.9, 1.25)
+window("w_south2", "y", 26.43, +1, 19.3, 0.9, 0.9, 1.25)
 window("w_door", "x", 21.28, +1, 23.31, 1.42, 0.0, 2.15, door=True)
 
-# ---------------- garage + door + cars ----------------
+# ---------------- garage (pult roof, floor -0.5 vs house) + door + cars ----------------
 g = first_rect(els["garage"])
-gcx, gcy = rect_center(g)
-gz = ground_h(gcx, gcy)
-rect_box("garage", g, gz - 0.3, gz + 2.3, MAT["garage_walls"])
-gable("garage_roof", g["x"] - 0.2, g["x"] + g["w"] + 0.2, g["y"] - 0.2, g["y"] + g["d"] + 0.2,
-      gz + 2.3, gz + 3.1, gcx, MAT["roof"])
-roof_seams("garW", g["x"] - 0.2, gz + 2.3, gcx, gz + 3.1, g["y"] - 0.2, g["y"] + g["d"] + 0.2, MAT["roof"])
-roof_seams("garE", g["x"] + g["w"] + 0.2, gz + 2.3, gcx, gz + 3.1, g["y"] - 0.2, g["y"] + g["d"] + 0.2, MAT["roof"])
+gx0, gy0, gx1, gy1 = g["x"], g["y"], g["x"] + g["w"], g["y"] + g["d"]
+GF = ft - 0.5  # garage floor abs
+g_wall_top = GF + 2.3  # low east eave
+g_roof_high = g_wall_top + 1.2  # high west edge at the carport junction
+g_min = min(ground_h(x, y) for x, y in [(gx0, gy0), (gx1, gy0), (gx0, gy1), (gx1, gy1)])
+rect_box("garage", g, g_min - 0.25, g_wall_top, MAT["garage_walls"])
+wedge_we("garage_fill", gx0, gx1, gy0, gy1, g_wall_top, g_roof_high, MAT["garage_walls"])
+g_pitch = 1.2 / g["w"]
+sloped_slab("garage_roof", gx0 - 0.3, gx1 + 0.3, g_roof_high + 0.3 * g_pitch,
+            g_wall_top - 0.3 * g_pitch, gy0, gy1, 0.12, MAT["roof"])
+roof_seams("gar", gx1 + 0.3, g_wall_top - 0.3 * g_pitch + 0.12,
+           gx0 - 0.3, g_roof_high + 0.3 * g_pitch + 0.12, gy0, gy1, MAT["roof"])
 
-gd_y = g["y"] + g["d"]  # south wall
-box_p("garage_door", 29.57, gd_y + 0.01, 32.87, gd_y + 0.06, gz, gz + 2.1, MAT["door_metal"])
+gd_y = gy1  # south wall
+door_r = next(p for p in els["garage"]["parts"] if p["kind"] == "rect" and p["d"] < 1.0)
+dx0, dx1 = door_r["x"], door_r["x"] + door_r["w"]
+box_p("garage_door", dx0, gd_y + 0.01, dx1, gd_y + 0.06, GF, GF + 2.05, MAT["door_metal"])
 for k in range(4):
-    zz = gz + 0.42 * (k + 1)
-    box_p("garage_groove%d" % k, 29.62, gd_y + 0.02, 32.82, gd_y + 0.09, zz - 0.02, zz + 0.02, MAT["groove"])
+    zz = GF + 0.41 * (k + 1)
+    box_p("garage_groove%d" % k, dx0 + 0.05, gd_y + 0.02, dx1 - 0.05, gd_y + 0.09, zz - 0.02, zz + 0.02, MAT["groove"])
 
 
-def car(name, cx, cy, paint, along="y", z=None):
+def car(name, cx, cy, paint, along="y", z=None, cabin_bias=1):
     if z is None:
         z = ground_h(cx, cy)
     L, W = 2.0, 0.86  # half length / half width
     if along == "y":
         box_p(name + "_body", cx - W, cy - L, cx + W, cy + L, z + 0.32, z + 0.92, paint)
-        box_p(name + "_cabin", cx - W + 0.1, cy - 0.9, cx + W - 0.1, cy + 1.1, z + 0.92, z + 1.42, MAT["cabin"])
+        box_p(name + "_cabin", cx - W + 0.1, cy - 1.0 + 0.1 * cabin_bias, cx + W - 0.1,
+              cy + 1.0 + 0.1 * cabin_bias, z + 0.92, z + 1.42, MAT["cabin"])
         wheels = [(cx - W, cy - 1.25), (cx + W, cy - 1.25), (cx - W, cy + 1.25), (cx + W, cy + 1.25)]
         rot = (0, math.pi / 2, 0)
     else:
@@ -736,28 +1035,90 @@ def car(name, cx, cy, paint, along="y", z=None):
         add_cyl(name + "_wheel%d" % i, wx, wy, z + 0.33, 0.33, 0.2, MAT["tire"], verts=16, rot=rot)
 
 
-car("car1", 29.0, 22.0, MAT["car_blue"], along="y", z=gz)
-car("car2", 32.5, 22.0, MAT["car_red"], along="y", z=gz)
-car("car3", 36.5, 24.65, MAT["car_grey"], along="x")
+car("car1", 29.0, 22.0, MAT["car_blue"], along="y", z=GF)
+car("car2", 32.5, 22.0, MAT["car_red"], along="y", z=GF)
+# parked parallel to the garage east wall on the long pad, facing south to the driveway
+car("car3", 36.4, 22.9, MAT["car_grey"], along="y",
+    z=ground_h(36.41, 22.925) + 0.05, cabin_bias=-1)
 
-# ---------------- carport ----------------
+# garage west personnel door 900x2150, dark, base at garage floor
+box_p("garage_pdoor", gx0 - 0.05, 20.2, gx0 + 0.01, 21.1, GF, GF + 2.15, MAT["door_metal"])
+
+
+# ---------------- facade climbers ----------------
+def climbers(prefix, axis, wall, out_sign, a0, a1, z_base, height):
+    """Thin stems + flattened foliage clusters hugging a wall plane."""
+    n = max(3, int((a1 - a0) / 0.9))
+    for i in range(n):
+        ac = a0 + (i + 0.5) * (a1 - a0) / n + random.uniform(-0.1, 0.1)
+        h = height * (0.75 + random.random() * 0.35)
+        off = wall + out_sign * 0.06
+        if axis == "x":
+            sx, sy = off, ac
+        else:
+            sx, sy = ac, off
+        add_cyl("%s_stem%d" % (prefix, i), sx, sy, z_base + h / 2, 0.015, h, MAT["trunk"], verts=6)
+        mat = random.choice(CANOPY)
+        for k in range(3 + int(random.random() * 3)):
+            zz = z_base + h * (0.25 + 0.75 * random.random())
+            aa = ac + random.uniform(-0.35, 0.35)
+            rr = 0.22 + random.random() * 0.16
+            off2 = wall + out_sign * (0.10 + random.random() * 0.06)
+            if axis == "x":
+                px_, py_ = off2, aa
+                sc = (0.35, 1.0, 0.9)
+            else:
+                px_, py_ = aa, off2
+                sc = (1.0, 0.35, 0.9)
+            add_sphere("%s_f%d_%d" % (prefix, i, k), px_, py_, zz, rr, mat, scale=sc, subdiv=1)
+
+
+if "facadeClimbers" in els:
+    climbers("climb_gar", "x", gx1, +1, 19.7, 26.2, ground_h(gx1 + 0.3, 22.9), 2.8)
+    climbers("climb_atrN", "y", 15.93, +1, 10.8, 14.6, DECK_TOP, 2.4)
+    climbers("climb_atrS", "y", 19.18, -1, 10.8, 14.6, DECK_TOP, 2.4)
+
+# ---------------- carport (thin plate falling west from the garage junction) ----------------
 c = first_rect(els["carport"])
-ccx, ccy = rect_center(c)
-cz = ground_h(ccx, ccy)
+cp_east = g_roof_high  # at garage junction x=27.63
+cp_west = g_wall_top + 0.5  # clears the entrance door top
+
+
+def cp_z(px):
+    return cp_west + (px - c["x"]) * (cp_east - cp_west) / c["w"]
+
+
 for i, (px, py) in enumerate([(c["x"] + 0.3, c["y"] + 0.3), (c["x"] + c["w"] - 0.3, c["y"] + 0.3),
                               (c["x"] + 0.3, c["y"] + c["d"] - 0.3),
                               (c["x"] + c["w"] - 0.3, c["y"] + c["d"] - 0.3)]):
-    post("carport_post%d" % i, px, py, ground_h(px, py) - 0.2, cz + 2.3, MAT["wood"], half=0.07)
-rect_box("carport_roof", c, cz + 2.3, cz + 2.42, MAT["roof"])
+    post("carport_post%d" % i, px, py, ground_h(px, py) - 0.2, cp_z(px) - 0.02, MAT["wood"], half=0.07)
+sloped_slab("carport_roof", c["x"], c["x"] + c["w"], cp_west, cp_east,
+            c["y"], c["y"] + c["d"], 0.08, MAT["roof"])
+roof_seams("cp", c["x"], cp_west + 0.08, c["x"] + c["w"], cp_east + 0.08,
+           c["y"], c["y"] + c["d"], MAT["roof"])
 
-# ---------------- terraces, path, driveway, parking ----------------
-for eid, mat in [("westTerrace", MAT["deck"]), ("eastTerrace", MAT["deck"]), ("saunaPath", MAT["path"])]:
-    for i, prt in enumerate(x for x in els[eid]["parts"] if x["kind"] == "rect"):
-        px, py = rect_center(prt)
-        z = ground_h(px, py)
-        rect_box("%s_%d" % (eid, i), prt, z - 0.05, z + 0.15, mat)
+# ---------------- terraces (level decks at house floor plane), path ----------------
+def level_deck(name, r, post_edge):
+    """Level deck slab with support posts to terrain on the downhill edge."""
+    rect_box(name, r, DECK_TOP - 0.08, DECK_TOP, MAT["deck"])
+    px = r["x"] + 0.15 if post_edge == "w" else r["x"] + r["w"] - 0.15
+    for k, py in enumerate([r["y"] + 0.2, r["y"] + r["d"] / 2, r["y"] + r["d"] - 0.2]):
+        pz = ground_h(px, py)
+        if DECK_TOP - 0.08 - pz < 0.05:
+            continue
+        post("%s_post%d" % (name, k), px, py, pz - 0.1, DECK_TOP - 0.08, MAT["wood"], half=0.06)
 
-draped_poly("driveway", dpoly, 0.04, MAT["drive"])
+
+for i, prt in enumerate(x for x in els["westTerrace"]["parts"] if x["kind"] == "rect"):
+    level_deck("westTerrace_%d" % i, prt, "w")
+for i, prt in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
+    level_deck("eastTerrace_%d" % i, prt, "e")
+for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect"):
+    px, py = rect_center(prt)
+    z = ground_h(px, py)
+    rect_box("saunaPath_%d" % i, prt, z - 0.05, z + 0.1, MAT["path"])
+
+draped_poly("driveway", dpoly, 0.04, MAT["drive"], subdiv=6)
 pk = first_rect(els["parking"])
 pcx, pcy = rect_center(pk)
 pkz = ground_h(pcx, pcy)
@@ -765,26 +1126,50 @@ rect_box("parking", pk, pkz - 0.05, pkz + 0.05, MAT["drive"])
 
 # ---------------- pond ----------------
 pe = next(x for x in els["pond"]["parts"] if x["kind"] == "ellipse")
-pz = ground_h(pe["cx"], pe["cy"])
-add_cyl("pond_basin", pe["cx"], pe["cy"], pz - 0.26, 1.0, 0.08, MAT["basin"], sx=pe["rx"] * 0.92, sy=pe["ry"] * 0.92)
-add_cyl("pond_water", pe["cx"], pe["cy"], pz - 0.16, 1.0, 0.06, MAT["water"], sx=pe["rx"] * 0.97, sy=pe["ry"] * 0.97)
-bpy.ops.mesh.primitive_torus_add(major_radius=1.0, minor_radius=0.09, location=(pe["cx"], -pe["cy"], pz))
-tor = bpy.context.active_object
-tor.name = "pond_rim"
-tor.scale = (pe["rx"], pe["ry"], 1.0)
-tor.data.materials.append(MAT["rim"])
+add_cyl("pond_water", pe["cx"], pe["cy"], POND_WATER_Z - 0.02, 1.0, 0.04, MAT["water"],
+        sx=pe["rx"] * 0.82, sy=pe["ry"] * 0.82, verts=48)
+for i in range(19):  # flattened rock chunks around the waterline lip
+    a = i * 2 * math.pi / 19.0 + random.uniform(-0.08, 0.08)
+    px = pe["cx"] + pe["rx"] * 0.80 * math.cos(a)
+    py = pe["cy"] + pe["ry"] * 0.80 * math.sin(a)
+    place_rock("pond_lip%d" % i, px, py, max(POND_WATER_Z + 0.03, terrain_z(px, py) - 0.02),
+               0.12 + random.random() * 0.08, squash=0.5)
+for i in range(26):  # outer scatter on the bank crest
+    a = i * 2 * math.pi / 26.0 + random.uniform(-0.06, 0.06)
+    px = pe["cx"] + pe["rx"] * 1.04 * math.cos(a)
+    py = pe["cy"] + pe["ry"] * 1.04 * math.sin(a)
+    place_rock("pond_stone%d" % i, px, py, max(ground_h(px, py) - 0.04, POND_WATER_Z + 0.02),
+               0.13 + random.random() * 0.09)
 
 # ---------------- fire pit + stones + benches ----------------
 fc = next(x for x in els["firePit"]["parts"] if x["kind"] == "circle")
 fz = ground_h(fc["cx"], fc["cy"])
+draped_poly("firepit_apron", circle_pts(fc["cx"], fc["cy"], 1.1, 24), 0.035, MAT["gravel"], subdiv=3)
+draped_poly("firepit_ash", circle_pts(fc["cx"], fc["cy"], 0.44, 16), 0.065, MAT["ash"], subdiv=2)
 for i in range(12):
-    a = i * math.pi / 6.0 + random.random() * 0.2
-    sx = fc["cx"] + 0.72 * math.cos(a)
-    sy = fc["cy"] + 0.72 * math.sin(a)
-    rr = 0.13 + random.random() * 0.07
-    add_sphere("firepit_stone%d" % i, sx, sy, fz + 0.10, rr, MAT["stone"],
-               scale=(1.0 + random.random() * 0.3, 1.0, 0.75), rot=(0, 0, random.random() * 3), subdiv=1)
-add_sphere("firepit_fire", fc["cx"], fc["cy"], fz + 0.14, 0.21, MAT["fire"], scale=(1.0, 1.0, 0.8))
+    a = i * math.pi / 6.0 + random.uniform(-0.12, 0.12)
+    sx = fc["cx"] + 0.64 * math.cos(a)
+    sy = fc["cy"] + 0.64 * math.sin(a)
+    place_rock("firepit_stone%d" % i, sx, sy, terrain_z(sx, sy) + 0.06,
+               0.15 + random.random() * 0.07, squash=0.8)
+for i, ang in enumerate((25, 100, 175, 255)):
+    ar = math.radians(ang)
+    ux, uy = math.cos(ar), math.sin(ar)
+    add_cyl("firepit_log%d" % i, fc["cx"] - 0.13 * ux, fc["cy"] - 0.13 * uy, fz + 0.17,
+            0.05, 0.72, MAT["char"], verts=10, rot=(0, math.radians(63), -ar))
+add_sphere("firepit_ember", fc["cx"], fc["cy"], fz + 0.10, 0.17, MAT["fire"],
+           scale=(1.0, 1.0, 0.4), subdiv=1)
+FLAME_OBJS = []
+for i, (fr, fh, ox, oy) in enumerate([(0.13, 0.42, 0.0, 0.0), (0.09, 0.28, 0.09, -0.06)]):
+    bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=fr, radius2=0.0, depth=fh,
+                                    location=(fc["cx"] + ox, -fc["cy"] + oy, fz + 0.24 + fh / 2))
+    fob = bpy.context.active_object
+    fob.name = "firepit_flame%d" % i
+    fob.rotation_euler = (random.uniform(-0.08, 0.08), random.uniform(-0.08, 0.08), 0)
+    fob.data.materials.append(MAT["flame"])
+    for p in fob.data.polygons:
+        p.use_smooth = True
+    FLAME_OBJS.append(fob)
 for i, a_deg in enumerate((140, 260, 20)):
     ar = math.radians(a_deg)
     bx = fc["cx"] + 1.85 * math.cos(ar)
@@ -833,6 +1218,50 @@ for i in range(15):
     bx = pg["x"] + 0.25 + i * (pg["w"] - 0.5) / 14.0
     box_p("pergola_board%d" % i, bx - 0.05, pg["y"], bx + 0.05, pg["y"] + pg["d"],
           pgz + 2.5, pgz + 2.58, MAT["wood"])
+# paved tile floor + dining table for 8-10 under the pergola
+pg_rects = [p for p in els["pergola"]["parts"] if p["kind"] == "rect"]
+floor_r = next((p for p in pg_rects if p.get("fill") == "#d8d2c8"), None)
+table_r = next((p for p in pg_rects if p.get("fill") == "#8a6a4a"), None)
+if floor_r:
+    MAT["tile"] = mat_concrete("tile", hexc("#d8d2c8"), hexc("#c6c0b4"), rough_lo=0.5, rough_hi=0.75)
+    fx0, fy0 = floor_r["x"], floor_r["y"]
+    fx1, fy1 = fx0 + floor_r["w"], fy0 + floor_r["d"]
+    draped_poly("pergola_floor", [(fx0, fy0), (fx1, fy0), (fx1, fy1), (fx0, fy1)], 0.05,
+                MAT["tile"], subdiv=3)
+if table_r:
+    tx0, ty0 = table_r["x"], table_r["y"]
+    tx1, ty1 = tx0 + table_r["w"], ty0 + table_r["d"]
+    ttz = ground_h((tx0 + tx1) / 2.0, (ty0 + ty1) / 2.0) + 0.05
+    box_p("pergola_table_top", tx0, ty0, tx1, ty1, ttz + 0.72, ttz + 0.78, MAT["wood"])
+    for li, (lx, ly) in enumerate([(tx0 + 0.18, ty0 + 0.18), (tx1 - 0.18, ty0 + 0.18),
+                                   (tx0 + 0.18, ty1 - 0.18), (tx1 - 0.18, ty1 - 0.18)]):
+        post("pergola_table_leg%d" % li, lx, ly, ttz, ttz + 0.72, MAT["wood"], half=0.045)
+    for bi, (by0, by1) in enumerate([(ty0 - 0.55, ty0 - 0.2), (ty1 + 0.2, ty1 + 0.55)]):
+        box_p("pergola_bench%d" % bi, tx0 + 0.1, by0, tx1 - 0.1, by1, ttz + 0.3, ttz + 0.45, MAT["wood"])
+
+# ---------------- zasivarna: hidden bench in the shade bed (garage north) ----------------
+if "zasivarna" in els:
+    MAT["bench_blue"] = mat_simple("bench_blue", hexc("#3a6ab8"), rough=0.35, metal=0.6)
+    MAT["bench_red"] = mat_simple("bench_red", hexc("#c0392b"), rough=0.35, metal=0.6)
+    MAT["bench_leg"] = mat_simple("bench_leg", hexc("#1c1c1e"), rough=0.45, metal=0.7)
+    zs_rects = [p for p in els["zasivarna"]["parts"] if p["kind"] == "rect"]
+    zx0 = min(p["x"] for p in zs_rects)
+    zx1 = max(p["x"] + p["w"] for p in zs_rects)
+    zy0 = min(p["y"] for p in zs_rects)
+    zy1 = max(p["y"] + p["d"] for p in zs_rects)
+    bz = ground_h((zx0 + zx1) / 2.0, (zy0 + zy1) / 2.0)
+    for ri, p in enumerate(zs_rects):
+        mat_i = MAT["bench_blue"] if p["fill"] == "#3a6ab8" else MAT["bench_red"]
+        for si in range(3):
+            yy0 = p["y"] + 0.02 + si * (p["d"] - 0.04) / 3.0
+            box_p("bench_slat%d_%d" % (ri, si), p["x"] + 0.02, yy0, p["x"] + p["w"] - 0.02,
+                  yy0 + (p["d"] - 0.04) / 3.0 - 0.03, bz + 0.42, bz + 0.46, mat_i)
+    # backrest on the south (garage) side, sitting faces north into the garden
+    box_p("bench_back", zx0 + 0.02, zy1 - 0.06, zx1 - 0.02, zy1 - 0.01, bz + 0.46, bz + 0.88,
+          MAT["bench_red"])
+    for li, (lx, ly) in enumerate([(zx0 + 0.1, zy0 + 0.1), (zx1 - 0.1, zy0 + 0.1),
+                                   (zx0 + 0.1, zy1 - 0.1), (zx1 - 0.1, zy1 - 0.1)]):
+        post("bench_leg%d" % li, lx, ly, ground_h(lx, ly) - 0.05, bz + 0.42, MAT["bench_leg"], half=0.025)
 
 # ---------------- raised beds ----------------
 for eid in ["raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
@@ -842,34 +1271,214 @@ for eid in ["raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
     rect_box(eid, r, z - 0.1, z + 0.4, MAT["wood"])
 
 
-# ---------------- trees ----------------
-def make_tree(idx, cx, cy):
-    z = terrain_z(cx, cy)
-    sf = 0.8 + random.random() * 0.6
-    trunk_h = 1.4 * sf
-    bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.14 * sf, radius2=0.08 * sf,
-                                    depth=trunk_h, location=(cx, -cy, z + trunk_h / 2 - 0.1))
-    tr = bpy.context.active_object
-    tr.name = "tree%d_trunk" % idx
-    tr.data.materials.append(MAT["trunk"])
-    mat = random.choice(CANOPY)
-    for j in range(random.choice([2, 3])):
-        rr = (0.7 + random.random() * 0.5) * sf
-        ox = (random.random() - 0.5) * 0.7 * sf
-        oy = (random.random() - 0.5) * 0.7 * sf
-        oz = z + trunk_h - 0.2 + j * 0.55 * sf + (random.random() - 0.5) * 0.2
-        sc = (1.0 + (random.random() - 0.5) * 0.3, 1.0 + (random.random() - 0.5) * 0.3,
-              0.85 + (random.random() - 0.5) * 0.2)
-        add_sphere("tree%d_c%d" % (idx, j), cx + ox, cy + oy, oz, rr, mat, scale=sc,
-                   rot=(random.random(), random.random(), random.random()))
+# ---------------- scanned plant library (Poly Haven, CC0) ----------------
+def append_from(slug, names):
+    path = os.path.join(ASSETS, "models", slug, slug + "_2k.blend")
+    out = []
+    if not os.path.exists(path):
+        print("MISSING ASSET", path)
+        return out
+    with bpy.data.libraries.load(path) as (src, dst):
+        avail = set(src.objects)
+        dst.objects = [n for n in names if n in avail]
+    for ob in dst.objects:
+        if ob is None:
+            continue
+        bpy.context.collection.objects.link(ob)
+        ob.location = (0, 0, -70)
+        ob.hide_render = True
+        out.append(ob)
+    return out
+
+
+SHRUBS = (append_from("shrub_02", ["shrub_02_a_LOD1", "shrub_02_c_LOD1"]) +
+          append_from("shrub_03", ["shrub_03_a_LOD0", "shrub_03_c_LOD0", "shrub_03_d_LOD0"]) +
+          append_from("shrub_04", ["shrub_04_b_LOD1", "shrub_04_d_LOD1"]))
+GROUND_PLANTS = (append_from("shrub_sorrel_01", ["shrub_sorrel_01_a", "shrub_sorrel_01_c",
+                                                 "shrub_sorrel_01_e", "shrub_sorrel_01_g"]) +
+                 append_from("fern_02", ["fern_02_a", "fern_02_c"]))
+FLOWER_OBJS = append_from("flower_empodium", ["flower_empodium_a_LOD1", "flower_empodium_c_LOD1",
+                                              "flower_empodium_e_LOD1"])
+print("LIB shrubs %d ground %d flowers %d" % (len(SHRUBS), len(GROUND_PLANTS), len(FLOWER_OBJS)))
+
+
+def place_asset(src, name, px, py, footprint=None, z=None):
+    ob = src.copy()
+    bpy.context.collection.objects.link(ob)
+    ob.hide_render = False
+    s = 1.0
+    if footprint:
+        d = max(src.dimensions.x, src.dimensions.y, 0.01)
+        s = footprint / d
+    sv = s * (0.85 + random.random() * 0.3)
+    ob.scale = (sv, sv, sv)
+    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    ob.location = (px, -py, (terrain_z(px, py) - 0.02) if z is None else z)
+    ob.name = name
+    return ob
+
+
+# ---------------- trees (Sapling Tree Gen) ----------------
+import addon_utils
+import ast
+import importlib
+
+if addon_utils.enable("bl_ext.user_default.sapling_tree_gen") is None:
+    _zip = os.path.join(ASSETS, "addons", "sapling_tree_gen-0.3.7.zip")
+    bpy.ops.extensions.package_install_files(filepath=_zip, repo="user_default", enable_on_install=True)
+    addon_utils.enable("bl_ext.user_default.sapling_tree_gen")
+SAP_DIR = os.path.dirname(importlib.import_module("bl_ext.user_default.sapling_tree_gen").__file__)
+SAP_VALID = {p.identifier for p in bpy.ops.curve.tree_add.get_rna_type().properties}
+SAP_VALID -= {"rna_type", "chooseSet", "presetName", "limitImport", "overwrite", "do_update"}
+
+
+def build_leaf_image():
+    """Procedural leaf texture with alpha silhouette, saved to a real file
+    (packed generated images lose their pixels in headless Cycles renders)."""
+    leaf_path = os.path.join(ASSETS, "leaf_generated.png")
+    if os.path.exists(leaf_path):
+        return bpy.data.images.load(leaf_path, check_existing=True)
+    w = 128
+    img = bpy.data.images.new("leafTex", w, w, alpha=True)
+    px = [0.0] * (w * w * 4)
+    for j in range(w):
+        t = j / (w - 1.0)  # 0 base .. 1 tip
+        hw = 0.42 * math.sin(min(1.0, t * 1.12) * math.pi) ** 0.75
+        if t < 0.10:
+            hw = max(hw, 0.035)
+        for i in range(w):
+            u = i / (w - 1.0) - 0.5
+            if abs(u) >= hw:
+                continue
+            edge = (hw - abs(u)) / hw
+            vein = max(0.0, 1.0 - abs(u) * 34.0)
+            g = 0.42 + 0.28 * edge + 0.12 * vein
+            r = 0.16 + 0.14 * (1.0 - edge) + 0.06 * vein
+            k = (j * w + i) * 4
+            px[k] = r
+            px[k + 1] = g
+            px[k + 2] = 0.07
+            px[k + 3] = 1.0
+    img.pixels.foreach_set(px)
+    img.filepath_raw = leaf_path
+    img.file_format = "PNG"
+    img.save()
+    bpy.data.images.remove(img)
+    return bpy.data.images.load(leaf_path, check_existing=True)
+
+
+LEAF_IMG = build_leaf_image()
+
+
+def mat_leaf(name, tint):
+    """Leaf alpha plane: textured card, tinted per archetype."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    b = nt.nodes["Principled BSDF"]
+    b.inputs["Roughness"].default_value = 0.55
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = LEAF_IMG
+    tex.extension = "CLIP"
+    uvn = nt.nodes.new("ShaderNodeUVMap")
+    uvn.uv_map = "leafUV"  # joined mesh carries the trunk's UVMap as active
+    nt.links.new(uvn.outputs["UV"], tex.inputs["Vector"])
+    mixc = nt.nodes.new("ShaderNodeMix")
+    mixc.data_type = "RGBA"
+    mixc.blend_type = "MULTIPLY"
+    mixc.inputs[0].default_value = 1.0
+    mixc.inputs[7].default_value = (*tint, 1.0)
+    nt.links.new(tex.outputs["Color"], mixc.inputs[6])
+    nt.links.new(mixc.outputs[2], b.inputs["Base Color"])
+    nt.links.new(tex.outputs["Alpha"], b.inputs["Alpha"])
+    return m
+
+
+LEAF_MATS = [mat_leaf("leaf_a", (1.0, 1.0, 0.8)), mat_leaf("leaf_b", (0.85, 1.0, 0.6)),
+             mat_leaf("leaf_c", (1.1, 0.95, 0.6))]
+
+
+def load_preset(nm):
+    with open(os.path.join(SAP_DIR, "presets", nm + ".py")) as f:
+        txt = f.read()
+    return ast.literal_eval(txt[txt.index("{"):])
+
+
+def build_tree_archetype(name, preset, leaf_mat, seed, **over):
+    kw = {k: v for k, v in load_preset(preset).items() if k in SAP_VALID}
+    kw.update(dict(bevel=True, showLeaves=True, leafShape="rect", useArm=False,
+                   makeMesh=False, seed=seed, bevelRes=1, resU=3))
+    kw.update(over)
+    before = set(bpy.data.objects)
+    bpy.ops.curve.tree_add(**kw)
+    new = [o for o in bpy.data.objects if o not in before]
+    trunk = next(o for o in new if o.type == "CURVE")
+    leaves = [o for o in new if o.type == "MESH"]
+    bpy.ops.object.select_all(action="DESELECT")
+    trunk.select_set(True)
+    bpy.context.view_layer.objects.active = trunk
+    bpy.ops.object.convert(target="MESH")
+    trunk = bpy.context.active_object
+    trunk.data.materials.clear()
+    trunk.data.materials.append(MAT["bark"])
+    trunk.data.uv_layers.new(name="leafUV")  # join drops the leaves' UV layer without it
+    for p in trunk.data.polygons:
+        p.use_smooth = True
+    for lv in leaves:
+        lv.data.materials.clear()
+        lv.data.materials.append(leaf_mat)
+        if not lv.data.uv_layers:
+            uvl = lv.data.uv_layers.new(name="leafUV")
+            quad = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
+            for pl in lv.data.polygons:
+                for k, li in enumerate(pl.loop_indices):
+                    uvl.data[li].uv = quad[k % 4]
+        lv.select_set(True)
+    bpy.context.view_layer.objects.active = trunk
+    bpy.ops.object.join()
+    ob = bpy.context.active_object
+    ob.name = name
+    ob.location = (0, 0, -60)
+    ob.hide_render = True
+    print("TREE ARCH %s: %d verts" % (name, len(ob.data.vertices)))
+    return ob
+
+
+TREE_ARCH = [
+    build_tree_archetype("arch_tall", "small_maple", LEAF_MATS[0], seed=3,
+                         levels=2, branches=(0, 40, 14, 0), leaves=60, leafScale=0.28,
+                         curveRes=(6, 4, 3, 1), scale=6.2, scaleV=0.9,
+                         segSplits=(0.3, 0.35, 0.0, 0.0)),
+    build_tree_archetype("arch_maple", "small_maple", LEAF_MATS[1], seed=8,
+                         levels=2, branches=(0, 36, 14, 0), leaves=65, leafScale=0.26,
+                         curveRes=(6, 4, 3, 1), scale=4.6, scaleV=0.7,
+                         segSplits=(0.2, 0.3, 0.0, 0.0)),
+    build_tree_archetype("arch_orchard", "small_maple", LEAF_MATS[2], seed=15,
+                         levels=2, branches=(0, 24, 12, 0), leaves=80, leafScale=0.28,
+                         curveRes=(5, 4, 2, 1), scale=3.0, scaleV=0.4, baseSize=0.3,
+                         segSplits=(0.15, 0.2, 0.0, 0.0)),
+]
+
+
+def place_tree(arch, name, cx, cy):
+    ob = arch.copy()
+    bpy.context.collection.objects.link(ob)
+    ob.hide_render = False
+    s = 0.85 + random.random() * 0.35
+    ob.scale = (s, s, s * (0.9 + random.random() * 0.2))
+    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    ob.location = (cx, -cy, terrain_z(cx, cy) - 0.05)
+    ob.name = name
+    return ob
 
 
 tree_i = 0
-for eid in ["northTrees", "eastTrees", "orchard"]:
+for eid, picks in [("northTrees", (0, 1)), ("eastTrees", (0, 1)), ("orchard", (2,))]:
     for prt in els[eid]["parts"]:
         if prt["kind"] == "circle":
-            make_tree(tree_i, prt["cx"], prt["cy"])
+            place_tree(TREE_ARCH[random.choice(picks)], "tree%d" % tree_i, prt["cx"], prt["cy"])
             tree_i += 1
+print("TREES placed:", tree_i)
 
 # ---------------- perennial strip + bushes ----------------
 peren_i = 0
@@ -878,22 +1487,12 @@ while peren_i < 35:
     if 3.5 <= px <= 10.5 or 25.28 <= px <= 32.28:
         continue
     py = 0.3 + random.random() * 2.2
-    rr = 0.25 + random.random() * 0.35
-    z = ground_h(px, py)
-    add_sphere("peren%d" % peren_i, px, py, z + rr * 0.5, rr, random.choice(PASTEL),
-               scale=(1.0, 1.0, 0.75 + random.random() * 0.3), subdiv=2)
+    place_asset(random.choice(GROUND_PLANTS + SHRUBS[2:5]), "peren%d" % peren_i, px, py,
+                footprint=0.45 + random.random() * 0.45)
     peren_i += 1
 
 def make_bush(name, bx, by, s=1.0):
-    z = terrain_z(bx, by)
-    mat = random.choice(CANOPY)
-    a = random.random() * 6.28
-    add_sphere(name + "_a", bx + 0.3 * s * math.cos(a), by + 0.3 * s * math.sin(a), z + 0.42 * s, 0.55 * s,
-               mat, scale=(1.1, 1.0, 0.85))
-    add_sphere(name + "_b", bx - 0.3 * s * math.cos(a), by - 0.3 * s * math.sin(a), z + 0.34 * s, 0.42 * s,
-               mat, scale=(1.0, 1.1, 0.9))
-    if random.random() < 0.5:
-        add_sphere(name + "_c", bx, by + 0.2 * s, z + 0.5 * s, 0.38 * s, mat, scale=(1.0, 1.0, 0.9))
+    place_asset(random.choice(SHRUBS), name, bx, by, footprint=(1.0 + random.random() * 0.4) * s)
 
 
 for i, (bx, by) in enumerate([(7, 11), (7, 14), (7, 18), (7, 22), (25.5, 12.5), (34.5, 12.5),
@@ -944,11 +1543,15 @@ def scatter_perennials(zid, fn, bbox, area, density=3.0, tufts=0.5):
             py = cy + (random.random() - 0.5) * 0.7
             if not fn(px, py):
                 continue
-            rr = 0.12 + random.random() * 0.18
-            z = terrain_z(px, py)
-            add_sphere("%s_p%d_%d" % (zid, ci, k), px, py, z + rr * (0.4 + random.random() * 0.7), rr,
-                       random.choice(PLANT_PALETTE),
-                       scale=(1.0, 1.0, 0.8 + random.random() * 0.6), subdiv=1)
+            if random.random() < 0.55:
+                rr = 0.13 + random.random() * 0.17
+                add_sphere("%s_p%d_%d" % (zid, ci, k), px, py,
+                           terrain_z(px, py) + rr * (0.4 + random.random() * 0.6), rr,
+                           random.choice(PLANT_PALETTE),
+                           scale=(1.0, 1.0, 0.8 + random.random() * 0.5), subdiv=1)
+            else:
+                place_asset(random.choice(GROUND_PLANTS), "%s_p%d_%d" % (zid, ci, k), px, py,
+                            footprint=0.35 + random.random() * 0.35)
             COUNTS["perennial"] += 1
     for ti, (px, py) in enumerate(sample_shape(fn, bbox, max(1, int(area * tufts)))):
         make_tuft("%s_t%d" % (zid, ti), px, py, terrain_z(px, py))
@@ -960,11 +1563,10 @@ def scatter_shrubs(zid, fn, bbox, area, per_m2=0.4):
         COUNTS["shrub"] += 1
 
 
-def scatter_flowers(zid, fn, bbox, area, per_m2=1.0):
+def scatter_flowers(zid, fn, bbox, area, per_m2=0.5):
     for i, (px, py) in enumerate(sample_shape(fn, bbox, max(1, int(area * per_m2)))):
-        z = terrain_z(px, py)
-        add_sphere("%s_f%d" % (zid, i), px, py, z + 0.13 + random.random() * 0.12,
-                   0.05 + random.random() * 0.05, random.choice(FLOWER), subdiv=1)
+        place_asset(random.choice(FLOWER_OBJS), "%s_f%d" % (zid, i), px, py,
+                    footprint=0.25 + random.random() * 0.2)
         COUNTS["flower"] += 1
 
 
@@ -1055,9 +1657,7 @@ for zid, plant, zfn, zbbox in ZONE_SHAPES:
                 place_clump(MOLINIA_MESH, "%s_me%d" % (zid, mi), px, py, 0.9 + random.random() * 0.5, "molinia")
 
 # atrium pots: planter cylinders on the west-terrace deck
-wt_deck = [x for x in els["westTerrace"]["parts"] if x["kind"] == "rect"][1]
-wcx, wcy = rect_center(wt_deck)
-deck_top = ground_h(wcx, wcy) + 0.15
+deck_top = DECK_TOP
 pot_parts = sorted((x for x in els["atriumPots"]["parts"] if x["kind"] == "circle"),
                    key=lambda q: -q["r"])
 for i, potc in enumerate(pot_parts):
@@ -1078,15 +1678,11 @@ for i, potc in enumerate(pot_parts):
             ob.name = "pot%d_stem%d" % (i, k)
             ob.rotation_euler = ((random.random() - 0.5) * 0.25, (random.random() - 0.5) * 0.25, 0)
             ob.data.materials.append(MAT["trunk"])
-        for k in range(3):
-            add_sphere("pot%d_can%d" % (i, k), pcx2 + (random.random() - 0.5) * 0.4,
-                       pcy2 + (random.random() - 0.5) * 0.4, top + 0.85 + random.random() * 0.25,
-                       0.28 + random.random() * 0.1, mat, scale=(1.0, 1.0, 0.85))
+        place_asset(random.choice(SHRUBS), "pot%d_can" % i, pcx2, pcy2,
+                    footprint=pr * 2.6, z=top + 0.55)
     else:
-        for k in range(2):
-            add_sphere("pot%d_per%d" % (i, k), pcx2 + (random.random() - 0.5) * 0.25,
-                       pcy2 + (random.random() - 0.5) * 0.25, top + 0.12, 0.12 + random.random() * 0.05,
-                       random.choice(PLANT_PALETTE), subdiv=1)
+        place_asset(random.choice(GROUND_PLANTS), "pot%d_per" % i, pcx2, pcy2,
+                    footprint=pr * 1.9, z=top - 0.02)
         make_tuft("pot%d_tuft" % i, pcx2, pcy2, top, depth=0.35)
 
 print("PLANTING:", COUNTS)
@@ -1160,7 +1756,7 @@ for i, (lx, ly) in enumerate(path_lights):
     add_cyl("bollard%d" % i, lx, ly, z + 0.33, 0.045, 0.66, MAT["bollard"], verts=12)
     add_cyl("bollard%d_head" % i, lx, ly, z + 0.69, 0.05, 0.06, MAT["bulb"], verts=12)
     ld = bpy.data.lights.new("bollardL%d" % i, type="POINT")
-    ld.energy = 5.0
+    ld.energy = 7.0
     ld.color = (1.0, 0.6, 0.3)
     ld.shadow_soft_size = 0.05
     lo = bpy.data.objects.new("bollardL%d" % i, ld)
@@ -1200,6 +1796,27 @@ if H > 0:
     az = 2 * math.pi - az
 print("SUN elevation %.1f deg, azimuth %.1f deg from north" % (math.degrees(elev), math.degrees(az)))
 
+HDRI_CACHE = {}
+
+
+def hdri_env():
+    """Day HDRI + Z rotation that aligns its sun with the computed sun azimuth."""
+    if "img" not in HDRI_CACHE:
+        d = os.path.join(ASSETS, "hdri")
+        fn = sorted(f for f in os.listdir(d) if f.endswith((".hdr", ".exr")))[0]
+        img = bpy.data.images.load(os.path.join(d, fn), check_existing=True)
+        import numpy as np
+        w, h = img.size
+        arr = np.empty(w * h * 4, dtype=np.float32)
+        img.pixels.foreach_get(arr)
+        lum = arr.reshape(h, w, 4)[..., :3].sum(axis=2)
+        j, i = np.unravel_index(int(np.argmax(lum)), lum.shape)
+        phi_img = (0.5 - (i + 0.5) / w) * 2.0 * math.pi
+        HDRI_CACHE["img"] = img
+        HDRI_CACHE["rot"] = phi_img - (math.pi / 2.0 - az)
+        print("HDRI sun at col %d/%d -> world rot %.1f deg" % (i, w, math.degrees(HDRI_CACHE["rot"])))
+    return HDRI_CACHE["img"], HDRI_CACHE["rot"]
+
 world = scene.world or bpy.data.worlds.new("World")
 scene.world = world
 world.use_nodes = True
@@ -1236,34 +1853,55 @@ def set_lighting(mode):
     wnt.links.new(mixsh.outputs["Shader"], out_n.inputs["Surface"])
     if mode == "night":
         bg_l.inputs["Color"].default_value = (*hexc("#22344f"), 1.0)
-        bg_l.inputs["Strength"].default_value = 0.35
+        bg_l.inputs["Strength"].default_value = 0.55
         bg_c.inputs["Color"].default_value = (*hexc("#16263f"), 1.0)
         bg_c.inputs["Strength"].default_value = 1.0
-        sun_data.energy = 0.18
+        sun_data.energy = 0.4
         sun_data.color = (0.6, 0.72, 1.0)
         aim_sun(math.radians(50), math.radians(120))
         ember.inputs["Emission Strength"].default_value = 30.0
         fire_ld.energy = 40.0
+        for s in FLAME_STR:
+            s.default_value = 6.0
+        for ob in FLAME_OBJS:
+            ob.hide_render = False
+        return
+    if mode == "day":
+        img, rot = hdri_env()
+        env = wnt.nodes.new("ShaderNodeTexEnvironment")
+        env.image = img
+        tcw = wnt.nodes.new("ShaderNodeTexCoord")
+        mpw = wnt.nodes.new("ShaderNodeMapping")
+        mpw.inputs["Rotation"].default_value = (0.0, 0.0, rot)
+        wnt.links.new(tcw.outputs["Generated"], mpw.inputs["Vector"])
+        wnt.links.new(mpw.outputs["Vector"], env.inputs["Vector"])
+        wnt.links.new(env.outputs["Color"], bg_l.inputs["Color"])
+        wnt.links.new(env.outputs["Color"], bg_c.inputs["Color"])
+        bg_l.inputs["Strength"].default_value = 0.45
+        bg_c.inputs["Strength"].default_value = 0.7
+        sun_data.energy = 2.4
+        sun_data.color = (1.0, 0.98, 0.94)
+        aim_sun(elev, az)
+        ember.inputs["Emission Strength"].default_value = 6.0
+        fire_ld.energy = 0.0
+        for ob in FLAME_OBJS:
+            ob.hide_render = True
         return
     sky2 = wnt.nodes.new("ShaderNodeTexSky")
     try:
         sky2.sky_type = "NISHITA"
     except (AttributeError, TypeError):
         pass
-    if mode == "golden":
-        e_r, a_r = math.radians(17.0), math.radians(300.0)
-        sun_data.energy = 7.0
-        sun_data.color = (1.0, 0.45, 0.22)
-        cam_strength = 0.4
-        amb_strength = 0.15
-        ember_str, fire_e = 15.0, 10.0
-    else:
-        e_r, a_r = elev, az
-        sun_data.energy = 4.0
-        sun_data.color = (1.0, 1.0, 1.0)
-        cam_strength = 0.5
-        amb_strength = 0.12
-        ember_str, fire_e = 8.0, 0.0
+    e_r, a_r = math.radians(17.0), math.radians(300.0)
+    sun_data.energy = 7.0
+    sun_data.color = (1.0, 0.45, 0.22)
+    cam_strength = 0.4
+    amb_strength = 0.15
+    ember_str, fire_e = 15.0, 10.0
+    for s in FLAME_STR:
+        s.default_value = 3.0
+    for ob in FLAME_OBJS:
+        ob.hide_render = False
     if hasattr(sky2, "sun_elevation"):
         sky2.sun_elevation = e_r
     if hasattr(sky2, "sun_rotation"):
@@ -1275,10 +1913,10 @@ def set_lighting(mode):
         warm = wnt.nodes.new("ShaderNodeMix")
         warm.data_type = "RGBA"
         warm.blend_type = "MULTIPLY"
-        warm.inputs["Factor"].default_value = 0.8
-        warm.inputs["B"].default_value = (1.0, 0.58, 0.36, 1.0)
-        wnt.links.new(sky2.outputs["Color"], warm.inputs["A"])
-        sky_src = warm.outputs["Result"]
+        warm.inputs[0].default_value = 0.8
+        warm.inputs[7].default_value = (1.0, 0.58, 0.36, 1.0)
+        wnt.links.new(sky2.outputs["Color"], warm.inputs[6])
+        sky_src = warm.outputs[2]
     wnt.links.new(sky_src, bg_l.inputs["Color"])
     wnt.links.new(sky_src, bg_c.inputs["Color"])
     bg_l.inputs["Strength"].default_value = amb_strength
@@ -1304,27 +1942,39 @@ def add_cam(name, loc, target, lens, fstop=None):
     return ob
 
 
-walk_loc = (33.4, -10.4, ground_h(33.4, 10.4) + 1.65)
-walk_tgt = (36.0, -8.0, ground_h(36, 8) + 0.5)
-deck_e_top = ground_h(22.58, 17.05) + 0.15
+fcx2, fcy2 = fc["cx"], fc["cy"]  # cameras follow the fire pit
+walk_loc = (fcx2 - 4.1, -(fcy2 + 3.8), ground_h(fcx2 - 4.1, fcy2 + 3.8) + 1.65)
+walk_tgt = (fcx2, -fcy2, ground_h(fcx2, fcy2) + 0.5)
+deck_e_top = DECK_TOP
 CAMS = {
     "iso": add_cam("iso", (60, -55, 35), (22, -17, 2), 40),
     "walk": add_cam("walk", walk_loc, walk_tgt, 30, fstop=2.8),
     "living": add_cam("living", (20.80, -17.5, ft + 1.5),
                       (30.5, -14.5, ground_h(30.5, 14.5) + 1.0), 35, fstop=4.0),
     "terrace": add_cam("terrace", (23.0, -16.0, deck_e_top + 1.6),
-                       (36.0, -8.0, ground_h(36, 8) + 1.0), 30),
+                       (fcx2, -fcy2, ground_h(fcx2, fcy2) + 1.0), 30),
     "arrival": add_cam("arrival", (42.3, -29.3, ground_h(42.3, 29.3) + 1.65),
-                       (30.0, -26.0, ground_h(30, 26) + 1.5), 35),
+                       (31.0, -24.8, ground_h(31, 24.8) + 1.4), 28),
 }
 
 # ---------------- render ----------------
 scene.render.engine = "CYCLES"
+scene.view_settings.view_transform = "Standard"
 scene.render.resolution_x = 1920
 scene.render.resolution_y = 1080
 scene.render.resolution_percentage = 100
 scene.cycles.samples = 128
 scene.cycles.use_denoising = True
+scene.cycles.use_adaptive_sampling = True
+scene.cycles.adaptive_threshold = 0.05
+scene.cycles.max_bounces = 6
+scene.cycles.diffuse_bounces = 3
+scene.cycles.glossy_bounces = 3
+scene.cycles.transmission_bounces = 4
+scene.cycles.transparent_max_bounces = 6
+scene.cycles.blur_glossy = 1.0
+scene.cycles.caustics_reflective = False
+scene.cycles.caustics_refractive = False
 
 device_used = "CPU"
 try:
@@ -1345,16 +1995,26 @@ except Exception as ex:
 print("RENDER DEVICE:", device_used)
 
 JOBS = [
-    ("iso", "render-iso.png", "day", 128, 0.0),
-    ("walk", "render-walk.png", "day", 128, 0.0),
-    ("living", "render-living.png", "day", 128, 0.0),
+    ("iso", "render-iso.png", "day", 96, 0.0),
+    ("walk", "render-walk.png", "day", 96, 0.0),
+    ("living", "render-living.png", "day", 96, 0.0),
     ("terrace", "render-terrace-golden.png", "golden", 128, 0.4),
-    ("arrival", "render-arrival-night.png", "night", 256, 0.3),
+    ("arrival", "render-arrival-night.png", "night", 192, 0.3),
 ]
 only = []
 for a2 in extra:
     if a2.startswith("--only="):
         only = a2.split("=", 1)[1].split(",")
+
+tri_unique = 0
+for _me in bpy.data.meshes:
+    if _me.users == 0:
+        continue
+    _me.calc_loop_triangles()
+    tri_unique += len(_me.loop_triangles)
+tri_scene = sum(len(ob.data.loop_triangles) for ob in bpy.data.objects
+                if ob.type == "MESH" and not ob.hide_render)
+print("TRIS unique %.0fk / placed %.0fk (excl. GN grass blades)" % (tri_unique / 1e3, tri_scene / 1e3))
 
 set_lighting("day")
 scene.camera = CAMS["iso"]
