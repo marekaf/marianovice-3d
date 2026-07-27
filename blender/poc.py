@@ -959,9 +959,9 @@ def window(name, axis, wall, out_sign, along_c, width, sill, height, door=False)
     layer(name + "_fT", 0.02, 0.11, a0, a1, z1 - fw, z1, MAT["frame"])
 
 
-window("w_slider1", "x", 20.58, +1, 13.5, 3.29, 0.05, 2.27)
-window("w_slider2", "x", 20.58, +1, 18.5, 5.16, 0.05, 2.27)
-window("w_bedroom", "x", 21.28, +1, 9.5, 2.0, 0.3, 1.5)
+window("w_kitchen", "x", 20.58, +1, 12.9, 2.3, 0.9, 1.35)
+window("w_portal", "x", 20.58, +1, 16.78, 5.16, 0.05, 2.27)
+window("w_bedroom", "x", 21.28, +1, 9.5, 2.0, 0.8, 1.75)
 window("w_north", "y", 7.18, -1, 15.88, 0.9, 0.3, 1.5)
 window("w_west1", "x", 10.48, -1, 10.5, 1.6, 0.3, 2.27)
 window("w_west2", "x", 10.48, -1, 13.5, 1.6, 0.3, 2.27)
