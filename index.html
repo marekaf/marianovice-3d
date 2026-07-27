@@ -751,76 +751,89 @@ roofGroup.add(sWingRoofMesh);
 
 // Atrium — no roof (open)
 
-// ───────────────────────── GARAGE + CARPORT (shared asymmetric gable roof) ─────────────────────────
+// ───────────────────────── GARAGE (pult roof) + CARPORT (shallow plate) ─────────────────────────
 const GA = rectOf('garage');
 const CP = rectOf('carport');
-// Garage walls 2.3 m
-addBox(GA.x, GA.y, GA.w, GA.d, 2.3, 0x888888, { sinkToMin: true });
+// Garage floor 0.5 m below house floor (397.00 vs 396.50); walls plinth down to lowest corner grade
+const garageFloorY = houseBaseY - 0.5;
+const garageWallTop = garageFloorY + 2.3;
+const garageMinY = Math.min(...[[GA.x, GA.y], [GA.x + GA.w, GA.y], [GA.x, GA.y + GA.d], [GA.x + GA.w, GA.y + GA.d]]
+  .map(([x, z]) => terrainHeight(x, z)));
+addBox(GA.x, GA.y, GA.w, GA.d, garageWallTop - garageMinY, 0x888888, { skipTerrain: true, yOffset: garageMinY });
 
-// Asymmetric gable roof over CARPORT + GARAGE
-// Ridge at the carport/garage junction, eaves at carport W edge and garage E edge
-function makeAsymGableRoof(xMin, xMid, xMax, zMin, zMax, eaveY, peakHeight) {
-  const peakY = eaveY + peakHeight;
-  const v = [
-    xMin, eaveY, zMin,
-    xMax, eaveY, zMin,
-    xMid, peakY,  zMin,
-    xMin, eaveY, zMax,
-    xMax, eaveY, zMax,
-    xMid, peakY,  zMax,
-  ];
-  const i = [
-    0, 1, 2,            // N gable
-    3, 5, 4,            // S gable
-    0, 3, 5,  0, 5, 2,  // left slope
-    1, 2, 5,  1, 5, 4,  // right slope
-  ];
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
-  g.setIndex(i);
-  g.computeVertexNormals();
-  return g;
-}
+// Garage pult roof — high at the carport junction (west), low at the east eave; no N/S overhang
+const garagePitch = 1.2 / GA.w;
+const garageRoofHigh = garageWallTop + 1.2;
 {
-  const baseY = terrainHeight(GA.x + GA.w / 2, GA.y + GA.d / 2);
-  const geom = makeAsymGableRoof(CP.x - 0.45, GA.x, GA.x + GA.w + 0.45, GA.y - 0.45, GA.y + GA.d + 0.45, baseY + 2.3, 1.2);
+  // makePultRoofWE args are y at xMin / y at xMax — here west is the high edge
+  const geom = makePultRoofWE(GA.x - 0.3, GA.x + GA.w + 0.3, GA.y, GA.y + GA.d,
+    garageRoofHigh + 0.3 * garagePitch, garageWallTop - 0.3 * garagePitch);
   const m = new THREE.Mesh(geom, roofMat);
   m.castShadow = true;
   roofGroup.add(m);
 }
+// Fill garage walls up to the roof plane: N/S triangles + west band under the high edge
+const garageFillMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.7, side: THREE.DoubleSide });
+for (const z of [GA.y, GA.y + GA.d]) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([
+    GA.x, garageWallTop, z,
+    GA.x + GA.w, garageWallTop, z,
+    GA.x, garageRoofHigh, z,
+  ], 3));
+  g.setIndex([0, 1, 2]);
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, garageFillMat);
+  m.castShadow = true;
+  scene.add(m);
+}
+{
+  const westFill = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, GA.d), garageFillMat);
+  westFill.position.set(GA.x + 0.05, garageWallTop + 0.6, GA.y + GA.d / 2);
+  westFill.castShadow = true;
+  scene.add(westFill);
+}
 
-// Standing seam metal (falcovaný plech) on the carport+garage gable
+// Carport plate — thin, high at the garage junction, shallow fall west; west edge clears entry door top
+const carportEastY = garageRoofHigh;
+const carportWestY = garageWallTop + 0.5;
+{
+  const drop = carportEastY - carportWestY;
+  const span = Math.hypot(CP.w, drop);
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(span, 0.08, CP.d), roofMat);
+  plate.position.set(CP.x + CP.w / 2, (carportWestY + carportEastY) / 2, CP.y + CP.d / 2);
+  plate.rotation.z = Math.atan2(drop, CP.w);
+  plate.castShadow = true;
+  roofGroup.add(plate);
+}
+
+// Standing seam metal (falcovaný plech) on both pult planes
 {
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
-  const baseY = terrainHeight(GA.x + GA.w / 2, GA.y + GA.d / 2);
-  const eaveY = baseY + 2.3;
-  const peakY = baseY + 2.3 + 1.2;
-  const xMin = CP.x - 0.45;
-  const xMid = GA.x;
-  const xMax = GA.x + GA.w + 0.45;
-  // Left slope (carport)
-  const leftLen = Math.sqrt((xMid - xMin) ** 2 + 1.2 ** 2);
-  const leftAng = Math.atan2(1.2, xMid - xMin);
-  // Right slope (garage)
-  const rightLen = Math.sqrt((xMax - xMid) ** 2 + 1.2 ** 2);
-  const rightAng = Math.atan2(1.2, xMax - xMid);
-  for (let zs = GA.y - 0.25; zs < GA.y + GA.d + 0.45; zs += 0.4) {
-    const l = new THREE.Mesh(new THREE.BoxGeometry(leftLen, 0.06, 0.04), stripeMat);
-    l.position.set((xMin + xMid) / 2, (eaveY + peakY) / 2 + 0.03, zs);
-    l.rotation.z = leftAng;
-    roofGroup.add(l);
-    const r = new THREE.Mesh(new THREE.BoxGeometry(rightLen, 0.06, 0.04), stripeMat);
-    r.position.set((xMid + xMax) / 2, (eaveY + peakY) / 2 + 0.03, zs);
-    r.rotation.z = -rightAng;
-    roofGroup.add(r);
+  const gLen = (GA.w + 0.6) * Math.hypot(1, garagePitch);
+  const gAng = Math.atan2(1.2, GA.w);
+  for (let zs = GA.y + 0.2; zs < GA.y + GA.d; zs += 0.4) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(gLen, 0.06, 0.04), stripeMat);
+    s.position.set(GA.x + GA.w / 2, (garageRoofHigh + garageWallTop) / 2 + 0.03, zs);
+    s.rotation.z = -gAng;
+    roofGroup.add(s);
+  }
+  const cDrop = carportEastY - carportWestY;
+  const cLen = Math.hypot(CP.w, cDrop);
+  const cAng = Math.atan2(cDrop, CP.w);
+  for (let zs = CP.y + 0.2; zs < CP.y + CP.d; zs += 0.4) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(cLen, 0.06, 0.04), stripeMat);
+    s.position.set(CP.x + CP.w / 2, (carportWestY + carportEastY) / 2 + 0.07, zs);
+    s.rotation.z = cAng;
+    roofGroup.add(s);
   }
 }
 
-// Garage doors (south wall of garage, outside) on terrain
+// Garage doors (south wall of garage, outside) — base on the garage slab
 const doorRect = EL.garage.parts.filter(p => p.kind === 'rect')[1];
 const garageDoorX = doorRect.x + doorRect.w / 2;
 const garageDoorZ = GA.y + GA.d;
-const garageDoorBaseY = terrainHeight(garageDoorX, garageDoorZ);
+const garageDoorBaseY = garageFloorY;
 const garageDoor = new THREE.Mesh(
   new THREE.BoxGeometry(doorRect.w, 2.1, 0.08),
   new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 })
@@ -838,12 +851,10 @@ for (let i = 1; i < 5; i++) {
 }
 
 // Carport between house and garage — open posts on west side (garage walls support east side)
-// Roof above is part of asymmetric gable shared with garage
 [[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
   const baseY = terrainHeight(px, pz);
-  // Each post stretched from its local terrain to the shared roof eave
-  const eaveY = terrainHeight(GA.x + GA.w / 2, GA.y + GA.d / 2) + 2.3;
-  const ph = eaveY - baseY;
+  // Each post stretched from its local terrain to the plate's west edge
+  const ph = carportWestY - baseY;
   const post = new THREE.Mesh(
     new THREE.BoxGeometry(0.15, ph, 0.15),
     new THREE.MeshStandardMaterial({ color: 0x5a3e25, roughness: 0.7 })
@@ -914,9 +925,36 @@ const deckTop = houseBaseY + 0.05;
 }
 
 // Terasa Z — sidewalk podél westní strany domu + atrium uvnitř westního zubu
+// Level decks on the same plane as the east deck
 const [wtSidewalk, wtAtrium] = EL.westTerrace.parts.filter(p => p.kind === 'rect');
-addTerrainPlatform(rectVerts(wtSidewalk), 0.15, 0xa87d4a, { map: woodTex });
-addTerrainPlatform(rectVerts(wtAtrium), 0.15, 0xa87d4a, { map: woodTex });
+function addLevelDeck(r) {
+  const tex = woodTex.clone();
+  tex.repeat.set(r.w / 2, r.d / 2);
+  const deck = new THREE.Mesh(
+    new THREE.BoxGeometry(r.w, 0.08, r.d),
+    new THREE.MeshStandardMaterial({ color: 0xa87d4a, map: tex, roughness: 0.7 })
+  );
+  deck.position.set(r.x + r.w / 2, deckTop - 0.04, r.y + r.d / 2);
+  deck.castShadow = true;
+  deck.receiveShadow = true;
+  scene.add(deck);
+}
+addLevelDeck(wtSidewalk);
+addLevelDeck(wtAtrium);
+// Support posts on the outer (west) edge where terrain falls away — north end is the low side
+{
+  const deckPostMat = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.85 });
+  const px = wtSidewalk.x + 0.15;
+  for (const pz of [wtSidewalk.y + 0.2, wtSidewalk.y + 1.6, wtSidewalk.y + 3]) {
+    const pY = terrainHeight(px, pz);
+    const ph = deckTop - 0.08 - pY;
+    if (ph < 0.05) continue;
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, ph, 0.12), deckPostMat);
+    post.position.set(px, pY + ph / 2, pz);
+    post.castShadow = true;
+    scene.add(post);
+  }
+}
 
 // Chodníček sauna → terasa Z
 addTerrainPlatform(rectVerts(rectOf('saunaPath')), 0.1, 0xcdc1ad, { map: woodTex });
@@ -1369,11 +1407,9 @@ function addCar(x, z, color, rotY, baseY = terrainHeight(x, z)) {
   furnitureGroup.add(g);
 }
 
-// Cars in garage (2 pcs) — both on the garage slab (walls' base after sinkToMin)
-const garageSlabY = Math.min(...[[GA.x, GA.y], [GA.x + GA.w, GA.y], [GA.x, GA.y + GA.d], [GA.x + GA.w, GA.y + GA.d]]
-  .map(([x, z]) => terrainHeight(x, z)));
-addCar(29, 22, 0x224488, 0, garageSlabY);
-addCar(32.5, 22, 0xaa3333, 0, garageSlabY);
+// Cars in garage (2 pcs) — both on the garage slab
+addCar(29, 22, 0x224488, 0, garageFloorY);
+addCar(32.5, 22, 0xaa3333, 0, garageFloorY);
 
 // Car on 2-spot parking (1 shown) — length along the pad's x-axis
 addCar(36.4, 22.9, 0x8a8f94, 0);
@@ -1648,11 +1684,11 @@ const mouse = new THREE.Vector2();
 const namedObjects = [];
 
 // Add invisible hover targets for major elements
-function addHoverTarget(plotX, plotY, w, d, h, name) {
+function addHoverTarget(plotX, plotY, w, d, h, name, base) {
   const geom = new THREE.BoxGeometry(w, h, d);
   const mat = new THREE.MeshBasicMaterial({ visible: false });
   const cx = plotX + w/2, cz = plotY + d/2;
-  const baseY = terrainHeight(cx, cz);
+  const baseY = base ?? terrainHeight(cx, cz);
   const m = new THREE.Mesh(geom, mat);
   m.position.set(cx, baseY + h/2, cz);
   m.userData = { name };
@@ -1661,8 +1697,8 @@ function addHoverTarget(plotX, plotY, w, d, h, name) {
 }
 const hoverRect = (id, h) => { const r = rectOf(id); addHoverTarget(r.x, r.y, r.w, r.d, h, EL[id].name); };
 addHoverTarget(HB[0], HB[1], HB[2] - HB[0], HB[3] - HB[1], 6, EL.house.name);
-hoverRect('garage', 3);
-hoverRect('carport', 2.5);
+addHoverTarget(GA.x, GA.y, GA.w, GA.d, 3.5, EL.garage.name, garageFloorY);
+hoverRect('carport', 3);
 hoverRect('sauna', 3);
 hoverRect('saunaShelter', 2.5);
 hoverRect('pergola', 2.5);
