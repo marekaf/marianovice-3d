@@ -1573,6 +1573,38 @@ const waterNormal = (() => {
   }
 }
 
+// VELUX roof windows over the southern attic room + štít window in the north gable
+{
+  const roofGlass = new THREE.MeshStandardMaterial({ color: 0x2a3540, roughness: 0.15, metalness: 0.6 });
+  const veluxFrame = new THREE.MeshStandardMaterial({ color: 0x2b2d30, roughness: 0.5 });
+  const rxMid = (HC[0] + HC[1]) / 2;
+  const ridgeYAbs = houseTerrainY + wallH + roofRise;
+  const rise2 = roofRise + eaveDrop;
+  const placeRoofWin = (side, zPos, wAcross) => {
+    const ex = side === 'e' ? HC[1] + 0.45 : HC[0] - 0.45;
+    const t = 0.45;
+    const cx2 = rxMid + t * (ex - rxMid);
+    const cy2 = ridgeYAbs - t * rise2 + 0.07;
+    const ang = Math.atan2(rise2, Math.abs(ex - rxMid));
+    const f = new THREE.Mesh(new THREE.BoxGeometry(1.52, 0.1, wAcross + 0.12), veluxFrame);
+    const g2 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.13, wAcross), roofGlass);
+    for (const m of [f, g2]) {
+      m.position.set(cx2, cy2, zPos);
+      m.rotation.z = side === 'e' ? -ang : ang;
+      roofGroup.add(m);
+    }
+  };
+  placeRoofWin('e', 19.6, 0.78);
+  placeRoofWin('e', 21.8, 0.78);
+  placeRoofWin('w', 20.5, 0.66);
+  const stitFrame = new THREE.Mesh(new THREE.BoxGeometry(0.87, 1.12, 0.09), veluxFrame);
+  stitFrame.position.set(rxMid, houseTerrainY + wallH + 2.0, HB[1] - 0.02);
+  scene.add(stitFrame);
+  const stitGlass = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.0, 0.05), roofGlass);
+  stitGlass.position.set(rxMid, houseTerrainY + wallH + 2.0, HB[1] - 0.05);
+  scene.add(stitGlass);
+}
+
 // ───────────────────────── FURNITURE / DECOR ─────────────────────────
 // Table + 4 chairs on east terrace
 {
