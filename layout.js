@@ -86,12 +86,12 @@ const GARDEN = {
     },
     {
       id: "parking",
-      name: "2× parking ~4.3 × 3.6 m",
+      name: "Parking along garage 3.2 × 7.05 m",
+      short: "Parking",
       parts: [
-        { kind: "rect", x: 34.81, y: 22.84, w: 4.33, d: 3.61, stroke: "#888", sw: 1.2, dash: "4,3" },
-        { kind: "line", x1: 36.97, y1: 22.84, x2: 36.97, y2: 26.45, stroke: "#888", sw: 1, dash: "3,3" },
-        { kind: "text", x: 36.94, y: 24.72, text: "2× parking", cls: "lbl-sm", fill: "#666" },
-        { kind: "text", x: 36.94, y: 25.56, text: "4.33 × 3.61 m", cls: "dim" }
+        { kind: "rect", x: 34.81, y: 19.4, w: 3.2, d: 7.05, stroke: "#888", sw: 1.2, dash: "4,3" },
+        { kind: "text", x: 36.41, y: 22.6, text: "parking", cls: "lbl-sm", fill: "#666" },
+        { kind: "text", x: 36.41, y: 23.4, text: "3.2 × 7.05 m", cls: "dim" }
       ]
     },
     {
@@ -389,14 +389,14 @@ const GARDEN = {
       short: "Path lights",
       meta: { light: "bollard" },
       parts: [
-        { kind: "circle", cx: 23, cy: 26.85, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 29, cy: 26.85, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 35, cy: 26.95, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 41, cy: 27.85, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 23, cy: 30.3, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 29, cy: 31, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 35, cy: 31.7, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 41, cy: 32.4, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 9.1, cy: 4.5, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 9.1, cy: 6.5, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 24.2, cy: 21.9, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "text", x: 26, y: 27.7, text: "path lights", cls: "lbl-sm", fill: "#8a6a1a" }
+        { kind: "text", x: 26, y: 31.3, text: "path lights", cls: "lbl-sm", fill: "#8a6a1a" }
       ]
     },
     {
