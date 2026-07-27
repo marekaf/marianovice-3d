@@ -374,6 +374,16 @@ const GARDEN = {
       ]
     },
     {
+      id: "zasivarna",
+      name: "Zašívárna — hidden bench (blue/red)",
+      short: "Zašívárna",
+      parts: [
+        { kind: "rect", x: 31.4, y: 18.8, w: 1.1, d: 0.5, fill: "#3a6ab8", stroke: "#2a4a88", sw: 0.8 },
+        { kind: "rect", x: 32.5, y: 18.8, w: 0.7, d: 0.5, fill: "#c0392b", stroke: "#8a2a1e", sw: 0.8 },
+        { kind: "text", x: 32.3, y: 18.45, text: "zašívárna", cls: "lbl-sm", fill: "#2a4a88" }
+      ]
+    },
+    {
       id: "rainGarden",
       name: "NE rain garden — Léto u vody swale (Z11)",
       short: "Rain garden",

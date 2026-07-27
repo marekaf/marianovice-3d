@@ -1437,6 +1437,23 @@ const waterNormal = (() => {
   }
 }
 
+// Zašívárna — hidden bench on the garage north side (Flera-style, blue/red)
+{
+  const bx = 32.3, bz = 19.05, baseY = terrainHeight(bx, bz);
+  const seatBlue = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.5), new THREE.MeshStandardMaterial({ color: 0x3a6ab8, roughness: 0.4, metalness: 0.3 }));
+  seatBlue.position.set(bx - 0.35, baseY + 0.45, bz);
+  const seatRed = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.07, 0.5), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 }));
+  seatRed.position.set(bx + 0.55, baseY + 0.45, bz);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.06), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 }));
+  back.position.set(bx, baseY + 0.75, bz + 0.22);
+  for (const m of [seatBlue, seatRed, back]) { m.castShadow = true; furnitureGroup.add(m); }
+  for (const lx of [bx - 0.8, bx + 0.8]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.44), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 }));
+    leg.position.set(lx, baseY + 0.21, bz);
+    furnitureGroup.add(leg);
+  }
+}
+
 // Lounger by hot tub
 {
   const lx = 7.5, lz = 5.5, baseY = terrainHeight(lx, lz);
