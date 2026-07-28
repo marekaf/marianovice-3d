@@ -281,8 +281,8 @@ def mat_blade(name):
     b.inputs["Roughness"].default_value = 0.65
     oi = nt.nodes.new("ShaderNodeObjectInfo")
     ramp = nt.nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].color = (*hexc("#3f683f"), 1.0)
-    ramp.color_ramp.elements[1].color = (*hexc("#7fb37a"), 1.0)
+    ramp.color_ramp.elements[0].color = (*hexc("#345c26"), 1.0)
+    ramp.color_ramp.elements[1].color = (*hexc("#6cb04c"), 1.0)
     nt.links.new(oi.outputs["Random"], ramp.inputs["Fac"])
     nt.links.new(ramp.outputs["Color"], b.inputs["Base Color"])
     return m
@@ -1453,6 +1453,90 @@ for prt in els["orchard"]["parts"]:
         tree_i += 1
 print("TREES placed:", tree_i)
 
+
+# ---------------- fallen-leaf / twig litter (the imperfection that reads as real) ----------------
+def mat_leaf_litter():
+    m, nt, b = new_mat("leaf_litter")
+    b.inputs["Roughness"].default_value = 0.9
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = bpy.data.images.load(os.path.join(ASSETS, "leaf_generated.png"), check_existing=True)
+    oi = nt.nodes.new("ShaderNodeObjectInfo")
+    tint = nt.nodes.new("ShaderNodeValToRGB")  # per-leaf brown -> ochre so the litter is not one flat colour
+    tint.color_ramp.elements[0].color = (*hexc("#6b4a25"), 1.0)
+    tint.color_ramp.elements[1].color = (*hexc("#a9873f"), 1.0)
+    mix = nt.nodes.new("ShaderNodeMixRGB")
+    mix.blend_type = "MULTIPLY"
+    mix.inputs["Factor"].default_value = 0.5
+    nt.links.new(oi.outputs["Random"], tint.inputs["Fac"])
+    nt.links.new(tex.outputs["Color"], mix.inputs["Color1"])
+    nt.links.new(tint.outputs["Color"], mix.inputs["Color2"])
+    nt.links.new(mix.outputs["Color"], b.inputs["Base Color"])
+    nt.links.new(tex.outputs["Alpha"], b.inputs["Alpha"])
+    return m
+
+
+LEAF_MAT = mat_leaf_litter()
+_lbm = bmesh.new()
+_lv = [_lbm.verts.new(c) for c in [(-0.5, -0.5, 0), (0.5, -0.5, 0), (0.5, 0.5, 0), (-0.5, 0.5, 0)]]
+_lf = _lbm.faces.new(_lv)
+_luv = _lbm.loops.layers.uv.new("UVMap")
+for _lp, _co in zip(_lf.loops, [(0, 0), (1, 0), (1, 1), (0, 1)]):
+    _lp[_luv].uv = _co
+LEAF_MESH = bpy.data.meshes.new("leafcard")
+_lbm.to_mesh(LEAF_MESH)
+_lbm.free()
+LEAF_TEMPLATE = link_obj("leafcard", LEAF_MESH, LEAF_MAT)
+LEAF_TEMPLATE.location = (0, 0, -80)
+LEAF_TEMPLATE.hide_render = True
+leaf_i = 0
+
+
+def drop_leaf(px, py, size):
+    global leaf_i
+    ob = LEAF_TEMPLATE.copy()
+    bpy.context.collection.objects.link(ob)
+    ob.hide_render = False
+    ob.scale = (size, size, size)
+    ob.rotation_euler = ((random.random() - 0.5) * 0.5, (random.random() - 0.5) * 0.5,
+                         random.random() * 6.283)
+    ob.location = (px, -py, terrain_z(px, py) + 0.008)
+    ob.name = "leaf%d" % leaf_i
+    leaf_i += 1
+
+
+def scatter_leaves(cx, cy, r, count, smin=0.05, smax=0.11):
+    for _ in range(count):
+        a = random.random() * 6.283
+        rr = r * math.sqrt(random.random())
+        px, py = cx + rr * math.cos(a), cy + rr * math.sin(a)
+        if point_in_poly(px, py, plot):
+            drop_leaf(px, py, smin + random.random() * (smax - smin))
+
+
+for _eid in ("northTrees", "eastTrees", "orchard"):
+    for _prt in els[_eid]["parts"]:
+        if _prt["kind"] == "circle":
+            scatter_leaves(_prt["cx"], _prt["cy"], 1.9, random.randint(7, 13))
+for _ in range(46):  # fire-pit apron, kept off the flames by the inner radius
+    _a = random.random() * 6.283
+    _rr = 1.5 + random.random() * 1.7
+    scatter_leaves(_fire["cx"] + _rr * math.cos(_a), _fire["cy"] + _rr * math.sin(_a), 0.25, 1, 0.05, 0.10)
+_dn = len(dpoly)  # leaves blown against the driveway/parking margins
+for _i in range(_dn):
+    _ax, _ay = dpoly[_i]
+    _bx, _by = dpoly[(_i + 1) % _dn]
+    for _ in range(int(math.hypot(_bx - _ax, _by - _ay) * 1.1)):
+        _t = random.random()
+        scatter_leaves(_ax + (_bx - _ax) * _t, _ay + (_by - _ay) * _t, 0.5, 1, 0.05, 0.10)
+for _ in range(20):  # pond rim ring (never over the water)
+    _a = random.random() * 6.283
+    scatter_leaves(POND[0] + (POND[2] + 0.5) * math.cos(_a), POND[1] + (POND[3] + 0.5) * math.sin(_a),
+                   0.3, 1, 0.05, 0.10)
+for _s in STEP_STONES:  # a few by each stepping stone
+    scatter_leaves(_s["cx"], _s["cy"], 0.55, random.randint(2, 4), 0.045, 0.09)
+print("LEAF litter placed:", leaf_i)
+
+
 # ---------------- perennial strip + bushes ----------------
 peren_i = 0
 while peren_i < 35:
@@ -1765,7 +1849,9 @@ def hdri_env():
     """Day HDRI + Z rotation that aligns its sun with the computed sun azimuth."""
     if "img" not in HDRI_CACHE:
         d = os.path.join(ASSETS, "hdri")
-        fn = sorted(f for f in os.listdir(d) if f.endswith((".hdr", ".exr")))[0]
+        cand = [f for f in os.listdir(d) if f.endswith((".hdr", ".exr"))]
+        # pick the highest-resolution sky (largest file) so the 4k background stays crisp
+        fn = max(cand, key=lambda f: os.path.getsize(os.path.join(d, f)))
         img = bpy.data.images.load(os.path.join(d, fn), check_existing=True)
         import numpy as np
         w, h = img.size
@@ -1839,10 +1925,10 @@ def set_lighting(mode):
         wnt.links.new(mpw.outputs["Vector"], env.inputs["Vector"])
         wnt.links.new(env.outputs["Color"], bg_l.inputs["Color"])
         wnt.links.new(env.outputs["Color"], bg_c.inputs["Color"])
-        bg_l.inputs["Strength"].default_value = 0.45
+        bg_l.inputs["Strength"].default_value = 0.42
         bg_c.inputs["Strength"].default_value = 0.7
-        sun_data.energy = 2.4
-        sun_data.color = (1.0, 0.98, 0.94)
+        sun_data.energy = 3.3
+        sun_data.color = (1.0, 0.93, 0.82)
         aim_sun(elev, az)
         ember.inputs["Emission Strength"].default_value = 6.0
         fire_ld.energy = 0.0
@@ -1888,6 +1974,130 @@ def set_lighting(mode):
     fire_ld.energy = fire_e
 
 
+# ---------------- compositor: photographic grade + depth haze (Blender 5 node group) ----------------
+# All maths run in scene-linear, BEFORE the AgX view transform tonemaps the output.
+# The haze fades geometry (not sky) toward a pale colour by camera depth -- aerial
+# perspective that dissolves the hard flat-green horizon band, the biggest wide-shot tell.
+scene.view_layers[0].use_pass_z = True
+CN = {}
+
+
+def build_compositor():
+    ng = bpy.data.node_groups.new("GardenGrade", "CompositorNodeTree")
+    scene.compositing_node_group = ng
+    ng.interface.new_socket("Image", in_out="OUTPUT", socket_type="NodeSocketColor")
+    n = ng.nodes
+    lk = ng.links.new
+    rl = n.new("CompositorNodeRLayers")
+    depth = rl.outputs.get("Depth") or rl.outputs.get("Z")
+
+    warm = n.new("ShaderNodeMixRGB")  # warm white balance (near-neutral luminance)
+    warm.blend_type = "MULTIPLY"
+    warm.inputs["Factor"].default_value = 1.0
+    lk(rl.outputs["Image"], warm.inputs["Color1"])
+
+    lift = n.new("CompositorNodeCurveRGB")  # raise the black point -> lifted, filmic shadows
+    lk(warm.outputs["Color"], lift.inputs["Image"])
+
+    # haze factor = smoothstep(depth) * sky-mask * strength
+    hz = n.new("ShaderNodeMapRange")
+    hz.interpolation_type = "SMOOTHSTEP"
+    hz.inputs["To Min"].default_value = 0.0
+    hz.inputs["To Max"].default_value = 1.0
+    lk(depth, hz.inputs["Value"])
+    skymask = n.new("ShaderNodeMath")  # 1 on geometry, 0 on the (very far) sky
+    skymask.operation = "LESS_THAN"
+    skymask.inputs[1].default_value = 1.0e7
+    lk(depth, skymask.inputs[0])
+    hzf = n.new("ShaderNodeMath")
+    hzf.operation = "MULTIPLY"
+    lk(hz.outputs["Result"], hzf.inputs[0])
+    lk(skymask.outputs["Value"], hzf.inputs[1])
+    hstr = n.new("ShaderNodeMath")
+    hstr.operation = "MULTIPLY"
+    lk(hzf.outputs["Value"], hstr.inputs[0])
+    hazemix = n.new("ShaderNodeMixRGB")
+    hazemix.blend_type = "MIX"
+    lk(lift.outputs["Image"], hazemix.inputs["Color1"])
+    lk(hstr.outputs["Value"], hazemix.inputs["Factor"])
+
+    glare = n.new("CompositorNodeGlare")  # soft filmic bloom off highlights + sky
+    glare.inputs["Type"].default_value = "Fog Glow"
+    glare.inputs["Quality"].default_value = "Medium"
+    glare.inputs["Size"].default_value = 0.6
+    lk(hazemix.outputs["Color"], glare.inputs["Image"])
+
+    em = n.new("CompositorNodeEllipseMask")  # vignette: ellipse a touch larger than the frame
+    em.inputs["Operation"].default_value = "Add"                # so the falloff sits in the corners
+    em.inputs["Size"].default_value = (1.05, 1.02)
+    blur = n.new("CompositorNodeBlur")  # wide blur -> gentle gradient, no visible arc on flat sky
+    blur.inputs["Type"].default_value = "Fast Gaussian"
+    blur.inputs["Size"].default_value = (0.34, 0.34)
+    lk(em.outputs["Mask"], blur.inputs["Image"])
+    vmul = n.new("ShaderNodeMath")
+    vmul.operation = "MULTIPLY"
+    vadd = n.new("ShaderNodeMath")
+    vadd.operation = "ADD"
+    lk(blur.outputs["Image"], vmul.inputs[0])
+    lk(vmul.outputs["Value"], vadd.inputs[0])
+    vig = n.new("ShaderNodeMixRGB")
+    vig.blend_type = "MULTIPLY"
+    vig.inputs["Factor"].default_value = 1.0
+    lk(glare.outputs["Image"], vig.inputs["Color1"])
+    lk(vadd.outputs["Value"], vig.inputs["Color2"])
+
+    go = n.new("NodeGroupOutput")
+    lk(vig.outputs["Color"], go.inputs[0])
+
+    CN.update(warm=warm.inputs["Color2"], lift=lift,
+              h_start=hz.inputs["From Min"], h_end=hz.inputs["From Max"],
+              h_str=hstr.inputs[1], h_col=hazemix.inputs["Color2"],
+              g_str=glare.inputs["Strength"], g_thr=glare.inputs["Threshold"],
+              v_mul=vmul.inputs[1], v_add=vadd.inputs[1])
+
+
+def _lift(v):
+    c = CN["lift"].mapping.curves[3]
+    c.points[0].location = (0.0, v)
+    CN["lift"].mapping.update()
+
+
+def _vig(amt):
+    CN["v_mul"].default_value = amt
+    CN["v_add"].default_value = 1.0 - amt
+
+
+def set_compositor(mode, hstart, hend):
+    # hstart/hend (metres of camera depth) are per-SHOT: the far iso needs the haze pushed
+    # way out so the house stays crisp, the eye-level shots start it just past the subject.
+    CN["h_start"].default_value, CN["h_end"].default_value = hstart, hend
+    if mode == "golden":
+        CN["warm"].default_value = (1.08, 1.0, 0.85, 1.0)
+        _lift(0.020)
+        CN["h_str"].default_value = 0.68
+        CN["h_col"].default_value = (0.95, 0.80, 0.60, 1.0)
+        CN["g_thr"].default_value, CN["g_str"].default_value = 0.75, 0.14
+        _vig(0.16)
+    elif mode == "night":
+        CN["warm"].default_value = (0.98, 1.0, 1.06, 1.0)
+        _lift(0.010)
+        CN["h_str"].default_value = 0.35
+        CN["h_col"].default_value = (0.09, 0.13, 0.22, 1.0)
+        CN["g_thr"].default_value, CN["g_str"].default_value = 0.55, 0.18
+        _vig(0.12)
+    else:  # day
+        CN["warm"].default_value = (1.05, 1.0, 0.92, 1.0)
+        _lift(0.016)
+        CN["h_str"].default_value = 0.90
+        # tuned so the hazed far ground meets the sky at the same value -> no horizon seam
+        CN["h_col"].default_value = (0.26, 0.28, 0.33, 1.0)
+        CN["g_thr"].default_value, CN["g_str"].default_value = 0.85, 0.11
+        _vig(0.15)
+
+
+build_compositor()
+
+
 # ---------------- cameras ----------------
 def add_cam(name, loc, target, lens, fstop=None):
     cd = bpy.data.cameras.new(name)
@@ -1912,12 +2122,45 @@ CAMS = {
     "iso": add_cam("iso", (60, -55, 35), (22, -17, 2), 40),
     "walk": add_cam("walk", walk_loc, walk_tgt, 30, fstop=2.8),
     "living": add_cam("living", (20.80, -17.5, ft + 1.5),
-                      (30.5, -14.5, ground_h(30.5, 14.5) + 1.0), 35, fstop=4.0),
+                      (30.5, -14.5, ground_h(30.5, 14.5) + 1.0), 35, fstop=2.8),
     "terrace": add_cam("terrace", (23.0, -16.0, deck_e_top + 1.6),
-                       (fcx2, -fcy2, ground_h(fcx2, fcy2) + 1.0), 30),
+                       (fcx2, -fcy2, ground_h(fcx2, fcy2) + 1.0), 30, fstop=3.2),
     "arrival": add_cam("arrival", (42.3, -29.3, ground_h(42.3, 29.3) + 1.65),
                        (31.0, -24.8, ground_h(31, 24.8) + 1.4), 28),
 }
+
+# ---------------- foreground framing plants (soft-focus near foliage) ----------------
+# Pro shots are taken through near foliage. Drop a plant just in front of the eye-level
+# cameras, off to one side and low, so it partly occludes the frame edge and -- with DOF
+# focused on the mid subject -- reads as an out-of-focus foreground.
+bpy.context.view_layer.update()  # make the camera world matrices current before reading axes
+
+
+def place_foreground(camname, template, ahead, side, target_h, up_off=0.0, tilt=0.14):
+    cam = CAMS[camname]
+    m3 = cam.matrix_world.to_3x3()
+    fwd = (m3 @ Vector((0.0, 0.0, -1.0))).normalized()
+    right = (m3 @ Vector((1.0, 0.0, 0.0))).normalized()
+    base = cam.location + fwd * ahead + right * side
+    ob = template.copy()
+    bpy.context.collection.objects.link(ob)
+    ob.hide_render = False
+    s = target_h / max(template.dimensions.z, 0.01)
+    ob.scale = (s, s, s)
+    ob.rotation_euler = ((random.random() - 0.5) * tilt, (random.random() - 0.5) * tilt,
+                         random.random() * 6.283)
+    ob.location = (base.x, base.y, terrain_z(base.x, -base.y) - 0.03 + up_off)
+    ob.name = "fg_%s_%d" % (camname, len(bpy.data.objects))
+    return ob
+
+
+# side/ahead sets the off-axis angle: keep it near the lens half-FOV so the plant's
+# inner foliage bites the frame edge without blocking the subject.
+place_foreground("living", SHRUBS[1], ahead=2.2, side=-1.30, target_h=1.25)
+place_foreground("living", SHRUBS[4], ahead=2.4, side=1.45, target_h=1.10)
+place_foreground("terrace", SHRUBS[2], ahead=2.2, side=-1.55, target_h=1.20)
+place_foreground("terrace", GROUND_PLANTS[1], ahead=1.9, side=1.35, target_h=0.80)
+place_foreground("walk", SHRUBS[0], ahead=2.1, side=1.45, target_h=1.15)
 
 # ---------------- render ----------------
 scene.render.engine = "CYCLES"
@@ -1958,11 +2201,11 @@ except Exception as ex:
 print("RENDER DEVICE:", device_used)
 
 JOBS = [
-    ("iso", "render-iso.png", "day", 96, 0.0),
-    ("walk", "render-walk.png", "day", 96, 0.0),
-    ("living", "render-living.png", "day", 96, 0.0),
-    ("terrace", "render-terrace-golden.png", "golden", 128, 0.4),
-    ("arrival", "render-arrival-night.png", "night", 192, 0.3),
+    ("iso", "render-iso.png", "day", 96, 0.0, 115.0, 320.0),
+    ("walk", "render-walk.png", "day", 96, 0.0, 16.0, 95.0),
+    ("living", "render-living.png", "day", 96, 0.0, 16.0, 95.0),
+    ("terrace", "render-terrace-golden.png", "golden", 128, 0.4, 16.0, 110.0),
+    ("arrival", "render-arrival-night.png", "night", 192, 0.3, 12.0, 100.0),
 ]
 only = []
 for a2 in extra:
@@ -1980,6 +2223,7 @@ tri_scene = sum(len(ob.data.loop_triangles) for ob in bpy.data.objects
 print("TRIS unique %.0fk / placed %.0fk (excl. GN grass blades)" % (tri_unique / 1e3, tri_scene / 1e3))
 
 set_lighting("day")
+set_compositor("day", 115.0, 320.0)
 scene.camera = CAMS["iso"]
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, "garden.blend"))
 print("SAVED", os.path.join(out_dir, "garden.blend"))
@@ -1987,10 +2231,11 @@ print("SAVED", os.path.join(out_dir, "garden.blend"))
 if NO_RENDER:
     print("NO-RENDER mode: scene built, skipping renders")
 else:
-    for cname, outfile, mode, smp, expo in JOBS:
+    for cname, outfile, mode, smp, expo, hstart, hend in JOBS:
         if only and cname not in only:
             continue
         set_lighting(mode)
+        set_compositor(mode, hstart, hend)
         scene.cycles.samples = smp
         scene.view_settings.exposure = expo
         scene.camera = CAMS[cname]

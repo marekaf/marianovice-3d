@@ -1,15 +1,26 @@
 # Asset manifest
 
-All assets from Poly Haven (polyhaven.com), license CC0 (public domain).
+All assets from Poly Haven (polyhaven.com), license CC0 (public domain), except
+`leaf_generated.png` (see Generated below).
 Textures and the original shrub/fern/flower models are 2k; the tree and grass-clump
 models added for the real-plant pass are 1k (their geometry, not texture resolution,
 is what makes them heavy).
 
 ## HDRI
 
+The day shots (iso/walk/living/terrace) light and background off the 4k sky; `hdri_env`
+picks the largest sky file present, so the 2k is kept only as a lightweight fallback.
+
 | File | Source | License |
 |---|---|---|
+| hdri/kloofendal_48d_partly_cloudy_puresky_4k.hdr | https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky | CC0 |
 | hdri/kloofendal_48d_partly_cloudy_puresky_2k.hdr | https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky | CC0 |
+
+## Generated
+
+| File | Use | Source | License |
+|---|---|---|---|
+| leaf_generated.png | fallen-leaf/twig ground litter cards | procedurally generated in-repo | CC0 |
 
 ## Textures (diff + nor_gl + rough, 2k)
 
