@@ -820,19 +820,23 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
 }
 
 // MAIN CORE — single gable roof, 0.45 m eave overhang on all sides
-const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH, roofRise);
+// Eave overhang continues the štít pitch: eave drops below wall top by overhang × slope
+const gableSlope = roofRise / ((HC[1] - HC[0]) / 2);
+const eaveDrop = 0.45 * gableSlope;
+const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH - eaveDrop, roofRise + eaveDrop);
 const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
 // North wing (west of core, north of atrium) — shed roof, small slope W low / E high
-const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1], HA[1], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+const wingDrop = 0.45 * (0.9 / (HC[0] - HB[0]));
+const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1], HA[1], houseTerrainY + wallH - wingDrop, houseTerrainY + wallH + 0.9 + wingDrop);
 const nWingRoofMesh = new THREE.Mesh(nWingRoofGeom, roofMat);
 nWingRoofMesh.castShadow = true;
 roofGroup.add(nWingRoofMesh);
 
 // South wing (west of core, south of atrium) — shed roof
-const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3], HB[3], houseTerrainY + wallH, houseTerrainY + wallH + 0.9);
+const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3], HB[3], houseTerrainY + wallH - wingDrop, houseTerrainY + wallH + 0.9 + wingDrop);
 const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
 sWingRoofMesh.castShadow = true;
 roofGroup.add(sWingRoofMesh);
@@ -1145,15 +1149,20 @@ const drivewayGeom = (() => {
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const step = 0.5, nx = Math.ceil((x1 - x0) / step), nz = Math.ceil((z1 - z0) / step);
   const verts = [], idx = [];
-  const dwArea = drivewayPts.reduce((a, [px, pz], i) => {
-    const [qx, qz] = drivewayPts[(i + 1) % drivewayPts.length];
-    return a + px * qz - qx * pz;
-  }, 0);
-  const dwSgn = dwArea > 0 ? 1 : -1;
-  const clipCell = (poly) => {
+  // Concave outline: SH-clipping needs convex clips, so split into convex pieces
+  const dwParts = [
+    [[21.28, 19.4], [27.63, 19.4], [27.63, 26.44], [21.28, 26.44]],
+    [[21.28, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]],
+  ];
+  const clipCell = (poly, clipPts) => {
+    const dwArea = clipPts.reduce((a, [px, pz], i) => {
+      const [qx, qz] = clipPts[(i + 1) % clipPts.length];
+      return a + px * qz - qx * pz;
+    }, 0);
+    const dwSgn = dwArea > 0 ? 1 : -1;
     let out = poly;
-    for (let i = 0, j = drivewayPts.length - 1; i < drivewayPts.length; j = i++) {
-      const [ax, az] = drivewayPts[j], [bx2, bz2] = drivewayPts[i];
+    for (let i = 0, j = clipPts.length - 1; i < clipPts.length; j = i++) {
+      const [ax, az] = clipPts[j], [bx2, bz2] = clipPts[i];
       const inp = out; out = [];
       const side = (px, pz) => dwSgn * ((bx2 - ax) * (pz - az) - (bz2 - az) * (px - ax));
       for (let k = 0; k < inp.length; k++) {
@@ -1170,11 +1179,11 @@ const drivewayGeom = (() => {
     return out;
   };
   const addV = (x, z) => { const id = verts.length / 3; verts.push(x, terrainHeight(x, z) + 0.05, z); return id; };
-  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+  for (const part of dwParts) for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
     const cell = clipCell([
       [x0 + i * step, z0 + j * step], [x0 + (i + 1) * step, z0 + j * step],
       [x0 + (i + 1) * step, z0 + (j + 1) * step], [x0 + i * step, z0 + (j + 1) * step],
-    ]);
+    ], part);
     if (cell.length < 3) continue;
     const vids = cell.map(([x, z]) => addV(x, z));
     for (let k = 1; k < vids.length - 1; k++) idx.push(vids[0], vids[k + 1], vids[k]);
@@ -1553,12 +1562,13 @@ const waterNormal = (() => {
 // ───────────────────────── STANDING SEAM METAL ROOF — main core gable ─────────────────────────
 {
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
-  const wallTopY = houseTerrainY + wallH;
-  const ridgeY = wallTopY + roofRise;
-  // Same extended eave bounds as the gable geometry so stripes lie on the roof planes
+  const wallTopY = houseTerrainY + wallH - eaveDrop;
+  const ridgeY = houseTerrainY + wallH + roofRise;
+  // Same extended eave bounds and pitch as the gable geometry so stripes lie on the roof planes
   const xMin = HC[0] - 0.45, xMax = HC[1] + 0.45, xMid = (xMin + xMax) / 2;
-  const slopeLen = Math.sqrt((xMid - xMin) ** 2 + roofRise ** 2);
-  const slopeAngle = Math.atan2(roofRise, xMid - xMin);
+  const rise = roofRise + eaveDrop;
+  const slopeLen = Math.sqrt((xMid - xMin) ** 2 + rise ** 2);
+  const slopeAngle = Math.atan2(rise, xMid - xMin);
   const zMin = HB[1], zMax = HB[3];
 
   for (let zs = zMin + 0.2; zs < zMax; zs += 0.4) {
@@ -1571,6 +1581,38 @@ const waterNormal = (() => {
     right.rotation.z = -slopeAngle;
     roofGroup.add(right);
   }
+}
+
+// VELUX roof windows over the southern attic room + štít window in the north gable
+{
+  const roofGlass = new THREE.MeshStandardMaterial({ color: 0x2a3540, roughness: 0.15, metalness: 0.6 });
+  const veluxFrame = new THREE.MeshStandardMaterial({ color: 0x2b2d30, roughness: 0.5 });
+  const rxMid = (HC[0] + HC[1]) / 2;
+  const ridgeYAbs = houseTerrainY + wallH + roofRise;
+  const rise2 = roofRise + eaveDrop;
+  const placeRoofWin = (side, zPos, wAcross) => {
+    const ex = side === 'e' ? HC[1] + 0.45 : HC[0] - 0.45;
+    const t = 0.45;
+    const cx2 = rxMid + t * (ex - rxMid);
+    const cy2 = ridgeYAbs - t * rise2 + 0.07;
+    const ang = Math.atan2(rise2, Math.abs(ex - rxMid));
+    const f = new THREE.Mesh(new THREE.BoxGeometry(1.52, 0.1, wAcross + 0.12), veluxFrame);
+    const g2 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.13, wAcross), roofGlass);
+    for (const m of [f, g2]) {
+      m.position.set(cx2, cy2, zPos);
+      m.rotation.z = side === 'e' ? -ang : ang;
+      roofGroup.add(m);
+    }
+  };
+  placeRoofWin('e', 19.6, 0.78);
+  placeRoofWin('e', 21.8, 0.78);
+  placeRoofWin('w', 20.5, 0.66);
+  const stitFrame = new THREE.Mesh(new THREE.BoxGeometry(0.87, 1.12, 0.09), veluxFrame);
+  stitFrame.position.set(rxMid, houseTerrainY + wallH + 2.0, HB[1] - 0.02);
+  scene.add(stitFrame);
+  const stitGlass = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.0, 0.05), roofGlass);
+  stitGlass.position.set(rxMid, houseTerrainY + wallH + 2.0, HB[1] - 0.05);
+  scene.add(stitGlass);
 }
 
 // ───────────────────────── FURNITURE / DECOR ─────────────────────────
