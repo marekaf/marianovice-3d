@@ -11,7 +11,7 @@ import os
 import random
 import sys
 import time
-from mathutils import Vector, noise
+from mathutils import Quaternion, Vector, noise
 
 argv = sys.argv
 extra = argv[argv.index("--") + 1:]
@@ -281,16 +281,16 @@ def mat_blade(name):
     b.inputs["Roughness"].default_value = 0.65
     oi = nt.nodes.new("ShaderNodeObjectInfo")
     ramp = nt.nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].color = (*hexc("#3e6b2f"), 1.0)
-    ramp.color_ramp.elements[1].color = (*hexc("#8fb45c"), 1.0)
+    ramp.color_ramp.elements[0].color = (*hexc("#3f683f"), 1.0)
+    ramp.color_ramp.elements[1].color = (*hexc("#7fb37a"), 1.0)
     nt.links.new(oi.outputs["Random"], ramp.inputs["Fac"])
     nt.links.new(ramp.outputs["Color"], b.inputs["Base Color"])
     return m
 
 
 MAT = {
-    "soil": mat_pbr("soil", "leafy_grass", scale=0.45, tint=hexc("#3f7a33"), tint_fac=0.55, tint_mode="MIX", spec=0.0),
-    "meadow": mat_pbr("meadow", "leafy_grass", scale=0.35, tint=hexc("#4f7f38"), tint_fac=0.8, tint_mode="MIX", spec=0.0),
+    "soil": mat_pbr("soil", "leafy_grass", scale=0.45, tint=hexc("#45744c"), tint_fac=0.55, tint_mode="MIX", spec=0.0),
+    "meadow": mat_pbr("meadow", "leafy_grass", scale=0.35, tint=hexc("#547c55"), tint_fac=0.8, tint_mode="MIX", spec=0.0),
     "walls": mat_pbr("walls", "plastered_wall_02", scale=0.6, tint=hexc("#c29a6d"), tint_fac=0.7, tint_mode="MIX"),
     "garage_walls": mat_pbr("garage_walls", "plastered_wall_02", scale=0.6, tint=hexc("#b4b6b8"), tint_fac=0.75, tint_mode="MIX"),
     "roof": mat_pbr("roof", "metal_plate_02", scale=0.8, tint=hexc("#7c838a"), tint_fac=0.7, tint_mode="MIX", metal=0.6),
@@ -648,6 +648,10 @@ EXCL_POLYS = [hpoly, dpoly]
 _fire = next(p for p in els["firePit"]["parts"] if p["kind"] == "circle")
 EXCL_ELLIPSES = [(POND[0], POND[1], POND[2] + 0.35, POND[3] + 0.3), (5.0, 2.5, 1.15, 1.15),
                  (_fire["cx"], _fire["cy"], 1.25, 1.25)]
+STEP_STONES = [p for p in els["steppingPaths"]["parts"]
+               if p["kind"] == "circle"] if "steppingPaths" in els else []
+for _s in STEP_STONES:
+    EXCL_ELLIPSES.append((_s["cx"], _s["cy"], 0.35, 0.35))
 
 
 def _seg_d2(px, py, ax, ay, bx, by):
@@ -900,20 +904,45 @@ extrude_poly("house_walls", hpoly, h_base, ft + 2.8, MAT["walls"])
 
 ridge_x = (core[0] + core[1]) / 2.0
 OV = 0.45  # east/west eaves only; rake flush with N/S walls
-gable("house_roof", core[0] - OV, core[1] + OV, bb[1], bb[3],
-      ft + 2.8, ft + 5.0, ridge_x, MAT["roof"], end_mat=MAT["walls"])
-roof_seams("houseW", core[0] - OV, ft + 2.8, ridge_x, ft + 5.0, bb[1], bb[3], MAT["roof"])
-roof_seams("houseE", core[1] + OV, ft + 2.8, ridge_x, ft + 5.0, bb[1], bb[3], MAT["roof"])
+G_SLOPE = 5.0 / ((core[1] - core[0]) / 2.0)  # eave overhang continues the stit pitch
+EAVE_Z = ft + 2.8 - OV * G_SLOPE
+RIDGE_Z = ft + 7.8
+sloped_slab("house_roof_w", core[0] - OV, ridge_x + 0.01, EAVE_Z, RIDGE_Z, bb[1], bb[3], 0.12, MAT["roof"])
+sloped_slab("house_roof_e", ridge_x - 0.01, core[1] + OV, RIDGE_Z, EAVE_Z, bb[1], bb[3], 0.12, MAT["roof"])
+roof_seams("houseW", core[0] - OV, EAVE_Z + 0.12, ridge_x, RIDGE_Z + 0.12, bb[1], bb[3], MAT["roof"])
+roof_seams("houseE", core[1] + OV, EAVE_Z + 0.12, ridge_x, RIDGE_Z + 0.12, bb[1], bb[3], MAT["roof"])
+
+
+def stit_tri(name, y0s, y1s):
+    """Gable-end facade triangle at the wall pitch, core span only."""
+    bm = bmesh.new()
+    pts = [(core[0], ft + 2.8), (core[1], ft + 2.8), (ridge_x, RIDGE_Z)]
+    va = [bm.verts.new((x, -y0s, z)) for x, z in pts]
+    vb = [bm.verts.new((x, -y1s, z)) for x, z in pts]
+    bm.faces.new(va)
+    bm.faces.new(list(reversed(vb)))
+    for i in range(3):
+        j = (i + 1) % 3
+        bm.faces.new([va[i], va[j], vb[j], vb[i]])
+    bm.normal_update()
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    return link_obj(name, mesh, MAT["walls"])
+
+
+stit_tri("stit_n", bb[1], bb[1] + 0.12)
+stit_tri("stit_s", bb[3] - 0.12, bb[3])
 
 
 def wing_z(x):
     return ft + 2.8 + (x - 10.48) * (0.9 / 4.3)
 
 
-sloped_slab("wingN", 10.13, 14.78, wing_z(10.13), wing_z(14.78), 7.18, 16.23, 0.12, MAT["roof"])
-sloped_slab("wingS", 10.13, 14.78, wing_z(10.13), wing_z(14.78), 18.88, 26.43, 0.12, MAT["roof"])
-roof_seams("wingN", 10.13, wing_z(10.13) + 0.12, 14.78, wing_z(14.78) + 0.12, 7.18, 16.23, MAT["roof"])
-roof_seams("wingS", 10.13, wing_z(10.13) + 0.12, 14.78, wing_z(14.78) + 0.12, 18.88, 26.43, MAT["roof"])
+sloped_slab("wingN", 10.03, 15.23, wing_z(10.03), wing_z(15.23), 7.18, 16.23, 0.12, MAT["roof"])
+sloped_slab("wingS", 10.03, 15.23, wing_z(10.03), wing_z(15.23), 18.88, 26.43, 0.12, MAT["roof"])
+roof_seams("wingN", 10.03, wing_z(10.03) + 0.12, 15.23, wing_z(15.23) + 0.12, 7.18, 16.23, MAT["roof"])
+roof_seams("wingS", 10.03, wing_z(10.03) + 0.12, 15.23, wing_z(15.23) + 0.12, 18.88, 26.43, MAT["roof"])
 # wing wall fills: N/S end triangles + band at the core junction (no air gap under sheds)
 for wname, wy0, wy1 in [("wingN", 7.18, 16.23), ("wingS", 18.88, 26.43)]:
     wedge_we(wname + "_fill_n", 10.48, 14.78, wy0, wy0 + 0.12, ft + 2.8, wing_z(14.78),
@@ -948,7 +977,36 @@ for run_a0, run_a1, run_c, run_axis, run_dir in [
             box_p("sokl_y%d_%d" % (int(run_c), si), run_c + min(0, run_dir * 0.05), seg0,
                   run_c + max(0, run_dir * 0.05), seg1, z_lo, SOKL_TOP, MAT["sokl"])
 
-box_p("chimney", 16.7, 21.7, 17.3, 22.3, ft + 3.5, ft + 6.0, MAT["garage_walls"])
+box_p("chimney", 16.7, 21.7, 17.3, 22.3, ft + 3.5, ft + 8.8, MAT["garage_walls"])
+
+# velux roof windows over the attic + stit window in the north gable
+MAT["roof_glass"] = mat_simple("roof_glass", hexc("#2a3540"), rough=0.15, metal=0.6)
+
+
+def velux(side, y_plan, w_across):
+    x_e = core[1] + OV if side == "e" else core[0] - OV
+    ang = math.atan2(RIDGE_Z - EAVE_Z, ridge_x - x_e)
+    t = 0.45
+    px = ridge_x + t * (x_e - ridge_x)
+    pz = RIDGE_Z + 0.12 - t * (RIDGE_Z - EAVE_Z) + 0.07
+    for nm, ln, wd, th, mm in [("f", 1.52, w_across + 0.12, 0.10, MAT["frame"]),
+                               ("g", 1.40, w_across, 0.13, MAT["roof_glass"])]:
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(px, -y_plan, pz))
+        ob = bpy.context.active_object
+        ob.name = "velux_%s%d_%s" % (side, int(y_plan * 10), nm)
+        ob.scale = (ln, wd, th)
+        ob.rotation_euler = (0.0, -ang, 0.0)
+        ob.data.materials.append(mm)
+
+
+velux("e", 19.6, 0.78)
+velux("e", 21.8, 0.78)
+velux("w", 20.5, 0.66)
+
+box_p("stit_win_f", ridge_x - 0.435, bb[1] - 0.065, ridge_x + 0.435, bb[1] + 0.025,
+      ft + 4.24, ft + 5.36, MAT["frame"])
+box_p("stit_win_g", ridge_x - 0.375, bb[1] - 0.075, ridge_x + 0.375, bb[1] - 0.025,
+      ft + 4.3, ft + 5.3, MAT["roof_glass"])
 
 
 def window(name, axis, wall, out_sign, along_c, width, sill, height, door=False):
@@ -1119,6 +1177,21 @@ for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "re
     rect_box("saunaPath_%d" % i, prt, z - 0.05, z + 0.1, MAT["path"])
 
 draped_poly("driveway", dpoly, 0.04, MAT["drive"], subdiv=6)
+
+# stepping-stone paths: flat stone discs draped on the terrain
+MAT["step_stone"] = mat_concrete("step_stone", hexc("#9a958c"), hexc("#7f7a72"),
+                                 rough_lo=0.7, rough_hi=0.95)
+for si, sp in enumerate(STEP_STONES):
+    scx, scy = sp["cx"], sp["cy"]
+    e2 = 0.3
+    ddx = (terrain_z(scx + e2, scy) - terrain_z(scx - e2, scy)) / (2 * e2)
+    ddy = (terrain_z(scx, scy + e2) - terrain_z(scx, scy - e2)) / (2 * e2)
+    nrm = Vector((-ddx, ddy, 1.0)).normalized()
+    q = nrm.to_track_quat("Z", "Y") @ Quaternion((0.0, 0.0, 1.0), random.random() * 6.283)
+    add_cyl("step%d" % si, scx, scy, terrain_z(scx, scy) + 0.012,
+            sp["r"] * (0.92 + random.random() * 0.2), 0.05, MAT["step_stone"],
+            sx=0.9 + random.random() * 0.2, sy=0.9 + random.random() * 0.2,
+            verts=18, rot=q.to_euler())
 pk = first_rect(els["parking"])
 pcx, pcy = rect_center(pk)
 pkz = ground_h(pcx, pcy)
