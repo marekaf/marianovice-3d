@@ -1663,6 +1663,18 @@ const waterNormal = (() => {
   }
 }
 
+// Stepping-stone paths (šlapáky) — flat stones draped on the terrain
+{
+  const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8f8a80, roughness: 0.95 });
+  for (const c of EL.steppingPaths.parts.filter(pt => pt.kind === 'circle')) {
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(c.r, c.r * 1.08, 0.05, 9), stoneMat);
+    st.position.set(c.cx, terrainHeight(c.cx, c.cy) + 0.025, c.cy);
+    st.rotation.y = (c.cx * 7 + c.cy * 13) % 3.14;
+    st.receiveShadow = true;
+    scene.add(st);
+  }
+}
+
 // Zašívárna — hidden red bench off the garage north wall (Flera-style)
 {
   const bx = 32.3, bz = 18.55, baseY = terrainHeight(bx, bz);
