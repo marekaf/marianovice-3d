@@ -116,11 +116,11 @@ const GARDEN = {
     },
     {
       id: "rainTank",
-      name: "Rainwater tank 2.5 × 2.5 m (underground)",
+      name: "Rainwater tank 12 m³ (underground, 2.5 × 2.5 m)",
       parts: [
         { kind: "rect", x: 40, y: 22.2, w: 2.5, d: 2.5, fill: "#3a7ab8", opacity: 0.78, stroke: "#1f3a5f", sw: 1.5 },
         { kind: "text", x: 41.22, y: 23.33, text: "rain tank", cls: "lbl-sm", fill: "#fff", weight: 700 },
-        { kind: "text", x: 41.22, y: 24.06, text: "2.5 × 2.5 m", cls: "dim", fill: "#fff" }
+        { kind: "text", x: 41.22, y: 24.06, text: "12 m³", cls: "dim", fill: "#fff" }
       ]
     },
     {

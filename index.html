@@ -291,11 +291,12 @@ const axes = new THREE.AxesHelper(5);
 axes.visible = false;
 scene.add(axes);
 
-// ───────────────────────── TERRAIN (slope SW→NE, 4 m elevation diff) ─────────────────────────
-// SW corner (1.15, 30.41) = highest (y=4), NE corner (44.16, 0) = lowest (y=0)
-// Plane equation: y = -0.062 x + 0.044 z + 2.733
+// ───────────────────────── TERRAIN (slope SW→NE, ~3 m fall) ─────────────────────────
+// Fitted to the DPS koordinační situace (C.3): house ±0.000 = 397.00 Bpv, contours
+// 398 (SW corner) → 397 (house) → 395.5 (NE), ≈5.8% grade. Constant anchors the house
+// centroid (16.48, 17.14) at 2.465 so all cut/deck/garage levels keyed to it stay valid.
 function basePlaneHeight(x, z) {
-  return Math.max(0, -0.062 * x + 0.044 * z + 2.733);
+  return Math.max(0, -0.050 * x + 0.030 * z + 2.775);
 }
 // Graded cut into the west slope — clamped just under the level west deck (top 2.515),
 // smoothstep bank rising to natural grade; min() leaves downhill areas untouched

@@ -110,10 +110,10 @@
       <text x="799.92" y="540" class="lbl-sm" font-weight="700" text-anchor="start">GATE</text>
       <text x="799.92" y="554.04" class="dim" text-anchor="start">~4.5 m</text>
     </g>
-    <g class="el" data-id="rainTank"><title>Rainwater tank 2.5 × 2.5 m (underground)</title>
+    <g class="el" data-id="rainTank"><title>Rainwater tank 12 m³ (underground, 2.5 × 2.5 m)</title>
       <rect x="720" y="399.6" width="45" height="45" fill="#3a7ab8" opacity="0.78" stroke="#1f3a5f" stroke-width="1.5"/>
       <text x="741.96" y="419.94" class="lbl-sm" fill="#fff" font-weight="700">rain tank</text>
-      <text x="741.96" y="433.08" class="dim" fill="#fff">2.5 × 2.5 m</text>
+      <text x="741.96" y="433.08" class="dim" fill="#fff">12 m³</text>
     </g>
     <g class="el" data-id="pondFringe"><title>Pond fringe — Léto u vody (Z2)</title>
       <ellipse cx="549" cy="277.2" rx="79.2" ry="61.2" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1" stroke-dasharray="5,3"/>
@@ -349,7 +349,7 @@
     <text x="0" y="102">Parking</text><text x="88" y="102">3.2 × 7.05</text><text x="170" y="102" text-anchor="end">22.56</text><text x="193" y="102" text-anchor="end">18j</text>
     <text x="0" y="114">Driveway</text><text x="88" y="114">22.55 × 12.99</text><text x="170" y="114" text-anchor="end">141.37</text><text x="193" y="114" text-anchor="end">11j</text>
     <text x="0" y="126">Gate</text><text x="88" y="126">4.52 long</text><text x="170" y="126" text-anchor="end">—</text><text x="193" y="126" text-anchor="end">22n</text>
-    <text x="0" y="138">Rainwater tank</text><text x="88" y="138">2.5 × 2.5</text><text x="170" y="138" text-anchor="end">6.25</text><text x="193" y="138" text-anchor="end">21l</text>
+    <text x="0" y="138">Rainwater tank 12 m³</text><text x="88" y="138">2.5 × 2.5</text><text x="170" y="138" text-anchor="end">6.25</text><text x="193" y="138" text-anchor="end">21l</text>
     <text x="0" y="150">Pond fringe</text><text x="88" y="150">8.8 × 6.8</text><text x="170" y="150" text-anchor="end">29.41</text><text x="193" y="150" text-anchor="end">14g</text>
     <text x="0" y="162">Pond</text><text x="88" y="162">5.6 × 4</text><text x="170" y="162" text-anchor="end">17.59</text><text x="193" y="162" text-anchor="end">14g</text>
     <text x="0" y="174">Fire pit + seating</text><text x="88" y="174">ø 1.56</text><text x="170" y="174" text-anchor="end">1.91</text><text x="193" y="174" text-anchor="end">19c</text>
