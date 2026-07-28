@@ -756,7 +756,9 @@ const houseVerts = EL.house.parts.find(p => p.kind === 'polygon').points;
 const { bbox: HB, coreX: HC, atrium: HA } = EL.house.meta;
 const wallH = 2.8;
 const roofRise = 5;
-const { baseY: houseBaseY } = addExtrudedPoly(houseVerts, wallH, 0xd4b896);
+// Facade: white mineral render RAL 9010 (DPS elevations); slightly off-white to avoid render blowout
+const HOUSE_RENDER = 0xeeeeea;
+const { baseY: houseBaseY } = addExtrudedPoly(houseVerts, wallH, HOUSE_RENDER);
 
 // Sedlová střecha (sedlový štít na S a J — ridge running E-W is wrong; per studie štít na south, takže ridge S-N or E-W?)
 // Studie: "Dominantní sedlový štít" v jižním pohledu = gable at south face. Ridge runs perpendicular to gable face, tj. ridge S-N.
@@ -845,22 +847,24 @@ roofGroup.add(sWingRoofMesh);
 // Wing roof fills — close the triangular gaps under the shed roofs (like the garage)
 {
   const wallTopY = houseTerrainY + wallH;
-  const wallFillMat = new THREE.MeshStandardMaterial({ color: 0xd4b896, roughness: 0.7, side: THREE.DoubleSide });
-  const tri = (ax, ay, az, bx, by, bz, cx2, cy2, cz2) => {
+  // Gable ends (štít) = natural wood cladding; wing infill = white render (per DPS elevations)
+  const woodGableMat = new THREE.MeshStandardMaterial({ color: 0xa87a45, roughness: 0.75, side: THREE.DoubleSide });
+  const renderFillMat = new THREE.MeshStandardMaterial({ color: HOUSE_RENDER, roughness: 0.85, side: THREE.DoubleSide });
+  const tri = (mat, ax, ay, az, bx, by, bz, cx2, cy2, cz2) => {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute([ax, ay, az, bx, by, bz, cx2, cy2, cz2], 3));
     g.computeVertexNormals();
-    const m = new THREE.Mesh(g, wallFillMat);
+    const m = new THREE.Mesh(g, mat);
     m.castShadow = true;
     scene.add(m);
   };
   const gmidX = (HC[0] + HC[1]) / 2;
-  tri(HC[0], wallTopY, HB[1], HC[1], wallTopY, HB[1], gmidX, wallTopY + roofRise, HB[1]);
-  tri(HC[0], wallTopY, HB[3], HC[1], wallTopY, HB[3], gmidX, wallTopY + roofRise, HB[3]);
+  tri(woodGableMat, HC[0], wallTopY, HB[1], HC[1], wallTopY, HB[1], gmidX, wallTopY + roofRise, HB[1]);
+  tri(woodGableMat, HC[0], wallTopY, HB[3], HC[1], wallTopY, HB[3], gmidX, wallTopY + roofRise, HB[3]);
   for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
-    tri(HB[0], wallTopY, z0, HC[0], wallTopY, z0, HC[0], wallTopY + 0.9, z0);
-    tri(HB[0], wallTopY, z1, HC[0], wallTopY, z1, HC[0], wallTopY + 0.9, z1);
-    const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, z1 - z0), wallFillMat);
+    tri(renderFillMat, HB[0], wallTopY, z0, HC[0], wallTopY, z0, HC[0], wallTopY + 0.9, z0);
+    tri(renderFillMat, HB[0], wallTopY, z1, HC[0], wallTopY, z1, HC[0], wallTopY + 0.9, z1);
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, z1 - z0), renderFillMat);
     band.position.set(HC[0] - 0.03, wallTopY + 0.45, (z0 + z1) / 2);
     band.castShadow = true;
     scene.add(band);
