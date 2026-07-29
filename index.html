@@ -842,8 +842,7 @@ roofGroup.add(wWingMesh);
 // Wing roof fills — close the triangular gaps under the shed roofs (like the garage)
 {
   const wallTopY = houseTerrainY + wallH;
-  // Gable ends (štít) = natural wood cladding; wing infill = white render (per DPS elevations)
-  const woodGableMat = new THREE.MeshStandardMaterial({ color: 0xa87a45, roughness: 0.75, side: THREE.DoubleSide });
+  // Gable ends (štít) + wing infill = white render matching the facade (per user)
   const renderFillMat = new THREE.MeshStandardMaterial({ color: HOUSE_RENDER, roughness: 0.85, side: THREE.DoubleSide });
   const tri = (mat, ax, ay, az, bx, by, bz, cx2, cy2, cz2) => {
     const g = new THREE.BufferGeometry();
@@ -854,8 +853,8 @@ roofGroup.add(wWingMesh);
     scene.add(m);
   };
   const gmidX = (GABLE[0] + GABLE[1]) / 2;
-  tri(woodGableMat, GABLE[0], wallTopY, HB[1], GABLE[1], wallTopY, HB[1], gmidX, wallTopY + roofRise, HB[1]);
-  tri(woodGableMat, GABLE[0], wallTopY, HB[3], GABLE[1], wallTopY, HB[3], gmidX, wallTopY + roofRise, HB[3]);
+  tri(renderFillMat, GABLE[0], wallTopY, HB[1], GABLE[1], wallTopY, HB[1], gmidX, wallTopY + roofRise, HB[1]);
+  tri(renderFillMat, GABLE[0], wallTopY, HB[3], GABLE[1], wallTopY, HB[3], gmidX, wallTopY + roofRise, HB[3]);
   // West lean-to end gaps (render) at N and S — wall top rises W→E under the shed
   for (const z of [HB[1], HB[3]]) {
     tri(renderFillMat, HB[0], wallTopY - wingRise, z, GABLE[0], wallTopY - wingRise, z, GABLE[0], wallTopY, z);
@@ -1599,14 +1598,15 @@ const waterNormal = (() => {
       roofGroup.add(m);
     }
   };
-  placeRoofWin('e', 19.6, 0.78);
-  placeRoofWin('e', 21.8, 0.78);
-  placeRoofWin('w', 20.5, 0.66);
+  // VELUX per DPS roof plan: 1 west slope + 2 east slope, spread N–S (living-room cathedral + attic)
+  placeRoofWin('w', 13.5, 0.78);
+  placeRoofWin('e', 13.5, 0.78);
+  placeRoofWin('e', 20.0, 0.78);
   const stitFrame = new THREE.Mesh(new THREE.BoxGeometry(0.87, 1.12, 0.09), veluxFrame);
-  stitFrame.position.set(rxMid, houseTerrainY + wallH + 2.0, HB[1] - 0.02);
+  stitFrame.position.set(rxMid, houseTerrainY + wallH + 1.0, HB[1] - 0.02);
   scene.add(stitFrame);
   const stitGlass = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.0, 0.05), roofGlass);
-  stitGlass.position.set(rxMid, houseTerrainY + wallH + 2.0, HB[1] - 0.05);
+  stitGlass.position.set(rxMid, houseTerrainY + wallH + 1.0, HB[1] - 0.05);
   scene.add(stitGlass);
 }
 
