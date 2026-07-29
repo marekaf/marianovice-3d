@@ -1524,7 +1524,7 @@ const waterNormal = (() => {
   winZ((HB[0] + HB[2]) / 2, HB[1], -1, 0.9, 2.27, ty + 0.3);
   // West windows per OKNA: offices 1600×2270, guest+bathroom 1250×2270, all sill 0.3
   for (const { z, w } of [{ z: 10.5, w: 1.6 }, { z: 13.5, w: 1.6 }, { z: 22, w: 1.25 }, { z: 24.5, w: 1.25 }]) {
-    winX(HB[0], -1, z, w, 2.27, ty + 0.3);
+    winX(HB[0], -1, z, w, 2.27, ty + 0.05);
   }
   // Living-room portal to the atrium
   winX(HA[2], -1, 17.55, 2.5, 2.27, ty + 0.35);
