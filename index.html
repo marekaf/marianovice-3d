@@ -88,7 +88,7 @@
 }
 </script>
 
-<script src="layout.js"></script>
+<script src="layout.js?v=20260729"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -492,36 +492,72 @@ function canopyMats(baseColor) {
   return canopyPalettes.get(baseColor);
 }
 
-// Tree (trunk + canopy blob cluster) on terrain
-function addTree(plotX, plotY, height = 4, canopyColor = 0x5a8a5a) {
-  const trunkH = height * 0.35;
+// ── Leafy foliage system: alpha-cut leaf-cluster cards replace the old sphere-blob canopies.
+// One canvas leaf texture (scattered little leaf ellipses, transparent gaps) mapped onto crossed
+// quads reads as real foliage from any angle; alphaTest>0 also gives leaf-shaped shadows. ──
+const leafTex = (() => {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const ctx = cv.getContext('2d');
+  const greens = ['#5b8a3c', '#6f9d47', '#4e7d35', '#84ab55', '#3f6b2e', '#7ba653'];
+  for (let i = 0; i < 155; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const rr = Math.pow(Math.random(), 0.55) * 56;
+    const x = 64 + Math.cos(a) * rr, y = 64 + Math.sin(a) * rr * 0.92;
+    const s = 3.5 + Math.random() * 5.5;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.random() * Math.PI);
+    ctx.globalAlpha = 0.55 + Math.random() * 0.45;
+    ctx.fillStyle = greens[(Math.random() * greens.length) | 0];
+    ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+const foliageQuad = new THREE.PlaneGeometry(1, 1);
+const foliageMatCache = new Map();
+function foliageMatFor(color) {
+  if (!foliageMatCache.has(color)) foliageMatCache.set(color, new THREE.MeshStandardMaterial({
+    map: leafTex, color, alphaTest: 0.45, roughness: 0.92, metalness: 0, side: THREE.DoubleSide,
+  }));
+  return foliageMatCache.get(color);
+}
+const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4f34, roughness: 0.9 });
+const flowerDotGeo = new THREE.SphereGeometry(0.07, 6, 5);
+const flowerMatCache = new Map();
+function flowerMatFor(color) {
+  if (!flowerMatCache.has(color)) flowerMatCache.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
+  return flowerMatCache.get(color);
+}
+// rounded leafy mass: `count` positions, each a crossed pair of leaf cards. flatten<1 squashes vertically.
+function foliageCluster(cx, cy, cz, radius, color, count, flatten) {
+  const mat = foliageMatFor(color);
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const rr = Math.pow(Math.random(), 0.6) * radius * 0.6;
+    const px = cx + Math.cos(a) * rr, pz = cz + Math.sin(a) * rr;
+    const py = cy + (Math.random() - 0.5) * radius * flatten;
+    const sz = radius * (0.85 + Math.random() * 0.6);
+    for (let k = 0; k < 2; k++) {
+      const q = new THREE.Mesh(foliageQuad, mat);
+      q.position.set(px, py, pz);
+      q.scale.set(sz, sz, sz);
+      q.rotation.y = a + k * Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+      q.rotation.z = (Math.random() - 0.5) * 0.3;
+      q.castShadow = true;
+      treesGroup.add(q);
+    }
+  }
+}
+
+// Tree — tapered trunk + rounded crown of alpha-cut leaf cards
+function addTree(plotX, plotY, height = 4, canopyColor = 0x6f9d47) {
   const baseY = terrainHeight(plotX, plotY);
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 0.24, trunkH, 7),
-    new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.9 })
-  );
-  trunk.position.set(plotX, baseY + trunkH/2, plotY);
+  const trunkH = height * 0.45;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(height * 0.035, height * 0.085, trunkH, 6), trunkMat);
+  trunk.position.set(plotX, baseY + trunkH / 2, plotY);
   trunk.castShadow = true;
   treesGroup.add(trunk);
-
-  const mats = canopyMats(canopyColor);
-  const crownY = baseY + trunkH + height * 0.35;
-  for (let i = 0; i < 4; i++) {
-    const a = i * 1.7 + Math.random();
-    const r = height * (0.22 + Math.random() * 0.14);
-    const blob = new THREE.Mesh(
-      new THREE.SphereGeometry(r, 10, 7),
-      mats[Math.floor(Math.random() * mats.length)]
-    );
-    blob.position.set(
-      plotX + Math.cos(a) * height * 0.14,
-      crownY + (Math.random() - 0.5) * height * 0.18,
-      plotY + Math.sin(a) * height * 0.14
-    );
-    blob.scale.y = 0.85;
-    blob.castShadow = true;
-    treesGroup.add(blob);
-  }
+  const crownR = height * 0.42;
+  foliageCluster(plotX, baseY + trunkH + crownR * 0.55, plotY, crownR, canopyColor, 7 + (Math.random() * 3 | 0), 0.95);
 }
 
 // Platform (terrace, sidewalk) following terrain — top surface only
@@ -592,46 +628,15 @@ scene.add(fenceGroup);
 scene.add(roofGroup);
 scene.add(furnitureGroup);
 
-// Tree variety
+// (formerly a stacked-cone conifer) — now a leafy tree so no needle/spruce shapes remain
 function addConifer(plotX, plotY, height = 5) {
-  const baseY = terrainHeight(plotX, plotY);
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, 0.25, height * 0.25, 8),
-    new THREE.MeshStandardMaterial({ color: 0x5a3e25, roughness: 0.95 })
-  );
-  trunk.position.set(plotX, baseY + height * 0.125, plotY);
-  trunk.castShadow = true;
-  treesGroup.add(trunk);
-  // 2-3 stacked cones
-  for (let i = 0; i < 3; i++) {
-    const r = (1 - i * 0.25) * height * 0.35;
-    const h = height * 0.4;
-    const cone = new THREE.Mesh(
-      new THREE.ConeGeometry(r, h, 10),
-      new THREE.MeshStandardMaterial({ color: 0x355c39, roughness: 0.85 })
-    );
-    cone.position.set(plotX, baseY + height * 0.25 + i * height * 0.25 + h / 2, plotY);
-    cone.castShadow = true;
-    treesGroup.add(cone);
-  }
+  addTree(plotX, plotY, height * 0.95, 0x557f38);
 }
 
-function addBush(plotX, plotY, size = 1, color = 0x5a8a5a) {
+// Bush — low mound of leaf cards
+function addBush(plotX, plotY, size = 1, color = 0x5f8452) {
   const baseY = terrainHeight(plotX, plotY);
-  // 3-4 overlapping spheres
-  const n = 3 + Math.floor(Math.random() * 2);
-  for (let i = 0; i < n; i++) {
-    const s = size * (0.6 + Math.random() * 0.5);
-    const ox = (Math.random() - 0.5) * size * 0.7;
-    const oz = (Math.random() - 0.5) * size * 0.7;
-    const bush = new THREE.Mesh(
-      new THREE.SphereGeometry(s, 10, 7),
-      new THREE.MeshStandardMaterial({ color, roughness: 0.85 })
-    );
-    bush.position.set(plotX + ox, baseY + s * 0.7, plotY + oz);
-    bush.castShadow = true;
-    treesGroup.add(bush);
-  }
+  foliageCluster(plotX, baseY + size * 0.42, plotY, size * 0.8, color, 4 + (Math.random() * 3 | 0), 0.5);
 }
 
 // Procedural speckle texture (grass/asphalt) — hsl-jittered rects over a base color
@@ -657,6 +662,30 @@ const grassTex = speckleTexture('#79a765', [85, 125], [30, 55], [30, 55]);
 grassTex.repeat.set(1 / 5.5, 1 / 5.5);
 const asphaltTex = speckleTexture('#b0b0aa', [40, 220], [0, 8], [55, 80], 4000);
 asphaltTex.repeat.set(1 / 3, 1 / 3);
+
+// DITON large-format pavers (MONACO/MILÁNO, natural grey), running bond, world-space UV.
+// Canvas covers a 2.4 m block (0.6×0.4 m units) so per-paver tone varies before it repeats.
+const paverTex = (() => {
+  const M = 2.4, S = 512, ppm = S / M;
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#66655f'; ctx.fillRect(0, 0, S, S);            // recessed joint (dark grey)
+  const pw = 0.6, ph = 0.4, j = 0.018;
+  let row = 0;
+  for (let z = 0; z < M; z += ph, row++) {
+    const off = (row % 2) * pw / 2;                               // half-paver running-bond shift
+    for (let x = -pw; x < M + pw; x += pw) {
+      const g = 154 + (Math.random() * 2 - 1) * 15;               // per-paver grey variation
+      ctx.fillStyle = `rgb(${g | 0},${(g - 3) | 0},${(g - 8) | 0})`;
+      ctx.fillRect((x + off + j) * ppm, (z + j) * ppm, (pw - 2 * j) * ppm, (ph - 2 * j) * ppm);
+    }
+  }
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.repeat.set(1 / M, 1 / M);
+  return t;
+})();
 
 // Wood-plank texture — near-white base so material color stays the multiplier
 const woodTex = (() => {
@@ -1041,7 +1070,7 @@ const PG = rectOf('pergola');
 addLamellarPergola(PG.x, PG.y, PG.w, PG.d, 2.5, 0x8a6840);
 
 // Pergola: paved floor + table for 8-10
-addTerrainPlatform([[25.48, 1.2], [32.08, 1.2], [32.08, 5.8], [25.48, 5.8]], 0.08, 0xd8d2c8);
+addTerrainPlatform([[25.48, 1.2], [32.08, 1.2], [32.08, 5.8], [25.48, 5.8]], 0.08, 0xffffff, { map: paverTex });
 {
   const tx = 28.8, tz = 3.5, baseY = terrainHeight(tx, tz) + 0.08;
   const wood = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.5 });
@@ -1153,6 +1182,7 @@ const drivewayGeom = (() => {
   // Concave outline: SH-clipping needs convex clips, so split into convex pieces
   const dwParts = [
     [[21.28, 19.4], [27.63, 19.4], [27.63, 26.44], [21.28, 26.44]],
+    [[34.81, 19.4], [38.01, 19.4], [38.01, 27.02], [34.81, 26.44]],   // parking bay east of the garage
     [[21.28, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]],
   ];
   const clipCell = (poly, clipPts) => {
@@ -1200,7 +1230,7 @@ const drivewayGeom = (() => {
 })();
 const driveway = new THREE.Mesh(
   drivewayGeom,
-  new THREE.MeshStandardMaterial({ color: 0xf2f2ee, map: asphaltTex, roughness: 0.92 })
+  new THREE.MeshStandardMaterial({ color: 0xffffff, map: paverTex, roughness: 0.85 })
 );
 driveway.receiveShadow = true;
 scene.add(driveway);
@@ -1318,18 +1348,19 @@ for (let i = 0; i < 35; i++) {
   // Skip sauna, shelter and pergola footprints
   if (x >= 3.5 && x <= 10.5 && z >= 1 && z <= 4) continue;
   if (x >= 25.28 && x <= 32.28 && z >= 1 && z <= 6) continue;
-  const r = 0.25 + Math.random() * 0.35;
   const baseY = terrainHeight(x, z);
-  const c = new THREE.Mesh(
-    new THREE.SphereGeometry(r, 8, 6),
-    new THREE.MeshStandardMaterial({
-      color: perennialColors[Math.floor(Math.random() * perennialColors.length)],
-      roughness: 0.85
-    })
-  );
-  c.position.set(x, baseY + r * 0.7, z);
-  c.castShadow = true;
-  treesGroup.add(c);
+  const sz = 0.4 + Math.random() * 0.3;
+  const q = new THREE.Mesh(foliageQuad, foliageMatFor(0x6b9243));
+  q.position.set(x, baseY + sz * 0.45, z);
+  q.scale.set(sz, sz, sz);
+  q.rotation.y = Math.random() * Math.PI;
+  q.rotation.z = (Math.random() - 0.5) * 0.35;
+  treesGroup.add(q);
+  if (Math.random() < 0.5) {
+    const fl = new THREE.Mesh(flowerDotGeo, flowerMatFor(perennialColors[Math.floor(Math.random() * perennialColors.length)]));
+    fl.position.set(x + (Math.random() - 0.5) * 0.25, baseY + sz * 0.85, z + (Math.random() - 0.5) * 0.25);
+    treesGroup.add(fl);
+  }
 }
 
 // ───────────────────────── FIREPIT IN NE CORNER + BENCHES ─────────────────────────
@@ -1718,13 +1749,11 @@ function addWallClimber(x1, z1, x2, z2, nx, nz, h = 2.2) {
     for (let b = 0; b < blobs; b++) {
       const by = baseY + 0.5 + Math.random() * (h - 0.6);
       const r = 0.22 + Math.random() * 0.2;
-      const leaf = new THREE.Mesh(
-        new THREE.SphereGeometry(r, 8, 6),
-        new THREE.MeshStandardMaterial({ color: b % 2 ? 0x5a8a4a : 0x4d7a40, roughness: 0.9 })
-      );
-      leaf.scale.set(1, 1, 0.45);
-      if (Math.abs(nx) > 0) leaf.scale.set(0.45, 1, 1);
+      const leaf = new THREE.Mesh(foliageQuad, foliageMatFor(b % 2 ? 0x5a8a4a : 0x4d7a40));
+      const sc = r * 2.6;
+      leaf.scale.set(sc, sc, sc);
       leaf.position.set(wx + nx * (0.14 + r * 0.3) + (Math.abs(nz) ? (Math.random() - 0.5) * 0.6 : 0), by, wz + nz * (0.14 + r * 0.3) + (Math.abs(nx) ? (Math.random() - 0.5) * 0.6 : 0));
+      leaf.rotation.y = Math.atan2(nx, nz) + (Math.random() - 0.5) * 0.5;
       leaf.castShadow = true;
       treesGroup.add(leaf);
     }
@@ -1866,15 +1895,19 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
     for (let i = 0; i < nPer; i++) {
       const pt = sample();
       if (!pt || !inPlot(pt[0], pt[1])) continue;
-      const r = (kind === 'meadow' ? 0.1 : 0.2) + Math.random() * (kind === 'meadow' ? 0.15 : 0.3);
       const baseY = terrainHeight(pt[0], pt[1]);
-      const c = new THREE.Mesh(
-        new THREE.SphereGeometry(r, 8, 6),
-        new THREE.MeshStandardMaterial({ color: perennialColors[Math.floor(Math.random() * perennialColors.length)], roughness: 0.85 })
-      );
-      c.position.set(pt[0], baseY + r * 0.7, pt[1]);
-      c.castShadow = true;
-      treesGroup.add(c);
+      const sz = (kind === 'meadow' ? 0.28 : 0.48) + Math.random() * (kind === 'meadow' ? 0.18 : 0.32);
+      const q = new THREE.Mesh(foliageQuad, foliageMatFor(0x6b9243));
+      q.position.set(pt[0], baseY + sz * 0.45, pt[1]);
+      q.scale.set(sz, sz, sz);
+      q.rotation.y = Math.random() * Math.PI;
+      q.rotation.z = (Math.random() - 0.5) * 0.35;
+      treesGroup.add(q);
+      if (Math.random() < (kind === 'meadow' ? 0.55 : 0.45)) {
+        const fl = new THREE.Mesh(flowerDotGeo, flowerMatFor(perennialColors[Math.floor(Math.random() * perennialColors.length)]));
+        fl.position.set(pt[0] + (Math.random() - 0.5) * 0.25, baseY + sz * 0.85, pt[1] + (Math.random() - 0.5) * 0.25);
+        treesGroup.add(fl);
+      }
     }
     for (let i = 0; i < nShr; i++) {
       const pt = sample();
