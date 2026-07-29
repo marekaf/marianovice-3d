@@ -1529,8 +1529,8 @@ const waterNormal = (() => {
   for (const { z, w } of [{ z: 10.5, w: 1.6 }, { z: 13.5, w: 1.6 }, { z: 22, w: 1.25 }, { z: 24.5, w: 1.25 }]) {
     winX(HB[0], -1, z, w, 2.27, ty + 0.05);
   }
-  // Living-room portal to the atrium
-  winX(HA[2], -1, 17.55, 2.5, 2.27, ty + 0.35);
+  // Living-room portal to the atrium — floor level (0 step onto the atrium courtyard)
+  winX(HA[2], -1, 17.55, 2.5, 2.27, ty + 0.05);
   // South windows O1 900×1250 (koupelna + technická), sill 0.9
   for (const x of [16.05, 19.3]) {
     winZ(x, HB[3], 1, 0.9, 1.25, ty + 0.9);
