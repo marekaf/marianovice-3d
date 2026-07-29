@@ -1345,8 +1345,8 @@ for eid in ["raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
 
 
 # ---------------- scanned plant library (Poly Haven, CC0) ----------------
-def append_from(slug, names):
-    path = os.path.join(ASSETS, "models", slug, slug + "_2k.blend")
+def append_from(slug, names, res="2k"):
+    path = os.path.join(ASSETS, "models", slug, slug + "_" + res + ".blend")
     out = []
     if not os.path.exists(path):
         print("MISSING ASSET", path)
@@ -1366,13 +1366,22 @@ def append_from(slug, names):
 
 SHRUBS = (append_from("shrub_02", ["shrub_02_a_LOD1", "shrub_02_c_LOD1"]) +
           append_from("shrub_03", ["shrub_03_a_LOD0", "shrub_03_c_LOD0", "shrub_03_d_LOD0"]) +
-          append_from("shrub_04", ["shrub_04_b_LOD1", "shrub_04_d_LOD1"]))
+          append_from("shrub_04", ["shrub_04_b_LOD1", "shrub_04_d_LOD1"]) +
+          append_from("shrub_01", ["shrub_01_a_LOD1", "shrub_01_d_LOD1", "shrub_01_g_LOD1"], res="1k"))
 GROUND_PLANTS = (append_from("shrub_sorrel_01", ["shrub_sorrel_01_a", "shrub_sorrel_01_c",
                                                  "shrub_sorrel_01_e", "shrub_sorrel_01_g"]) +
                  append_from("fern_02", ["fern_02_a", "fern_02_c"]))
 FLOWER_OBJS = append_from("flower_empodium", ["flower_empodium_a_LOD1", "flower_empodium_c_LOD1",
                                               "flower_empodium_e_LOD1"])
-print("LIB shrubs %d ground %d flowers %d" % (len(SHRUBS), len(GROUND_PLANTS), len(FLOWER_OBJS)))
+GRASS_CLUMPS = append_from("grass_medium_01",
+                           ["grass_medium_01_large_a_LOD1", "grass_medium_01_large_b_LOD1",
+                            "grass_medium_01_mid_a_LOD1", "grass_medium_01_mid_b_LOD1",
+                            "grass_medium_01_tall_a_LOD1", "grass_medium_01_small_a_LOD1"], res="1k")
+# real-geometry perennial mix (ferns, sorrel, yellow flowers, ornamental grass tufts);
+# grass weighted up so beds read as planted, not spotted. Replaces the old pastel blobs.
+PERENNIAL_POOL = GROUND_PLANTS + FLOWER_OBJS + GRASS_CLUMPS + GRASS_CLUMPS
+print("LIB shrubs %d ground %d flowers %d grass %d" %
+      (len(SHRUBS), len(GROUND_PLANTS), len(FLOWER_OBJS), len(GRASS_CLUMPS)))
 
 
 def place_asset(src, name, px, py, footprint=None, z=None):
@@ -1391,166 +1400,57 @@ def place_asset(src, name, px, py, footprint=None, z=None):
     return ob
 
 
-# ---------------- trees (Sapling Tree Gen) ----------------
-import addon_utils
-import ast
-import importlib
-
-if addon_utils.enable("bl_ext.user_default.sapling_tree_gen") is None:
-    _zip = os.path.join(ASSETS, "addons", "sapling_tree_gen-0.3.7.zip")
-    bpy.ops.extensions.package_install_files(filepath=_zip, repo="user_default", enable_on_install=True)
-    addon_utils.enable("bl_ext.user_default.sapling_tree_gen")
-SAP_DIR = os.path.dirname(importlib.import_module("bl_ext.user_default.sapling_tree_gen").__file__)
-SAP_VALID = {p.identifier for p in bpy.ops.curve.tree_add.get_rna_type().properties}
-SAP_VALID -= {"rna_type", "chooseSet", "presetName", "limitImport", "overwrite", "do_update"}
-
-
-def build_leaf_image():
-    """Procedural leaf texture with alpha silhouette, saved to a real file
-    (packed generated images lose their pixels in headless Cycles renders)."""
-    leaf_path = os.path.join(ASSETS, "leaf_generated.png")
-    if os.path.exists(leaf_path):
-        return bpy.data.images.load(leaf_path, check_existing=True)
-    w = 128
-    img = bpy.data.images.new("leafTex", w, w, alpha=True)
-    px = [0.0] * (w * w * 4)
-    for j in range(w):
-        t = j / (w - 1.0)  # 0 base .. 1 tip
-        hw = 0.42 * math.sin(min(1.0, t * 1.12) * math.pi) ** 0.75
-        if t < 0.10:
-            hw = max(hw, 0.035)
-        for i in range(w):
-            u = i / (w - 1.0) - 0.5
-            if abs(u) >= hw:
-                continue
-            edge = (hw - abs(u)) / hw
-            vein = max(0.0, 1.0 - abs(u) * 34.0)
-            g = 0.42 + 0.28 * edge + 0.12 * vein
-            r = 0.16 + 0.14 * (1.0 - edge) + 0.06 * vein
-            k = (j * w + i) * 4
-            px[k] = r
-            px[k + 1] = g
-            px[k + 2] = 0.07
-            px[k + 3] = 1.0
-    img.pixels.foreach_set(px)
-    img.filepath_raw = leaf_path
-    img.file_format = "PNG"
-    img.save()
-    bpy.data.images.remove(img)
-    return bpy.data.images.load(leaf_path, check_existing=True)
+# ---------------- trees (Poly Haven scanned/geometry-node models) ----------------
+# CC0 real-tree library. pine_tree_01 and fir_tree_01 are full Central-Europe-native
+# conifers (real needle geometry). tree_small_02 is the only CC0 broadleaf available
+# (African wild syringa) and stands in by silhouette for a young deciduous / fruit
+# tree -- Poly Haven has no CC0 European deciduous or orchard tree. Each variant is a
+# static baked mesh; copies share it, so a species costs one unique mesh however many
+# trees use it.
+TREE_LIB = {
+    "pine": append_from("pine_tree_01", ["pine_tree_01_a_LOD1", "pine_tree_01_b_LOD1",
+                                         "pine_tree_01_c_LOD1"], res="1k"),
+    "fir": append_from("fir_tree_01", ["fir_tree_01_a_LOD1", "fir_tree_01_b_LOD1",
+                                       "fir_tree_01_c_LOD1"], res="1k"),
+    "broad": append_from("tree_small_02", ["tree_small_02_LOD1"], res="1k"),
+}
+print("TREE LIB pine %d fir %d broad %d" %
+      (len(TREE_LIB["pine"]), len(TREE_LIB["fir"]), len(TREE_LIB["broad"])))
 
 
-LEAF_IMG = build_leaf_image()
-
-
-def mat_leaf(name, tint):
-    """Leaf alpha plane: textured card, tinted per archetype."""
-    m = bpy.data.materials.new(name)
-    m.use_nodes = True
-    nt = m.node_tree
-    b = nt.nodes["Principled BSDF"]
-    b.inputs["Roughness"].default_value = 0.55
-    tex = nt.nodes.new("ShaderNodeTexImage")
-    tex.image = LEAF_IMG
-    tex.extension = "CLIP"
-    uvn = nt.nodes.new("ShaderNodeUVMap")
-    uvn.uv_map = "leafUV"  # joined mesh carries the trunk's UVMap as active
-    nt.links.new(uvn.outputs["UV"], tex.inputs["Vector"])
-    mixc = nt.nodes.new("ShaderNodeMix")
-    mixc.data_type = "RGBA"
-    mixc.blend_type = "MULTIPLY"
-    mixc.inputs[0].default_value = 1.0
-    mixc.inputs[7].default_value = (*tint, 1.0)
-    nt.links.new(tex.outputs["Color"], mixc.inputs[6])
-    nt.links.new(mixc.outputs[2], b.inputs["Base Color"])
-    nt.links.new(tex.outputs["Alpha"], b.inputs["Alpha"])
-    return m
-
-
-LEAF_MATS = [mat_leaf("leaf_a", (1.0, 1.0, 0.8)), mat_leaf("leaf_b", (0.85, 1.0, 0.6)),
-             mat_leaf("leaf_c", (1.1, 0.95, 0.6))]
-
-
-def load_preset(nm):
-    with open(os.path.join(SAP_DIR, "presets", nm + ".py")) as f:
-        txt = f.read()
-    return ast.literal_eval(txt[txt.index("{"):])
-
-
-def build_tree_archetype(name, preset, leaf_mat, seed, **over):
-    kw = {k: v for k, v in load_preset(preset).items() if k in SAP_VALID}
-    kw.update(dict(bevel=True, showLeaves=True, leafShape="rect", useArm=False,
-                   makeMesh=False, seed=seed, bevelRes=1, resU=3))
-    kw.update(over)
-    before = set(bpy.data.objects)
-    bpy.ops.curve.tree_add(**kw)
-    new = [o for o in bpy.data.objects if o not in before]
-    trunk = next(o for o in new if o.type == "CURVE")
-    leaves = [o for o in new if o.type == "MESH"]
-    bpy.ops.object.select_all(action="DESELECT")
-    trunk.select_set(True)
-    bpy.context.view_layer.objects.active = trunk
-    bpy.ops.object.convert(target="MESH")
-    trunk = bpy.context.active_object
-    trunk.data.materials.clear()
-    trunk.data.materials.append(MAT["bark"])
-    trunk.data.uv_layers.new(name="leafUV")  # join drops the leaves' UV layer without it
-    for p in trunk.data.polygons:
-        p.use_smooth = True
-    for lv in leaves:
-        lv.data.materials.clear()
-        lv.data.materials.append(leaf_mat)
-        if not lv.data.uv_layers:
-            uvl = lv.data.uv_layers.new(name="leafUV")
-            quad = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
-            for pl in lv.data.polygons:
-                for k, li in enumerate(pl.loop_indices):
-                    uvl.data[li].uv = quad[k % 4]
-        lv.select_set(True)
-    bpy.context.view_layer.objects.active = trunk
-    bpy.ops.object.join()
-    ob = bpy.context.active_object
-    ob.name = name
-    ob.location = (0, 0, -60)
-    ob.hide_render = True
-    print("TREE ARCH %s: %d verts" % (name, len(ob.data.vertices)))
-    return ob
-
-
-TREE_ARCH = [
-    build_tree_archetype("arch_tall", "small_maple", LEAF_MATS[0], seed=3,
-                         levels=2, branches=(0, 40, 14, 0), leaves=60, leafScale=0.28,
-                         curveRes=(6, 4, 3, 1), scale=6.2, scaleV=0.9,
-                         segSplits=(0.3, 0.35, 0.0, 0.0)),
-    build_tree_archetype("arch_maple", "small_maple", LEAF_MATS[1], seed=8,
-                         levels=2, branches=(0, 36, 14, 0), leaves=65, leafScale=0.26,
-                         curveRes=(6, 4, 3, 1), scale=4.6, scaleV=0.7,
-                         segSplits=(0.2, 0.3, 0.0, 0.0)),
-    build_tree_archetype("arch_orchard", "small_maple", LEAF_MATS[2], seed=15,
-                         levels=2, branches=(0, 24, 12, 0), leaves=80, leafScale=0.28,
-                         curveRes=(5, 4, 2, 1), scale=3.0, scaleV=0.4, baseSize=0.3,
-                         segSplits=(0.15, 0.2, 0.0, 0.0)),
-]
-
-
-def place_tree(arch, name, cx, cy):
-    ob = arch.copy()
+def place_tree(species, name, cx, cy, smin, smax, tilt=0.03):
+    """Linked-duplicate a species template so instances share mesh data. Per-instance
+    scale (smin..smax), Z-spin, and a slight tilt so the row does not read as clones."""
+    ob = random.choice(TREE_LIB[species]).copy()
     bpy.context.collection.objects.link(ob)
     ob.hide_render = False
-    s = 0.85 + random.random() * 0.35
-    ob.scale = (s, s, s * (0.9 + random.random() * 0.2))
-    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    sc = smin + random.random() * (smax - smin)
+    ob.scale = (sc, sc, sc * (0.94 + random.random() * 0.12))
+    ob.rotation_euler = ((random.random() - 0.5) * tilt,
+                         (random.random() - 0.5) * tilt,
+                         random.random() * 6.283)
     ob.location = (cx, -cy, terrain_z(cx, cy) - 0.05)
     ob.name = name
     return ob
 
 
+# perimeter screen (north + east edges): broadleaf-dominant mixed hedge with conifer
+# accents; conifers scaled to garden height (~8-13 m), not their native forest height.
+PERIM_MIX = ([("broad", 1.0, 1.55)] * 5 +
+             [("fir", 0.45, 0.66)] * 3 +
+             [("pine", 0.42, 0.58)] * 2)
 tree_i = 0
-for eid, picks in [("northTrees", (0, 1)), ("eastTrees", (0, 1)), ("orchard", (2,))]:
+for eid in ("northTrees", "eastTrees"):
     for prt in els[eid]["parts"]:
         if prt["kind"] == "circle":
-            place_tree(TREE_ARCH[random.choice(picks)], "tree%d" % tree_i, prt["cx"], prt["cy"])
+            sp, smin, smax = random.choice(PERIM_MIX)
+            place_tree(sp, "tree%d" % tree_i, prt["cx"], prt["cy"], smin, smax)
             tree_i += 1
+# orchard: small broadleaf at fruit-tree scale (~4-5.5 m)
+for prt in els["orchard"]["parts"]:
+    if prt["kind"] == "circle":
+        place_tree("broad", "tree%d" % tree_i, prt["cx"], prt["cy"], 0.9, 1.2)
+        tree_i += 1
 print("TREES placed:", tree_i)
 
 # ---------------- perennial strip + bushes ----------------
@@ -1573,7 +1473,6 @@ for i, (bx, by) in enumerate([(7, 11), (7, 14), (7, 18), (7, 22), (25.5, 12.5), 
     make_bush("bush%d" % i, bx, by)
 
 # ---------------- planting-zone vegetation ----------------
-PLANT_PALETTE = PASTEL + [CANOPY[1], CANOPY[3]]
 COUNTS = {"perennial": 0, "tuft": 0, "shrub": 0, "flower": 0, "pot": 0, "molinia": 0, "stalks": 0}
 
 
@@ -1600,12 +1499,9 @@ def shape_area(fn, bbox, probes=1200):
 
 
 def make_tuft(name, px, py, z, depth=0.4):
-    bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=0.06, radius2=0.005, depth=depth,
-                                    location=(px, -py, z + depth * 0.45))
-    ob = bpy.context.active_object
-    ob.name = name
-    ob.rotation_euler = ((random.random() - 0.5) * 0.4, (random.random() - 0.5) * 0.4, 0)
-    ob.data.materials.append(MAT["tuft"])
+    # real ornamental-grass clump instead of a procedural cone; depth biases its size
+    place_asset(random.choice(GRASS_CLUMPS), name, px, py,
+                footprint=0.16 + depth * 0.4 + random.random() * 0.12, z=z - 0.01)
     COUNTS["tuft"] += 1
 
 
@@ -1616,15 +1512,8 @@ def scatter_perennials(zid, fn, bbox, area, density=3.0, tufts=0.5):
             py = cy + (random.random() - 0.5) * 0.7
             if not fn(px, py):
                 continue
-            if random.random() < 0.55:
-                rr = 0.13 + random.random() * 0.17
-                add_sphere("%s_p%d_%d" % (zid, ci, k), px, py,
-                           terrain_z(px, py) + rr * (0.4 + random.random() * 0.6), rr,
-                           random.choice(PLANT_PALETTE),
-                           scale=(1.0, 1.0, 0.8 + random.random() * 0.5), subdiv=1)
-            else:
-                place_asset(random.choice(GROUND_PLANTS), "%s_p%d_%d" % (zid, ci, k), px, py,
-                            footprint=0.35 + random.random() * 0.35)
+            place_asset(random.choice(PERENNIAL_POOL), "%s_p%d_%d" % (zid, ci, k), px, py,
+                        footprint=0.28 + random.random() * 0.4)
             COUNTS["perennial"] += 1
     for ti, (px, py) in enumerate(sample_shape(fn, bbox, max(1, int(area * tufts)))):
         make_tuft("%s_t%d" % (zid, ti), px, py, terrain_z(px, py))
