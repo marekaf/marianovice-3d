@@ -1602,6 +1602,11 @@ for prt in els["orchard"]["parts"]:
         place_tree(sp, "tree%d" % tree_i, prt["cx"], prt["cy"], hmin, hmax)
         tree_i += 1
         oi += 1
+# specimen maple: one large Freeman maple standing alone in the east lawn room (east of the
+# pond, clear of beds and the drive) as a focal shade tree read from the terrace + living views
+if TREE_LIB.get("maple_l"):
+    place_tree("maple_l", "specimen_maple", 35.0, 13.0, 12.0, 13.0, tilt=0.03)
+    tree_i += 1
 print("TREES placed:", tree_i)
 
 # ---------------- perennial strip + bushes ----------------
@@ -1648,16 +1653,44 @@ def place_plant(lib, name, px, py, footprint, zoff=0.0):
     ob.name = name
 
 
-# daisy bushes (white/pink/red) as colour accents in the flower-forward beds
-DAISY_SPOTS = [(25.6, 12.4), (26.3, 15.0), (25.8, 18.0),               # bedTerrace
-               (29.0, 8.2), (31.5, 9.4), (30.2, 10.2),                 # prairieIsland
-               (24.2, 3.0), (27.0, 4.2), (30.5, 2.6), (33.2, 4.0),     # pergolaBeds
-               (39.0, 3.4), (41.0, 4.6),                               # rainGarden
-               (12.5, 6.3), (16.0, 6.5), (19.5, 6.2),                  # northFoundation
-               (23.0, 31.0), (27.5, 33.5), (34.0, 31.5), (40.0, 33.0)]  # arrivalStrip
-for i, (px, py) in enumerate(DAISY_SPOTS):
-    place_plant(DAISY_LIB, "daisy%d" % i, px + (random.random() - 0.5) * 0.6,
-                py + (random.random() - 0.5) * 0.6, 1.0 + random.random() * 0.5, zoff=-0.03)
+# daisy bushes (white/pink/red) planted the Flera way: single-colour DRIFTS in the beds, a
+# dedicated cutting bed beside the raised beds, and naturalised through the orchard meadow.
+def place_daisy(ci, name, px, py, foot):
+    ob = DAISY_LIB[ci % len(DAISY_LIB)].copy()
+    bpy.context.collection.objects.link(ob)
+    ob.hide_render = False
+    s = foot / max(ob.dimensions.x, ob.dimensions.y, 0.01)
+    ob.scale = (s, s, s)
+    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    base = min(c[2] for c in ob.bound_box) * s
+    ob.location = (px, -py, terrain_z(px, py) - base - 0.03)
+    ob.name = name
+
+
+di = 0
+# (1) single-colour drifts (cx, cy, colour 0=white/1=pink/2=red, count) in the flower beds
+for cx, cy, ci, cnt in [(25.7, 13.2, 0, 4), (25.9, 17.4, 1, 4),          # bedTerrace
+                        (30.0, 8.6, 2, 4), (31.9, 9.9, 0, 3),            # prairieIsland
+                        (24.4, 3.1, 1, 3), (30.9, 3.0, 2, 3), (33.4, 3.9, 0, 3),  # pergola
+                        (39.4, 3.6, 1, 3),                               # rainGarden
+                        (13.5, 6.4, 0, 3), (18.0, 6.4, 1, 3)]:           # northFoundation
+    for k in range(cnt):
+        place_daisy(ci, "daisy%d" % di, cx + (random.random() - 0.5) * 1.1,
+                    cy + (random.random() - 0.5) * 0.9, 0.9 + random.random() * 0.4)
+        di += 1
+# (2) dedicated cutting bed east of the raised beds: a dense mixed block of daisies
+for row in range(5):
+    for col in range(4):
+        place_daisy((row + col) % 3, "daisycut%d" % di,
+                    5.2 + col * 0.62 + (random.random() - 0.5) * 0.18,
+                    11.0 + row * 1.55 + (random.random() - 0.5) * 0.4, 0.75 + random.random() * 0.25)
+        di += 1
+# (3) naturalised drifts scattered through the orchard meadow (west)
+for k in range(14):
+    place_daisy(k % 3, "daisymeadow%d" % di, 0.8 + random.random() * 4.2,
+                21.7 + random.random() * 9.6, 0.7 + random.random() * 0.35)
+    di += 1
+print("DAISIES placed:", di)
 
 # rose shrubs along the pergola beds + the bed-terrace strip
 ROSE_SPOTS = [(23.8, 2.2), (26.2, 4.6), (28.8, 2.0), (31.4, 4.8), (33.8, 2.6),
@@ -1665,9 +1698,78 @@ ROSE_SPOTS = [(23.8, 2.2), (26.2, 4.6), (28.8, 2.0), (31.4, 4.8), (33.8, 2.6),
 for i, (px, py) in enumerate(ROSE_SPOTS):
     place_plant(ROSE_LIB, "rose%d" % i, px, py, 0.9 + random.random() * 0.4, zoff=-0.02)
 
-# firewood stacks beside the sauna
-for i, (px, py) in enumerate([(10.9, 3.4), (6.1, 4.4)]):
-    place_plant(LOG_LIB, "logs%d" % i, px, py, 1.5)
+
+# climbing roses trained up the pergola posts and spilling over the top slats: stacked rose
+# clumps up each corner post (bulging inward toward the frame) form a rough vertical column,
+# plus a run of clumps along the two long top beams so the roof reads as rose-covered.
+def put_rose(name, px, py, z, smin, smax):
+    ob = random.choice(ROSE_LIB).copy()
+    bpy.context.collection.objects.link(ob)
+    ob.hide_render = False
+    s = (smin + random.random() * (smax - smin)) / max(ob.dimensions.x, ob.dimensions.y, 0.01)
+    ob.scale = (s, s, s)
+    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    ob.location = (px, -py, z)
+    ob.name = name
+
+
+if ROSE_LIB:
+    pg = first_rect(els["pergola"])
+    px0, py0, pw, pdp = pg["x"], pg["y"], pg["w"], pg["d"]
+    pgz = ground_h(px0 + pw / 2, py0 + pdp / 2)
+    top = pgz + 2.5
+    ri = 0
+    for qx, qy in [(px0 + 0.2, py0 + 0.2), (px0 + pw - 0.2, py0 + 0.2),
+                   (px0 + 0.2, py0 + pdp - 0.2), (px0 + pw - 0.2, py0 + pdp - 0.2)]:
+        ox = 0.12 if qx < px0 + pw / 2 else -0.12
+        oy = 0.12 if qy < py0 + pdp / 2 else -0.12
+        for h in (0.7, 1.25, 1.8, 2.4):
+            put_rose("pergrose%d" % ri, qx + ox + (random.random() - 0.5) * 0.1,
+                     qy + oy + (random.random() - 0.5) * 0.1, pgz + h, 0.5, 0.85)
+            ri += 1
+    for edge_y in (py0 + 0.15, py0 + pdp - 0.15):
+        for k in range(6):
+            put_rose("pergrose%d" % ri,
+                     px0 + 0.4 + (pw - 0.8) * k / 5.0 + (random.random() - 0.5) * 0.2,
+                     edge_y + (random.random() - 0.5) * 0.15, top - 0.15, 0.55, 0.95)
+            ri += 1
+    print("PERGOLA ROSES:", ri)
+
+# firewood pile beside the sauna
+place_plant(LOG_LIB, "logs0", 10.9, 3.4, 1.5)
+
+# firewood by the fire pit (37.5, 6.6) so there is wood to actually burn there
+for i, (px, py) in enumerate([(38.7, 6.5), (36.4, 5.6)]):
+    place_plant(LOG_LIB, "firepitlogs%d" % i, px, py, 1.2)
+
+# stacked log store: split-log rounds cross-stacked into a wall (cut ends facing the garden),
+# tucked under the sauna shelter. Brick-offset rows so the ends don't line up into a grid.
+MAT["logwood"] = mat_simple("logwood", hexc("#c2a878"), rough=0.85)
+
+
+def build_log_store(name, x0, x1, y_front, depth, height, mat):
+    r = 0.07
+    step = 2 * r + 0.004
+    cols = int((x1 - x0) / step)
+    rows = int(height / (2 * r * 0.9))
+    cy = y_front - depth / 2.0
+    zb = ground_h((x0 + x1) / 2.0, y_front)
+    n = 0
+    for rw in range(rows):
+        off = r if rw % 2 else 0.0
+        for cl in range(cols):
+            cx = x0 + r + off + cl * step
+            if cx > x1 - r:
+                continue
+            cz = zb + r + rw * (2 * r * 0.9)
+            add_cyl("%s_%d" % (name, n), cx + (random.random() - 0.5) * 0.006, cy, cz,
+                    r * (0.9 + random.random() * 0.18), depth * (0.9 + random.random() * 0.2),
+                    mat, verts=12, rot=(math.radians(90), 0, (random.random() - 0.5) * 0.08))
+            n += 1
+    print("LOG STORE logs:", n)
+
+
+build_log_store("logstore", 3.6, 6.0, 4.0, 0.5, 0.85, MAT["logwood"])
 
 
 # ---------------- edible kitchen garden (four western raised beds) ----------------
