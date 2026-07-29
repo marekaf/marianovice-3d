@@ -1511,6 +1511,13 @@ const waterNormal = (() => {
   // East notch: kitchen window 2300×1350 (sill 0.9) north, HS portal 5160×2270 to the floor — both clear of the carport line z<19.4
   winX(EN[0], 1, 12.9, 2.3, 1.35, ty + 0.9);
   winX(EN[0], 1, 16.78, 5.16, 2.27, ty + 0.05);
+  // HS2 portal split in the middle — only the northern half is the opening sash
+  const hsMull = new THREE.Mesh(new THREE.BoxGeometry(0.11, 2.27, 0.12), frameA);
+  hsMull.position.set(EN[0] + 0.02, ty + 0.05 + 2.27 / 2, 16.78);
+  scene.add(hsMull);
+  const hsHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.04), frameA);
+  hsHandle.position.set(EN[0] + 0.1, ty + 1.05, 16.4);
+  scene.add(hsHandle);
   // Bedroom window on east wall (NE) — 2000×1750, sill 0.8
   winX(HB[2], 1, 9.5, 2.0, 1.75, ty + 0.8);
   // North window in middle of north wall — 900×2270, sill 0.3
@@ -1602,10 +1609,10 @@ const waterNormal = (() => {
       roofGroup.add(m);
     }
   };
-  // VELUX per DPS roof plan: 1 west slope + 2 east slope, spread N–S (living-room cathedral + attic)
-  placeRoofWin('w', 13.5, 0.78);
-  placeRoofWin('e', 13.5, 0.78);
-  placeRoofWin('e', 20.0, 0.78);
+  // VELUX (all in the southern part): E slope above the stairs + in the attic room; W slope in the attic room
+  placeRoofWin('e', 18.5, 0.78);  // above the stairs
+  placeRoofWin('e', 22.5, 0.78);  // attic room, east
+  placeRoofWin('w', 22.5, 0.78);  // attic room, west
   const stitFrame = new THREE.Mesh(new THREE.BoxGeometry(0.87, 1.12, 0.09), veluxFrame);
   stitFrame.position.set(rxMid, houseTerrainY + wallH + 1.0, HB[1] - 0.02);
   scene.add(stitFrame);
@@ -1617,7 +1624,7 @@ const waterNormal = (() => {
 // ───────────────────────── FURNITURE / DECOR ─────────────────────────
 // Table + 4 chairs on east terrace
 {
-  const tx = 22.5, tz = 18, baseY = deckTop;
+  const tx = 21.8, tz = 16, baseY = deckTop;
   // Table
   const table = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 0.06, 0.9),
