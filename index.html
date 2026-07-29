@@ -492,72 +492,53 @@ function canopyMats(baseColor) {
   return canopyPalettes.get(baseColor);
 }
 
-// ── Leafy foliage system: alpha-cut leaf-cluster cards replace the old sphere-blob canopies.
-// One canvas leaf texture (scattered little leaf ellipses, transparent gaps) mapped onto crossed
-// quads reads as real foliage from any angle; alphaTest>0 also gives leaf-shaped shadows. ──
-const leafTex = (() => {
-  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
-  const ctx = cv.getContext('2d');
-  const greens = ['#5b8a3c', '#6f9d47', '#4e7d35', '#84ab55', '#3f6b2e', '#7ba653'];
-  for (let i = 0; i < 155; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const rr = Math.pow(Math.random(), 0.55) * 56;
-    const x = 64 + Math.cos(a) * rr, y = 64 + Math.sin(a) * rr * 0.92;
-    const s = 3.5 + Math.random() * 5.5;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.random() * Math.PI);
-    ctx.globalAlpha = 0.55 + Math.random() * 0.45;
-    ctx.fillStyle = greens[(Math.random() * greens.length) | 0];
-    ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
-})();
-const foliageQuad = new THREE.PlaneGeometry(1, 1);
+// ── Low-poly stylized foliage: clusters of flat-shaded icosphere "leaf blobs", layered so lower/
+// inner blobs are darker and upper/outer ones lighter (fake canopy shading). Reads as a designed
+// tree from every angle — no flat cards, no smooth pastel balloons. ──
+const icoGeo = new THREE.IcosahedronGeometry(1, 1);
+const LEAF_GREENS = [0x2f5222, 0x3d6b2c, 0x4e7d35, 0x5f9440, 0x74ad51];   // dark → light
 const foliageMatCache = new Map();
 function foliageMatFor(color) {
-  if (!foliageMatCache.has(color)) foliageMatCache.set(color, new THREE.MeshStandardMaterial({
-    map: leafTex, color, alphaTest: 0.45, roughness: 0.92, metalness: 0, side: THREE.DoubleSide,
-  }));
+  if (!foliageMatCache.has(color)) foliageMatCache.set(color,
+    new THREE.MeshStandardMaterial({ color, roughness: 0.9, flatShading: true }));
   return foliageMatCache.get(color);
 }
-const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4f34, roughness: 0.9 });
-const flowerDotGeo = new THREE.SphereGeometry(0.07, 6, 5);
+const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4f34, roughness: 0.9, flatShading: true });
+const flowerDotGeo = new THREE.IcosahedronGeometry(0.08, 0);
 const flowerMatCache = new Map();
 function flowerMatFor(color) {
-  if (!flowerMatCache.has(color)) flowerMatCache.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
+  if (!flowerMatCache.has(color)) flowerMatCache.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.6, flatShading: true }));
   return flowerMatCache.get(color);
 }
-// rounded leafy mass: `count` positions, each a crossed pair of leaf cards. flatten<1 squashes vertically.
-function foliageCluster(cx, cy, cz, radius, color, count, flatten) {
-  const mat = foliageMatFor(color);
+// leafy mass: `count` flat-shaded blobs; higher blobs use lighter greens. flatten<1 → low mound.
+function leafyMass(cx, cy, cz, radius, count, flatten) {
   for (let i = 0; i < count; i++) {
     const a = Math.random() * Math.PI * 2;
-    const rr = Math.pow(Math.random(), 0.6) * radius * 0.6;
+    const rr = Math.pow(Math.random(), 0.5) * radius * 0.72;
+    const up = Math.random();
     const px = cx + Math.cos(a) * rr, pz = cz + Math.sin(a) * rr;
-    const py = cy + (Math.random() - 0.5) * radius * flatten;
-    const sz = radius * (0.85 + Math.random() * 0.6);
-    for (let k = 0; k < 2; k++) {
-      const q = new THREE.Mesh(foliageQuad, mat);
-      q.position.set(px, py, pz);
-      q.scale.set(sz, sz, sz);
-      q.rotation.y = a + k * Math.PI / 2 + (Math.random() - 0.5) * 0.5;
-      q.rotation.z = (Math.random() - 0.5) * 0.3;
-      q.castShadow = true;
-      treesGroup.add(q);
-    }
+    const py = cy + (up - 0.35) * radius * 1.6 * flatten;
+    const s = radius * (0.5 + Math.random() * 0.42);
+    const gi = Math.min(LEAF_GREENS.length - 1, Math.floor(up * LEAF_GREENS.length));
+    const blob = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[gi]));
+    blob.position.set(px, py, pz);
+    blob.scale.setScalar(s);
+    blob.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    blob.castShadow = true;
+    treesGroup.add(blob);
   }
 }
 
-// Tree — tapered trunk + rounded crown of alpha-cut leaf cards
-function addTree(plotX, plotY, height = 4, canopyColor = 0x6f9d47) {
+// Tree — tapered trunk + layered flat-shaded canopy
+function addTree(plotX, plotY, height = 4, canopyColor) {
   const baseY = terrainHeight(plotX, plotY);
-  const trunkH = height * 0.45;
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(height * 0.035, height * 0.085, trunkH, 6), trunkMat);
+  const trunkH = height * 0.42;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(height * 0.04, height * 0.09, trunkH, 6), trunkMat);
   trunk.position.set(plotX, baseY + trunkH / 2, plotY);
   trunk.castShadow = true;
   treesGroup.add(trunk);
-  const crownR = height * 0.42;
-  foliageCluster(plotX, baseY + trunkH + crownR * 0.55, plotY, crownR, canopyColor, 7 + (Math.random() * 3 | 0), 0.95);
+  const crownR = height * 0.4;
+  leafyMass(plotX, baseY + trunkH + crownR * 0.7, plotY, crownR, 8 + (Math.random() * 4 | 0), 0.7);
 }
 
 // Platform (terrace, sidewalk) following terrain — top surface only
@@ -633,10 +614,10 @@ function addConifer(plotX, plotY, height = 5) {
   addTree(plotX, plotY, height * 0.95, 0x557f38);
 }
 
-// Bush — low mound of leaf cards
+// Bush — low flat-shaded mound
 function addBush(plotX, plotY, size = 1, color = 0x5f8452) {
   const baseY = terrainHeight(plotX, plotY);
-  foliageCluster(plotX, baseY + size * 0.42, plotY, size * 0.8, color, 4 + (Math.random() * 3 | 0), 0.5);
+  leafyMass(plotX, baseY + size * 0.3, plotY, size * 0.72, 4 + (Math.random() * 3 | 0), 0.55);
 }
 
 // Procedural speckle texture (grass/asphalt) — hsl-jittered rects over a base color
@@ -1350,11 +1331,10 @@ for (let i = 0; i < 35; i++) {
   if (x >= 25.28 && x <= 32.28 && z >= 1 && z <= 6) continue;
   const baseY = terrainHeight(x, z);
   const sz = 0.4 + Math.random() * 0.3;
-  const q = new THREE.Mesh(foliageQuad, foliageMatFor(0x6b9243));
-  q.position.set(x, baseY + sz * 0.45, z);
-  q.scale.set(sz, sz, sz);
-  q.rotation.y = Math.random() * Math.PI;
-  q.rotation.z = (Math.random() - 0.5) * 0.35;
+  const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
+  q.position.set(x, baseY + sz * 0.38, z);
+  q.scale.setScalar(sz * 0.72);
+  q.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
   treesGroup.add(q);
   if (Math.random() < 0.5) {
     const fl = new THREE.Mesh(flowerDotGeo, flowerMatFor(perennialColors[Math.floor(Math.random() * perennialColors.length)]));
@@ -1749,11 +1729,10 @@ function addWallClimber(x1, z1, x2, z2, nx, nz, h = 2.2) {
     for (let b = 0; b < blobs; b++) {
       const by = baseY + 0.5 + Math.random() * (h - 0.6);
       const r = 0.22 + Math.random() * 0.2;
-      const leaf = new THREE.Mesh(foliageQuad, foliageMatFor(b % 2 ? 0x5a8a4a : 0x4d7a40));
-      const sc = r * 2.6;
-      leaf.scale.set(sc, sc, sc);
+      const leaf = new THREE.Mesh(icoGeo, foliageMatFor(b % 2 ? 0x4e7d35 : 0x3d6b2c));
+      leaf.scale.setScalar(r * 1.35);
       leaf.position.set(wx + nx * (0.14 + r * 0.3) + (Math.abs(nz) ? (Math.random() - 0.5) * 0.6 : 0), by, wz + nz * (0.14 + r * 0.3) + (Math.abs(nx) ? (Math.random() - 0.5) * 0.6 : 0));
-      leaf.rotation.y = Math.atan2(nx, nz) + (Math.random() - 0.5) * 0.5;
+      leaf.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
       leaf.castShadow = true;
       treesGroup.add(leaf);
     }
@@ -1897,11 +1876,10 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
       if (!pt || !inPlot(pt[0], pt[1])) continue;
       const baseY = terrainHeight(pt[0], pt[1]);
       const sz = (kind === 'meadow' ? 0.28 : 0.48) + Math.random() * (kind === 'meadow' ? 0.18 : 0.32);
-      const q = new THREE.Mesh(foliageQuad, foliageMatFor(0x6b9243));
-      q.position.set(pt[0], baseY + sz * 0.45, pt[1]);
-      q.scale.set(sz, sz, sz);
-      q.rotation.y = Math.random() * Math.PI;
-      q.rotation.z = (Math.random() - 0.5) * 0.35;
+      const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
+      q.position.set(pt[0], baseY + sz * 0.38, pt[1]);
+      q.scale.setScalar(sz * 0.72);
+      q.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
       treesGroup.add(q);
       if (Math.random() < (kind === 'meadow' ? 0.55 : 0.45)) {
         const fl = new THREE.Mesh(flowerDotGeo, flowerMatFor(perennialColors[Math.floor(Math.random() * perennialColors.length)]));
