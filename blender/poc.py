@@ -35,14 +35,14 @@ def smoothstep01(t):
 
 
 CUT_Z = 2.46  # graded cut for the level west decks
-APRON_Z = -0.062 * 15.88 + 0.044 * 16.805 + 2.733 - 0.5  # garage floor level
+APRON_Z = -0.050 * 15.88 + 0.030 * 16.805 + 2.775 - 0.5  # garage floor level
 DRIP_Z = 2.345  # drip-strip dig level along the facade
 DRIP_BANDS = [(10.48, 21.28, 6.68, 7.18), (10.48, 21.28, 26.43, 26.93), (21.28, 21.78, 7.18, 11.58)]
 
 
 def ground_h(x, y):
     """Terrain height in plan coords (x east, y south), incl. grading cuts."""
-    z = max(0.0, -0.062 * x + 0.044 * y + 2.733)
+    z = max(0.0, -0.050 * x + 0.030 * y + 2.775)
     in_a = 6.5 <= x <= 10.6 and 6.7 <= y <= 28.8
     in_b = 10.48 <= x <= 14.78 and 15.93 <= y <= 19.18
     if in_a or in_b:
