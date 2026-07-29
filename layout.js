@@ -47,7 +47,7 @@ const GARDEN = {
     },
     {
       id: "eastTerrace",
-      name: "East terrace 4 × 11 m",
+      name: "East terrace 3 × 11 m",
       parts: [
         { kind: "rect", x: 20.58, y: 11.58, w: 3, d: 7.82, fill: "#a87d4a", opacity: 0.78, stroke: "#5a3e25", sw: 1.2 },
         { kind: "text", x: 22.08, y: 16.39, text: "east terrace", cls: "lbl-w" },
