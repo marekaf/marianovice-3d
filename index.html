@@ -754,10 +754,12 @@ scene.add(ground);
 const houseVerts = EL.house.parts.find(p => p.kind === 'polygon').points;
 // bbox [x0,y0,x1,y1], coreX = gable core x-range, atrium [x0,y0,x1,y1] (open, no roof)
 const { bbox: HB, coreX: HC, atrium: HA } = EL.house.meta;
-const wallH = 2.8;
-const roofRise = 5;
-// Facade: white mineral render RAL 9010 (DPS elevations); slightly off-white to avoid render blowout
-const HOUSE_RENDER = 0xeeeeea;
+const wallH = 3.07;   // general wall / lean-to eave — west rooms sit lower (DPS řez A)
+const KNEE = 0.28;    // gable pozednice knee above the general walls → ridge +7.15
+const roofRise = 3.8; // half the 7.6 m gable span → 45° main pitch (DPS)
+const GABLE = [13.68, 21.28]; // 45° gable x-range; west of it is a 5° lean-to
+// Facade: Weber mineral render HN3E, HBW 61.9 (light warm greige) — user's chosen colour
+const HOUSE_RENDER = 0xcfc8ba;
 const { baseY: houseBaseY } = addExtrudedPoly(houseVerts, wallH, HOUSE_RENDER);
 
 // Sedlová střecha (sedlový štít na S a J — ridge running E-W is wrong; per studie štít na south, takže ridge S-N or E-W?)
@@ -824,31 +826,25 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
 
 // MAIN CORE — single gable roof, 0.45 m eave overhang on all sides
 // Eave overhang continues the štít pitch: eave drops below wall top by overhang × slope
-const gableSlope = roofRise / ((HC[1] - HC[0]) / 2);
+const gableSlope = roofRise / ((GABLE[1] - GABLE[0]) / 2);  // 3.8/3.8 = 1 → 45°
 const eaveDrop = 0.45 * gableSlope;
-const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH - eaveDrop, roofRise + eaveDrop);
+const mainGableGeom = makeGableRoof(GABLE[0] - 0.45, GABLE[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH + KNEE - eaveDrop, roofRise + eaveDrop);
 const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
-// North wing (west of core, north of atrium) — shed roof, small slope W low / E high
-const wingDrop = 0.45 * (0.9 / (HC[0] - HB[0]));
-const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1], HA[1], houseTerrainY + wallH - wingDrop, houseTerrainY + wallH + 0.9 + wingDrop);
-const nWingRoofMesh = new THREE.Mesh(nWingRoofGeom, roofMat);
-nWingRoofMesh.castShadow = true;
-roofGroup.add(nWingRoofMesh);
-
-// South wing (west of core, south of atrium) — shed roof
-const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3], HB[3], houseTerrainY + wallH - wingDrop, houseTerrainY + wallH + 0.9 + wingDrop);
-const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
-sWingRoofMesh.castShadow = true;
-roofGroup.add(sWingRoofMesh);
+// West lean-to (5°) SPLIT around the open atrium — the office roof is two pieces (N and S)
+for (const [wz0, wz1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
+  const g = makePultRoofWE(HB[0] - 0.45, GABLE[0], wz0, wz1, houseTerrainY + wallH, houseTerrainY + wallH + KNEE);
+  const m = new THREE.Mesh(g, roofMat);
+  m.castShadow = true;
+  roofGroup.add(m);
+}
 
 // Wing roof fills — close the triangular gaps under the shed roofs (like the garage)
 {
   const wallTopY = houseTerrainY + wallH;
-  // Gable ends (štít) = natural wood cladding; wing infill = white render (per DPS elevations)
-  const woodGableMat = new THREE.MeshStandardMaterial({ color: 0xa87a45, roughness: 0.75, side: THREE.DoubleSide });
+  // Gable ends (štít) + wing infill = white render matching the facade (per user)
   const renderFillMat = new THREE.MeshStandardMaterial({ color: HOUSE_RENDER, roughness: 0.85, side: THREE.DoubleSide });
   const tri = (mat, ax, ay, az, bx, by, bz, cx2, cy2, cz2) => {
     const g = new THREE.BufferGeometry();
@@ -858,16 +854,19 @@ roofGroup.add(sWingRoofMesh);
     m.castShadow = true;
     scene.add(m);
   };
-  const gmidX = (HC[0] + HC[1]) / 2;
-  tri(woodGableMat, HC[0], wallTopY, HB[1], HC[1], wallTopY, HB[1], gmidX, wallTopY + roofRise, HB[1]);
-  tri(woodGableMat, HC[0], wallTopY, HB[3], HC[1], wallTopY, HB[3], gmidX, wallTopY + roofRise, HB[3]);
-  for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
-    tri(renderFillMat, HB[0], wallTopY, z0, HC[0], wallTopY, z0, HC[0], wallTopY + 0.9, z0);
-    tri(renderFillMat, HB[0], wallTopY, z1, HC[0], wallTopY, z1, HC[0], wallTopY + 0.9, z1);
-    const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, z1 - z0), renderFillMat);
-    band.position.set(HC[0] - 0.03, wallTopY + 0.45, (z0 + z1) / 2);
-    band.castShadow = true;
-    scene.add(band);
+  const springY = wallTopY + KNEE;  // gable pozednice, 0.28 above the general walls
+  const gmidX = (GABLE[0] + GABLE[1]) / 2;
+  // Gable ends (štít) from the knee up to the ridge
+  tri(renderFillMat, GABLE[0], springY, HB[1], GABLE[1], springY, HB[1], gmidX, springY + roofRise, HB[1]);
+  tri(renderFillMat, GABLE[0], springY, HB[3], GABLE[1], springY, HB[3], gmidX, springY + roofRise, HB[3]);
+  // Knee strips closing the 0.28 gap between the general wall top and the gable spring
+  const knee = (w, d, kx, kz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, KNEE, d), renderFillMat); m.position.set(kx, wallTopY + KNEE / 2, kz); m.castShadow = true; scene.add(m); };
+  knee(0.1, HB[3] - HB[1], GABLE[1], (HB[1] + HB[3]) / 2);  // east gable wall
+  knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[1]);             // north gable end
+  knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[3]);             // south gable end
+  // West lean-to end gaps at all four edges (incl. the open-atrium sides)
+  for (const z of [HB[1], HA[1], HA[3], HB[3]]) {
+    tri(renderFillMat, HB[0], wallTopY, z, GABLE[0], wallTopY, z, GABLE[0], springY, z);
   }
 }
 
@@ -875,16 +874,15 @@ roofGroup.add(sWingRoofMesh);
 {
   const stripeMatW = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
   const wallTopY = houseTerrainY + wallH;
-  const xMin = HB[0] - 0.45, xMax = HC[0];
-  const len = Math.hypot(xMax - xMin, 0.9);
-  const ang = Math.atan2(0.9, xMax - xMin);
-  for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
-    for (let zs = z0 + 0.2; zs < z1; zs += 0.4) {
-      const st = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), stripeMatW);
-      st.position.set((xMin + xMax) / 2, wallTopY + 0.45 + 0.03, zs);
-      st.rotation.z = ang;
-      roofGroup.add(st);
-    }
+  const xMin = HB[0] - 0.45, xMax = GABLE[0];
+  const len = Math.hypot(xMax - xMin, KNEE);
+  const ang = Math.atan2(KNEE, xMax - xMin);
+  for (let zs = HB[1] + 0.2; zs < HB[3]; zs += 0.4) {
+    if (zs > HA[1] && zs < HA[3]) continue;  // skip the open atrium
+    const st = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), stripeMatW);
+    st.position.set((xMin + xMax) / 2, wallTopY + KNEE / 2 + 0.03, zs);
+    st.rotation.z = ang;
+    roofGroup.add(st);
   }
 }
 
@@ -1013,9 +1011,7 @@ for (let i = 1; i < 5; i++) {
   scene.add(post);
 });
 
-// 2× parkování (nízká plocha)
-const PK = rectOf('parking');
-addTerrainPlatform(rectVerts(PK), 0.05, 0xbdbdbd);
+// Parking bay is paved as part of the driveway polygon (see driveway); dashed stall on the 2D plan only
 
 // ───────────────────────── SAUNA + HOT TUB + SHELTER ─────────────────────────
 const SA = rectOf('sauna');
@@ -1216,7 +1212,7 @@ scene.add(driveway);
     addTerrainPlatform([[x0, z0], [x1, z0], [x1, z1], [x0, z1]], 0.04, 0xb8b0a2);
   }
   // Marmolit sokl band — level top above floor, bottom follows the dug grade under the gravel
-  const soklMat = new THREE.MeshStandardMaterial({ color: 0x6f6960, roughness: 0.95 });
+  const soklMat = new THREE.MeshStandardMaterial({ color: 0x453f38, roughness: 0.95 }); // marmolit MAR2 M092, HBW 6
   const soklTop = houseBaseY + 0.25;
   const runs = [
     { a0: 10.48, a1: 21.28, c: 7.18, axis: 'x', dir: -1 },
@@ -1518,16 +1514,23 @@ const waterNormal = (() => {
   // East notch: kitchen window 2300×1350 (sill 0.9) north, HS portal 5160×2270 to the floor — both clear of the carport line z<19.4
   winX(EN[0], 1, 12.9, 2.3, 1.35, ty + 0.9);
   winX(EN[0], 1, 16.78, 5.16, 2.27, ty + 0.05);
+  // HS2 portal split in the middle — only the northern half is the opening sash
+  const hsMull = new THREE.Mesh(new THREE.BoxGeometry(0.11, 2.27, 0.12), frameA);
+  hsMull.position.set(EN[0] + 0.02, ty + 0.05 + 2.27 / 2, 16.78);
+  scene.add(hsMull);
+  const hsHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.04), frameA);
+  hsHandle.position.set(EN[0] + 0.1, ty + 1.05, 16.4);
+  scene.add(hsHandle);
   // Bedroom window on east wall (NE) — 2000×1750, sill 0.8
   winX(HB[2], 1, 9.5, 2.0, 1.75, ty + 0.8);
   // North window in middle of north wall — 900×2270, sill 0.3
   winZ((HB[0] + HB[2]) / 2, HB[1], -1, 0.9, 2.27, ty + 0.3);
   // West windows per OKNA: offices 1600×2270, guest+bathroom 1250×2270, all sill 0.3
   for (const { z, w } of [{ z: 10.5, w: 1.6 }, { z: 13.5, w: 1.6 }, { z: 22, w: 1.25 }, { z: 24.5, w: 1.25 }]) {
-    winX(HB[0], -1, z, w, 2.27, ty + 0.3);
+    winX(HB[0], -1, z, w, 2.27, ty + 0.05);
   }
-  // Living-room portal to the atrium
-  winX(HA[2], -1, 17.55, 2.5, 2.27, ty + 0.35);
+  // Living-room portal to the atrium — floor level (0 step onto the atrium courtyard)
+  winX(HA[2], -1, 17.55, 2.5, 2.27, ty + 0.05);
   // South windows O1 900×1250 (koupelna + technická), sill 0.9
   for (const x of [16.05, 19.3]) {
     winZ(x, HB[3], 1, 0.9, 1.25, ty + 0.9);
@@ -1567,10 +1570,10 @@ const waterNormal = (() => {
 // ───────────────────────── STANDING SEAM METAL ROOF — main core gable ─────────────────────────
 {
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
-  const wallTopY = houseTerrainY + wallH - eaveDrop;
-  const ridgeY = houseTerrainY + wallH + roofRise;
+  const wallTopY = houseTerrainY + wallH + KNEE - eaveDrop;
+  const ridgeY = houseTerrainY + wallH + KNEE + roofRise;
   // Same extended eave bounds and pitch as the gable geometry so stripes lie on the roof planes
-  const xMin = HC[0] - 0.45, xMax = HC[1] + 0.45, xMid = (xMin + xMax) / 2;
+  const xMin = GABLE[0] - 0.45, xMax = GABLE[1] + 0.45, xMid = (xMin + xMax) / 2;
   const rise = roofRise + eaveDrop;
   const slopeLen = Math.sqrt((xMid - xMin) ** 2 + rise ** 2);
   const slopeAngle = Math.atan2(rise, xMid - xMin);
@@ -1592,11 +1595,11 @@ const waterNormal = (() => {
 {
   const roofGlass = new THREE.MeshStandardMaterial({ color: 0x2a3540, roughness: 0.15, metalness: 0.6 });
   const veluxFrame = new THREE.MeshStandardMaterial({ color: 0x2b2d30, roughness: 0.5 });
-  const rxMid = (HC[0] + HC[1]) / 2;
-  const ridgeYAbs = houseTerrainY + wallH + roofRise;
+  const rxMid = (GABLE[0] + GABLE[1]) / 2;
+  const ridgeYAbs = houseTerrainY + wallH + KNEE + roofRise;
   const rise2 = roofRise + eaveDrop;
   const placeRoofWin = (side, zPos, wAcross) => {
-    const ex = side === 'e' ? HC[1] + 0.45 : HC[0] - 0.45;
+    const ex = side === 'e' ? GABLE[1] + 0.45 : GABLE[0] - 0.45;
     const t = 0.45;
     const cx2 = rxMid + t * (ex - rxMid);
     const cy2 = ridgeYAbs - t * rise2 + 0.07;
@@ -1609,21 +1612,22 @@ const waterNormal = (() => {
       roofGroup.add(m);
     }
   };
-  placeRoofWin('e', 19.6, 0.78);
-  placeRoofWin('e', 21.8, 0.78);
-  placeRoofWin('w', 20.5, 0.66);
+  // VELUX per user measurement: win1 south edge 1050 mm from inner south wall, 3200 mm gap to win2
+  placeRoofWin('e', 24.76, 0.78);  // attic room, east (south)
+  placeRoofWin('e', 20.78, 0.78);  // above the stairs
+  placeRoofWin('w', 20.78, 0.78);  // west, same distance from S wall as east win2
   const stitFrame = new THREE.Mesh(new THREE.BoxGeometry(0.87, 1.12, 0.09), veluxFrame);
-  stitFrame.position.set(rxMid, houseTerrainY + wallH + 2.0, HB[1] - 0.02);
+  stitFrame.position.set(rxMid, houseTerrainY + wallH + 1.0, HB[1] - 0.02);
   scene.add(stitFrame);
   const stitGlass = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.0, 0.05), roofGlass);
-  stitGlass.position.set(rxMid, houseTerrainY + wallH + 2.0, HB[1] - 0.05);
+  stitGlass.position.set(rxMid, houseTerrainY + wallH + 1.0, HB[1] - 0.05);
   scene.add(stitGlass);
 }
 
 // ───────────────────────── FURNITURE / DECOR ─────────────────────────
 // Table + 4 chairs on east terrace
 {
-  const tx = 22.5, tz = 18, baseY = deckTop;
+  const tx = 21.8, tz = 16, baseY = deckTop;
   // Table
   const table = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 0.06, 0.9),
@@ -1662,7 +1666,7 @@ const waterNormal = (() => {
       new THREE.BoxGeometry(0.4, 0.5, 0.05),
       new THREE.MeshStandardMaterial({ color: 0x7a5a3a })
     );
-    back.position.set(tx + dx, baseY + 0.7, tz + dz + (dz > 0 ? -0.2 : 0.2));
+    back.position.set(tx + dx, baseY + 0.7, tz + dz + (dz > 0 ? 0.2 : -0.2));  // backrest on the outside → chair faces the table
     back.rotation.y = ry;
     furnitureGroup.add(back);
   }

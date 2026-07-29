@@ -1,9 +1,11 @@
 # Asset manifest
 
-All assets from Poly Haven (polyhaven.com), license CC0 (public domain).
-Textures and the original shrub/fern/flower models are 2k; the tree and grass-clump
-models added for the real-plant pass are 1k (their geometry, not texture resolution,
-is what makes them heavy).
+Two asset sources. Poly Haven (polyhaven.com), license CC0, covers the ground textures,
+HDRI, shrubs, ferns, flowers and grass clumps. The primary canopy tree and the flowering
+accents are client-supplied .blend files downloaded from Fab — kept out of git (gitignored)
+and NOT redistributed here; check each asset's own Fab licence before any commercial use of
+the renders. Poly Haven textures/shrub/fern/flower models are 2k; the CC0 tree and grass
+models are 1k (their geometry, not texture resolution, is what makes them heavy).
 
 ## HDRI
 
@@ -27,9 +29,9 @@ is what makes them heavy).
 
 | Dir | Res | Use | Source | License |
 |---|---|---|---|---|
-| models/pine_tree_01/ | 1k | perimeter conifer (native pine) | https://polyhaven.com/a/pine_tree_01 | CC0 |
-| models/fir_tree_01/ | 1k | perimeter conifer (native fir/spruce) | https://polyhaven.com/a/fir_tree_01 | CC0 |
-| models/tree_small_02/ | 1k | orchard + young perimeter broadleaf | https://polyhaven.com/a/tree_small_02 | CC0 |
+| models/island_tree_01/ | 1k | secondary perimeter broadleaf | https://polyhaven.com/a/island_tree_01 | CC0 |
+| models/island_tree_03/ | 1k | orchard + young perimeter broadleaf | https://polyhaven.com/a/island_tree_03 | CC0 |
+| models/tree_small_02/ | 1k | orchard broadleaf (wild syringa) | https://polyhaven.com/a/tree_small_02 | CC0 |
 | models/shrub_01/ | 1k | garden shrubs | https://polyhaven.com/a/shrub_01 | CC0 |
 | models/shrub_02/ | 2k | garden shrubs | https://polyhaven.com/a/shrub_02 | CC0 |
 | models/shrub_03/ | 2k | garden shrubs | https://polyhaven.com/a/shrub_03 | CC0 |
@@ -39,14 +41,24 @@ is what makes them heavy).
 | models/flower_empodium/ | 2k | perennial beds + meadow flowers | https://polyhaven.com/a/flower_empodium | CC0 |
 | models/grass_medium_01/ | 1k | ornamental-grass clumps in beds | https://polyhaven.com/a/grass_medium_01 | CC0 |
 
-Poly Haven ships these .blend files referencing their textures via relative
-`//textures/<map>` paths; the matching maps are downloaded into each model's
-`textures/` subdir so the paths resolve. Tree variants (`_a/_b/_c_LOD1`) are static
-baked meshes — poc.py appends them as templates and linked-duplicates them, so N
-trees of a species share one mesh datablock.
+## Client-supplied plants (Fab downloads, gitignored, NOT redistributed)
 
-Trees are real scanned/geometry-node models, no longer procedural. Poly Haven has no
-CC0 European deciduous or fruit tree, so the two native conifers cover the perimeter
-screen and the one CC0 broadleaf (tree_small_02, African wild syringa) stands in by
-silhouette for the orchard and young deciduous accents. The Sapling addon zip may
-still sit in addons/ but is unused.
+| Path | Use | Notes |
+|---|---|---|
+| models/maple_freeman/maple_freeman.blend | primary canopy | Acer x freemanii (Freeman maple), 3 sizes (~6.8/9.8/10.2 m), packed textures |
+| models/plants/daisy_white/pink/red.blend | flower-bed colour accents | ~1.8 m marguerite bushes, joined to one mesh each, packed |
+| models/plants/roses.blend | pergola + terrace beds | ~1 m rose shrub, packed 4k atlas |
+| models/plants/wood_logs.blend | firewood by the sauna | packed bark textures |
+| models/plants/tomato.blend | edible raised beds | stylized, 3 growth stages, text labels stripped |
+
+Poly Haven ships its .blend files referencing textures via relative `//textures/<map>`
+paths; the matching maps are downloaded into each model's `textures/` subdir so the paths
+resolve. The client plant .blend files have their textures packed in-file. Tree/plant
+templates are appended once and linked-duplicated, so N instances of a species share one
+mesh datablock.
+
+Trees are real scanned/geometry-node models, no longer procedural, and no longer conifers.
+The Freeman maple (3 ready-grown sizes) is the dominant species across the perimeter screen
+and orchard; the CC0 island/wild-syringa broadleaves are minority silhouettes for variety.
+pine_tree_01, fir_tree_01, jacaranda_tree and island_tree_02 remain on disk but are
+deliberately unused. The Sapling addon zip may still sit in addons/ but is unused.
