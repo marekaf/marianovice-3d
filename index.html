@@ -754,8 +754,9 @@ scene.add(ground);
 const houseVerts = EL.house.parts.find(p => p.kind === 'polygon').points;
 // bbox [x0,y0,x1,y1], coreX = gable core x-range, atrium [x0,y0,x1,y1] (open, no roof)
 const { bbox: HB, coreX: HC, atrium: HA } = EL.house.meta;
-const wallH = 2.8;
-const roofRise = 5;
+const wallH = 3.35;   // pozednice at the gable spring (DPS řez A → ridge +7.15)
+const roofRise = 3.8; // half the 7.6 m gable span → 45° main pitch (DPS)
+const GABLE = [13.68, 21.28]; // 45° gable x-range; west of it is a 5° lean-to
 // Facade: white mineral render RAL 9010 (DPS elevations); slightly off-white to avoid render blowout
 const HOUSE_RENDER = 0xeeeeea;
 const { baseY: houseBaseY } = addExtrudedPoly(houseVerts, wallH, HOUSE_RENDER);
@@ -824,25 +825,19 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
 
 // MAIN CORE — single gable roof, 0.45 m eave overhang on all sides
 // Eave overhang continues the štít pitch: eave drops below wall top by overhang × slope
-const gableSlope = roofRise / ((HC[1] - HC[0]) / 2);
+const gableSlope = roofRise / ((GABLE[1] - GABLE[0]) / 2);  // 3.8/3.8 = 1 → 45°
 const eaveDrop = 0.45 * gableSlope;
-const mainGableGeom = makeGableRoof(HC[0] - 0.45, HC[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH - eaveDrop, roofRise + eaveDrop);
+const mainGableGeom = makeGableRoof(GABLE[0] - 0.45, GABLE[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH - eaveDrop, roofRise + eaveDrop);
 const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
-// North wing (west of core, north of atrium) — shed roof, small slope W low / E high
-const wingDrop = 0.45 * (0.9 / (HC[0] - HB[0]));
-const nWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HB[1], HA[1], houseTerrainY + wallH - wingDrop, houseTerrainY + wallH + 0.9 + wingDrop);
-const nWingRoofMesh = new THREE.Mesh(nWingRoofGeom, roofMat);
-nWingRoofMesh.castShadow = true;
-roofGroup.add(nWingRoofMesh);
-
-// South wing (west of core, south of atrium) — shed roof
-const sWingRoofGeom = makePultRoofWE(HB[0] - 0.45, HC[0] + 0.45, HA[3], HB[3], houseTerrainY + wallH - wingDrop, houseTerrainY + wallH + 0.9 + wingDrop);
-const sWingRoofMesh = new THREE.Mesh(sWingRoofGeom, roofMat);
-sWingRoofMesh.castShadow = true;
-roofGroup.add(sWingRoofMesh);
+// West lean-to (5°) over the full N-S span — DPS pudorys has rooms here, no open atrium
+const wingRise = (GABLE[0] - HB[0]) * Math.tan(5 * Math.PI / 180);  // ≈ 0.28 m
+const wWingGeom = makePultRoofWE(HB[0] - 0.45, GABLE[0], HB[1], HB[3], houseTerrainY + wallH - wingRise, houseTerrainY + wallH);
+const wWingMesh = new THREE.Mesh(wWingGeom, roofMat);
+wWingMesh.castShadow = true;
+roofGroup.add(wWingMesh);
 
 // Wing roof fills — close the triangular gaps under the shed roofs (like the garage)
 {
@@ -858,16 +853,12 @@ roofGroup.add(sWingRoofMesh);
     m.castShadow = true;
     scene.add(m);
   };
-  const gmidX = (HC[0] + HC[1]) / 2;
-  tri(woodGableMat, HC[0], wallTopY, HB[1], HC[1], wallTopY, HB[1], gmidX, wallTopY + roofRise, HB[1]);
-  tri(woodGableMat, HC[0], wallTopY, HB[3], HC[1], wallTopY, HB[3], gmidX, wallTopY + roofRise, HB[3]);
-  for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
-    tri(renderFillMat, HB[0], wallTopY, z0, HC[0], wallTopY, z0, HC[0], wallTopY + 0.9, z0);
-    tri(renderFillMat, HB[0], wallTopY, z1, HC[0], wallTopY, z1, HC[0], wallTopY + 0.9, z1);
-    const band = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, z1 - z0), renderFillMat);
-    band.position.set(HC[0] - 0.03, wallTopY + 0.45, (z0 + z1) / 2);
-    band.castShadow = true;
-    scene.add(band);
+  const gmidX = (GABLE[0] + GABLE[1]) / 2;
+  tri(woodGableMat, GABLE[0], wallTopY, HB[1], GABLE[1], wallTopY, HB[1], gmidX, wallTopY + roofRise, HB[1]);
+  tri(woodGableMat, GABLE[0], wallTopY, HB[3], GABLE[1], wallTopY, HB[3], gmidX, wallTopY + roofRise, HB[3]);
+  // West lean-to end gaps (render) at N and S — wall top rises W→E under the shed
+  for (const z of [HB[1], HB[3]]) {
+    tri(renderFillMat, HB[0], wallTopY - wingRise, z, GABLE[0], wallTopY - wingRise, z, GABLE[0], wallTopY, z);
   }
 }
 
@@ -875,16 +866,15 @@ roofGroup.add(sWingRoofMesh);
 {
   const stripeMatW = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
   const wallTopY = houseTerrainY + wallH;
-  const xMin = HB[0] - 0.45, xMax = HC[0];
-  const len = Math.hypot(xMax - xMin, 0.9);
-  const ang = Math.atan2(0.9, xMax - xMin);
-  for (const [z0, z1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
-    for (let zs = z0 + 0.2; zs < z1; zs += 0.4) {
-      const st = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), stripeMatW);
-      st.position.set((xMin + xMax) / 2, wallTopY + 0.45 + 0.03, zs);
-      st.rotation.z = ang;
-      roofGroup.add(st);
-    }
+  const wingRise = (GABLE[0] - HB[0]) * Math.tan(5 * Math.PI / 180);
+  const xMin = HB[0] - 0.45, xMax = GABLE[0];
+  const len = Math.hypot(xMax - xMin, wingRise);
+  const ang = Math.atan2(wingRise, xMax - xMin);
+  for (let zs = HB[1] + 0.2; zs < HB[3]; zs += 0.4) {
+    const st = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), stripeMatW);
+    st.position.set((xMin + xMax) / 2, wallTopY - wingRise / 2 + 0.03, zs);
+    st.rotation.z = ang;
+    roofGroup.add(st);
   }
 }
 
@@ -1570,7 +1560,7 @@ const waterNormal = (() => {
   const wallTopY = houseTerrainY + wallH - eaveDrop;
   const ridgeY = houseTerrainY + wallH + roofRise;
   // Same extended eave bounds and pitch as the gable geometry so stripes lie on the roof planes
-  const xMin = HC[0] - 0.45, xMax = HC[1] + 0.45, xMid = (xMin + xMax) / 2;
+  const xMin = GABLE[0] - 0.45, xMax = GABLE[1] + 0.45, xMid = (xMin + xMax) / 2;
   const rise = roofRise + eaveDrop;
   const slopeLen = Math.sqrt((xMid - xMin) ** 2 + rise ** 2);
   const slopeAngle = Math.atan2(rise, xMid - xMin);
@@ -1592,11 +1582,11 @@ const waterNormal = (() => {
 {
   const roofGlass = new THREE.MeshStandardMaterial({ color: 0x2a3540, roughness: 0.15, metalness: 0.6 });
   const veluxFrame = new THREE.MeshStandardMaterial({ color: 0x2b2d30, roughness: 0.5 });
-  const rxMid = (HC[0] + HC[1]) / 2;
+  const rxMid = (GABLE[0] + GABLE[1]) / 2;
   const ridgeYAbs = houseTerrainY + wallH + roofRise;
   const rise2 = roofRise + eaveDrop;
   const placeRoofWin = (side, zPos, wAcross) => {
-    const ex = side === 'e' ? HC[1] + 0.45 : HC[0] - 0.45;
+    const ex = side === 'e' ? GABLE[1] + 0.45 : GABLE[0] - 0.45;
     const t = 0.45;
     const cx2 = rxMid + t * (ex - rxMid);
     const cy2 = ridgeYAbs - t * rise2 + 0.07;
