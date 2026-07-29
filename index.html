@@ -833,11 +833,13 @@ const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
 mainGableMesh.castShadow = true;
 roofGroup.add(mainGableMesh);
 
-// West lean-to (5°) over the full N-S span — DPS pudorys has rooms here, no open atrium
-const wWingGeom = makePultRoofWE(HB[0] - 0.45, GABLE[0], HB[1], HB[3], houseTerrainY + wallH, houseTerrainY + wallH + KNEE);  // 5° over 3.2 m = KNEE
-const wWingMesh = new THREE.Mesh(wWingGeom, roofMat);
-wWingMesh.castShadow = true;
-roofGroup.add(wWingMesh);
+// West lean-to (5°) SPLIT around the open atrium — the office roof is two pieces (N and S)
+for (const [wz0, wz1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
+  const g = makePultRoofWE(HB[0] - 0.45, GABLE[0], wz0, wz1, houseTerrainY + wallH, houseTerrainY + wallH + KNEE);
+  const m = new THREE.Mesh(g, roofMat);
+  m.castShadow = true;
+  roofGroup.add(m);
+}
 
 // Wing roof fills — close the triangular gaps under the shed roofs (like the garage)
 {
@@ -862,8 +864,8 @@ roofGroup.add(wWingMesh);
   knee(0.1, HB[3] - HB[1], GABLE[1], (HB[1] + HB[3]) / 2);  // east gable wall
   knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[1]);             // north gable end
   knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[3]);             // south gable end
-  // West lean-to N/S end gaps — flat wall top (west) rising to the spring (east)
-  for (const z of [HB[1], HB[3]]) {
+  // West lean-to end gaps at all four edges (incl. the open-atrium sides)
+  for (const z of [HB[1], HA[1], HA[3], HB[3]]) {
     tri(renderFillMat, HB[0], wallTopY, z, GABLE[0], wallTopY, z, GABLE[0], springY, z);
   }
 }
@@ -876,6 +878,7 @@ roofGroup.add(wWingMesh);
   const len = Math.hypot(xMax - xMin, KNEE);
   const ang = Math.atan2(KNEE, xMax - xMin);
   for (let zs = HB[1] + 0.2; zs < HB[3]; zs += 0.4) {
+    if (zs > HA[1] && zs < HA[3]) continue;  // skip the open atrium
     const st = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), stripeMatW);
     st.position.set((xMin + xMax) / 2, wallTopY + KNEE / 2 + 0.03, zs);
     st.rotation.z = ang;
@@ -1609,10 +1612,10 @@ const waterNormal = (() => {
       roofGroup.add(m);
     }
   };
-  // VELUX (all in the southern part): E slope above the stairs + in the attic room; W slope in the attic room
-  placeRoofWin('e', 18.5, 0.78);  // above the stairs
-  placeRoofWin('e', 22.5, 0.78);  // attic room, east
-  placeRoofWin('w', 22.5, 0.78);  // attic room, west
+  // VELUX per user measurement: win1 south edge 1050 mm from inner south wall, 3200 mm gap to win2
+  placeRoofWin('e', 24.76, 0.78);  // attic room, east (south)
+  placeRoofWin('e', 20.78, 0.78);  // above the stairs
+  placeRoofWin('w', 20.78, 0.78);  // west, same distance from S wall as east win2
   const stitFrame = new THREE.Mesh(new THREE.BoxGeometry(0.87, 1.12, 0.09), veluxFrame);
   stitFrame.position.set(rxMid, houseTerrainY + wallH + 1.0, HB[1] - 0.02);
   scene.add(stitFrame);
