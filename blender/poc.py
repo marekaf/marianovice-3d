@@ -261,6 +261,61 @@ def mat_concrete(name, c1, c2, rough_lo=0.55, rough_hi=0.85):
     return m
 
 
+def mat_pavers(name):
+    """DITON large-format concrete pavers: world-space 0.60 x 0.40 m running-bond
+    slabs, ~5 mm recessed dark joints, subtle grey multi-tone per slab. Fed from
+    Geometry Position so the module size is exact regardless of the draped mesh."""
+    m, nt, b = new_mat(name)
+    b.inputs["Metallic"].default_value = 0.0
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    brick = nt.nodes.new("ShaderNodeTexBrick")
+    brick.offset = 0.5           # running bond: every other row shifted half a slab
+    brick.offset_frequency = 2
+    brick.inputs["Scale"].default_value = 1.0
+    brick.inputs["Mortar Size"].default_value = 0.010   # ~5 mm joint at this module
+    brick.inputs["Mortar Smooth"].default_value = 0.10
+    brick.inputs["Bias"].default_value = 0.0
+    brick.inputs["Brick Width"].default_value = 0.60
+    brick.inputs["Row Height"].default_value = 0.40
+    brick.inputs["Color1"].default_value = (*hexc("#9c9995"), 1.0)
+    brick.inputs["Color2"].default_value = (*hexc("#88857f"), 1.0)
+    brick.inputs["Mortar"].default_value = (*hexc("#47443e"), 1.0)
+    nt.links.new(geo.outputs["Position"], brick.inputs["Vector"])
+    # broad tonal drift so the field is not just two flat greys
+    drift = nt.nodes.new("ShaderNodeTexNoise")
+    drift.inputs["Scale"].default_value = 0.5
+    drift.inputs["Detail"].default_value = 2.0
+    nt.links.new(geo.outputs["Position"], drift.inputs["Vector"])
+    dmap = nt.nodes.new("ShaderNodeMapRange")
+    dmap.inputs["To Min"].default_value = 0.82
+    dmap.inputs["To Max"].default_value = 1.0
+    nt.links.new(drift.outputs["Fac"], dmap.inputs["Value"])
+    tone = nt.nodes.new("ShaderNodeMix")
+    tone.data_type = "RGBA"
+    tone.blend_type = "MULTIPLY"
+    tone.inputs[0].default_value = 1.0
+    nt.links.new(brick.outputs["Color"], tone.inputs[6])
+    nt.links.new(dmap.outputs["Result"], tone.inputs[7])
+    nt.links.new(tone.outputs[2], b.inputs["Base Color"])
+    # matte concrete; joints a touch rougher than the slab faces
+    rmap = nt.nodes.new("ShaderNodeMapRange")
+    rmap.inputs["To Min"].default_value = 0.62
+    rmap.inputs["To Max"].default_value = 0.86
+    nt.links.new(brick.outputs["Fac"], rmap.inputs["Value"])
+    nt.links.new(rmap.outputs["Result"], b.inputs["Roughness"])
+    # recessed joints: slab faces raised, mortar sunk (height = 1 - mortar Fac)
+    inv = nt.nodes.new("ShaderNodeMath")
+    inv.operation = "SUBTRACT"
+    inv.inputs[0].default_value = 1.0
+    nt.links.new(brick.outputs["Fac"], inv.inputs[1])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.35
+    bump.inputs["Distance"].default_value = 0.02
+    nt.links.new(inv.outputs["Value"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], b.inputs["Normal"])
+    return m
+
+
 def mat_soil_grass(name, c1, c2, rough=0.95, scale=14.0):
     m, nt, b = new_mat(name)
     b.inputs["Roughness"].default_value = rough
@@ -291,7 +346,7 @@ def mat_blade(name):
 MAT = {
     "soil": mat_pbr("soil", "leafy_grass", scale=0.45, tint=hexc("#45744c"), tint_fac=0.55, tint_mode="MIX", spec=0.0),
     "meadow": mat_pbr("meadow", "leafy_grass", scale=0.35, tint=hexc("#547c55"), tint_fac=0.8, tint_mode="MIX", spec=0.0),
-    "walls": mat_pbr("walls", "plastered_wall_02", scale=0.6, tint=hexc("#eeeeea"), tint_fac=0.85, tint_mode="MIX"),
+    "walls": mat_pbr("walls", "plastered_wall_02", scale=0.6, tint=hexc("#cfc8ba"), tint_fac=0.85, tint_mode="MIX"),  # Weber HN3E, light warm greige
     "garage_walls": mat_pbr("garage_walls", "plastered_wall_02", scale=0.6, tint=hexc("#b4b6b8"), tint_fac=0.75, tint_mode="MIX"),
     "roof": mat_pbr("roof", "metal_plate_02", scale=0.8, tint=hexc("#7c838a"), tint_fac=0.7, tint_mode="MIX", metal=0.6),
     "wood": mat_wood("wood", hexc("#7a5a3a"), hexc("#5e4229")),
@@ -329,6 +384,7 @@ PASTEL = [mat_simple("per%d" % i, c, rough=0.9) for i, c in enumerate(
     [hexc("#b28cb8"), hexc("#8a6fae"), hexc("#c9a44a"), hexc("#d8a0b0"), hexc("#9aa87a")])]
 FLOWER = [mat_simple("flower%d" % i, c, rough=0.8) for i, c in enumerate(
     [hexc("#e8e8e0"), hexc("#e8c94a"), hexc("#9a7ab8")])]
+MAT["pavers"] = mat_pavers("pavers")
 MAT["planter"] = mat_simple("planter", hexc("#3a3a3e"), rough=0.6)
 MAT["tuft"] = mat_simple("tuft", hexc("#6f9a4a"), rough=0.8)
 MAT["soil_pot"] = mat_simple("soil_pot", hexc("#3a2f24"), rough=0.95)
@@ -466,6 +522,18 @@ def draped_poly(name, pts, lift, mat, subdiv=4):
         bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=1, use_grid_fill=True)
     for v in bm.verts:
         v.co.z = terrain_z(v.co.x, -v.co.y) + lift
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    return link_obj(name, mesh, mat)
+
+
+def vtri_xz(name, pts_xz, y_plan, mat):
+    """Single vertical triangle in the x-height plane at a fixed plan y."""
+    bm = bmesh.new()
+    vs = [bm.verts.new((x, -y_plan, zz)) for (x, zz) in pts_xz]
+    bm.faces.new(vs)
+    bm.normal_update()
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
@@ -899,17 +967,20 @@ bb = house["meta"]["bbox"]
 ft = ground_h((bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2)  # floor level
 DECK_TOP = ft + 0.05
 h_base = min(ground_h(x, y) for x, y in hpoly) - 0.2
-WALL_H = 3.35    # pozednice at the gable spring (DPS řez A → ridge +7.15)
-ROOF_RISE = 3.8  # half the 7.6 m gable span → 45° main pitch (DPS)
-WALL_TOP = ft + WALL_H
+GEN_WALL_H = 3.07  # general wall top / west lean-to eave (DPS řez A) — west rooms sit lower
+KNEE = 0.28        # gable pozednice knee above the general walls → ridge +7.15
+ROOF_RISE = 3.8    # half the 7.6 m gable span → 45° main pitch (DPS)
+WALL_TOP = ft + GEN_WALL_H  # general wall top / west lean-to eave
+SPRING = WALL_TOP + KNEE    # gable pozednice spring (ridge base)
+HA = house["meta"]["atrium"]  # [x0, z0, x1, z1] open courtyard — no roof over the west part
 extrude_poly("house_walls", hpoly, h_base, WALL_TOP, MAT["walls"])
 
 GABLE = (13.68, 21.28)  # 45° main gable x-range; a 5° lean-to sits west of it
 ridge_x = (GABLE[0] + GABLE[1]) / 2.0
 OV = 0.45  # eave overhang on the E/W long sides; rakes flush with the N/S gable walls
 G_SLOPE = ROOF_RISE / ((GABLE[1] - GABLE[0]) / 2.0)  # 3.8/3.8 = 1 → 45°
-EAVE_Z = WALL_TOP - OV * G_SLOPE
-RIDGE_Z = WALL_TOP + ROOF_RISE
+EAVE_Z = SPRING - OV * G_SLOPE
+RIDGE_Z = SPRING + ROOF_RISE
 sloped_slab("house_roof_w", GABLE[0] - OV, ridge_x + 0.01, EAVE_Z, RIDGE_Z, bb[1], bb[3], 0.12, MAT["roof"])
 sloped_slab("house_roof_e", ridge_x - 0.01, GABLE[1] + OV, RIDGE_Z, EAVE_Z, bb[1], bb[3], 0.12, MAT["roof"])
 roof_seams("houseW", GABLE[0] - OV, EAVE_Z + 0.12, ridge_x, RIDGE_Z + 0.12, bb[1], bb[3], MAT["roof"])
@@ -919,10 +990,10 @@ print("HOUSE HEIGHTS: ft=%.3f wall_top=%.3f ridge=%.3f  (ridge-ft=%.2f, ridge-fl
 
 
 def stit_tri(name, y0s, y1s):
-    """Gable-end (štít) triangle at the 45° pitch, GABLE span only — white
-    render matching the facade (RAL 9010, per the DPS elevations)."""
+    """Gable-end (štít) triangle at the 45° pitch, GABLE span only — greige
+    render (HN3E) matching the facade, per the DPS elevations."""
     bm = bmesh.new()
-    pts = [(GABLE[0], WALL_TOP), (GABLE[1], WALL_TOP), (ridge_x, RIDGE_Z)]
+    pts = [(GABLE[0], SPRING), (GABLE[1], SPRING), (ridge_x, RIDGE_Z)]
     va = [bm.verts.new((x, -y0s, z)) for x, z in pts]
     vb = [bm.verts.new((x, -y1s, z)) for x, z in pts]
     bm.faces.new(va)
@@ -940,11 +1011,20 @@ def stit_tri(name, y0s, y1s):
 stit_tri("stit_n", bb[1], bb[1] + 0.12)
 stit_tri("stit_s", bb[3] - 0.12, bb[3])
 
-# west lean-to (5°): a single shed over the full N-S span (DPS pudorys has rooms
-# here, no open atrium), low on the west, rising to the gable eave on the east
-WING_RISE = (GABLE[0] - bb[0]) * math.tan(math.radians(5.0))  # ≈ 0.28 m
-sloped_slab("wingW", bb[0] - OV, GABLE[0], WALL_TOP - WING_RISE, WALL_TOP, bb[1], bb[3], 0.12, MAT["roof"])
-roof_seams("wingW", bb[0] - OV, WALL_TOP - WING_RISE + 0.12, GABLE[0], WALL_TOP + 0.12, bb[1], bb[3], MAT["roof"])
+# west office lean-to (5°, rise = KNEE): SPLIT into two shed pieces around the OPEN
+# atrium — the courtyard strip (z 15.93–19.18) has no roof over the west part
+for wi, (wz0, wz1) in enumerate([(bb[1], HA[1]), (HA[3], bb[3])]):
+    sloped_slab("wingW%d" % wi, bb[0] - OV, GABLE[0], WALL_TOP, SPRING, wz0, wz1, 0.12, MAT["roof"])
+    roof_seams("wingW%d" % wi, bb[0] - OV, WALL_TOP + 0.12, GABLE[0], SPRING + 0.12, wz0, wz1, MAT["roof"])
+# knee strips (greige) closing the 0.28 gap between the general wall top and the gable
+# spring on the E gable wall + N/S gable ends; the west edge is closed by the lean-to
+box_p("knee_e", GABLE[1] - 0.05, bb[1], GABLE[1] + 0.05, bb[3], WALL_TOP, SPRING, MAT["walls"])
+box_p("knee_n", GABLE[0], bb[1] - 0.05, GABLE[1], bb[1] + 0.05, WALL_TOP, SPRING, MAT["walls"])
+box_p("knee_s", GABLE[0], bb[3] - 0.05, GABLE[1], bb[3] + 0.05, WALL_TOP, SPRING, MAT["walls"])
+# lean-to shed-end triangles (greige) at the four z-edges incl. the open-atrium sides
+for z_end in [bb[1], HA[1], HA[3], bb[3]]:
+    vtri_xz("wing_end%d" % int(z_end * 100),
+            [(bb[0], WALL_TOP), (GABLE[0], WALL_TOP), (GABLE[0], SPRING)], z_end, MAT["walls"])
 # drip strips: light gravel bands in the dug terrain along the facade
 MAT["gravel_light"] = mat_pbr("gravel_light", "gravel_floor_02", scale=1.0,
                               tint=hexc("#cfcbc3"), tint_fac=0.45, tint_mode="MIX")
@@ -953,7 +1033,7 @@ for di, (bx0, bx1, by0, by1) in enumerate(DRIP_BANDS):
                 MAT["gravel_light"], subdiv=3)
 # marmolit sokl band: level top above floor, bottom under the gravel grade
 MAT["sokl"] = mat_pbr("sokl", "plastered_wall_02", scale=2.0,
-                      tint=hexc("#6f6960"), tint_fac=0.85, tint_mode="MIX")
+                      tint=hexc("#453f38"), tint_fac=0.85, tint_mode="MIX")  # marmolit MAR2 M092, dark
 SOKL_TOP = ft + 0.25
 for run_a0, run_a1, run_c, run_axis, run_dir in [
     (10.48, 21.28, 7.18, "x", -1), (10.48, 21.28, 26.43, "x", 1), (7.18, 11.58, 21.28, "y", 1),
@@ -994,9 +1074,9 @@ def velux(side, y_plan, w_across):
         ob.data.materials.append(mm)
 
 
-velux("w", 13.5, 0.78)
-velux("e", 13.5, 0.78)
-velux("e", 20.0, 0.78)
+velux("e", 24.76, 0.78)  # attic room, southern
+velux("e", 20.78, 0.78)  # above the stairs
+velux("w", 20.78, 0.78)  # west slope, same distance from the S wall
 
 box_p("stit_win_f", ridge_x - 0.435, bb[1] - 0.065, ridge_x + 0.435, bb[1] + 0.025,
       WALL_TOP + 0.44, WALL_TOP + 1.56, MAT["frame"])
@@ -1036,14 +1116,18 @@ def window(name, axis, wall, out_sign, along_c, width, sill, height, door=False)
 window("w_kitchen", "x", 20.58, +1, 12.9, 2.3, 0.9, 1.35)
 window("w_portal", "x", 20.58, +1, 16.78, 5.16, 0.05, 2.27)
 window("w_bedroom", "x", 21.28, +1, 9.5, 2.0, 0.8, 1.75)
-window("w_north", "y", 7.18, -1, 15.88, 0.9, 0.3, 1.5)
-window("w_west1", "x", 10.48, -1, 10.5, 1.6, 0.3, 2.27)
-window("w_west2", "x", 10.48, -1, 13.5, 1.6, 0.3, 2.27)
-window("w_west3", "x", 10.48, -1, 22.0, 1.25, 0.3, 2.27)
-window("w_west4", "x", 10.48, -1, 24.5, 1.25, 0.3, 2.27)
+window("w_north", "y", 7.18, -1, 15.88, 0.9, 0.3, 2.27)
+window("w_west1", "x", 10.48, -1, 10.5, 1.6, 0.05, 2.27)   # offices, floor-level (0 step)
+window("w_west2", "x", 10.48, -1, 13.5, 1.6, 0.05, 2.27)
+window("w_west3", "x", 10.48, -1, 22.0, 1.25, 0.05, 2.27)  # guest + bathroom, floor-level
+window("w_west4", "x", 10.48, -1, 24.5, 1.25, 0.05, 2.27)
+window("w_livingportal", "x", 14.78, -1, 17.55, 2.5, 0.05, 2.27)  # onto the atrium, floor-level (0 step)
 window("w_south1", "y", 26.43, +1, 16.05, 0.9, 0.9, 1.25)
 window("w_south2", "y", 26.43, +1, 19.3, 0.9, 0.9, 1.25)
 window("w_door", "x", 21.28, +1, 23.31, 1.42, 0.0, 2.15, door=True)
+# HS2 east portal split: central vertical mullion + a handle on the north half
+box_p("hs_mull", 20.58, 16.72, 20.69, 16.84, ft + 0.05, ft + 0.05 + 2.27, MAT["frame"])
+box_p("hs_handle", 20.66, 16.38, 20.70, 16.42, ft + 0.89, ft + 1.21, MAT["frame"])
 
 # ---------------- garage (pult roof, floor -0.5 vs house) + door + cars ----------------
 g = first_rect(els["garage"])
@@ -1166,12 +1250,29 @@ for i, prt in enumerate(x for x in els["westTerrace"]["parts"] if x["kind"] == "
     level_deck("westTerrace_%d" % i, prt, "w")
 for i, prt in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
     level_deck("eastTerrace_%d" % i, prt, "e")
+
+# east-terrace dining: table + 4 chairs, seats facing the table (backrests outside)
+et_tx, et_tz = 21.8, 16.0
+box_p("et_table", et_tx - 0.8, et_tz - 0.45, et_tx + 0.8, et_tz + 0.45,
+      DECK_TOP + 0.72, DECK_TOP + 0.78, MAT["wood"])
+for li, (ldx, ldz) in enumerate([(-0.7, -0.4), (0.7, -0.4), (-0.7, 0.4), (0.7, 0.4)]):
+    post("et_tableleg%d" % li, et_tx + ldx, et_tz + ldz, DECK_TOP, DECK_TOP + 0.75, MAT["frame"], half=0.03)
+for ci, (cdx, cdz) in enumerate([(-0.6, -0.9), (0.6, -0.9), (-0.6, 0.9), (0.6, 0.9)]):
+    sx0, sz0 = et_tx + cdx, et_tz + cdz
+    box_p("et_seat%d" % ci, sx0 - 0.2, sz0 - 0.2, sx0 + 0.2, sz0 + 0.2,
+          DECK_TOP + 0.42, DECK_TOP + 0.47, MAT["wood"])
+    for oi, (ox, oz) in enumerate([(-0.16, -0.16), (0.16, -0.16), (-0.16, 0.16), (0.16, 0.16)]):
+        post("et_chairleg%d_%d" % (ci, oi), sx0 + ox, sz0 + oz, DECK_TOP, DECK_TOP + 0.425, MAT["trunk"], half=0.02)
+    back_z = sz0 + (0.2 if cdz > 0 else -0.2)  # backrest on the outside -> chair faces the table
+    box_p("et_back%d" % ci, sx0 - 0.2, back_z - 0.025, sx0 + 0.2, back_z + 0.025,
+          DECK_TOP + 0.45, DECK_TOP + 0.95, MAT["wood"])
 for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect"):
     px, py = rect_center(prt)
     z = ground_h(px, py)
     rect_box("saunaPath_%d" % i, prt, z - 0.05, z + 0.1, MAT["path"])
 
-draped_poly("driveway", dpoly, 0.04, MAT["drive"], subdiv=6)
+# driveway + carport + parking bay: one continuous DITON large-format paver surface
+draped_poly("driveway", dpoly, 0.04, MAT["pavers"], subdiv=6)
 
 # stepping-stone paths: flat stone discs draped on the terrain
 MAT["step_stone"] = mat_concrete("step_stone", hexc("#9a958c"), hexc("#7f7a72"),
@@ -1187,10 +1288,7 @@ for si, sp in enumerate(STEP_STONES):
             sp["r"] * (0.92 + random.random() * 0.2), 0.05, MAT["step_stone"],
             sx=0.9 + random.random() * 0.2, sy=0.9 + random.random() * 0.2,
             verts=18, rot=q.to_euler())
-pk = first_rect(els["parking"])
-pcx, pcy = rect_center(pk)
-pkz = ground_h(pcx, pcy)
-rect_box("parking", pk, pkz - 0.05, pkz + 0.05, MAT["drive"])
+# no separate parking pad — the driveway polygon already covers the parking bay
 
 # ---------------- pond ----------------
 pe = next(x for x in els["pond"]["parts"] if x["kind"] == "ellipse")
