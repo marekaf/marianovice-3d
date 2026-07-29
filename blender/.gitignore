@@ -4,3 +4,4 @@ garden.json
 *.blend1
 assets/*
 !assets/MANIFEST.md
+__pycache__/
