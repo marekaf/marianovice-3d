@@ -291,7 +291,7 @@ def mat_blade(name):
 MAT = {
     "soil": mat_pbr("soil", "leafy_grass", scale=0.45, tint=hexc("#45744c"), tint_fac=0.55, tint_mode="MIX", spec=0.0),
     "meadow": mat_pbr("meadow", "leafy_grass", scale=0.35, tint=hexc("#547c55"), tint_fac=0.8, tint_mode="MIX", spec=0.0),
-    "walls": mat_pbr("walls", "plastered_wall_02", scale=0.6, tint=hexc("#c29a6d"), tint_fac=0.7, tint_mode="MIX"),
+    "walls": mat_pbr("walls", "plastered_wall_02", scale=0.6, tint=hexc("#eeeeea"), tint_fac=0.85, tint_mode="MIX"),
     "garage_walls": mat_pbr("garage_walls", "plastered_wall_02", scale=0.6, tint=hexc("#b4b6b8"), tint_fac=0.75, tint_mode="MIX"),
     "roof": mat_pbr("roof", "metal_plate_02", scale=0.8, tint=hexc("#7c838a"), tint_fac=0.7, tint_mode="MIX", metal=0.6),
     "wood": mat_wood("wood", hexc("#7a5a3a"), hexc("#5e4229")),
@@ -896,27 +896,33 @@ build_grass(build_blade())
 
 # ---------------- house ----------------
 bb = house["meta"]["bbox"]
-core = house["meta"]["coreX"]
 ft = ground_h((bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2)  # floor level
 DECK_TOP = ft + 0.05
 h_base = min(ground_h(x, y) for x, y in hpoly) - 0.2
-extrude_poly("house_walls", hpoly, h_base, ft + 2.8, MAT["walls"])
+WALL_H = 3.35    # pozednice at the gable spring (DPS řez A → ridge +7.15)
+ROOF_RISE = 3.8  # half the 7.6 m gable span → 45° main pitch (DPS)
+WALL_TOP = ft + WALL_H
+extrude_poly("house_walls", hpoly, h_base, WALL_TOP, MAT["walls"])
 
-ridge_x = (core[0] + core[1]) / 2.0
-OV = 0.45  # east/west eaves only; rake flush with N/S walls
-G_SLOPE = 5.0 / ((core[1] - core[0]) / 2.0)  # eave overhang continues the stit pitch
-EAVE_Z = ft + 2.8 - OV * G_SLOPE
-RIDGE_Z = ft + 7.8
-sloped_slab("house_roof_w", core[0] - OV, ridge_x + 0.01, EAVE_Z, RIDGE_Z, bb[1], bb[3], 0.12, MAT["roof"])
-sloped_slab("house_roof_e", ridge_x - 0.01, core[1] + OV, RIDGE_Z, EAVE_Z, bb[1], bb[3], 0.12, MAT["roof"])
-roof_seams("houseW", core[0] - OV, EAVE_Z + 0.12, ridge_x, RIDGE_Z + 0.12, bb[1], bb[3], MAT["roof"])
-roof_seams("houseE", core[1] + OV, EAVE_Z + 0.12, ridge_x, RIDGE_Z + 0.12, bb[1], bb[3], MAT["roof"])
+GABLE = (13.68, 21.28)  # 45° main gable x-range; a 5° lean-to sits west of it
+ridge_x = (GABLE[0] + GABLE[1]) / 2.0
+OV = 0.45  # eave overhang on the E/W long sides; rakes flush with the N/S gable walls
+G_SLOPE = ROOF_RISE / ((GABLE[1] - GABLE[0]) / 2.0)  # 3.8/3.8 = 1 → 45°
+EAVE_Z = WALL_TOP - OV * G_SLOPE
+RIDGE_Z = WALL_TOP + ROOF_RISE
+sloped_slab("house_roof_w", GABLE[0] - OV, ridge_x + 0.01, EAVE_Z, RIDGE_Z, bb[1], bb[3], 0.12, MAT["roof"])
+sloped_slab("house_roof_e", ridge_x - 0.01, GABLE[1] + OV, RIDGE_Z, EAVE_Z, bb[1], bb[3], 0.12, MAT["roof"])
+roof_seams("houseW", GABLE[0] - OV, EAVE_Z + 0.12, ridge_x, RIDGE_Z + 0.12, bb[1], bb[3], MAT["roof"])
+roof_seams("houseE", GABLE[1] + OV, EAVE_Z + 0.12, ridge_x, RIDGE_Z + 0.12, bb[1], bb[3], MAT["roof"])
+print("HOUSE HEIGHTS: ft=%.3f wall_top=%.3f ridge=%.3f  (ridge-ft=%.2f, ridge-floor=%.2f)"
+      % (ft, WALL_TOP, RIDGE_Z, RIDGE_Z - ft, RIDGE_Z - DECK_TOP))
 
 
 def stit_tri(name, y0s, y1s):
-    """Gable-end facade triangle at the wall pitch, core span only."""
+    """Gable-end (štít) triangle at the 45° pitch, GABLE span only — white
+    render matching the facade (RAL 9010, per the DPS elevations)."""
     bm = bmesh.new()
-    pts = [(core[0], ft + 2.8), (core[1], ft + 2.8), (ridge_x, RIDGE_Z)]
+    pts = [(GABLE[0], WALL_TOP), (GABLE[1], WALL_TOP), (ridge_x, RIDGE_Z)]
     va = [bm.verts.new((x, -y0s, z)) for x, z in pts]
     vb = [bm.verts.new((x, -y1s, z)) for x, z in pts]
     bm.faces.new(va)
@@ -934,22 +940,11 @@ def stit_tri(name, y0s, y1s):
 stit_tri("stit_n", bb[1], bb[1] + 0.12)
 stit_tri("stit_s", bb[3] - 0.12, bb[3])
 
-
-def wing_z(x):
-    return ft + 2.8 + (x - 10.48) * (0.9 / 4.3)
-
-
-sloped_slab("wingN", 10.03, 15.23, wing_z(10.03), wing_z(15.23), 7.18, 16.23, 0.12, MAT["roof"])
-sloped_slab("wingS", 10.03, 15.23, wing_z(10.03), wing_z(15.23), 18.88, 26.43, 0.12, MAT["roof"])
-roof_seams("wingN", 10.03, wing_z(10.03) + 0.12, 15.23, wing_z(15.23) + 0.12, 7.18, 16.23, MAT["roof"])
-roof_seams("wingS", 10.03, wing_z(10.03) + 0.12, 15.23, wing_z(15.23) + 0.12, 18.88, 26.43, MAT["roof"])
-# wing wall fills: N/S end triangles + band at the core junction (no air gap under sheds)
-for wname, wy0, wy1 in [("wingN", 7.18, 16.23), ("wingS", 18.88, 26.43)]:
-    wedge_we(wname + "_fill_n", 10.48, 14.78, wy0, wy0 + 0.12, ft + 2.8, wing_z(14.78),
-             MAT["walls"], high="e")
-    wedge_we(wname + "_fill_s", 10.48, 14.78, wy1 - 0.12, wy1, ft + 2.8, wing_z(14.78),
-             MAT["walls"], high="e")
-    box_p(wname + "_band", 14.66, wy0, 14.78, wy1, ft + 2.8, wing_z(14.78), MAT["walls"])
+# west lean-to (5°): a single shed over the full N-S span (DPS pudorys has rooms
+# here, no open atrium), low on the west, rising to the gable eave on the east
+WING_RISE = (GABLE[0] - bb[0]) * math.tan(math.radians(5.0))  # ≈ 0.28 m
+sloped_slab("wingW", bb[0] - OV, GABLE[0], WALL_TOP - WING_RISE, WALL_TOP, bb[1], bb[3], 0.12, MAT["roof"])
+roof_seams("wingW", bb[0] - OV, WALL_TOP - WING_RISE + 0.12, GABLE[0], WALL_TOP + 0.12, bb[1], bb[3], MAT["roof"])
 # drip strips: light gravel bands in the dug terrain along the facade
 MAT["gravel_light"] = mat_pbr("gravel_light", "gravel_floor_02", scale=1.0,
                               tint=hexc("#cfcbc3"), tint_fac=0.45, tint_mode="MIX")
@@ -977,14 +972,14 @@ for run_a0, run_a1, run_c, run_axis, run_dir in [
             box_p("sokl_y%d_%d" % (int(run_c), si), run_c + min(0, run_dir * 0.05), seg0,
                   run_c + max(0, run_dir * 0.05), seg1, z_lo, SOKL_TOP, MAT["sokl"])
 
-box_p("chimney", 16.7, 21.7, 17.3, 22.3, ft + 3.5, ft + 8.8, MAT["garage_walls"])
+box_p("chimney", ridge_x - 0.3, 21.7, ridge_x + 0.3, 22.3, ft + 3.5, RIDGE_Z + 0.6, MAT["garage_walls"])
 
 # velux roof windows over the attic + stit window in the north gable
 MAT["roof_glass"] = mat_simple("roof_glass", hexc("#2a3540"), rough=0.15, metal=0.6)
 
 
 def velux(side, y_plan, w_across):
-    x_e = core[1] + OV if side == "e" else core[0] - OV
+    x_e = GABLE[1] + OV if side == "e" else GABLE[0] - OV
     ang = math.atan2(RIDGE_Z - EAVE_Z, ridge_x - x_e)
     t = 0.45
     px = ridge_x + t * (x_e - ridge_x)
@@ -999,14 +994,14 @@ def velux(side, y_plan, w_across):
         ob.data.materials.append(mm)
 
 
-velux("e", 19.6, 0.78)
-velux("e", 21.8, 0.78)
-velux("w", 20.5, 0.66)
+velux("w", 13.5, 0.78)
+velux("e", 13.5, 0.78)
+velux("e", 20.0, 0.78)
 
 box_p("stit_win_f", ridge_x - 0.435, bb[1] - 0.065, ridge_x + 0.435, bb[1] + 0.025,
-      ft + 4.24, ft + 5.36, MAT["frame"])
+      WALL_TOP + 0.44, WALL_TOP + 1.56, MAT["frame"])
 box_p("stit_win_g", ridge_x - 0.375, bb[1] - 0.075, ridge_x + 0.375, bb[1] - 0.025,
-      ft + 4.3, ft + 5.3, MAT["roof_glass"])
+      WALL_TOP + 0.5, WALL_TOP + 1.5, MAT["roof_glass"])
 
 
 def window(name, axis, wall, out_sign, along_c, width, sill, height, door=False):
