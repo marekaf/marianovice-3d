@@ -1434,7 +1434,7 @@ for eid in ["raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
     r = first_rect(els[eid])
     bcx, bcy = rect_center(r)
     z = ground_h(bcx, bcy)
-    rect_box(eid, r, z - 0.1, z + 0.4, MAT["wood"])
+    rect_box(eid, r, z - 0.1, z + 0.6, MAT["wood"])
 
 
 # ---------------- scanned plant library (Poly Haven, CC0) ----------------
@@ -1794,7 +1794,7 @@ edible_i = 0
 for eid in ["raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
     r = first_rect(els[eid])
     x0, y0, w, dep = r["x"], r["y"], r["w"], r.get("d", r.get("h"))
-    soil = ground_h(x0 + w / 2, y0 + dep / 2) + 0.4
+    soil = ground_h(x0 + w / 2, y0 + dep / 2) + 0.6
     n_rows = 6
     for row in range(n_rows):
         py = y0 + 0.45 + (dep - 0.9) * row / (n_rows - 1)

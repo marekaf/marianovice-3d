@@ -217,35 +217,35 @@ const GARDEN = {
     },
     {
       id: "raisedBed1",
-      name: "Raised bed 1 (1.5 × 4 m)",
+      name: "Raised bed 1 (1.0 × 2.0 m)",
       parts: [
-        { kind: "rect", x: 1, y: 10, w: 1.5, d: 4, fill: "#7a5a3a", opacity: 0.78 },
-        { kind: "text", x: 1.72, y: 12.22, text: "raised bed 1", cls: "lbl-sm-w", rotate: -90 }
+        { kind: "rect", x: 1, y: 10, w: 1.0, d: 2.0, fill: "#7a5a3a", opacity: 0.78 },
+        { kind: "text", x: 1.6, y: 11.0, text: "raised bed 1", cls: "lbl-sm-w", rotate: -90 }
       ]
     },
     {
       id: "raisedBed2",
-      name: "Raised bed 2 (1.5 × 4 m)",
+      name: "Raised bed 2 (1.0 × 2.0 m)",
       parts: [
-        { kind: "rect", x: 1, y: 15, w: 1.5, d: 4, fill: "#7a5a3a", opacity: 0.78 },
-        { kind: "text", x: 1.72, y: 17.22, text: "raised bed 2", cls: "lbl-sm-w", rotate: -90 }
+        { kind: "rect", x: 1, y: 13.0, w: 1.0, d: 2.0, fill: "#7a5a3a", opacity: 0.78 },
+        { kind: "text", x: 1.6, y: 14.0, text: "raised bed 2", cls: "lbl-sm-w", rotate: -90 }
       ]
     },
     {
       id: "raisedBed3",
-      name: "Raised bed 3 (1.5 × 4 m)",
+      name: "Raised bed 3 (1.0 × 2.0 m)",
       parts: [
-        { kind: "rect", x: 3, y: 10, w: 1.5, d: 4, fill: "#7a5a3a", opacity: 0.78 },
-        { kind: "text", x: 3.72, y: 12.22, text: "raised bed 3", cls: "lbl-sm-w", rotate: -90 }
+        { kind: "rect", x: 2.5, y: 10, w: 1.0, d: 2.0, fill: "#7a5a3a", opacity: 0.78 },
+        { kind: "text", x: 3.1, y: 11.0, text: "raised bed 3", cls: "lbl-sm-w", rotate: -90 }
       ]
     },
     {
       id: "raisedBed4",
-      name: "Raised bed 4 (1.5 × 4 m)",
+      name: "Raised bed 4 (1.0 × 2.0 m)",
       parts: [
-        { kind: "rect", x: 3, y: 15, w: 1.5, d: 4, fill: "#7a5a3a", opacity: 0.78 },
-        { kind: "text", x: 3.72, y: 17.22, text: "raised bed 4", cls: "lbl-sm-w", rotate: -90 },
-        { kind: "text", x: 5.11, y: 15, text: "each 1.5 × 4 m", cls: "dim", anchor: "start" }
+        { kind: "rect", x: 2.5, y: 13.0, w: 1.0, d: 2.0, fill: "#7a5a3a", opacity: 0.78 },
+        { kind: "text", x: 3.1, y: 14.0, text: "raised bed 4", cls: "lbl-sm-w", rotate: -90 },
+        { kind: "text", x: 4.2, y: 12.5, text: "each 1.0 × 2.0 m, 0.6 m tall", cls: "dim", anchor: "start" }
       ]
     },
     {
