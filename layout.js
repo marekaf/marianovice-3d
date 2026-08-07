@@ -249,6 +249,33 @@ const GARDEN = {
       ]
     },
     {
+      id: "screenNorth",
+      name: "Privacy screen — north neighbour (2 × 2 m louvre)",
+      meta: { screen: { h: 2.0 } },
+      parts: [
+        { kind: "rect", x: 35.9, y: 4.3, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
+        { kind: "text", x: 37.1, y: 3.85, text: "paraván N", cls: "lbl-sm", fill: "#3a3a3e" }
+      ]
+    },
+    {
+      id: "screenWest",
+      name: "Privacy screen — west neighbour (2 × 2 m louvre)",
+      meta: { screen: { h: 2.0 } },
+      parts: [
+        { kind: "rect", x: 3.0, y: 1.6, w: 0.14, d: 2.4, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
+        { kind: "text", x: 2.6, y: 2.8, text: "paraván Z", cls: "lbl-sm", fill: "#3a3a3e", rotate: -90 }
+      ]
+    },
+    {
+      id: "screenSouth",
+      name: "Privacy screen — south neighbour (2 × 2 m louvre)",
+      meta: { screen: { h: 2.0 } },
+      parts: [
+        { kind: "rect", x: 14.0, y: 28.5, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
+        { kind: "text", x: 15.2, y: 28.1, text: "paraván J", cls: "lbl-sm", fill: "#3a3a3e" }
+      ]
+    },
+    {
       id: "orchardMeadow",
       name: "Orchard meadow understory (Z12)",
       short: "Orchard meadow",

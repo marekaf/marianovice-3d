@@ -1437,6 +1437,33 @@ for eid in ["raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
     rect_box(eid, r, z - 0.1, z + 0.6, MAT["wood"])
 
 
+# ---------------- privacy screens (paravány): 2 m louvre panels blocking neighbour sightlines ----------------
+MAT["screen_post"] = mat_simple("screen_post", hexc("#33343a"), rough=0.55, metal=0.5)
+for e in GARDEN["elements"]:
+    sm = (e.get("meta") or {}).get("screen")
+    if not sm:
+        continue
+    r = first_rect(e)
+    h = sm.get("h", 2.0)
+    horiz = r["w"] >= r["d"]
+    cx = r["x"] + r["w"] / 2.0
+    cy = r["y"] + r["d"] / 2.0
+    z0 = ground_h(cx, cy)
+    ends = ([(r["x"] + 0.06, cy), (r["x"] + r["w"] - 0.06, cy)] if horiz
+            else [(cx, r["y"] + 0.06), (cx, r["y"] + r["d"] - 0.06)])
+    for i, (px, py) in enumerate(ends):
+        post("%s_post%d" % (e["id"], i), px, py, ground_h(px, py) - 0.05, z0 + h + 0.08,
+             MAT["screen_post"], half=0.05)
+    for i in range(11):
+        zz = z0 + 0.14 + i * (h - 0.24) / 10.0
+        if horiz:
+            box_p("%s_slat%d" % (e["id"], i), r["x"] + 0.06, cy - 0.015, r["x"] + r["w"] - 0.06, cy + 0.015,
+                  zz - 0.05, zz + 0.05, MAT["wood"])
+        else:
+            box_p("%s_slat%d" % (e["id"], i), cx - 0.015, r["y"] + 0.06, cx + 0.015, r["y"] + r["d"] - 0.06,
+                  zz - 0.05, zz + 0.05, MAT["wood"])
+
+
 # ---------------- scanned plant library (Poly Haven, CC0) ----------------
 def append_from(slug, names, res="2k"):
     path = os.path.join(ASSETS, "models", slug, slug + "_" + res + ".blend")

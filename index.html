@@ -1312,6 +1312,31 @@ scene.add(driveway);
   addBox(b.x, b.y, b.w, b.d, 0.6, 0x7a5a3a, { sinkToMin: true });
 });
 
+// ───────────────────────── PRIVACY SCREENS (paravány) — 2 m louvre panels ─────────────────────────
+function addScreen(r, h = 2.0) {
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x33343a, roughness: 0.55, metalness: 0.4 });
+  const slatMat = new THREE.MeshStandardMaterial({ color: 0x6e5a40, roughness: 0.8 });
+  const horiz = r.w >= r.d, long = Math.max(r.w, r.d);
+  const cx = r.x + r.w / 2, cz = r.y + r.d / 2, postH = h + 0.08;
+  const ends = horiz ? [[r.x + 0.06, cz], [r.x + r.w - 0.06, cz]] : [[cx, r.y + 0.06], [cx, r.y + r.d - 0.06]];
+  for (const [px, pz] of ends) {
+    const p = new THREE.Mesh(new THREE.BoxGeometry(0.1, postH, 0.1), postMat);
+    p.position.set(px, terrainHeight(px, pz) + postH / 2, pz);
+    p.castShadow = true; fenceGroup.add(p);
+  }
+  const baseY = terrainHeight(cx, cz), n = 11;
+  for (let i = 0; i < n; i++) {
+    const yy = baseY + 0.14 + i * (h - 0.24) / (n - 1);
+    const slat = new THREE.Mesh(
+      horiz ? new THREE.BoxGeometry(long - 0.1, 0.1, 0.03) : new THREE.BoxGeometry(0.03, 0.1, long - 0.1), slatMat);
+    slat.position.set(cx, yy, cz); slat.castShadow = true; slat.receiveShadow = true; fenceGroup.add(slat);
+  }
+}
+GARDEN.elements.filter(e => e.meta && e.meta.screen).forEach(e => {
+  const r = e.parts.find(p => p.kind === 'rect');
+  if (r) addScreen(r, e.meta.screen.h || 2.0);
+});
+
 // ───────────────────────── ORCHARD ─────────────────────────
 circlesOf('orchard').forEach(c => addTree(c.cx, c.cy, 4 + Math.random()));
 
