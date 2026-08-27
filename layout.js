@@ -205,14 +205,14 @@ const GARDEN = {
     },
     {
       id: "pergola",
-      name: "Pergola + grill 7 × 5 m",
+      name: "Pergola + grill 6 × 4 m",
       parts: [
-        { kind: "rect", x: 25.28, y: 1, w: 7, d: 5, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
-        { kind: "rect", x: 25.48, y: 1.2, w: 6.6, d: 4.6, fill: "#d8d2c8", opacity: 0.9 },
-        { kind: "rect", x: 27.4, y: 3, w: 2.8, d: 1, fill: "#8a6a4a" },
-        { kind: "text", x: 28.78, y: 3.06, text: "pergola + grill", cls: "lbl" },
-        { kind: "text", x: 28.78, y: 4, text: "7 × 5 m", cls: "dim" },
-        { kind: "text", x: 28.78, y: 5.11, text: "by north fence", cls: "lbl-sm", fill: "#5a4828" }
+        { kind: "rect", x: 25.78, y: 1, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
+        { kind: "rect", x: 25.98, y: 1.2, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9 },
+        { kind: "rect", x: 27.4, y: 2.5, w: 2.8, d: 1, fill: "#8a6a4a" },
+        { kind: "text", x: 28.78, y: 2.86, text: "pergola + grill", cls: "lbl" },
+        { kind: "text", x: 28.78, y: 3.6, text: "6 × 4 m", cls: "dim" },
+        { kind: "text", x: 28.78, y: 4.5, text: "by north fence", cls: "lbl-sm", fill: "#5a4828" }
       ]
     },
     {
@@ -253,8 +253,8 @@ const GARDEN = {
       name: "Privacy screen — north neighbour (2 × 2 m louvre)",
       meta: { screen: { h: 2.0 } },
       parts: [
-        { kind: "rect", x: 35.9, y: 4.3, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
-        { kind: "text", x: 37.1, y: 3.85, text: "paraván N", cls: "lbl-sm", fill: "#3a3a3e" }
+        { kind: "rect", x: 13.83, y: 0.2, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
+        { kind: "text", x: 15.03, y: 0.95, text: "paraván N", cls: "lbl-sm", fill: "#3a3a3e" }
       ]
     },
     {
@@ -262,8 +262,8 @@ const GARDEN = {
       name: "Privacy screen — west neighbour (2 × 2 m louvre)",
       meta: { screen: { h: 2.0 } },
       parts: [
-        { kind: "rect", x: 3.0, y: 1.6, w: 0.14, d: 2.4, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
-        { kind: "text", x: 2.6, y: 2.8, text: "paraván Z", cls: "lbl-sm", fill: "#3a3a3e", rotate: -90 }
+        { kind: "rect", x: 0.86, y: 16.36, w: 0.14, d: 2.4, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
+        { kind: "text", x: 1.35, y: 17.56, text: "paraván Z", cls: "lbl-sm", fill: "#3a3a3e", rotate: -90 }
       ]
     },
     {
@@ -271,8 +271,8 @@ const GARDEN = {
       name: "Privacy screen — south neighbour (2 × 2 m louvre)",
       meta: { screen: { h: 2.0 } },
       parts: [
-        { kind: "rect", x: 14.0, y: 28.5, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
-        { kind: "text", x: 15.2, y: 28.1, text: "paraván J", cls: "lbl-sm", fill: "#3a3a3e" }
+        { kind: "rect", x: 14.0, y: 31.7, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
+        { kind: "text", x: 15.2, y: 31.4, text: "paraván J", cls: "lbl-sm", fill: "#3a3a3e" }
       ]
     },
     {

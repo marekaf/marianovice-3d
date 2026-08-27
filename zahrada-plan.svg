@@ -159,13 +159,13 @@
       <circle cx="90" cy="45" r="16.2" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
       <text x="90" y="48.96" class="lbl-sm" fill="#1f3a5f" font-weight="700">Softub</text>
     </g>
-    <g class="el" data-id="pergola"><title>Pergola + grill 7 × 5 m</title>
-      <rect x="455.04" y="18" width="126" height="90" fill="#c8a878" opacity="0.55" stroke="#7a5e3e" stroke-width="1.5" stroke-dasharray="6,3"/>
-      <rect x="458.64" y="21.6" width="118.8" height="82.8" fill="#d8d2c8" opacity="0.9"/>
-      <rect x="493.2" y="54" width="50.4" height="18" fill="#8a6a4a"/>
-      <text x="518.04" y="55.08" class="lbl">pergola + grill</text>
-      <text x="518.04" y="72" class="dim">7 × 5 m</text>
-      <text x="518.04" y="91.98" class="lbl-sm" fill="#5a4828">by north fence</text>
+    <g class="el" data-id="pergola"><title>Pergola + grill 6 × 4 m</title>
+      <rect x="464.04" y="18" width="108" height="72" fill="#c8a878" opacity="0.55" stroke="#7a5e3e" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <rect x="467.64" y="21.6" width="100.8" height="64.8" fill="#d8d2c8" opacity="0.9"/>
+      <rect x="493.2" y="45" width="50.4" height="18" fill="#8a6a4a"/>
+      <text x="518.04" y="51.48" class="lbl">pergola + grill</text>
+      <text x="518.04" y="64.8" class="dim">6 × 4 m</text>
+      <text x="518.04" y="81" class="lbl-sm" fill="#5a4828">by north fence</text>
     </g>
     <g class="el" data-id="raisedBed1"><title>Raised bed 1 (1.0 × 2.0 m)</title>
       <rect x="18" y="180" width="18" height="36" fill="#7a5a3a" opacity="0.78"/>
@@ -185,16 +185,16 @@
       <text x="75.6" y="225" class="dim" text-anchor="start">each 1.0 × 2.0 m, 0.6 m tall</text>
     </g>
     <g class="el" data-id="screenNorth"><title>Privacy screen — north neighbour (2 × 2 m louvre)</title>
-      <rect x="646.2" y="77.4" width="43.2" height="2.52" fill="#4a4a4e" opacity="0.92" stroke="#26262a" stroke-width="1"/>
-      <text x="667.8" y="69.3" class="lbl-sm" fill="#3a3a3e">paraván N</text>
+      <rect x="248.94" y="3.6" width="43.2" height="2.52" fill="#4a4a4e" opacity="0.92" stroke="#26262a" stroke-width="1"/>
+      <text x="270.54" y="17.1" class="lbl-sm" fill="#3a3a3e">paraván N</text>
     </g>
     <g class="el" data-id="screenWest"><title>Privacy screen — west neighbour (2 × 2 m louvre)</title>
-      <rect x="54" y="28.8" width="2.52" height="43.2" fill="#4a4a4e" opacity="0.92" stroke="#26262a" stroke-width="1"/>
-      <text x="46.8" y="50.4" class="lbl-sm" fill="#3a3a3e" transform="rotate(-90, 46.8, 50.4)">paraván Z</text>
+      <rect x="15.48" y="294.48" width="2.52" height="43.2" fill="#4a4a4e" opacity="0.92" stroke="#26262a" stroke-width="1"/>
+      <text x="24.3" y="316.08" class="lbl-sm" fill="#3a3a3e" transform="rotate(-90, 24.3, 316.08)">paraván Z</text>
     </g>
     <g class="el" data-id="screenSouth"><title>Privacy screen — south neighbour (2 × 2 m louvre)</title>
-      <rect x="252" y="513" width="43.2" height="2.52" fill="#4a4a4e" opacity="0.92" stroke="#26262a" stroke-width="1"/>
-      <text x="273.6" y="505.8" class="lbl-sm" fill="#3a3a3e">paraván J</text>
+      <rect x="252" y="570.6" width="43.2" height="2.52" fill="#4a4a4e" opacity="0.92" stroke="#26262a" stroke-width="1"/>
+      <text x="273.6" y="565.2" class="lbl-sm" fill="#3a3a3e">paraván J</text>
     </g>
     <g class="el" data-id="orchardMeadow"><title>Orchard meadow understory (Z12)</title>
       <g clip-path="url(#plotShape)"><rect x="3.6" y="383.4" width="93.6" height="190.8" fill="#b5c98a" opacity="0.35" stroke="#8aa85a" stroke-width="1" stroke-dasharray="5,3"/></g>
@@ -369,14 +369,14 @@
     <text x="0" y="210">Sauna</text><text x="88" y="210">4 × 3</text><text x="170" y="210" text-anchor="end">12</text><text x="193" y="210" text-anchor="end">4a</text>
     <text x="0" y="222">Sauna shelter</text><text x="88" y="222">3 × 3</text><text x="170" y="222" text-anchor="end">9</text><text x="193" y="222" text-anchor="end">2a</text>
     <text x="0" y="234">Softub hot tub</text><text x="88" y="234">ø 1.8</text><text x="170" y="234" text-anchor="end">2.54</text><text x="193" y="234" text-anchor="end">3a</text>
-    <text x="0" y="246">Pergola + grill</text><text x="88" y="246">7 × 5</text><text x="170" y="246" text-anchor="end">35</text><text x="193" y="246" text-anchor="end">13a</text>
+    <text x="0" y="246">Pergola + grill</text><text x="88" y="246">6 × 4</text><text x="170" y="246" text-anchor="end">24</text><text x="193" y="246" text-anchor="end">13a</text>
     <text x="0" y="258">Raised bed 1</text><text x="88" y="258">1 × 2</text><text x="170" y="258" text-anchor="end">2</text><text x="193" y="258" text-anchor="end">1f</text>
     <text x="0" y="270">Raised bed 2</text><text x="88" y="270">1 × 2</text><text x="170" y="270" text-anchor="end">2</text><text x="193" y="270" text-anchor="end">1g</text>
     <text x="0" y="282">Raised bed 3</text><text x="88" y="282">1 × 2</text><text x="170" y="282" text-anchor="end">2</text><text x="193" y="282" text-anchor="end">2f</text>
     <text x="0" y="294">Raised bed 4</text><text x="88" y="294">1 × 2</text><text x="170" y="294" text-anchor="end">2</text><text x="193" y="294" text-anchor="end">2g</text>
-    <text x="0" y="306">Privacy screen — nor</text><text x="88" y="306">2.4 × 0.14</text><text x="170" y="306" text-anchor="end">0.34</text><text x="193" y="306" text-anchor="end">18c</text>
-    <text x="0" y="318">Privacy screen — wes</text><text x="88" y="318">0.14 × 2.4</text><text x="170" y="318" text-anchor="end">0.34</text><text x="193" y="318" text-anchor="end">2a</text>
-    <text x="0" y="330">Privacy screen — sou</text><text x="88" y="330">2.4 × 0.14</text><text x="170" y="330" text-anchor="end">0.34</text><text x="193" y="330" text-anchor="end">8o</text>
+    <text x="0" y="306">Privacy screen — nor</text><text x="88" y="306">2.4 × 0.14</text><text x="170" y="306" text-anchor="end">0.34</text><text x="193" y="306" text-anchor="end">7a</text>
+    <text x="0" y="318">Privacy screen — wes</text><text x="88" y="318">0.14 × 2.4</text><text x="170" y="318" text-anchor="end">0.34</text><text x="193" y="318" text-anchor="end">1i</text>
+    <text x="0" y="330">Privacy screen — sou</text><text x="88" y="330">2.4 × 0.14</text><text x="170" y="330" text-anchor="end">0.34</text><text x="193" y="330" text-anchor="end">8p</text>
     <text x="0" y="342">Orchard meadow</text><text x="88" y="342">5.2 × 10.6</text><text x="170" y="342" text-anchor="end">55.12</text><text x="193" y="342" text-anchor="end">1k</text>
     <text x="0" y="354">Orchard</text><text x="88" y="354">5.56 × 11.11</text><text x="170" y="354" text-anchor="end">61.77</text><text x="193" y="354" text-anchor="end">1k</text>
     <text x="0" y="366">Terrace bed</text><text x="88" y="366">2.4 × 7.8</text><text x="170" y="366" text-anchor="end">18.72</text><text x="193" y="366" text-anchor="end">13f</text>
