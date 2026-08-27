@@ -1,0 +1,291 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 880" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
+  <defs>
+    <pattern id="cellgrid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#e2e2e2" stroke-width="0.6"/>
+    </pattern>
+    <pattern id="majorgrid" x="0" y="0" width="180" height="180" patternUnits="userSpaceOnUse">
+      <rect width="180" height="180" fill="url(#cellgrid)"/>
+      <path d="M 180 0 L 0 0 0 180" fill="none" stroke="#bcbcbc" stroke-width="1"/>
+    </pattern>
+    <pattern id="fallhatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#2f6fae" stroke-width="1" opacity="0.5"/>
+    </pattern>
+    <clipPath id="plotShape"><polygon points="0,0 794.88,0 794.88,420.84 775.98,637.38 20.7,547.38"/></clipPath>
+  </defs>
+  <style>
+    text { font-family: -apple-system, sans-serif; fill: #2a2a2a; }
+    .title { font-size: 18px; font-weight: 700; text-anchor: middle; }
+    .subtitle { font-size: 11px; fill: #666; text-anchor: middle; }
+    .axis { font-size: 9px; fill: #777; text-anchor: middle; font-weight: 600; }
+    .tag { font-size: 10px; font-weight: 700; text-anchor: middle; }
+    .zlvl { font-size: 8px; text-anchor: middle; fill: #333; }
+    .ctxlbl { font-size: 8px; fill: #aaa; text-anchor: middle; }
+    .panelh { font-size: 11px; font-weight: 700; }
+    .th { font-size: 8px; fill: #555; font-weight: 700; }
+    .td { font-size: 8px; }
+    .note { font-size: 8px; fill: #777; }
+  </style>
+  <rect x="0" y="0" width="1100" height="880" fill="white"/>
+  <text x="440" y="26" class="title">Garden schematic plan — grading / flat-areas plan</text>
+  <text x="440" y="44" class="subtitle">Areas to be built level, with finished levels. Datum ±0.000 = house floor = 397.00 Bpv · levels indicative, confirm on site</text>
+  <g transform="translate(70, 96)">
+    <g clip-path="url(#plotShape)"><rect x="-50" y="-10" width="900" height="720" fill="url(#majorgrid)"/></g>
+    <polygon points="0,0 794.88,0 794.88,420.84 775.98,637.38 20.7,547.38" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
+    <g class="axis"><text x="18" y="-6">1</text><text x="54" y="-6">2</text><text x="90" y="-6">3</text><text x="126" y="-6">4</text><text x="162" y="-6">5</text><text x="198" y="-6">6</text><text x="234" y="-6">7</text><text x="270" y="-6">8</text><text x="306" y="-6">9</text><text x="342" y="-6">10</text><text x="378" y="-6">11</text><text x="414" y="-6">12</text><text x="450" y="-6">13</text><text x="486" y="-6">14</text><text x="522" y="-6">15</text><text x="558" y="-6">16</text><text x="594" y="-6">17</text><text x="630" y="-6">18</text><text x="666" y="-6">19</text><text x="702" y="-6">20</text><text x="738" y="-6">21</text><text x="774" y="-6">22</text></g>
+    <g class="axis"><text x="-12" y="22">a</text><text x="-12" y="58">b</text><text x="-12" y="94">c</text><text x="-12" y="130">d</text><text x="-12" y="166">e</text><text x="-12" y="202">f</text><text x="-12" y="238">g</text><text x="-12" y="274">h</text><text x="-12" y="310">i</text><text x="-12" y="346">j</text><text x="-12" y="382">k</text><text x="-12" y="418">l</text><text x="-12" y="454">m</text><text x="-12" y="490">n</text><text x="-12" y="526">o</text><text x="-12" y="562">p</text><text x="-12" y="598">q</text><text x="-12" y="634">r</text></g>
+    <g clip-path="url(#plotShape)" fill="#f3f3f3" stroke="#d3d3d3" stroke-width="0.8">
+      <polygon points="188.64,129.24 383.04,129.24 383.04,208.44 370.44,208.44 370.44,405.54 383.04,405.54 383.04,475.74 188.64,475.74 188.64,345.24 266.04,345.24 266.04,286.74 188.64,286.74" />
+      <rect x="170.64" y="129.24" width="18" height="346.5" />
+      <rect x="188.64" y="286.74" width="77.4" height="58.5" />
+      <rect x="370.44" y="208.44" width="54" height="140.76" />
+      <rect x="171" y="72" width="18" height="57.06" />
+      <rect x="383.04" y="349.2" width="114.3" height="126.9" />
+      <rect x="497.34" y="349.2" width="129.24" height="126.9" />
+      <rect x="516.96" y="473.04" width="90" height="5.94" />
+      <rect x="495" y="363.6" width="4.68" height="16.2" />
+      <rect x="626.58" y="349.2" width="57.6" height="126.9" />
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.92 626.58,475.92 626.58,349.2 684.18,349.2 684.18,486.36 788.94,502.02 781.92,583.02 383.04,534.96" />
+      <line x1="788.94" y1="502.02" x2="781.92" y2="583.02" />
+      <rect x="759.6" y="601.2" width="14.76" height="25.38" />
+      <rect x="720" y="399.6" width="45" height="45" />
+      <ellipse cx="549" cy="277.2" rx="79.2" ry="61.2" />
+      <ellipse cx="540" cy="270" rx="50.4" ry="36" />
+      <circle cx="675" cy="118.8" r="31.5" />
+      <circle cx="675" cy="118.8" r="9" />
+      <circle cx="675" cy="118.8" r="5.76" />
+      <circle cx="234" cy="21.6" r="9" />
+      <circle cx="306" cy="27" r="9" />
+      <circle cx="378" cy="18" r="9" />
+      <circle cx="612" cy="23.4" r="9" />
+      <circle cx="684" cy="28.8" r="9" />
+      <circle cx="738" cy="21.6" r="9" />
+      <circle cx="774" cy="25.2" r="9" />
+      <circle cx="765" cy="144" r="9" />
+      <circle cx="765" cy="216" r="9" />
+      <circle cx="765" cy="288" r="9" />
+      <circle cx="765" cy="360" r="9" />
+      <circle cx="756" cy="594" r="9" />
+      <circle cx="756" cy="630" r="9" />
+      <rect x="117" y="18" width="72" height="54" />
+      <rect x="63" y="18" width="54" height="54" />
+      <rect x="216" y="18" width="34.29" height="19.62" />
+      <circle cx="90" cy="45" r="16.2" />
+      <rect x="464.04" y="18" width="108" height="72" />
+      <rect x="467.64" y="21.6" width="100.8" height="64.8" />
+      <rect x="493.2" y="45" width="50.4" height="18" />
+      <rect x="18" y="180" width="18" height="36" />
+      <rect x="18" y="234" width="18" height="36" />
+      <rect x="45" y="180" width="18" height="36" />
+      <rect x="45" y="234" width="18" height="36" />
+      <rect x="248.94" y="3.6" width="43.2" height="2.52" />
+      <rect x="15.48" y="294.48" width="2.52" height="43.2" />
+      <rect x="252" y="570.6" width="43.2" height="2.52" />
+      <rect x="3.6" y="383.4" width="93.6" height="190.8" />
+      <rect x="0" y="379.98" width="100.08" height="199.98" />
+      <circle cx="21.6" cy="396" r="9" />
+      <circle cx="72" cy="423" r="9" />
+      <circle cx="21.6" cy="468" r="9" />
+      <circle cx="72" cy="495" r="9" />
+      <circle cx="21.6" cy="540" r="9" />
+      <circle cx="72" cy="558" r="9" />
+      <rect x="27" y="432" width="46.8" height="64.8" />
+      <rect x="28.8" y="509.4" width="36" height="18" />
+      <rect x="442.8" y="208.8" width="43.2" height="140.4" />
+      <rect x="513" y="129.6" width="81" height="64.8" />
+      <rect x="10.8" y="14.4" width="46.8" height="57.6" />
+      <rect x="36" y="75.6" width="108" height="28.8" />
+      <rect x="417.6" y="18" width="36" height="72" />
+      <rect x="583.2" y="18" width="36" height="72" />
+      <polygon points="383.4,539.1 777.6,585.9 774.9,630 383.4,583.2" />
+      <rect x="741.6" y="81" width="50.4" height="297" />
+      <circle cx="203.4" cy="295.2" r="6.3" />
+      <circle cx="244.8" cy="297" r="10.8" />
+      <circle cx="250.2" cy="333" r="6.3" />
+      <rect x="192.6" y="100.8" width="190.8" height="27" />
+      <rect x="189" y="478.8" width="194.4" height="32.4" />
+      <rect x="444.6" y="320.4" width="180" height="27" />
+      <rect x="627.48" y="352.8" width="4.5" height="118.8" />
+      <rect x="192.6" y="287.64" width="70.2" height="4.5" />
+      <rect x="192.6" y="341.1" width="70.2" height="4.5" />
+      <rect x="565.2" y="329.4" width="32.4" height="9" />
+      <rect x="687.6" y="39.6" width="72" height="68.4" />
+      <circle cx="178.2" cy="457.74" r="4.32" />
+      <circle cx="166.86" cy="450" r="4.32" />
+      <circle cx="162.36" cy="437.04" r="4.32" />
+      <circle cx="151.02" cy="429.48" r="4.32" />
+      <circle cx="146.52" cy="416.52" r="4.32" />
+      <circle cx="135.18" cy="408.96" r="4.32" />
+      <circle cx="132.12" cy="395.46" r="4.32" />
+      <circle cx="121.86" cy="386.28" r="4.32" />
+      <circle cx="119.34" cy="372.96" r="4.32" />
+      <circle cx="109.08" cy="363.78" r="4.32" />
+      <circle cx="106.56" cy="350.46" r="4.32" />
+      <circle cx="98.46" cy="339.84" r="4.32" />
+      <circle cx="98.46" cy="326.16" r="4.32" />
+      <circle cx="90.18" cy="315.36" r="4.32" />
+      <circle cx="90.18" cy="301.68" r="4.32" />
+      <circle cx="450.36" cy="261.54" r="4.32" />
+      <circle cx="449.64" cy="247.86" r="4.32" />
+      <circle cx="457.2" cy="236.7" r="4.32" />
+      <circle cx="456.66" cy="223.02" r="4.32" />
+      <circle cx="464.58" cy="211.86" r="4.32" />
+      <circle cx="464.76" cy="198.18" r="4.32" />
+      <circle cx="473.04" cy="187.38" r="4.32" />
+      <circle cx="473.22" cy="173.7" r="4.32" />
+      <circle cx="482.22" cy="163.26" r="4.32" />
+      <circle cx="483.12" cy="149.58" r="4.32" />
+      <circle cx="491.94" cy="139.32" r="4.32" />
+      <circle cx="495" cy="126.18" r="4.32" />
+      <circle cx="505.98" cy="118.26" r="4.32" />
+      <circle cx="584.46" cy="88.56" r="4.32" />
+      <circle cx="598.14" cy="87.84" r="4.32" />
+      <circle cx="609.48" cy="95.4" r="4.32" />
+      <circle cx="623.16" cy="95.04" r="4.32" />
+      <circle cx="633.78" cy="103.5" r="4.32" />
+      <circle cx="647.46" cy="103.68" r="4.32" />
+      <circle cx="674.82" cy="152.1" r="4.32" />
+      <circle cx="673.56" cy="165.78" r="4.32" />
+      <circle cx="664.56" cy="175.86" r="4.32" />
+      <circle cx="663.3" cy="189.54" r="4.32" />
+      <circle cx="653.58" cy="199.08" r="4.32" />
+      <circle cx="650.7" cy="212.4" r="4.32" />
+      <circle cx="640.26" cy="221.4" r="4.32" />
+      <circle cx="637.56" cy="234.72" r="4.32" />
+      <circle cx="627.12" cy="243.72" r="4.32" />
+      <circle cx="624.24" cy="257.04" r="4.32" />
+      <circle cx="613.98" cy="266.04" r="4.32" />
+      <circle cx="612" cy="279.36" r="4.32" />
+      <circle cx="603.36" cy="289.98" r="4.32" />
+      <circle cx="602.82" cy="303.66" r="4.32" />
+      <circle cx="594" cy="313.92" r="4.32" />
+      <circle cx="592.56" cy="327.6" r="4.32" />
+      <circle cx="414" cy="545.4" r="3.24" />
+      <circle cx="522" cy="558" r="3.24" />
+      <circle cx="630" cy="570.6" r="3.24" />
+      <circle cx="738" cy="583.2" r="3.24" />
+      <circle cx="163.8" cy="81" r="3.24" />
+      <circle cx="163.8" cy="117" r="3.24" />
+      <circle cx="435.6" cy="394.2" r="3.24" />
+      <circle cx="745.2" cy="604.8" r="3.96" />
+      <circle cx="745.2" cy="604.8" r="1.26" />
+      <circle cx="608.4" cy="244.8" r="3.96" />
+      <circle cx="608.4" cy="244.8" r="1.26" />
+      <circle cx="450" cy="113.4" r="3.96" />
+      <circle cx="450" cy="113.4" r="1.26" />
+    </g>
+    <g clip-path="url(#plotShape)">
+      <rect x="464.04" y="18" width="108" height="72" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="467.64" y="21.6" width="100.8" height="64.8" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="493.2" y="45" width="50.4" height="18" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="117" y="18" width="72" height="54" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="63" y="18" width="54" height="54" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="27" y="432" width="46.8" height="64.8" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="497.34" y="349.2" width="129.24" height="126.9" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
+      <rect x="516.96" y="473.04" width="90" height="5.94" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
+      <rect x="495" y="363.6" width="4.68" height="16.2" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
+      <rect x="626.58" y="349.2" width="57.6" height="126.9" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="370.44" y="208.44" width="54" height="140.76" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
+      <rect x="170.64" y="129.24" width="18" height="346.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
+      <rect x="188.64" y="286.74" width="77.4" height="58.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.92 626.58,475.92 626.58,349.2 684.18,349.2 684.18,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1.6" />
+      <circle cx="675" cy="118.8" r="31.5" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <circle cx="675" cy="118.8" r="9" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <circle cx="675" cy="118.8" r="5.76" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <rect x="18" y="180" width="18" height="36" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <rect x="18" y="234" width="18" height="36" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <rect x="45" y="180" width="18" height="36" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <rect x="45" y="234" width="18" height="36" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <rect x="28.8" y="509.4" width="36" height="18" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <rect x="759.6" y="601.2" width="14.76" height="25.38" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="216" y="18" width="34.29" height="19.62" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+    </g>
+    <circle cx="518.04" cy="54" r="8" fill="#e08a1e"/>
+    <text x="518.04" y="57.2" class="tag" fill="#fff">1</text>
+    <text x="518.04" y="72" class="zlvl">−1.25</text>
+    <circle cx="153" cy="45" r="8" fill="#e08a1e"/>
+    <text x="153" y="48.2" class="tag" fill="#fff">2</text>
+    <text x="153" y="63" class="zlvl">−0.19</text>
+    <circle cx="90" cy="45" r="8" fill="#e08a1e"/>
+    <text x="90" y="48.2" class="tag" fill="#fff">3</text>
+    <text x="90" y="63" class="zlvl">+0.02</text>
+    <circle cx="50.4" cy="464.4" r="8" fill="#e08a1e"/>
+    <text x="50.4" y="467.59999999999997" class="tag" fill="#fff">4</text>
+    <text x="50.4" y="482.4" class="zlvl">+0.83</text>
+    <circle cx="440.19" cy="412.65" r="8" fill="#e08a1e"/>
+    <text x="440.19" y="415.84999999999997" class="tag" fill="#fff">5</text>
+    <text x="440.19" y="430.65" class="zlvl">−0.49</text>
+    <circle cx="561.96" cy="412.65" r="8" fill="#c25e12"/>
+    <text x="561.96" y="415.84999999999997" class="tag" fill="#fff">6</text>
+    <text x="561.96" y="430.65" class="zlvl">−0.50</text>
+    <circle cx="655.38" cy="412.65" r="8" fill="#e08a1e"/>
+    <text x="655.38" y="415.84999999999997" class="tag" fill="#fff">7</text>
+    <text x="655.38" y="430.65" class="zlvl">−1.01</text>
+    <circle cx="397.44" cy="278.82" r="8" fill="#5a9a3c"/>
+    <text x="397.44" y="282.02" class="tag" fill="#fff">8</text>
+    <text x="397.44" y="296.82" class="zlvl">+0.05</text>
+    <circle cx="179.64" cy="302.49" r="8" fill="#5a9a3c"/>
+    <text x="179.64" y="305.69" class="tag" fill="#fff">9</text>
+    <text x="179.64" y="320.49" class="zlvl">+0.05</text>
+    <circle cx="585.99" cy="466.11" r="8" fill="#2f6fae"/>
+    <text x="585.99" y="469.31" class="tag" fill="#fff">10</text>
+    <text x="585.99" y="484.11" class="zlvl">fall</text>
+    <circle cx="675" cy="118.8" r="8" fill="#bf9000"/>
+    <text x="675" y="122" class="tag" fill="#fff">11</text>
+    <text x="675" y="136.8" class="zlvl">−1.51</text>
+    <circle cx="27" cy="198" r="8" fill="#bf9000"/>
+    <text x="27" y="201.2" class="tag" fill="#fff">12</text>
+    <text x="27" y="216" class="zlvl">+0.44</text>
+    <circle cx="46.8" cy="518.4" r="8" fill="#bf9000"/>
+    <text x="46.8" y="521.6" class="tag" fill="#fff">13</text>
+    <text x="46.8" y="536.4" class="zlvl">+0.98</text>
+    <circle cx="766.98" cy="613.89" r="8" fill="#e08a1e"/>
+    <text x="766.98" y="617.09" class="tag" fill="#fff">14</text>
+    <text x="766.98" y="631.89" class="zlvl">−0.84</text>
+    <circle cx="233.15" cy="27.81" r="8" fill="#e08a1e"/>
+    <text x="233.15" y="31.009999999999998" class="tag" fill="#fff">15</text>
+    <text x="233.15" y="45.81" class="zlvl">−0.36</text>
+  </g>
+  <g transform="translate(838, 92)">
+    <circle cx="0" cy="0" r="24" fill="white" stroke="#555" stroke-width="1.3"/>
+    <path d="M 0 -19 L 5 3 L 0 -5 L -5 3 Z" fill="#2a2a2a"/>
+    <path d="M 0 5 L 5 -3 L 0 19 L -5 -3 Z" fill="#999"/>
+    <text x="0" y="-28" font-size="12" font-weight="700" text-anchor="middle">N</text>
+  </g>
+  <g transform="translate(882, 150)">
+    <text x="0" y="0" class="panelh">LEGEND</text>
+    <rect x="0" y="8" width="12" height="10" fill="#ffe0b2" stroke="#e08a1e" stroke-width="1"/>
+    <text x="18" y="16" class="td">Level pad — cut to level (structure on grade)</text>
+    <rect x="0" y="23" width="12" height="10" fill="#f6c9a0" stroke="#c25e12" stroke-width="1"/>
+    <text x="18" y="31" class="td">Graded apron — level slab (cut &amp; fill)</text>
+    <rect x="0" y="38" width="12" height="10" fill="#d9ead3" stroke="#5a9a3c" stroke-width="1"/>
+    <text x="18" y="46" class="td">Level deck at +0.050 — on posts, ground not graded</text>
+    <rect x="0" y="53" width="12" height="10" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1"/>
+    <text x="18" y="61" class="td">Hard surface — graded to fall (~2% to gate)</text>
+    <rect x="0" y="68" width="12" height="10" fill="#fff2cc" stroke="#bf9000" stroke-width="1"/>
+    <text x="18" y="76" class="td">Level soft/utility area — trim to level</text>
+    <text x="0" y="97" class="panelh">LEVELS SCHEDULE</text>
+    <text x="0" y="110" class="th">#  area</text><text x="118" y="110" class="th" text-anchor="end">±0.000</text><text x="158" y="110" class="th" text-anchor="end">Bpv</text><text x="196" y="110" class="th" text-anchor="end">cut m</text>
+    <line x1="0" y1="114" x2="196" y2="114" stroke="#bbb" stroke-width="0.8"/>
+    <text x="0" y="126" class="td">1  Pergola + grill</text><text x="118" y="126" class="td" text-anchor="end">−1.25</text><text x="158" y="126" class="td" text-anchor="end">395.75</text><text x="196" y="126" class="td" text-anchor="end">0.42</text>
+    <text x="0" y="138" class="td">2  Sauna</text><text x="118" y="138" class="td" text-anchor="end">−0.19</text><text x="158" y="138" class="td" text-anchor="end">396.81</text><text x="196" y="138" class="td" text-anchor="end">0.29</text>
+    <text x="0" y="150" class="td">3  Hot-tub shelter</text><text x="118" y="150" class="td" text-anchor="end">+0.02</text><text x="158" y="150" class="td" text-anchor="end">397.01</text><text x="196" y="150" class="td" text-anchor="end">0.24</text>
+    <text x="0" y="162" class="td">4  Greenhouse</text><text x="118" y="162" class="td" text-anchor="end">+0.83</text><text x="158" y="162" class="td" text-anchor="end">397.82</text><text x="196" y="162" class="td" text-anchor="end">0.24</text>
+    <text x="0" y="174" class="td">5  Carport</text><text x="118" y="174" class="td" text-anchor="end">−0.49</text><text x="158" y="174" class="td" text-anchor="end">396.51</text><text x="196" y="174" class="td" text-anchor="end">0.53</text>
+    <text x="0" y="186" class="td">6  Garage slab/apron</text><text x="118" y="186" class="td" text-anchor="end">−0.50</text><text x="158" y="186" class="td" text-anchor="end">396.50</text><text x="196" y="186" class="td" text-anchor="end">0.22/0.35f</text>
+    <text x="0" y="198" class="td">7  Parking</text><text x="118" y="198" class="td" text-anchor="end">−1.01</text><text x="158" y="198" class="td" text-anchor="end">395.99</text><text x="196" y="198" class="td" text-anchor="end">0.37</text>
+    <text x="0" y="210" class="td">8  Terrace E</text><text x="118" y="210" class="td" text-anchor="end">+0.05</text><text x="158" y="210" class="td" text-anchor="end">397.05</text><text x="196" y="210" class="td" text-anchor="end">posts</text>
+    <text x="0" y="222" class="td">9  Terrace W</text><text x="118" y="222" class="td" text-anchor="end">+0.05</text><text x="158" y="222" class="td" text-anchor="end">397.05</text><text x="196" y="222" class="td" text-anchor="end">posts</text>
+    <text x="0" y="234" class="td">10  Driveway</text><text x="118" y="234" class="td" text-anchor="end">—</text><text x="158" y="234" class="td" text-anchor="end">—</text><text x="196" y="234" class="td" text-anchor="end">Δ1.18</text>
+    <text x="0" y="246" class="td">11  Fire-pit seating</text><text x="118" y="246" class="td" text-anchor="end">−1.51</text><text x="158" y="246" class="td" text-anchor="end">395.49</text><text x="196" y="246" class="td" text-anchor="end">0.28</text>
+    <text x="0" y="258" class="td">12  Raised beds (4×)</text><text x="118" y="258" class="td" text-anchor="end">+0.44</text><text x="158" y="258" class="td" text-anchor="end">397.44</text><text x="196" y="258" class="td" text-anchor="end">0.27</text>
+    <text x="0" y="270" class="td">13  Compost</text><text x="118" y="270" class="td" text-anchor="end">+0.98</text><text x="158" y="270" class="td" text-anchor="end">397.98</text><text x="196" y="270" class="td" text-anchor="end">0.13</text>
+    <text x="0" y="282" class="td">14  Bin store</text><text x="118" y="282" class="td" text-anchor="end">−0.84</text><text x="158" y="282" class="td" text-anchor="end">396.16</text><text x="196" y="282" class="td" text-anchor="end">0.08</text>
+    <text x="0" y="294" class="td">15  Tool store</text><text x="118" y="294" class="td" text-anchor="end">−0.36</text><text x="158" y="294" class="td" text-anchor="end">396.64</text><text x="196" y="294" class="td" text-anchor="end">0.13</text>
+    <text x="0" y="314" class="note">±0.000 = house FF = 397.00 Bpv.</text>
+    <text x="0" y="325" class="note">Pads cut to lowest corner (no fill</text>
+    <text x="0" y="335" class="note">under structures); cut m = max dig.</text>
+    <text x="0" y="346" class="note">Driveway graded to fall, not flat.</text>
+    <text x="0" y="357" class="note">Decks are level on posts over grade.</text>
+  </g>
+</svg>

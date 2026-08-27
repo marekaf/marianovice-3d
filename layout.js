@@ -114,6 +114,15 @@ const GARDEN = {
       ]
     },
     {
+      id: "binStore",
+      name: "Bin store (plastic box) 1.41 × 0.82 m",
+      short: "Bin store",
+      parts: [
+        { kind: "rect", x: 42.2, y: 33.4, w: 0.82, d: 1.41, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
+        { kind: "text", x: 41.9, y: 34.2, text: "bins", cls: "lbl-sm", fill: "#333", anchor: "end" }
+      ]
+    },
+    {
       id: "rainTank",
       name: "Rainwater tank 12 m³ (underground, 2.5 × 2.5 m)",
       parts: [
@@ -145,9 +154,10 @@ const GARDEN = {
       id: "firePit",
       name: "Fire pit + seating",
       parts: [
-        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.78, fill: "#5a4030", opacity: 0.85, stroke: "#3a2818", sw: 1 },
-        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.5, fill: "#ff7733", opacity: 0.7 },
-        { kind: "text", x: 37.5, y: 8.1, text: "fire pit", cls: "lbl-sm", fill: "#5a4828" }
+        { kind: "circle", cx: 37.5, cy: 6.6, r: 1.75, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5,4" },
+        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.5, fill: "#5a4030", opacity: 0.85, stroke: "#3a2818", sw: 1 },
+        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.32, fill: "#ff7733", opacity: 0.7 },
+        { kind: "text", x: 37.5, y: 9.0, text: "fire pit + seating ø3.5 m", cls: "lbl-sm", fill: "#5a4828" }
       ]
     },
     {
@@ -193,6 +203,15 @@ const GARDEN = {
         { kind: "rect", x: 3.5, y: 1, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4,3" },
         { kind: "text", x: 5, y: 4.67, text: "shelter", cls: "lbl-sm", fill: "#5a4828" },
         { kind: "text", x: 5, y: 5.4, text: "3 × 3 m", cls: "dim" }
+      ]
+    },
+    {
+      id: "toolStore",
+      name: "Garden tool store (plastic box) 1.905 × 1.09 m",
+      short: "Tool store",
+      parts: [
+        { kind: "rect", x: 12.0, y: 1.0, w: 1.905, d: 1.09, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
+        { kind: "text", x: 12.95, y: 1.68, text: "tools", cls: "lbl-sm", fill: "#fff" }
       ]
     },
     {
@@ -298,6 +317,24 @@ const GARDEN = {
         { kind: "circle", cx: 4, cy: 31, r: 0.5, fill: "#5a8a5a" },
         { kind: "text", x: 2.78, y: 27.22, text: "orchard", cls: "lbl", rotate: -90 },
         { kind: "text", x: 6.39, y: 27.22, text: "~5.5 × 11 m", cls: "dim", anchor: "start" }
+      ]
+    },
+    {
+      id: "greenhouse",
+      name: "Greenhouse 2.6 × 3.6 m",
+      short: "Greenhouse",
+      parts: [
+        { kind: "rect", x: 1.5, y: 24.0, w: 2.6, d: 3.6, clipToPlot: true, fill: "#cfe8ef", opacity: 0.8, stroke: "#5f93a8", sw: 1.2 },
+        { kind: "text", x: 2.8, y: 25.8, text: "greenhouse", cls: "lbl-sm", fill: "#245a6a", rotate: -90 }
+      ]
+    },
+    {
+      id: "compost",
+      name: "Compost bin 2.0 × 1.0 m (open, slatted)",
+      short: "Compost",
+      parts: [
+        { kind: "rect", x: 1.6, y: 28.3, w: 2.0, d: 1.0, clipToPlot: true, fill: "#6a4a2a", opacity: 0.6, stroke: "#4a3218", sw: 1 },
+        { kind: "text", x: 2.6, y: 28.95, text: "compost", cls: "lbl-sm", fill: "#fff" }
       ]
     },
     {
