@@ -1051,9 +1051,9 @@ const PG = rectOf('pergola');
 addLamellarPergola(PG.x, PG.y, PG.w, PG.d, 2.5, 0x8a6840);
 
 // Pergola: paved floor + table for 8-10
-addTerrainPlatform([[25.48, 1.2], [32.08, 1.2], [32.08, 5.8], [25.48, 5.8]], 0.08, 0xffffff, { map: paverTex });
+addTerrainPlatform([[25.98, 1.2], [31.58, 1.2], [31.58, 4.8], [25.98, 4.8]], 0.08, 0xffffff, { map: paverTex });
 {
-  const tx = 28.8, tz = 3.5, baseY = terrainHeight(tx, tz) + 0.08;
+  const tx = 28.8, tz = 3.0, baseY = terrainHeight(tx, tz) + 0.08;
   const wood = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.5 });
   const top = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.07, 1.0), wood);
   top.position.set(tx, baseY + 0.75, tz);
@@ -1353,7 +1353,7 @@ for (let i = 0; i < 35; i++) {
   const z = 0.3 + Math.random() * 2.2;
   // Skip sauna, shelter and pergola footprints
   if (x >= 3.5 && x <= 10.5 && z >= 1 && z <= 4) continue;
-  if (x >= 25.28 && x <= 32.28 && z >= 1 && z <= 6) continue;
+  if (x >= 25.78 && x <= 31.78 && z >= 1 && z <= 5) continue;
   const baseY = terrainHeight(x, z);
   const sz = 0.4 + Math.random() * 0.3;
   const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
@@ -1835,8 +1835,8 @@ const bushPositions = [
 bushPositions.forEach(([x, z, s, c]) => addBush(x, z, s, c));
 
 // Conifers in north strip (mixed with deciduous, NOT in sauna/pergola)
-addConifer(11.5, 1.4, 5);   // open between sauna (x<10.5) and pergola (x>25.28)
-addConifer(35.5, 1.6, 4.5); // open between pergola (x<32.28) and east fence
+addConifer(11.5, 1.4, 5);   // open between sauna (x<10.5) and pergola (x>25.78)
+addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
 
 // ───────────────────────── PLANTING ZONES (Flera review) — vegetation scattered per meta.plant ─────────────────────────
 {
@@ -1944,7 +1944,7 @@ for (let i = 0; i < 80; i++) {
   // Avoid buildings (house, garage, etc.) — rough check
   if (tx > 9 && tx < 22 && tz > 5 && tz < 27) continue; // house
   if (tx > 21 && tx < 35 && tz > 19 && tz < 27) continue; // carport+garáž
-  if (tx > 25 && tx < 32 && tz > 0 && tz < 7) continue; // pergola
+  if (tx > 25 && tx < 32 && tz > 0 && tz < 5) continue; // pergola
   if (tx > 0 && tx < 6 && tz > 18 && tz < 35) continue; // orchard
   if (tx > 28 && tx < 35 && tz > 7 && tz < 13) continue; // water
   grassPositions.push([tx, tz]);
@@ -2222,7 +2222,7 @@ const tourPath = [
   { p: [8.5, 6],     la: [5, 2.5],     dur: 3,   label: 'Sauna + hot tub' },
   { p: [12, 4.5],    la: [17, 1.5],    dur: 2.5, label: 'Perennials by north fence' },
   { p: [19, 4.5],    la: [27, 2.5],    dur: 2.5, label: 'Approaching pergola' },
-  { p: [24, 6.5],    la: [28.5, 3.5],  dur: 3,   label: 'At pergola + grill' },
+  { p: [24, 6.5],    la: [28.5, 3.0],  dur: 3,   label: 'At pergola + grill' },
   { p: [30, 7.5],    la: [37.5, 6.6],  dur: 2.5, label: 'Toward fire pit' },
   { p: [34.5, 9],    la: [37.5, 6.6],  dur: 3,   label: 'At fire pit' },
   { p: [38, 12],     la: [42.3, 14],   dur: 2.5, label: 'East trees (privacy)' },
