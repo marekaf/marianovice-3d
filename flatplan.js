@@ -14,6 +14,7 @@ const CAT = {
   pad:   { fill: "#ffe0b2", stroke: "#e08a1e", label: "Level pad — cut to level (structure on grade)" },
   apron: { fill: "#f6c9a0", stroke: "#c25e12", label: "Graded apron — level slab (cut & fill)" },
   deck:  { fill: "#d9ead3", stroke: "#5a9a3c", label: "Level deck at +0.050 — on posts, ground not graded" },
+  fill:  { fill: "#e6cfa6", stroke: "#b0801f", label: "Level pad on soil fill — excavated soil placed under" },
   fall:  { fill: "#cfe2f3", stroke: "#2f6fae", label: "Hard surface — graded to fall (~2% to gate)" },
   soft:  { fill: "#fff2cc", stroke: "#bf9000", label: "Level soft/utility area — trim to level" },
 };
@@ -25,10 +26,10 @@ const ZONES = [
   { id: "sauna",        label: "Sauna",             cat: "pad" },
   { id: "saunaShelter", label: "Hot-tub shelter",   cat: "pad" },
   { id: "greenhouse",   label: "Greenhouse",        cat: "pad" },
-  { id: "carport",      label: "Carport",           cat: "pad" },
+  { id: "carport",      label: "Carport slab",      cat: "apron", level: 1.965 },
   { id: "garage",       label: "Garage slab/apron", cat: "apron", level: 1.965 },
   { id: "parking",      label: "Parking",           cat: "pad" },
-  { id: "eastTerrace",  label: "Terrace E",         cat: "deck",  level: 2.515 },
+  { id: "eastTerrace",  label: "Terrace E (fill)",  cat: "fill",  level: 2.44 },
   { id: "westTerrace",  label: "Terrace W",         cat: "deck",  level: 2.515 },
   { id: "driveway",     label: "Driveway",          cat: "fall" },
   { id: "firePit",      label: "Fire-pit seating",  cat: "soft" },
@@ -187,7 +188,7 @@ function renderFlatPlanSVG(garden) {
   out.push(`  <g transform="translate(882, 150)">`);
   out.push(`    <text x="0" y="0" class="panelh">LEGEND</text>`);
   let ly = 16;
-  for (const key of ["pad", "apron", "deck", "fall", "soft"]) {
+  for (const key of ["pad", "apron", "deck", "fill", "fall", "soft"]) {
     const c = CAT[key];
     const box = key === "fall" ? `fill="url(#fallhatch)"` : `fill="${c.fill}"`;
     out.push(`    <rect x="0" y="${ly - 8}" width="12" height="10" ${box} stroke="${c.stroke}" stroke-width="1"/>`);
@@ -207,6 +208,7 @@ function renderFlatPlanSVG(garden) {
     let cut;
     if (z.cat === "deck") cut = "posts";
     else if (z.cat === "fall") cut = "Δ" + info.delta.toFixed(2);
+    else if (z.cat === "fill") cut = info.fill.toFixed(2) + "f";
     else if (info.fill > 0.02 && z.cat === "apron") cut = `${info.cut.toFixed(2)}/${info.fill.toFixed(2)}f`;
     else cut = info.cut.toFixed(2);
     out.push(`    <text x="0" y="${ly}" class="td">${i + 1}  ${esc(z.label)}</text><text x="118" y="${ly}" class="td" text-anchor="end">${esc(rel)}</text><text x="158" y="${ly}" class="td" text-anchor="end">${esc(bpv)}</text><text x="196" y="${ly}" class="td" text-anchor="end">${esc(cut)}</text>`);

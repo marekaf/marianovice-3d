@@ -305,8 +305,10 @@ const cutRects = [
   { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
   { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
   { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965, blend: 3.5 }, // level apron in front of the garage door
+  { x0: 21.28, z0: 19.4, x1: 27.63, z1: 26.45, level: 1.965, blend: 2.0 },  // flat carport slab at garage floor level (−0.50 m)
   { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
   { x0: 10.48, z0: 26.43, x1: 21.28, z1: 26.93, level: 2.345, blend: 0.6 }, // drip strip — south wall
+  { x0: 15.7, z0: 26.43, x1: 19.7, z1: 27.5, level: 2.345, blend: 0.6 },    // 1 m flat gravel bed for the heat-pump unit (S wall)
   { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
 ];
 // Pond basin — smooth bowl carved to the pond's downhill edge level
@@ -320,9 +322,20 @@ const PBOWL = (() => {
 })();
 const cutSmoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
 const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
+// Fill pads — excess site soil placed flat under a structure, sloping back to natural grade outside.
+// Processed BEFORE the cuts so an adjacent cut (the carport slab) still wins at the shared edge.
+const fillPads = [
+  { x0: 20.58, z0: 11.58, x1: 23.58, z1: 19.4, level: 2.44, blend: 2.6 }, // flat soil under the E terrace, slopes into the garden
+];
 function gradedHeight(x, z) {
   const base = basePlaneHeight(x, z);
   let h = base;
+  for (const p of fillPads) {
+    const blend = p.blend ?? CUT_BLEND;
+    const d = cutRectDist(p, x, z);
+    if (d >= blend) continue;
+    h = Math.max(h, p.level + (base - p.level) * cutSmoothstep(d / blend));
+  }
   for (const r of cutRects) {
     const blend = r.blend ?? CUT_BLEND;
     const d = cutRectDist(r, x, z);
@@ -1370,8 +1383,20 @@ scene.add(driveway);
 // Gravel drip strips (okapový chodníček) — 0.5 m kačírek draped on the graded terrain,
 // following the slope down to the low east side; laps onto the marmolit sokl
 {
-  for (const [x0, z0, x1, z1] of [[10.48, 6.68, 21.28, 7.18], [10.48, 26.43, 21.28, 26.93], [21.28, 7.18, 21.78, 11.58]]) {
+  for (const [x0, z0, x1, z1] of [[10.48, 6.68, 21.28, 7.18], [10.48, 26.43, 21.28, 26.93], [21.28, 7.18, 21.78, 11.58], [15.7, 26.43, 19.7, 27.5]]) {
     addTerrainPlatform([[x0, z0], [x1, z0], [x1, z1], [x0, z1]], 0.04, 0xb8b0a2);
+  }
+  // Heat pump (tepelné čerpadlo) outdoor unit on the 1 m gravel bed, S wall between bathroom & technical room
+  {
+    const hx = 17.7, hz = 27.0, by = terrainHeight(hx, hz);
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.08, 0.6), new THREE.MeshStandardMaterial({ color: 0x8d8a84, roughness: 0.95 }));
+    pad.position.set(hx, by + 0.04, hz); pad.receiveShadow = true; scene.add(pad);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.75, 0.45), new THREE.MeshStandardMaterial({ color: 0xcdd0d3, roughness: 0.5, metalness: 0.3 }));
+    body.position.set(hx, by + 0.08 + 0.375, hz); body.castShadow = true; scene.add(body);
+    // Fan grille (dark disc on the south face)
+    const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.04, 16), new THREE.MeshStandardMaterial({ color: 0x2a2c2e, roughness: 0.7 }));
+    fan.rotation.x = Math.PI / 2;
+    fan.position.set(hx, by + 0.08 + 0.42, hz + 0.24); scene.add(fan);
   }
   // Marmolit sokl band — level top above floor, bottom follows the dug grade under the gravel
   const soklMat = new THREE.MeshStandardMaterial({ color: 0x453f38, roughness: 0.95 }); // marmolit MAR2 M092, HBW 6
@@ -1708,12 +1733,13 @@ const waterNormal = (() => {
     g.position.set(x, sillY + h / 2, wallZ + dir * 0.05);
     scene.add(g);
   };
-  // East notch: kitchen window 2300×1350 (sill 0.9) north, HS portal 5160×2270 to the floor — both clear of the carport line z<19.4
-  winX(EN[0], 1, 12.9, 2.3, 1.35, ty + 0.9);
-  winX(EN[0], 1, 16.78, 5.16, 2.27, ty + 0.05);
+  // East notch: kitchen window 2300×1350 north, HS portal 5160×2270 to the floor — both clear of the carport line z<19.4.
+  // FFL = ty (±0.000): portal sill on the floor, kitchen sill raised so its head shares the portal lintel (ty+2.27).
+  winX(EN[0], 1, 12.9, 2.3, 1.35, ty + 0.92);
+  winX(EN[0], 1, 16.78, 5.16, 2.27, ty);
   // HS2 portal split in the middle — only the northern half is the opening sash
   const hsMull = new THREE.Mesh(new THREE.BoxGeometry(0.11, 2.27, 0.12), frameA);
-  hsMull.position.set(EN[0] + 0.02, ty + 0.05 + 2.27 / 2, 16.78);
+  hsMull.position.set(EN[0] + 0.02, ty + 2.27 / 2, 16.78);
   scene.add(hsMull);
   const hsHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.04), frameA);
   hsHandle.position.set(EN[0] + 0.1, ty + 1.05, 16.4);
@@ -1736,12 +1762,21 @@ const waterNormal = (() => {
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 1.42), frameMat);
   d2.position.set(HB[2] + 0.03, ty + 1.075, 22);
   scene.add(d2);
-  // Entry step — from terrain up to the door bottom
-  const stepH = Math.max(0.12, ty - terrainHeight(HB[2] + 0.2, 22));
-  const step = new THREE.Mesh(new THREE.BoxGeometry(0.4, stepH, 1.5), new THREE.MeshStandardMaterial({ color: 0x9a9a94, roughness: 0.9 }));
-  step.position.set(HB[2] + 0.2, ty - stepH / 2, 22);
-  step.receiveShadow = true;
-  scene.add(step);
+  // Entry steps — door threshold is at FFL (±0.000); the carport slab is 0.5 m lower, so drop in
+  // two nested treads. Each tread rests on the slab (its box runs down to the carport level).
+  const carportY = terrainHeight(HB[2] + 0.9, 22);   // flat carport slab (−0.50)
+  const stepMat = new THREE.MeshStandardMaterial({ color: 0x9a9a94, roughness: 0.9 });
+  const treads = [
+    { x0: HB[2], x1: HB[2] + 0.32, top: ty },              // upper tread, flush with the threshold
+    { x0: HB[2] + 0.32, x1: HB[2] + 0.66, top: (ty + carportY) / 2 }, // lower tread, half-way down
+  ];
+  for (const tr of treads) {
+    const w = tr.x1 - tr.x0, h = Math.max(0.1, tr.top - carportY);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, 1.5), stepMat);
+    st.position.set((tr.x0 + tr.x1) / 2, tr.top - h / 2, 22);
+    st.receiveShadow = true; st.castShadow = true;
+    scene.add(st);
+  }
 }
 
 // ───────────────────────── CHIMNEY (inside house footprint, NOT in atrium, south side) ─────────────────────────
@@ -2145,22 +2180,49 @@ addFenceSegment(gateB[0], gateB[1], eL2[0], eL2[1]);  // east lower 2 (after gat
 addFenceSegment(pSE[0], pSE[1], pSW[0], pSW[1]);      // south
 addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);      // west
 
-// Gate (open indication) on terrain
-const gateCenterX = (gateT[0] + gateB[0]) / 2;
-const gateCenterZ = (gateT[1] + gateB[1]) / 2;
-const gateBaseY = terrainHeight(gateCenterX, gateCenterZ);
-const gate1 = new THREE.Mesh(
-  new THREE.BoxGeometry(0.08, 1.5, 2.2),
-  new THREE.MeshStandardMaterial({ color: 0x3a3a3a })
-);
-gate1.position.set(gateCenterX - 0.6, gateBaseY + 0.75, gateCenterZ - 1);
-gate1.rotation.y = -0.3;
-scene.add(gate1);
-const gate2 = gate1.clone();
-// Mirrored leaf stays inside the fence line — both leaves open inward
-gate2.position.set(gateCenterX - 0.6, gateBaseY + 0.75, gateCenterZ + 1);
-gate2.rotation.y = 0.3;
-scene.add(gate2);
+// Entrance = posuvná brána (sliding gate, ~3.5 m) + 1 m branka (pedestrian gate), both shown OPEN.
+// Opening runs gateT (north) → gateB (south); interior is west, so the inward normal points −x.
+{
+  const gL = Math.hypot(gateB[0] - gateT[0], gateB[1] - gateT[1]);
+  const ux = (gateB[0] - gateT[0]) / gL, uz = (gateB[1] - gateT[1]) / gL;   // along the opening
+  const nx = -uz, nz = ux;                                                   // inward normal (−x into the plot)
+  const barMat = new THREE.MeshStandardMaterial({ color: 0x33343a, roughness: 0.5, metalness: 0.45 });
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 });
+  // Framed leaf: rails + vertical pickets, centred at origin, length along local +X, thin in Z.
+  const makeLeaf = (len, h) => {
+    const g = new THREE.Group();
+    for (const yy of [h / 2 - 0.05, -h / 2 + 0.05]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.08, 0.05), barMat);
+      rail.position.set(0, yy, 0); g.add(rail);
+    }
+    const nb = Math.max(4, Math.round(len / 0.14));
+    for (let i = 0; i <= nb; i++) {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.025, h - 0.12, 0.025), barMat);
+      bar.position.set(-len / 2 + len * i / nb, 0, 0); g.add(bar);
+    }
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    return g;
+  };
+  const placeLeaf = (cx, cz, len, h, dx, dz) => {
+    const leaf = makeLeaf(len, h);
+    leaf.position.set(cx, terrainHeight(cx, cz) + h / 2, cz);
+    leaf.rotation.y = Math.atan2(-dz, dx);
+    scene.add(leaf);
+  };
+  // Sliding gate retracted (open): parked along the fence just north of the opening, on its track inside the line
+  const slideLen = 3.5, slideH = 1.5;
+  placeLeaf(gateT[0] - ux * (slideLen / 2 + 0.15) + nx * 0.12,
+            gateT[1] - uz * (slideLen / 2 + 0.15) + nz * 0.12, slideLen, slideH, ux, uz);
+  // Branka (1 m) hinged at the south jamb, swung ~90° inward (open)
+  const brankaLen = 1.0, brankaH = 1.4;
+  placeLeaf(gateB[0] + nx * (brankaLen / 2), gateB[1] + nz * (brankaLen / 2), brankaLen, brankaH, nx, nz);
+  // Gate posts at both jambs
+  for (const [gx, gz] of [gateT, gateB]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.75, 0.14), postMat);
+    post.position.set(gx, terrainHeight(gx, gz) + 0.875, gz); post.castShadow = true;
+    scene.add(post);
+  }
+}
 
 // ───────────────────────── CAMERA PRESETS ─────────────────────────
 const targetCenter = new THREE.Vector3(22, 0, 17);
@@ -2193,6 +2255,19 @@ window.setPreset = function(name) {
   controls.update();
 };
 setPreset('iso');
+// Deep-link a view via URL hash: #east / #south / … or #cam=px,py,pz,tx,ty,tz for a custom camera
+function applyHashView() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (!h) return;
+  if (h.startsWith('cam=')) {
+    const n = h.slice(4).split(',').map(Number);
+    if (n.length === 6 && n.every(v => !isNaN(v))) {
+      camera.position.set(n[0], n[1], n[2]); controls.target.set(n[3], n[4], n[5]); controls.update();
+    }
+  } else { setPreset(h); }
+}
+applyHashView();
+window.addEventListener('hashchange', applyHashView);
 
 // ───────────────────────── TOGGLES ─────────────────────────
 document.getElementById('togglePlot').addEventListener('change', e => fenceGroup.visible = e.target.checked);

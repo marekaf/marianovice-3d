@@ -160,9 +160,9 @@
       <text x="90" y="84.06" class="lbl-sm" fill="#5a4828">shelter</text>
       <text x="90" y="97.2" class="dim">3 × 3 m</text>
     </g>
-    <g class="el" data-id="toolStore"><title>Garden tool store (plastic box) 1.905 × 1.09 m</title>
-      <rect x="216" y="18" width="34.29" height="19.62" fill="#5a5e64" opacity="0.92" stroke="#33363a" stroke-width="1"/>
-      <text x="233.1" y="30.24" class="lbl-sm" fill="#fff">tools</text>
+    <g class="el" data-id="toolStore"><title>Garden tool + mower store (plastic box) 1.905 × 1.09 m</title>
+      <g clip-path="url(#plotShape)"><rect x="4.5" y="3.6" width="34.29" height="19.62" fill="#5a5e64" opacity="0.92" stroke="#33363a" stroke-width="1"/></g>
+      <text x="21.6" y="16.2" class="lbl-sm" fill="#fff">mower</text>
     </g>
     <g class="el" data-id="softub"><title>Softub hot tub ø 1.8 m</title>
       <circle cx="90" cy="45" r="16.2" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
@@ -386,7 +386,7 @@
     <text x="0" y="210">East trees</text><text x="88" y="210">6 pcs</text><text x="170" y="210" text-anchor="end">—</text><text x="193" y="210" text-anchor="end">21d</text>
     <text x="0" y="222">Sauna</text><text x="88" y="222">4 × 3</text><text x="170" y="222" text-anchor="end">12</text><text x="193" y="222" text-anchor="end">4a</text>
     <text x="0" y="234">Sauna shelter</text><text x="88" y="234">3 × 3</text><text x="170" y="234" text-anchor="end">9</text><text x="193" y="234" text-anchor="end">2a</text>
-    <text x="0" y="246">Tool store</text><text x="88" y="246">1.91 × 1.09</text><text x="170" y="246" text-anchor="end">2.08</text><text x="193" y="246" text-anchor="end">7a</text>
+    <text x="0" y="246">Tool store</text><text x="88" y="246">1.91 × 1.09</text><text x="170" y="246" text-anchor="end">2.08</text><text x="193" y="246" text-anchor="end">1a</text>
     <text x="0" y="258">Softub hot tub</text><text x="88" y="258">ø 1.8</text><text x="170" y="258" text-anchor="end">2.54</text><text x="193" y="258" text-anchor="end">3a</text>
     <text x="0" y="270">Pergola + grill</text><text x="88" y="270">6 × 4</text><text x="170" y="270" text-anchor="end">24</text><text x="193" y="270" text-anchor="end">13a</text>
     <text x="0" y="282">Raised bed 1</text><text x="88" y="282">1 × 2</text><text x="170" y="282" text-anchor="end">2</text><text x="193" y="282" text-anchor="end">1f</text>
