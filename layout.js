@@ -110,7 +110,16 @@ const GARDEN = {
       parts: [
         { kind: "line", x1: 43.83, y1: 27.89, x2: 43.44, y2: 32.39, stroke: "#3a3a3a", sw: 6, cap: "round" },
         { kind: "text", x: 44.44, y: 30, text: "GATE", cls: "lbl-sm", weight: 700, anchor: "start" },
-        { kind: "text", x: 44.44, y: 30.78, text: "~4.5 m", cls: "dim", anchor: "start" }
+        { kind: "text", x: 44.44, y: 30.78, text: "4.0 m clear", cls: "dim", anchor: "start" }
+      ]
+    },
+    {
+      id: "binStore",
+      name: "Bin store (plastic box) 1.41 × 0.82 m",
+      short: "Bin store",
+      parts: [
+        { kind: "rect", x: 42.2, y: 33.4, w: 0.82, d: 1.41, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
+        { kind: "text", x: 41.9, y: 34.2, text: "bins", cls: "lbl-sm", fill: "#333", anchor: "end" }
       ]
     },
     {
@@ -145,9 +154,10 @@ const GARDEN = {
       id: "firePit",
       name: "Fire pit + seating",
       parts: [
-        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.78, fill: "#5a4030", opacity: 0.85, stroke: "#3a2818", sw: 1 },
-        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.5, fill: "#ff7733", opacity: 0.7 },
-        { kind: "text", x: 37.5, y: 8.1, text: "fire pit", cls: "lbl-sm", fill: "#5a4828" }
+        { kind: "circle", cx: 37.5, cy: 6.6, r: 1.75, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5,4" },
+        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.5, fill: "#5a4030", opacity: 0.85, stroke: "#3a2818", sw: 1 },
+        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.32, fill: "#ff7733", opacity: 0.7 },
+        { kind: "text", x: 37.5, y: 9.0, text: "fire pit + seating ø3.5 m", cls: "lbl-sm", fill: "#5a4828" }
       ]
     },
     {
@@ -196,6 +206,15 @@ const GARDEN = {
       ]
     },
     {
+      id: "toolStore",
+      name: "Garden tool + mower store (plastic box) 1.905 × 1.09 m",
+      short: "Tool store",
+      parts: [
+        { kind: "rect", x: 0.25, y: 0.2, w: 1.905, d: 1.09, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
+        { kind: "text", x: 1.2, y: 0.9, text: "mower", cls: "lbl-sm", fill: "#fff" }
+      ]
+    },
+    {
       id: "softub",
       name: "Softub hot tub ø 1.8 m",
       parts: [
@@ -213,6 +232,15 @@ const GARDEN = {
         { kind: "text", x: 28.78, y: 2.86, text: "pergola + grill", cls: "lbl" },
         { kind: "text", x: 28.78, y: 3.6, text: "6 × 4 m", cls: "dim" },
         { kind: "text", x: 28.78, y: 4.5, text: "by north fence", cls: "lbl-sm", fill: "#5a4828" }
+      ]
+    },
+    {
+      id: "raisedBedsPad",
+      name: "Raised-beds pad (flat) 3.1 × 5.6 m",
+      short: "Raised-beds pad",
+      parts: [
+        { kind: "rect", x: 0.7, y: 9.7, w: 3.1, d: 5.6, clipToPlot: true, fill: "#c8c2b0", opacity: 0.55, stroke: "#9a9074", sw: 1 },
+        { kind: "text", x: 3.9, y: 12.5, text: "beds pad — flat", cls: "lbl-sm", fill: "#5a5030", anchor: "start" }
       ]
     },
     {
@@ -298,6 +326,24 @@ const GARDEN = {
         { kind: "circle", cx: 4, cy: 31, r: 0.5, fill: "#5a8a5a" },
         { kind: "text", x: 2.78, y: 27.22, text: "orchard", cls: "lbl", rotate: -90 },
         { kind: "text", x: 6.39, y: 27.22, text: "~5.5 × 11 m", cls: "dim", anchor: "start" }
+      ]
+    },
+    {
+      id: "greenhouse",
+      name: "Greenhouse 2.6 × 3.6 m",
+      short: "Greenhouse",
+      parts: [
+        { kind: "rect", x: 1.5, y: 24.0, w: 2.6, d: 3.6, clipToPlot: true, fill: "#cfe8ef", opacity: 0.8, stroke: "#5f93a8", sw: 1.2 },
+        { kind: "text", x: 2.8, y: 25.8, text: "greenhouse", cls: "lbl-sm", fill: "#245a6a", rotate: -90 }
+      ]
+    },
+    {
+      id: "compost",
+      name: "Compost bin 2.0 × 1.0 m (open, slatted)",
+      short: "Compost",
+      parts: [
+        { kind: "rect", x: 1.6, y: 28.3, w: 2.0, d: 1.0, clipToPlot: true, fill: "#6a4a2a", opacity: 0.6, stroke: "#4a3218", sw: 1 },
+        { kind: "text", x: 2.6, y: 28.95, text: "compost", cls: "lbl-sm", fill: "#fff" }
       ]
     },
     {

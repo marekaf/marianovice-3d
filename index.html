@@ -32,7 +32,7 @@
 <div id="info">
   <b>Garden — 3D visualization</b><br>
   <small>Left mouse: rotate · Right mouse: pan · Scroll: zoom</small><br>
-  <small style="opacity:0.85">Other: <a href="editor.html" style="color:#5dade2">2D editor</a> · <a href="zahrada-plan.svg" style="color:#5dade2">2D plan</a></small>
+  <small style="opacity:0.85">Other: <a href="editor.html" style="color:#5dade2">2D editor</a> · <a href="zahrada-plan.svg" style="color:#5dade2">2D plan</a> · <a href="zahrada-flat-plan.svg" style="color:#5dade2">grading plan</a> · <a href="zahrada-driveway-check.svg" style="color:#5dade2">driveway check</a></small>
 </div>
 
 <div id="presets">
@@ -76,7 +76,8 @@
   <div><span class="swatch" style="background:#a87d4a"></span>terraces · <span class="swatch" style="background:#cdc1ad"></span>shelter</div>
   <div><span class="swatch" style="background:#c8a878"></span>pergola · <span class="swatch" style="background:#bdbdbd"></span>driveway</div>
   <div><span class="swatch" style="background:#7a5a3a"></span>raised beds · <span class="swatch" style="background:#5a8a5a"></span>trees</div>
-  <div><span class="swatch" style="background:#3a7ab8"></span>rain tank</div>
+  <div><span class="swatch" style="background:#3a7ab8"></span>rain tank · <span class="swatch" style="background:#bfe6ee"></span>greenhouse</div>
+  <div><span class="swatch" style="background:#5a5e64"></span>storage boxes · <span class="swatch" style="background:#6a4a2a"></span>compost</div>
 </div>
 
 <script type="importmap">
@@ -88,6 +89,7 @@
 }
 </script>
 
+<script src="terrain.js?v=20260827"></script>
 <script src="layout.js?v=20260729"></script>
 <script type="module">
 import * as THREE from 'three';
@@ -295,9 +297,7 @@ scene.add(axes);
 // Fitted to the DPS koordinační situace (C.3): house ±0.000 = 397.00 Bpv, contours
 // 398 (SW corner) → 397 (house) → 395.5 (NE), ≈5.8% grade. Constant anchors the house
 // centroid (16.48, 17.14) at 2.465 so all cut/deck/garage levels keyed to it stay valid.
-function basePlaneHeight(x, z) {
-  return Math.max(0, -0.050 * x + 0.030 * z + 2.775);
-}
+const basePlaneHeight = (x, z) => TERRAIN.basePlaneHeight(x, z);
 // Graded cut into the west slope — clamped just under the level west deck (top 2.515),
 // smoothstep bank rising to natural grade; min() leaves downhill areas untouched
 const CUT_BLEND = 1.8;
@@ -305,8 +305,13 @@ const cutRects = [
   { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
   { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
   { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965, blend: 3.5 }, // level apron in front of the garage door
+  { x0: 21.28, z0: 19.4, x1: 27.63, z1: 26.45, level: 1.965, blend: 2.0 },  // flat carport slab at garage floor level (−0.50 m)
+  { x0: 21.28, z0: 26.44, x1: 38.5, z1: 30.5, level: 1.965, blend: 1.5 },   // keep driveway ≤ carport level (no hump above the slab; falls on to the gate)
+  { x0: 3.5, z0: 1.0, x1: 10.5, z1: 4.0, level: 2.28, blend: 1.0 },         // one flat platform for sauna + hot-tub shelter
+  { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 2.876, blend: 1.0 },        // one flat pad containing all 4 raised beds
   { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
   { x0: 10.48, z0: 26.43, x1: 21.28, z1: 26.93, level: 2.345, blend: 0.6 }, // drip strip — south wall
+  { x0: 15.7, z0: 26.43, x1: 19.7, z1: 27.5, level: 2.345, blend: 0.6 },    // 1 m flat gravel bed for the heat-pump unit (S wall)
   { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
 ];
 // Pond basin — smooth bowl carved to the pond's downhill edge level
@@ -320,6 +325,12 @@ const PBOWL = (() => {
 })();
 const cutSmoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
 const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
+// Fill pads — excess site soil placed FLAT under a structure. Flat over the whole footprint,
+// sloping down only on the +x (garden) side; nothing on the other sides so it never bleeds into
+// the carport. Applied AFTER the cuts so an adjacent cut's blend can't clip the flat pad (no gaps).
+const fillPads = [
+  { x0: 20.58, z0: 11.58, x1: 23.58, z1: 19.4, level: 2.44, eastBlend: 2.6 }, // soil under the E terrace, slope into the garden
+];
 function gradedHeight(x, z) {
   const base = basePlaneHeight(x, z);
   let h = base;
@@ -329,6 +340,11 @@ function gradedHeight(x, z) {
     if (d >= blend) continue;
     const t = cutSmoothstep(d / blend);
     h = Math.min(h, r.level + (base - r.level) * t);
+  }
+  for (const p of fillPads) {
+    if (x >= p.x0 && x <= p.x1 && z >= p.z0 && z <= p.z1) h = Math.max(h, p.level);
+    else if (x > p.x1 && x < p.x1 + p.eastBlend && z >= p.z0 && z <= p.z1)
+      h = Math.max(h, p.level + (base - p.level) * cutSmoothstep((x - p.x1) / p.eastBlend));
   }
   const prr = Math.sqrt(((x - PBOWL.cx) / PBOWL.rx) ** 2 + ((z - PBOWL.cz) / PBOWL.rz) ** 2);
   if (prr < 1.3) {
@@ -477,6 +493,157 @@ function addLamellarPergola(plotX, plotY, w, d, h, slatColor = 0x6e4f31, postCol
       scene.add(slat);
     }
   }
+}
+
+// Glass greenhouse — dwarf-wall plinth, aluminium frame, transparent glazing, gable roof
+// (ridge along the long axis). Floor levels to the highest footprint corner; the plinth fills
+// the fall to grade on the downhill side. Glass panes cast NO shadow: the shadow map is
+// opacity-blind, so a glazed box would otherwise drop a solid black footprint.
+function addGreenhouse(plotX, plotY, w, d, wallH = 1.5, roofRise = 0.75, dwarfH = 0.4) {
+  const g = new THREE.Group();
+  const cx = plotX + w / 2, cz = plotY + d / 2;
+  const terr = [[0, 0], [w, 0], [0, d], [w, d]].map(([ox, oz]) => terrainHeight(plotX + ox, plotY + oz));
+  const minY = Math.min(...terr), maxY = Math.max(...terr);
+  const floorY = maxY + 0.04;
+  const sillY = floorY + dwarfH;       // glazing starts on top of the dwarf wall
+  const eaveY = sillY + wallH;
+  const ridgeY = eaveY + roofRise;
+  const wallMidY = (sillY + eaveY) / 2;
+
+  const glass = new THREE.MeshStandardMaterial({ color: 0xbfe6ee, transparent: true, opacity: 0.22, roughness: 0.08, side: THREE.DoubleSide });
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0xeceff1, roughness: 0.5, metalness: 0.1 });
+  const plinthMat = new THREE.MeshStandardMaterial({ color: 0x8d8a84, roughness: 0.95 });
+  const t = 0.03;                      // pane thickness
+
+  // Dwarf wall / plinth — top at sillY, base sunk to the lowest corner so no gap on the slope
+  const plinthH = sillY - minY;
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(w + 0.06, plinthH, d + 0.06), plinthMat);
+  plinth.position.set(cx, sillY - plinthH / 2, cz);
+  plinth.castShadow = true; plinth.receiveShadow = true;
+  g.add(plinth);
+
+  const pane = (sx, sy, sz, px, py, pz, rz = 0) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), glass);
+    m.position.set(px, py, pz); m.rotation.z = rz;
+    g.add(m);
+  };
+  const bar = (sx, sy, sz, px, py, pz, rz = 0) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), frameMat);
+    m.position.set(px, py, pz); m.rotation.z = rz; m.castShadow = true;
+    g.add(m);
+  };
+
+  // Wall glazing (sill → eave)
+  pane(t, wallH, d, plotX, wallMidY, cz);          // west
+  pane(t, wallH, d, plotX + w, wallMidY, cz);      // east
+  pane(w, wallH, t, cx, wallMidY, plotY);          // north gable (rectangular part)
+  pane(w, wallH, t, cx, wallMidY, plotY + d);      // south gable (rectangular part)
+
+  // Corner posts, eave beams, mid-wall mullions
+  for (const [ox, oz] of [[0, 0], [w, 0], [0, d], [w, d]]) bar(0.06, wallH, 0.06, plotX + ox, wallMidY, plotY + oz);
+  bar(0.05, 0.05, d, plotX, eaveY, cz); bar(0.05, 0.05, d, plotX + w, eaveY, cz);
+  bar(w, 0.05, 0.05, cx, eaveY, plotY); bar(w, 0.05, 0.05, cx, eaveY, plotY + d);
+  bar(0.05, wallH, 0.05, plotX, wallMidY, cz); bar(0.05, wallH, 0.05, plotX + w, wallMidY, cz);
+
+  // Gable triangles (glass) above the eave at each end
+  const gable = (zPos) => {
+    const s = new THREE.Shape();
+    s.moveTo(plotX, eaveY); s.lineTo(plotX + w, eaveY); s.lineTo(cx, ridgeY); s.closePath();
+    const m = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: t, bevelEnabled: false }), glass);
+    m.position.set(0, 0, zPos);
+    g.add(m);
+  };
+  gable(plotY - t / 2); gable(plotY + d - t / 2);
+
+  // Roof — ridge beam + two glazed slopes + gable-end rafters
+  const theta = Math.atan2(roofRise, w / 2), L = Math.hypot(w / 2, roofRise), roofMidY = (eaveY + ridgeY) / 2;
+  bar(0.06, 0.08, d, cx, ridgeY, cz);
+  pane(L, t, d, (plotX + cx) / 2, roofMidY, cz, theta);            // west slope
+  pane(L, t, d, (plotX + w + cx) / 2, roofMidY, cz, -theta);       // east slope
+  for (const z of [plotY + 0.03, plotY + d - 0.03]) {
+    bar(L, 0.05, 0.05, (plotX + cx) / 2, roofMidY, z, theta);
+    bar(L, 0.05, 0.05, (plotX + w + cx) / 2, roofMidY, z, -theta);
+  }
+
+  // Glazed door on the north gable (faces the garden) — floor to lintel + a threshold step
+  const doorW = 0.9, doorTop = floorY + 2.0;
+  for (const dx of [-doorW / 2, doorW / 2]) bar(0.06, doorTop - floorY, 0.06, cx + dx, (floorY + doorTop) / 2, plotY - 0.01);
+  bar(doorW + 0.06, 0.06, 0.06, cx, doorTop, plotY - 0.01);
+  const step = new THREE.Mesh(new THREE.BoxGeometry(doorW + 0.3, 0.08, 0.45), plinthMat);
+  step.position.set(cx, floorY + 0.02, plotY - 0.28); step.receiveShadow = true; g.add(step);
+
+  scene.add(g);
+
+  // Interior potting bench + seed trays (toggle with the furniture layer)
+  const benchMat = new THREE.MeshStandardMaterial({ color: 0x9a7b52, roughness: 0.8 });
+  const benchTopY = floorY + 0.8, benchW = 0.55, benchD = d - 0.9, bx = plotX + w - 0.4;
+  const benchTop = new THREE.Mesh(new THREE.BoxGeometry(benchW, 0.05, benchD), benchMat);
+  benchTop.position.set(bx, benchTopY, cz); benchTop.castShadow = true; furnitureGroup.add(benchTop);
+  for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, benchTopY - floorY, 0.05), benchMat);
+    leg.position.set(bx + lx * (benchW / 2 - 0.05), (floorY + benchTopY) / 2, cz + lz * (benchD / 2 - 0.05));
+    furnitureGroup.add(leg);
+  }
+  const trayMat = new THREE.MeshStandardMaterial({ color: 0x4e7d35, roughness: 0.9, flatShading: true });
+  for (let i = 0; i < 3; i++) {
+    const tray = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.09, 0.5), trayMat);
+    tray.position.set(bx, benchTopY + 0.07, plotY + 0.95 + i * (benchD / 3));
+    tray.castShadow = true; furnitureGroup.add(tray);
+  }
+}
+
+// Plastic garden storage box (bin store / tool store) — body + slightly domed overhanging lid,
+// sitting flat on terrain (base sunk to the lowest footprint corner).
+function addStorageBox(plotX, plotY, w, d, h, bodyColor = 0x41454b, lidColor = 0x4c515a) {
+  const bodyH = h - 0.08;
+  const body = addBox(plotX, plotY, w, d, bodyH, bodyColor, { sinkToMin: true, roughness: 0.55 });
+  // sinkToMin keeps the original top (base at the footprint centre + bodyH), so derive it directly
+  const topY = terrainHeight(plotX + w / 2, plotY + d / 2) + bodyH;
+  const lid = new THREE.Mesh(
+    new THREE.BoxGeometry(w + 0.06, 0.1, d + 0.06),
+    new THREE.MeshStandardMaterial({ color: lidColor, roughness: 0.5 })
+  );
+  lid.position.set(plotX + w / 2, topY + 0.03, plotY + d / 2);
+  lid.castShadow = true; lid.receiveShadow = true;
+  scene.add(lid);
+  return body;
+}
+
+// Compost bin — open-top slatted timber box (breathable, no floor). Corner posts sink to the
+// lowest footprint corner; horizontal boards leave gaps between them for airflow.
+function addCompostBin(plotX, plotY, w, d, h = 1.0) {
+  const g = new THREE.Group();
+  const corners = [[0, 0], [w, 0], [0, d], [w, d]];
+  const terr = corners.map(([ox, oz]) => terrainHeight(plotX + ox, plotY + oz));
+  const minY = Math.min(...terr), maxY = Math.max(...terr);
+  const topY = maxY + h;
+  const cx = plotX + w / 2, cz = plotY + d / 2;
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x6b4f34, roughness: 0.9 });
+  const slatMat = new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 0.85 });
+
+  for (const [ox, oz] of corners) {
+    const ph = topY + 0.05 - minY;
+    const p = new THREE.Mesh(new THREE.BoxGeometry(0.09, ph, 0.09), postMat);
+    p.position.set(plotX + ox, minY + ph / 2, plotY + oz);
+    p.castShadow = true; g.add(p);
+  }
+  const n = 6, y0 = minY + 0.12, y1 = topY - 0.06;
+  for (let i = 0; i < n; i++) {
+    const yy = y0 + (y1 - y0) * i / (n - 1);
+    for (const zz of [plotY, plotY + d]) {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(w + 0.02, 0.09, 0.025), slatMat);
+      s.position.set(cx, yy, zz); s.castShadow = true; s.receiveShadow = true; g.add(s);
+    }
+    for (const xx of [plotX, plotX + w]) {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.09, d + 0.02), slatMat);
+      s.position.set(xx, yy, cz); s.castShadow = true; s.receiveShadow = true; g.add(s);
+    }
+  }
+  // Compost heap inside (visible through the open top)
+  const heap = new THREE.Mesh(new THREE.BoxGeometry(w - 0.12, 0.45, d - 0.12),
+    new THREE.MeshStandardMaterial({ color: 0x3a2a18, roughness: 1 }));
+  heap.position.set(cx, maxY + 0.22, cz); heap.receiveShadow = true; g.add(heap);
+  scene.add(g);
 }
 
 // Canopy material palettes — 6 jittered materials per base color to limit material count
@@ -1007,6 +1174,21 @@ for (let i = 1; i < 5; i++) {
   scene.add(d);
 }
 
+// Garage workbench across the north wall (full width) — cars must park south of it, toward the door
+{
+  const bw = GA.w - 0.3, bd = 0.65, bh = 0.9, bx = GA.x + GA.w / 2, bz = GA.y + 0.1 + bd / 2;
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x565b60, roughness: 0.6, metalness: 0.3 });
+  const top = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.07, bd), new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 0.7 }));
+  top.position.set(bx, garageFloorY + bh, bz); top.castShadow = true; top.receiveShadow = true; scene.add(top);
+  for (const dx of [-bw / 2 + 0.12, bw / 2 - 0.12]) for (const dz of [-bd / 2 + 0.06, bd / 2 - 0.06]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, bh, 0.07), legMat);
+    leg.position.set(bx + dx, garageFloorY + bh / 2, bz + dz); scene.add(leg);
+  }
+  // pegboard back panel on the wall
+  const peg = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.9, 0.04), new THREE.MeshStandardMaterial({ color: 0x6a7075, roughness: 0.8 }));
+  peg.position.set(bx, garageFloorY + bh + 0.55, GA.y + 0.06); scene.add(peg);
+}
+
 // Carport between house and garage — open posts on west side (garage walls support east side)
 [[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
   const baseY = terrainHeight(px, pz);
@@ -1216,11 +1398,28 @@ const driveway = new THREE.Mesh(
 driveway.receiveShadow = true;
 scene.add(driveway);
 
-// Gravel drip strips (okapový chodníček) — 0.5 m kačírek draped on the graded terrain,
-// following the slope down to the low east side; laps onto the marmolit sokl
+// Gravel margin (kačírek) — grey level strips along the N and S facades only (the E and W sides
+// carry terraces). 0.45 m wide, 1 m at the heat pump; draped on the flat drip-strip terrain.
 {
-  for (const [x0, z0, x1, z1] of [[10.48, 6.68, 21.28, 7.18], [10.48, 26.43, 21.28, 26.93], [21.28, 7.18, 21.78, 11.58]]) {
-    addTerrainPlatform([[x0, z0], [x1, z0], [x1, z1], [x0, z1]], 0.04, 0xb8b0a2);
+  const strips = [
+    [10.48, 6.73, 21.28, 7.18],    // N wall
+    [10.48, 26.43, 21.28, 26.88],  // S wall
+    [15.7, 26.43, 19.7, 27.5],     // 1 m heat-pump bed (S wall)
+  ];
+  for (const [x0, z0, x1, z1] of strips) {
+    addTerrainPlatform([[x0, z0], [x1, z0], [x1, z1], [x0, z1]], 0.07, 0x9a9a97);
+  }
+  // Heat pump (tepelné čerpadlo) outdoor unit on the 1 m gravel bed, S wall between bathroom & technical room
+  {
+    const hx = 17.7, hz = 27.0, by = terrainHeight(hx, hz);
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.08, 0.6), new THREE.MeshStandardMaterial({ color: 0x8d8a84, roughness: 0.95 }));
+    pad.position.set(hx, by + 0.04, hz); pad.receiveShadow = true; scene.add(pad);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.75, 0.45), new THREE.MeshStandardMaterial({ color: 0xcdd0d3, roughness: 0.5, metalness: 0.3 }));
+    body.position.set(hx, by + 0.08 + 0.375, hz); body.castShadow = true; scene.add(body);
+    // Fan grille (dark disc on the south face)
+    const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.04, 16), new THREE.MeshStandardMaterial({ color: 0x2a2c2e, roughness: 0.7 }));
+    fan.rotation.x = Math.PI / 2;
+    fan.position.set(hx, by + 0.08 + 0.42, hz + 0.24); scene.add(fan);
   }
   // Marmolit sokl band — level top above floor, bottom follows the dug grade under the gravel
   const soklMat = new THREE.MeshStandardMaterial({ color: 0x453f38, roughness: 0.95 }); // marmolit MAR2 M092, HBW 6
@@ -1306,7 +1505,9 @@ scene.add(driveway);
   }
 }
 
-// ───────────────────────── RAISED BEDS (4 pcs, 2 rows × 2) ─────────────────────────
+// ───────────────────────── RAISED BEDS (4 pcs on one flat pad) ─────────────────────────
+// Flat gravel pad (terrain cut to level under it) containing all four beds
+{ const p = rectOf('raisedBedsPad'); addTerrainPlatform(rectVerts(p), 0.06, 0xb9b3a2); }
 ['raisedBed1', 'raisedBed2', 'raisedBed3', 'raisedBed4'].forEach(id => {
   const b = rectOf(id);
   addBox(b.x, b.y, b.w, b.d, 0.6, 0x7a5a3a, { sinkToMin: true });
@@ -1337,8 +1538,20 @@ GARDEN.elements.filter(e => e.meta && e.meta.screen).forEach(e => {
   if (r) addScreen(r, e.meta.screen.h || 2.0);
 });
 
-// ───────────────────────── ORCHARD ─────────────────────────
-circlesOf('orchard').forEach(c => addTree(c.cx, c.cy, 4 + Math.random()));
+// ───────────────────────── ORCHARD + GREENHOUSE ─────────────────────────
+const GH = rectOf('greenhouse');
+addGreenhouse(GH.x, GH.y, GH.w, GH.d);
+// Skip orchard trees whose trunk falls under the greenhouse footprint (+0.35 m clearance)
+const ghM = 0.35;
+circlesOf('orchard').forEach(c => {
+  if (c.cx > GH.x - ghM && c.cx < GH.x + GH.w + ghM && c.cy > GH.y - ghM && c.cy < GH.y + GH.d + ghM) return;
+  addTree(c.cx, c.cy, 4 + Math.random());
+});
+{ const c = rectOf('compost'); addCompostBin(c.x, c.y, c.w, c.d, 1.0); }
+
+// ───────────────────────── STORAGE BOXES (plastic garden boxes) ─────────────────────────
+{ const b = rectOf('binStore'); addStorageBox(b.x, b.y, b.w, b.d, 1.235); }   // bins, SE corner by the gate
+{ const b = rectOf('toolStore'); addStorageBox(b.x, b.y, b.w, b.d, 1.325); }  // tools, N fence beside the sauna
 
 // ───────────────────────── TREES ALONG NORTH FENCE ─────────────────────────
 circlesOf('northTrees').forEach(c => addTree(c.cx, c.cy, 4.5 + Math.random() * 1.5, 0x4d7a4d));
@@ -1373,9 +1586,9 @@ for (let i = 0; i < 35; i++) {
   const FP = circlesOf('firePit')[0];
   const ox = FP.cx, oz = FP.cy;
   const baseY = terrainHeight(ox, oz);
-  // Fire pit stone ring
+  // Fire pit stone ring — 1 m diameter
   const ring = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.65, 0.75, 0.35, 16),
+    new THREE.CylinderGeometry(0.45, 0.5, 0.35, 16),
     new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.95 })
   );
   ring.position.set(ox, baseY + 0.125, oz);
@@ -1384,39 +1597,37 @@ for (let i = 0; i < 35; i++) {
   scene.add(ring);
   // Inside (darker, like ashes)
   const inside = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.55, 0.55, 0.05, 16),
+    new THREE.CylinderGeometry(0.38, 0.38, 0.05, 16),
     new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 1 })
   );
   inside.position.set(ox, baseY + 0.31, oz);
   scene.add(inside);
   // "Flame" — emissive sphere
   const flame = new THREE.Mesh(
-    new THREE.SphereGeometry(0.3, 8, 6),
+    new THREE.SphereGeometry(0.22, 8, 6),
     new THREE.MeshStandardMaterial({
       color: 0xff7733,
       emissive: 0xff5511,
       emissiveIntensity: 0.7
     })
   );
-  flame.position.set(ox, baseY + 0.5, oz);
+  flame.position.set(ox, baseY + 0.42, oz);
   scene.add(flame);
-  // 3 benches around (wooden logs/beams)
-  const benchOffsets = [
-    { x: -1.7, z: 0, ry: 0 },
-    { x: 0.85, z: -1.4, ry: Math.PI / 3 },
-    { x: 0.85, z: 1.4, ry: -Math.PI / 3 },
-  ];
-  for (const b of benchOffsets) {
-    const bx = ox + b.x;
-    const bz = oz + b.z;
-    const benchY = terrainHeight(bx, bz);
+  // Seating — log benches evenly around a ~3.3 m circle, each tangent to the ring so it
+  // faces the fire; the SW arc is left open as the approach. rotation.y = -θ - π/2 turns the
+  // bench's long axis to the tangent.
+  const seatR = 1.65;
+  for (const deg of [0, 60, 180, 240, 300]) {   // gap at 120° (SW, the approach side)
+    const th = deg * Math.PI / 180;
+    const bx = ox + Math.cos(th) * seatR, bz = oz + Math.sin(th) * seatR;
     const bench = new THREE.Mesh(
-      new THREE.BoxGeometry(1.4, 0.3, 0.35),
+      new THREE.BoxGeometry(1.2, 0.32, 0.36),
       new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.85 })
     );
-    bench.position.set(bx, benchY + 0.15, bz);
-    bench.rotation.y = b.ry;
+    bench.position.set(bx, terrainHeight(bx, bz) + 0.16, bz);
+    bench.rotation.y = -th - Math.PI / 2;
     bench.castShadow = true;
+    bench.receiveShadow = true;
     scene.add(bench);
   }
 }
@@ -1547,12 +1758,13 @@ const waterNormal = (() => {
     g.position.set(x, sillY + h / 2, wallZ + dir * 0.05);
     scene.add(g);
   };
-  // East notch: kitchen window 2300×1350 (sill 0.9) north, HS portal 5160×2270 to the floor — both clear of the carport line z<19.4
-  winX(EN[0], 1, 12.9, 2.3, 1.35, ty + 0.9);
-  winX(EN[0], 1, 16.78, 5.16, 2.27, ty + 0.05);
+  // East notch: kitchen window 2300×1350 north, HS portal 5160×2270 to the floor — both clear of the carport line z<19.4.
+  // FFL = ty (±0.000): portal sill on the floor, kitchen sill raised so its head shares the portal lintel (ty+2.27).
+  winX(EN[0], 1, 12.9, 2.3, 1.35, ty + 0.92);
+  winX(EN[0], 1, 16.78, 5.16, 2.27, ty);
   // HS2 portal split in the middle — only the northern half is the opening sash
   const hsMull = new THREE.Mesh(new THREE.BoxGeometry(0.11, 2.27, 0.12), frameA);
-  hsMull.position.set(EN[0] + 0.02, ty + 0.05 + 2.27 / 2, 16.78);
+  hsMull.position.set(EN[0] + 0.02, ty + 2.27 / 2, 16.78);
   scene.add(hsMull);
   const hsHandle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.04), frameA);
   hsHandle.position.set(EN[0] + 0.1, ty + 1.05, 16.4);
@@ -1571,16 +1783,28 @@ const waterNormal = (() => {
   for (const x of [16.05, 19.3]) {
     winZ(x, HB[3], 1, 0.9, 1.25, ty + 0.9);
   }
-  // Entry doors — on east wall of south part (from carport to vestibule)
-  const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 1.42), frameMat);
-  d2.position.set(HB[2] + 0.03, ty + 1.075, 22);
+  // Entrance door — in the east NOTCH (back wall x=EN[0]=20.58), into the entrance hall (zádveří),
+  // at the south end of the notch, south of the living-room portal. NOT the south-part solid wall
+  // (that is the technical room). Faces east; a landing + short flight drop to the notch/carport.
+  const doorZ = 21.7;
+  const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 1.1), frameMat);
+  d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
   scene.add(d2);
-  // Entry step — from terrain up to the door bottom
-  const stepH = Math.max(0.12, ty - terrainHeight(HB[2] + 0.2, 22));
-  const step = new THREE.Mesh(new THREE.BoxGeometry(0.4, stepH, 1.5), new THREE.MeshStandardMaterial({ color: 0x9a9a94, roughness: 0.9 }));
-  step.position.set(HB[2] + 0.2, ty - stepH / 2, 22);
-  step.receiveShadow = true;
-  scene.add(step);
+  // Generous landing at FFL (comfortable to stand + open the door), then a flight of ~0.17 m risers
+  // down to the carport — not one 0.5 m block.
+  const groundY = terrainHeight(EN[0] + 2.2, doorZ);
+  const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
+  const rise = Math.max(0, ty - groundY), platW = 2.0, tread = 0.3;
+  const nSteps = rise < 0.18 ? 0 : Math.max(1, Math.round(rise / 0.17));
+  const parts = [{ x0: EN[0], x1: EN[0] + 1.2, top: ty }];             // landing: 1.2 m deep
+  for (let i = 1; i <= nSteps; i++) parts.push({ x0: EN[0] + 1.2 + (i - 1) * tread, x1: EN[0] + 1.2 + i * tread, top: ty - rise * i / nSteps });
+  for (const tr of parts) {
+    const w = tr.x1 - tr.x0, h = Math.max(0.06, tr.top - groundY);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, platW), stepMat);
+    st.position.set((tr.x0 + tr.x1) / 2, tr.top - h / 2, doorZ);
+    st.receiveShadow = true; st.castShadow = true;
+    scene.add(st);
+  }
 }
 
 // ───────────────────────── CHIMNEY (inside house footprint, NOT in atrium, south side) ─────────────────────────
@@ -1977,29 +2201,59 @@ const GT = EL.gate.parts.find(p => p.kind === 'line');
 const eL1 = pEK, eL2 = pSE;
 const tBranaT = (GT.y1 - eL1[1]) / (eL2[1] - eL1[1]);
 const tBranaB = (GT.y2 - eL1[1]) / (eL2[1] - eL1[1]);
-const gateT = lerp2(eL1, eL2, tBranaT);
-const gateB = lerp2(eL1, eL2, tBranaB);
-addFenceSegment(eL1[0], eL1[1], gateT[0], gateT[1]);  // east lower 1 (before gate)
-addFenceSegment(gateB[0], gateB[1], eL2[0], eL2[1]);  // east lower 2 (after gate)
-addFenceSegment(pSE[0], pSE[1], pSW[0], pSW[1]);      // south
-addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);      // west
+const gateT = lerp2(eL1, eL2, tBranaT);   // vehicle-gate north jamb (= the post between wicket & gate)
+const gateB = lerp2(eL1, eL2, tBranaB);   // vehicle-gate south jamb
+const gateGL = Math.hypot(gateB[0] - gateT[0], gateB[1] - gateT[1]);
+const gux = (gateB[0] - gateT[0]) / gateGL, guz = (gateB[1] - gateT[1]) / gateGL;  // along the opening (→ south)
+const wicketN = [gateT[0] - gux * 0.9, gateT[1] - guz * 0.9];   // wicket north jamb, 0.9 m N of the gate
+addFenceSegment(eL1[0], eL1[1], wicketN[0], wicketN[1]);  // fence up to the wicket
+// wicketN → gateT = 0.9 m wicket opening (pedestrian, north of and off the driveway)
+addFenceSegment(gateB[0], gateB[1], eL2[0], eL2[1]);      // fence south of the vehicle gate
+addFenceSegment(pSE[0], pSE[1], pSW[0], pSW[1]);          // south
+addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);          // west
 
-// Gate (open indication) on terrain
-const gateCenterX = (gateT[0] + gateB[0]) / 2;
-const gateCenterZ = (gateT[1] + gateB[1]) / 2;
-const gateBaseY = terrainHeight(gateCenterX, gateCenterZ);
-const gate1 = new THREE.Mesh(
-  new THREE.BoxGeometry(0.08, 1.5, 2.2),
-  new THREE.MeshStandardMaterial({ color: 0x3a3a3a })
-);
-gate1.position.set(gateCenterX - 0.6, gateBaseY + 0.75, gateCenterZ - 1);
-gate1.rotation.y = -0.3;
-scene.add(gate1);
-const gate2 = gate1.clone();
-// Mirrored leaf stays inside the fence line — both leaves open inward
-gate2.position.set(gateCenterX - 0.6, gateBaseY + 0.75, gateCenterZ + 1);
-gate2.rotation.y = 0.3;
-scene.add(gate2);
+// Entrance: posuvná brána (cantilever sliding, 4.0 m clear) + a SEPARATE 0.9 m wicket (branka) to
+// the NORTH, off the driveway; a post stands between the wicket and the gate. Both shown OPEN.
+{
+  const ux = gux, uz = guz;                 // along the opening (→ south)
+  const nx = -uz, nz = ux;                  // inward normal (−x into the plot)
+  const barMat = new THREE.MeshStandardMaterial({ color: 0x33343a, roughness: 0.5, metalness: 0.45 });
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 });
+  // Framed leaf: rails + vertical pickets, centred at origin, length along local +X, thin in Z.
+  const makeLeaf = (len, h) => {
+    const g = new THREE.Group();
+    for (const yy of [h / 2 - 0.05, -h / 2 + 0.05]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.08, 0.05), barMat);
+      rail.position.set(0, yy, 0); g.add(rail);
+    }
+    const nb = Math.max(4, Math.round(len / 0.14));
+    for (let i = 0; i <= nb; i++) {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.025, h - 0.12, 0.025), barMat);
+      bar.position.set(-len / 2 + len * i / nb, 0, 0); g.add(bar);
+    }
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    return g;
+  };
+  const placeLeaf = (cx, cz, len, h, dx, dz) => {
+    const leaf = makeLeaf(len, h);
+    leaf.position.set(cx, terrainHeight(cx, cz) + h / 2, cz);
+    leaf.rotation.y = Math.atan2(-dz, dx);
+    scene.add(leaf);
+  };
+  // Sliding gate 4.0 m, retracted north on its run-back (open), on the track just inside the line
+  const slideLen = 4.0, slideH = 1.5;
+  placeLeaf(gateT[0] - ux * (slideLen / 2 + 0.2) + nx * 0.18,
+            gateT[1] - uz * (slideLen / 2 + 0.2) + nz * 0.18, slideLen, slideH, ux, uz);
+  // Wicket 0.9 m at its north jamb, swung ~90° inward (open)
+  const brankaLen = 0.9, brankaH = 1.5;
+  placeLeaf(wicketN[0] + nx * (brankaLen / 2), wicketN[1] + nz * (brankaLen / 2), brankaLen, brankaH, nx, nz);
+  // Posts: wicket N jamb, the post BETWEEN wicket & gate (gateT), and the gate S jamb (gateB)
+  for (const [gx, gz] of [wicketN, gateT, gateB]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.75, 0.14), postMat);
+    post.position.set(gx, terrainHeight(gx, gz) + 0.875, gz); post.castShadow = true;
+    scene.add(post);
+  }
+}
 
 // ───────────────────────── CAMERA PRESETS ─────────────────────────
 const targetCenter = new THREE.Vector3(22, 0, 17);
@@ -2032,6 +2286,19 @@ window.setPreset = function(name) {
   controls.update();
 };
 setPreset('iso');
+// Deep-link a view via URL hash: #east / #south / … or #cam=px,py,pz,tx,ty,tz for a custom camera
+function applyHashView() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (!h) return;
+  if (h.startsWith('cam=')) {
+    const n = h.slice(4).split(',').map(Number);
+    if (n.length === 6 && n.every(v => !isNaN(v))) {
+      camera.position.set(n[0], n[1], n[2]); controls.target.set(n[3], n[4], n[5]); controls.update();
+    }
+  } else { setPreset(h); }
+}
+applyHashView();
+window.addEventListener('hashchange', applyHashView);
 
 // ───────────────────────── TOGGLES ─────────────────────────
 document.getElementById('togglePlot').addEventListener('change', e => fenceGroup.visible = e.target.checked);
@@ -2123,6 +2390,10 @@ hoverRect('parking', 0.3);
 }
 hoverRect('rainTank', 0.1);
 hoverRect('orchard', 0.5);
+hoverRect('greenhouse', 2.6);
+hoverRect('compost', 1.0);
+hoverRect('binStore', 1.235);
+hoverRect('toolStore', 1.325);
 
 window.addEventListener('mousemove', e => {
   mouse.x = (e.clientX / innerWidth) * 2 - 1;
