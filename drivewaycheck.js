@@ -85,11 +85,12 @@ function renderDrivewayCheckSVG(garden) {
   // Carport walkways to the two pedestrian doors (keep clear of parked cars)
   out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(0.8)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
   out.push(`    <rect x="${px(cp.x + cp.w - 0.85)}" y="${px(cp.y)}" width="${px(0.85)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
-  // Pedestrian doors + swing arcs (house entry on the W wall, garage personnel door on the garage W wall)
-  out.push(`    <line x1="${px(cp.x)}" y1="${px(23.49)}" x2="${px(cp.x)}" y2="${px(24.91)}" stroke="#1f7a3d" stroke-width="3"/>`);
-  // On the solid S-part wall (z > 22.53), opens INWARD (hinge on the S side) — no carport space used
-  out.push(`    <path d="M ${px(cp.x)},${px(23.49)} A ${px(1.42)} ${px(1.42)} 0 0 0 ${px(cp.x - 1.42)},${px(24.91)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`);
-  out.push(`    <text x="${px(cp.x) + 3}" y="${px(25.8)}" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m (opens in)</text>`);
+  // Pedestrian doors + swing arcs. House entry is IN THE NOTCH (recessed back wall x=eNotch[0]),
+  // into the zádveří at ~z 21.7 — reached from the carport through the notch (NOT on the carport wall).
+  const notchX = EL.house.meta.eNotch[0];
+  out.push(`    <line x1="${px(notchX)}" y1="${px(21.15)}" x2="${px(notchX)}" y2="${px(22.25)}" stroke="#1f7a3d" stroke-width="3"/>`);
+  out.push(`    <path d="M ${px(notchX)},${px(21.15)} A ${px(1.1)} ${px(1.1)} 0 0 0 ${px(notchX - 1.1)},${px(22.25)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`); // opens inward (west)
+  out.push(`    <text x="${px(notchX) - 3}" y="${px(20.9)}" class="dim" fill="#1f7a3d" text-anchor="end">house door (in the notch)</text>`);
   out.push(`    <line x1="${px(ga.x)}" y1="${px(20.2)}" x2="${px(ga.x)}" y2="${px(21.1)}" stroke="#1f7a3d" stroke-width="3"/>`);
   out.push(`    <circle cx="${px(ga.x)}" cy="${px(20.65)}" r="2.5" fill="#1f7a3d"/>`); // garage personnel door (labelled in the panel)
   // Vehicles to scale, drawn with the two front doors open. `reversed` = parked nose-out (front
@@ -154,7 +155,8 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Door &amp; exit clearance (carport)</text>`);
   y += 12;
   for (const line of [
-    "W walkway 0.8 m → house door (opens in): OK.",
+    "House door is in the notch → reached via the W",
+    "walkway + notch (clear of the cars): OK.",
     "E walkway 0.85 m → garage door: OK.",
     "Between the cars ~1.0 m → inner doors ~0.5 m",
     "each: tight — get out on the outer side.",
