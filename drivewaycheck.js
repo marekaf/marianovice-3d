@@ -80,8 +80,9 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <text x="${px(pk.x + pk.w / 2)}" y="${px(pk.y + pk.d) - 4}" class="bay" fill="#556" text-anchor="middle" transform="rotate(90 ${px(pk.x + pk.w / 2)} ${px(pk.y + pk.d) - 4})">PARKING</text>`);
 
   // Garage workbench across the north wall (full width) — cars park south of it
-  out.push(`    <rect x="${px(ga.x + 0.15)}" y="${px(ga.y)}" width="${px(ga.w - 0.3)}" height="${px(0.65)}" fill="#8a6a44" stroke="#5a4530" stroke-width="1"/>`);
-  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + 0.45)}" class="vlbl" text-anchor="middle" fill="#fff">workbench</text>`);
+  const gaM = EL.garage.meta;
+  out.push(`    <rect x="${px(ga.x + gaM.wallT + 0.1)}" y="${px(ga.y + gaM.wallT)}" width="${px(ga.w - 2 * gaM.wallT - 0.2)}" height="${px(gaM.workbench.d)}" fill="#8a6a44" stroke="#5a4530" stroke-width="1"/>`);
+  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + gaM.wallT + 0.5)}" class="vlbl" text-anchor="middle" fill="#fff">workbench</text>`);
   // Carport walkways to the two pedestrian doors (keep clear of parked cars)
   out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(0.8)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
   out.push(`    <rect x="${px(cp.x + cp.w - 0.85)}" y="${px(cp.y)}" width="${px(0.85)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
