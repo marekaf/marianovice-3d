@@ -1789,17 +1789,21 @@ const waterNormal = (() => {
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 1.42), frameMat);
   d2.position.set(HB[2] + 0.03, ty + 1.075, doorZ);
   scene.add(d2);
-  // Entry steps — door threshold is at FFL (±0.000); the carport slab is 0.5 m lower, so drop in
-  // two nested treads. Each tread rests on the slab (its box runs down to the carport level).
-  const carportY = terrainHeight(HB[2] + 0.9, doorZ);   // flat carport slab (−0.50)
-  const stepMat = new THREE.MeshStandardMaterial({ color: 0x9a9a94, roughness: 0.9 });
-  const treads = [
-    { x0: HB[2], x1: HB[2] + 0.32, top: ty },              // upper tread, flush with the threshold
-    { x0: HB[2] + 0.32, x1: HB[2] + 0.66, top: (ty + carportY) / 2 }, // lower tread, half-way down
+  // Entrance landing at FFL + a 3-step flight down to the carport slab (0.5 m lower). A proper
+  // landing at the threshold, then even risers — so the door reads as reached by steps, not perched
+  // on a block. Treads rest on the slab (each box runs down to the carport level).
+  const carportY = terrainHeight(HB[2] + 1.3, doorZ);   // flat carport slab (−0.50)
+  const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
+  const rise = ty - carportY, stepW = 1.9;
+  const flight = [
+    { x0: HB[2],        x1: HB[2] + 0.55, top: ty },                  // landing, flush with the threshold
+    { x0: HB[2] + 0.55, x1: HB[2] + 0.84, top: ty - rise / 3 },
+    { x0: HB[2] + 0.84, x1: HB[2] + 1.13, top: ty - 2 * rise / 3 },
+    { x0: HB[2] + 1.13, x1: HB[2] + 1.42, top: carportY + 0.02 },
   ];
-  for (const tr of treads) {
-    const w = tr.x1 - tr.x0, h = Math.max(0.1, tr.top - carportY);
-    const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, 1.5), stepMat);
+  for (const tr of flight) {
+    const w = tr.x1 - tr.x0, h = Math.max(0.08, tr.top - carportY);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, stepW), stepMat);
     st.position.set((tr.x0 + tr.x1) / 2, tr.top - h / 2, doorZ);
     st.receiveShadow = true; st.castShadow = true;
     scene.add(st);
