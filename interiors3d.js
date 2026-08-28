@@ -197,11 +197,14 @@ const INTERIORS3D = (() => {
       gateOpen.add(panel);
     }
 
-    // Garage personnel door 900×2150 on the west wall (under the carport)
+    // Garage personnel door on the west wall (under the carport) — leaf sized from the opening
     {
-      const d = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 0.9), doorMat.clone());
-      d.position.set(GA.x - 0.03, floorY + 2.15 / 2, 20.65);
-      walls.W.add(d);
+      const pd = GOP.find(o => o.kind === 'door');
+      if (pd) {
+        const d = new THREE.Mesh(new THREE.BoxGeometry(0.06, pd.h, pd.w), doorMat.clone());
+        d.position.set(GA.x - 0.03, floorY + pd.h / 2, pd.from + pd.w / 2);
+        walls.W.add(d);
+      }
     }
 
     // Garage workbench across the north wall (full width) — cars must park south of it.

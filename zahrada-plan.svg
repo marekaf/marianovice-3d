@@ -87,20 +87,20 @@
       <text x="439.92" y="414" class="lbl-sm">carport</text>
       <text x="439.92" y="437.94" class="dim">6.35 × 7.05 m</text>
     </g>
-    <g class="el" data-id="garage"><title>Garage 7.18 × 7.05 m</title>
-      <rect x="497.34" y="349.2" width="129.24" height="126.9" fill="#888" opacity="0.88" stroke="#3a3a3a" stroke-width="2"/>
-      <rect x="516.96" y="473.04" width="90" height="5.94" fill="#222"/>
-      <rect x="495" y="363.6" width="4.68" height="16.2" fill="#222"/>
-      <text x="561.06" y="408.06" class="lbl-w" font-size="14" font-weight="700">GARAGE</text>
-      <text x="561.06" y="426.06" class="dim" fill="#fff">7.18 × 7.05 m</text>
+    <g class="el" data-id="garage"><title>Garage 6.50 × 7.05 m</title>
+      <rect x="497.34" y="348.84" width="117" height="126.9" fill="#888" opacity="0.88" stroke="#3a3a3a" stroke-width="2"/>
+      <rect x="510.84" y="472.68" width="90" height="5.94" fill="#222"/>
+      <rect x="495" y="380.34" width="4.68" height="25.65" fill="#222"/>
+      <text x="555.84" y="408.06" class="lbl-w" font-size="14" font-weight="700">GARAGE</text>
+      <text x="555.84" y="426.06" class="dim" fill="#fff">6.50 × 7.05 m</text>
     </g>
     <g class="el" data-id="parking"><title>Parking along garage 3.2 × 7.05 m</title>
-      <rect x="626.58" y="349.2" width="57.6" height="126.9" fill="none" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
-      <text x="655.38" y="406.8" class="lbl-sm" fill="#666">parking</text>
-      <text x="655.38" y="421.2" class="dim">3.2 × 7.05 m</text>
+      <rect x="614.34" y="348.84" width="57.6" height="126.9" fill="none" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
+      <text x="643.14" y="406.8" class="lbl-sm" fill="#666">parking</text>
+      <text x="643.14" y="421.2" class="dim">3.2 × 7.05 m</text>
     </g>
     <g class="el" data-id="driveway"><title>Driveway 4.5 m × ~22 m</title>
-      <polygon points="383.04,349.2 497.34,349.2 497.34,475.92 626.58,475.92 626.58,349.2 684.18,349.2 684.18,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="#cccccc" opacity="0.55"/>
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 614.34,348.84 671.94,348.84 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="#cccccc" opacity="0.55"/>
       <text x="554.94" y="509.94" class="lbl-sm">driveway</text>
       <text x="554.94" y="525.06" class="dim">4.5 m × ~22 m</text>
     </g>
@@ -377,9 +377,9 @@
     <text x="0" y="54">East terrace</text><text x="88" y="54">3 × 7.82</text><text x="170" y="54" text-anchor="end">23.46</text><text x="193" y="54" text-anchor="end">11f</text>
     <text x="0" y="66">Sauna path</text><text x="88" y="66">1 × 2.17</text><text x="170" y="66" text-anchor="end">2.17</text><text x="193" y="66" text-anchor="end">5c</text>
     <text x="0" y="78">Carport</text><text x="88" y="78">6.35 × 7.05</text><text x="170" y="78" text-anchor="end">44.77</text><text x="193" y="78" text-anchor="end">11j</text>
-    <text x="0" y="90">Garage</text><text x="88" y="90">7.18 × 7.05</text><text x="170" y="90" text-anchor="end">50.62</text><text x="193" y="90" text-anchor="end">14j</text>
+    <text x="0" y="90">Garage</text><text x="88" y="90">6.5 × 7.05</text><text x="170" y="90" text-anchor="end">45.83</text><text x="193" y="90" text-anchor="end">14j</text>
     <text x="0" y="102">Parking</text><text x="88" y="102">3.2 × 7.05</text><text x="170" y="102" text-anchor="end">22.56</text><text x="193" y="102" text-anchor="end">18j</text>
-    <text x="0" y="114">Driveway</text><text x="88" y="114">22.55 × 12.99</text><text x="170" y="114" text-anchor="end">165.04</text><text x="193" y="114" text-anchor="end">11j</text>
+    <text x="0" y="114">Driveway</text><text x="88" y="114">22.55 × 13.01</text><text x="170" y="114" text-anchor="end">164.47</text><text x="193" y="114" text-anchor="end">11j</text>
     <text x="0" y="126">Gate</text><text x="88" y="126">4.52 long</text><text x="170" y="126" text-anchor="end">—</text><text x="193" y="126" text-anchor="end">22n</text>
     <text x="0" y="138">Bin store</text><text x="88" y="138">0.82 × 1.41</text><text x="170" y="138" text-anchor="end">1.16</text><text x="193" y="138" text-anchor="end">22q</text>
     <text x="0" y="150">Rainwater tank 12 m³</text><text x="88" y="150">2.5 × 2.5</text><text x="170" y="150" text-anchor="end">6.25</text><text x="193" y="150" text-anchor="end">21l</text>
