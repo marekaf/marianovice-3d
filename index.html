@@ -333,7 +333,6 @@ const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Mat
 // the carport. Applied AFTER the cuts so an adjacent cut's blend can't clip the flat pad (no gaps).
 const fillPads = [
   { x0: 20.58, z0: 11.58, x1: 23.58, z1: 19.4, level: 2.44, eastBlend: 2.6 },  // soil under the E terrace, slope into the garden
-  { x0: 20.58, z0: 19.18, x1: 21.28, z1: 22.6, level: 2.44, eastBlend: 0.06 }, // notch floor filled to FFL up to the entrance door (joins the terrace); sharp edge to the carport
 ];
 function gradedHeight(x, z) {
   const base = basePlaneHeight(x, z);
@@ -1840,18 +1839,16 @@ const waterNormal = (() => {
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 1.1), frameMat);
   d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
   scene.add(d2);
-  // The door opens LEVEL onto the notch floor (filled to FFL, joining the terrace to the north). A
-  // paved landing fills the notch; the steps DOWN to the carport are at the notch opening (x=HB[2]),
-  // centred on the door, facing the carport — they do NOT cross the notch.
+  // Just a staircase from the door threshold (FFL) down to the carport — NO soil fill, NO paving.
+  // Each tread is a solid box running down to the carport level, so the treads cover the descent
+  // and nothing shows through beneath them.
   const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
-  addTerrainPlatform([[EN[0], 19.4], [HB[2], 19.4], [HB[2], 22.6], [EN[0], 22.6]], 0.05, 0xcdc7bb); // FFL landing in the notch
-  const openX = HB[2], groundY = terrainHeight(openX + 1.4, doorZ);   // carport slab (−0.50)
-  const rise = Math.max(0, ty - groundY), tread = 0.32, stepW = 2.0;
-  const nSteps = rise < 0.18 ? 0 : Math.max(1, Math.round(rise / 0.17));
+  const groundY = terrainHeight(HB[2] + 0.7, doorZ);   // carport slab (−0.50)
+  const rise = Math.max(0.3, ty - groundY), nSteps = 3, tread = 0.34, stepW = 1.8;
   for (let i = 1; i <= nSteps; i++) {
-    const top = ty - rise * i / nSteps, h = Math.max(0.06, top - groundY);
+    const top = ty - (rise * i) / (nSteps + 1), h = top - groundY;   // 3 treads; the carport is the last level
     const st = new THREE.Mesh(new THREE.BoxGeometry(tread, h, stepW), stepMat);
-    st.position.set(openX + (i - 0.5) * tread, top - h / 2, doorZ);   // centred on the door
+    st.position.set(EN[0] + (i - 0.5) * tread, top - h / 2, doorZ);
     st.receiveShadow = true; st.castShadow = true;
     scene.add(st);
   }
