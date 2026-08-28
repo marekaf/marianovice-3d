@@ -28,7 +28,6 @@ const ZONES = [
   { id: "greenhouse",   label: "Greenhouse",        cat: "pad" },
   { id: "carport",      label: "Carport slab",      cat: "apron", level: 1.965 },
   { id: "garage",       label: "Garage slab/apron", cat: "apron", level: 1.965 },
-  { id: "parking",      label: "Parking",           cat: "pad" },
   { id: "eastTerrace",  label: "Terrace E (fill)",  cat: "fill",  level: 2.44 },
   { id: "westTerrace",  label: "Terrace W",         cat: "deck",  level: 2.515 },
   { id: "driveway",     label: "Driveway",          cat: "fall" },

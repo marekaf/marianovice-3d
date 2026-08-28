@@ -20,7 +20,6 @@ function renderDrivewayCheckSVG(garden) {
   const cp = EL.carport.parts.find((p) => p.kind === "rect");
   const ga = EL.garage.parts.find((p) => p.kind === "rect");
   const gaDoor = EL.garage.parts.filter((p) => p.kind === "rect")[1]; // 5 m door on the S wall
-  const pk = EL.parking.parts.find((p) => p.kind === "rect");
   const dw = EL.driveway.parts.find((p) => p.kind === "polygon").points;
   const gt = EL.gate.parts.find((p) => p.kind === "line");
 
@@ -45,7 +44,7 @@ function renderDrivewayCheckSVG(garden) {
   </style>`);
   out.push(`  <rect width="1100" height="880" fill="white"/>`);
   out.push(`  <text x="430" y="26" class="title">Parking &amp; maneuvering — vehicle fit</text>`);
-  out.push(`  <text x="430" y="44" class="sub">M4 + Ténéré in the garage · Scala + A6 allroad under the carport · E46 next to the garage</text>`);
+  out.push(`  <text x="430" y="44" class="sub">M4 + Ténéré in the garage · Scala + A6 allroad under the carport</text>`);
 
   out.push(`  <g transform="translate(70, 96)">`);
   out.push(`    <g clip-path="url(#plot)"><rect x="-50" y="-10" width="900" height="720" fill="url(#mg)"/></g>`);
@@ -72,12 +71,10 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <polygon points="${dw.map(([x, y]) => `${px(x)},${px(y)}`).join(" ")}" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>`);
   out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(cp.w)}" height="${px(cp.d)}" fill="#e7f3ea" stroke="#3f8f52" stroke-width="1.6"/>`);
   out.push(`    <rect x="${px(ga.x)}" y="${px(ga.y)}" width="${px(ga.w)}" height="${px(ga.d)}" fill="#efe9dd" stroke="#9a9074" stroke-width="1.6"/>`);
-  out.push(`    <rect x="${px(pk.x)}" y="${px(pk.y)}" width="${px(pk.w)}" height="${px(pk.d)}" fill="#eef2f6" stroke="#6b8199" stroke-width="1.4" stroke-dasharray="4,3"/>`);
   // Garage door opening (5 m) marked on the S wall
   out.push(`    <line x1="${px(gaDoor.x)}" y1="${px(ga.y + ga.d)}" x2="${px(gaDoor.x + gaDoor.w)}" y2="${px(ga.y + ga.d)}" stroke="#3a2a18" stroke-width="3"/>`);
   out.push(`    <text x="${px(cp.x + cp.w / 2)}" y="${px(cp.y + cp.d) - 4}" class="bay" fill="#2f6f43" text-anchor="middle">CARPORT</text>`);
   out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + ga.d) - 4}" class="bay" fill="#7a6f52" text-anchor="middle">GARAGE</text>`);
-  out.push(`    <text x="${px(pk.x + pk.w / 2)}" y="${px(pk.y + pk.d) - 4}" class="bay" fill="#556" text-anchor="middle" transform="rotate(90 ${px(pk.x + pk.w / 2)} ${px(pk.y + pk.d) - 4})">PARKING</text>`);
 
   // Garage workbench across the north wall (full width) — cars park south of it
   const gaM = EL.garage.meta;
@@ -139,9 +136,9 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vehicle</text><text x="142" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">L × W m</text><text x="170" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>`);
   out.push(`    <line x1="0" y1="20" x2="170" y2="20" stroke="#bbb" stroke-width="0.8"/>`);
   let y = 33;
-  const grp = { carport: "CARPORT 6.35 × 7.05 — two side-by-side", garage: "GARAGE 6.50 × 7.05 (door 5.0 m)", parking: "PARKING 3.2 × 7.05 — single bay" };
-  const verdict = { carport: "✓ both fit; ~0.65 m gaps (fold mirrors)", garage: "✓ car + bike, ~1 m between them", parking: "✓ 0.72 m each side, 2.8 m spare" };
-  for (const bay of ["carport", "garage", "parking"]) {
+  const grp = { carport: "CARPORT 6.35 × 7.05 — two side-by-side", garage: "GARAGE 6.50 × 7.05 (door 5.0 m)" };
+  const verdict = { carport: "✓ both fit; ~0.65 m gaps (fold mirrors)", garage: "✓ car + bike, ~1 m between them" };
+  for (const bay of ["carport", "garage"]) {
     out.push(`    <text x="0" y="${y}" class="pt" font-weight="700" fill="#333">${esc(grp[bay])}</text>`);
     y += 13;
     for (const v of VEH.filter((v) => v.bay === bay)) {

@@ -31,8 +31,7 @@ const GARDEN = {
     { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3a72b8", cx: 22.98, noseZ: 20.0, hinge: 1.65, doorLen: 1.00 },
     { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#b3a06e", cx: 25.83, noseZ: 20.0, hinge: 1.80, doorLen: 1.05 },
     { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#0f5aa8", cx: 30.7,  noseZ: 20.95, reversed: true, hinge: 2.00, doorLen: 1.35 }, // reverse-parked (low coupe) squarely in the 5 m door
-    { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#462482", cx: 33.1,  noseZ: 20.95, moto: true },
-    { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#1a3b63", cx: 35.73, noseZ: 20.0, hinge: 1.60, doorLen: 0.98 }
+    { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#462482", cx: 33.1,  noseZ: 20.95, moto: true }
   ],
   elements: [
     {
@@ -104,20 +103,10 @@ const GARDEN = {
       ]
     },
     {
-      id: "parking",
-      name: "Parking along garage 3.2 × 7.05 m",
-      short: "Parking",
-      parts: [
-        { kind: "rect", x: 34.13, y: 19.38, w: 3.2, d: 7.05, stroke: "#888", sw: 1.2, dash: "4,3" },
-        { kind: "text", x: 35.73, y: 22.6, text: "parking", cls: "lbl-sm", fill: "#666" },
-        { kind: "text", x: 35.73, y: 23.4, text: "3.2 × 7.05 m", cls: "dim" }
-      ]
-    },
-    {
       id: "driveway",
       name: "Driveway 4.5 m × ~22 m",
       parts: [
-        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [34.13, 19.38], [37.33, 19.38], [37.33, 27.02], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
+        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [37.33, 27.02], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
         { kind: "text", x: 30.83, y: 28.33, text: "driveway", cls: "lbl-sm" },
         { kind: "text", x: 30.83, y: 29.17, text: "4.5 m × ~22 m", cls: "dim" }
       ]
