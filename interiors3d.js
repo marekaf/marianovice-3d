@@ -317,6 +317,7 @@ const INTERIORS3D = (() => {
 
     for (const r of data.rooms) {
       if (r.ceil !== 'open') mkBox(ceiling, r.x0, floorY + (data.clearH ?? 2.52), r.z0, r.x1, floorY + (data.clearH ?? 2.52) + 0.05, r.z1, ceilMat);
+      if (r.noLabel) continue;
       // Room label lying on the floor — reads upright in the north-up plan view
       const cv = document.createElement('canvas');
       cv.width = 512; cv.height = 160;
