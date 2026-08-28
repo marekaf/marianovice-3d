@@ -1844,11 +1844,12 @@ const waterNormal = (() => {
   // and nothing shows through beneath them.
   const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
   const groundY = terrainHeight(HB[2] + 0.7, doorZ);   // carport slab (−0.50)
-  const rise = Math.max(0.3, ty - groundY), nSteps = 3, tread = 0.34, stepW = 1.8;
+  const rise = Math.max(0.3, ty - groundY), nSteps = 3, tread = 0.34;
+  const stairN = 19.4, stairS = 22.6, stepW = stairS - stairN, zc = (stairN + stairS) / 2; // wide enough to touch the terrace deck (its S edge is z=19.4)
   for (let i = 1; i <= nSteps; i++) {
     const top = ty - (rise * i) / (nSteps + 1), h = top - groundY;   // 3 treads; the carport is the last level
     const st = new THREE.Mesh(new THREE.BoxGeometry(tread, h, stepW), stepMat);
-    st.position.set(EN[0] + (i - 0.5) * tread, top - h / 2, doorZ);
+    st.position.set(EN[0] + (i - 0.5) * tread, top - h / 2, zc);
     st.receiveShadow = true; st.castShadow = true;
     scene.add(st);
   }
