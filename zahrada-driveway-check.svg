@@ -41,33 +41,42 @@
     <text x="440.19" y="472.1" class="bay" fill="#2f6f43" text-anchor="middle">CARPORT</text>
     <text x="561.96" y="472.1" class="bay" fill="#7a6f52" text-anchor="middle">GARAGE</text>
     <text x="655.38" y="472.1" class="bay" fill="#556" text-anchor="middle" transform="rotate(90 655.38 472.1)">PARKING</text>
-    <g transform="translate(411.3,399.24)">
+    <rect x="500.04" y="349.2" width="123.84" height="11.7" fill="#8a6a44" stroke="#5a4530" stroke-width="1"/>
+    <text x="561.96" y="357.3" class="vlbl" text-anchor="middle" fill="#fff">workbench</text>
+    <rect x="383.04" y="349.2" width="14.4" height="126.9" fill="#fbe9c7" fill-opacity="0.7"/>
+    <rect x="482.04" y="349.2" width="15.3" height="126.9" fill="#fbe9c7" fill-opacity="0.7"/>
+    <line x1="383.04" y1="383.22" x2="383.04" y2="408.78" stroke="#1f7a3d" stroke-width="3"/>
+    <path d="M 383.04,408.78 A 25.56 25.56 0 0 0 408.6,408.78" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <text x="386.04" y="424.8" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m</text>
+    <line x1="497.34" y1="363.6" x2="497.34" y2="379.8" stroke="#1f7a3d" stroke-width="3"/>
+    <circle cx="497.34" cy="371.7" r="2.5" fill="#1f7a3d"/>
+    <g transform="translate(413.64,399.24)">
       <rect x="-16.11" y="-39.24" width="32.22" height="78.48" rx="4" fill="#3f8f52" fill-opacity="0.9" stroke="#111" stroke-width="1.2"/>
       <rect x="-14.11" y="-36.24" width="28.22" height="18" rx="2" fill="#2a3542"/>
     </g>
-    <text x="411.3" y="399.24" class="vlbl" text-anchor="middle" transform="rotate(90 411.3 399.24)">Scala</text>
-    <g transform="translate(467.1,404.55)">
+    <text x="413.64" y="399.24" class="vlbl" text-anchor="middle" transform="rotate(90 413.64 399.24)">Scala</text>
+    <g transform="translate(464.94,404.55)">
       <rect x="-17.1" y="-44.55" width="34.2" height="89.1" rx="4" fill="#7f858c" fill-opacity="0.9" stroke="#111" stroke-width="1.2"/>
       <rect x="-15.100000000000001" y="-41.55" width="30.200000000000003" height="18" rx="2" fill="#2a3542"/>
     </g>
-    <text x="467.1" y="404.55" class="vlbl" text-anchor="middle" transform="rotate(90 467.1 404.55)">Audi A6 allr.</text>
-    <g transform="translate(531,402.03)">
+    <text x="464.94" y="404.55" class="vlbl" text-anchor="middle" transform="rotate(90 464.94 404.55)">Audi A6 allr.</text>
+    <g transform="translate(531,414.63)">
       <rect x="-16.83" y="-42.03" width="33.66" height="84.06" rx="4" fill="#3a6ea5" fill-opacity="0.9" stroke="#111" stroke-width="1.2"/>
       <rect x="-14.829999999999998" y="-39.03" width="29.659999999999997" height="18" rx="2" fill="#2a3542"/>
     </g>
-    <text x="531" y="402.03" class="vlbl" text-anchor="middle" transform="rotate(90 531 402.03)">M4 F82</text>
-    <g transform="translate(592.2,381.33)">
+    <text x="531" y="414.63" class="vlbl" text-anchor="middle" transform="rotate(90 531 414.63)">M4 F82</text>
+    <g transform="translate(592.2,393.93)">
       <rect x="-8.19" y="-21.33" width="16.38" height="42.66" rx="8.19" fill="#e08a1e" stroke="#1a1a1a" stroke-width="1"/>
       <line x1="-8.1" y1="-12.329999999999998" x2="8.1" y2="-12.329999999999998" stroke="#1a1a1a" stroke-width="1.4"/>
     </g>
-    <text x="592.2" y="381.33" class="vlbl" text-anchor="middle" transform="rotate(90 592.2 381.33)">Ténéré 700</text>
+    <text x="592.2" y="393.93" class="vlbl" text-anchor="middle" transform="rotate(90 592.2 393.93)">Ténéré 700</text>
     <g transform="translate(656.1,398.34)">
       <rect x="-15.84" y="-38.34" width="31.68" height="76.68" rx="4" fill="#c0392b" fill-opacity="0.9" stroke="#111" stroke-width="1.2"/>
       <rect x="-13.84" y="-35.34" width="27.68" height="18" rx="2" fill="#2a3542"/>
     </g>
     <text x="656.1" y="398.34" class="vlbl" text-anchor="middle" transform="rotate(90 656.1 398.34)">E46 Comp.</text>
     <line x1="788.94" y1="502.02" x2="781.92" y2="583.02" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>
-    <text x="796.94" y="542.52" class="dim" text-anchor="start">gate 3.5 m</text>
+    <text x="796.94" y="542.52" class="dim" text-anchor="start">gate 4.0 m</text>
     <circle cx="531" cy="511.2" r="100.8" fill="#c0392b" fill-opacity="0.05" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>
     <text x="531" y="511.2" class="dim">turning Ø 11.2 m</text>
     <path d="M 783.54,540 Q 612,522 504,500.4 T 439.2,432" fill="none" stroke="#c0392b" stroke-width="1.6" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
@@ -93,13 +102,19 @@
     <rect x="0" y="153" width="8" height="8" fill="#c0392b"/>
     <text x="13" y="160" class="pt">BMW E46 Compact</text><text x="118" y="160" class="pt" text-anchor="end">4.26 × 1.76</text><text x="150" y="160" class="pt" text-anchor="end">10.6</text>
     <text x="0" y="172" class="ok" font-size="8.5">✓ 0.72 m each side, 2.8 m spare</text>
-    <text x="0" y="196" class="pt" fill="#444" font-weight="700">Access from the gate</text>
-    <text x="0" y="208" class="pt" fill="#555">Gate leaf 3.5 m, drive ~4.5 m — straight run OK.</text>
-    <text x="0" y="220" class="pt" fill="#555">Turning Ø 11.2 m met by driveway + apron L.</text>
-    <text x="0" y="232" class="pt" fill="#555">Drive in forward, back-and-fill, leave forward.</text>
-    <text x="0" y="244" class="pt" fill="#555">A6 allroad (Ø 12.1 m) is the tightest: still OK,</text>
-    <text x="0" y="256" class="pt" fill="#555">reverse the last bit into the carport if needed.</text>
-    <text x="0" y="274" class="pt" fill="#888">Widths exclude mirrors (~+0.25 m). Fold mirrors</text>
-    <text x="0" y="286" class="pt" fill="#888">for the side-by-side carport pair.</text>
+    <text x="0" y="192" class="pt" fill="#444" font-weight="700">Door &amp; exit clearance (carport)</text>
+    <text x="0" y="204" class="pt" fill="#555">W walkway 0.8 m → house door (opens in): OK.</text>
+    <text x="0" y="216" class="pt" fill="#555">E walkway 0.85 m → garage door: OK.</text>
+    <text x="0" y="228" class="pt" fill="#555">Between the cars ~1.0 m → inner doors ~0.5 m</text>
+    <text x="0" y="240" class="pt" fill="#555">each: tight — get out on the outer side.</text>
+    <text x="0" y="252" class="pt" fill="#555">Keep both side strips clear (no parking on them).</text>
+    <text x="0" y="270" class="pt" fill="#444" font-weight="700">Access from the gate</text>
+    <text x="0" y="282" class="pt" fill="#555">Gate 4.0 m clear (+ separate 0.9 m wicket).</text>
+    <text x="0" y="294" class="pt" fill="#555">Turning Ø 11.2 m met by driveway + apron L.</text>
+    <text x="0" y="306" class="pt" fill="#555">Drive in forward, back-and-fill, leave forward.</text>
+    <text x="0" y="318" class="pt" fill="#555">A6 allroad (Ø 12.1 m) is the tightest: still OK,</text>
+    <text x="0" y="330" class="pt" fill="#555">reverse the last bit into the carport if needed.</text>
+    <text x="0" y="348" class="pt" fill="#888">Widths exclude mirrors (~+0.25 m). Fold mirrors</text>
+    <text x="0" y="360" class="pt" fill="#888">for the side-by-side carport pair.</text>
   </g>
 </svg>

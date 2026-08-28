@@ -110,7 +110,7 @@ const GARDEN = {
       parts: [
         { kind: "line", x1: 43.83, y1: 27.89, x2: 43.44, y2: 32.39, stroke: "#3a3a3a", sw: 6, cap: "round" },
         { kind: "text", x: 44.44, y: 30, text: "GATE", cls: "lbl-sm", weight: 700, anchor: "start" },
-        { kind: "text", x: 44.44, y: 30.78, text: "~4.5 m", cls: "dim", anchor: "start" }
+        { kind: "text", x: 44.44, y: 30.78, text: "4.0 m clear", cls: "dim", anchor: "start" }
       ]
     },
     {

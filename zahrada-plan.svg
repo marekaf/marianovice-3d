@@ -107,7 +107,7 @@
     <g class="el" data-id="gate"><title>Gate ~4.5 m</title>
       <line x1="788.94" y1="502.02" x2="781.92" y2="583.02" fill="none" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round"/>
       <text x="799.92" y="540" class="lbl-sm" font-weight="700" text-anchor="start">GATE</text>
-      <text x="799.92" y="554.04" class="dim" text-anchor="start">~4.5 m</text>
+      <text x="799.92" y="554.04" class="dim" text-anchor="start">4.0 m clear</text>
     </g>
     <g class="el" data-id="binStore"><title>Bin store (plastic box) 1.41 × 0.82 m</title>
       <g clip-path="url(#plotShape)"><rect x="759.6" y="601.2" width="14.76" height="25.38" fill="#5a5e64" opacity="0.92" stroke="#33363a" stroke-width="1"/></g>

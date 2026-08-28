@@ -1174,6 +1174,21 @@ for (let i = 1; i < 5; i++) {
   scene.add(d);
 }
 
+// Garage workbench across the north wall (full width) — cars must park south of it, toward the door
+{
+  const bw = GA.w - 0.3, bd = 0.65, bh = 0.9, bx = GA.x + GA.w / 2, bz = GA.y + 0.1 + bd / 2;
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x565b60, roughness: 0.6, metalness: 0.3 });
+  const top = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.07, bd), new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 0.7 }));
+  top.position.set(bx, garageFloorY + bh, bz); top.castShadow = true; top.receiveShadow = true; scene.add(top);
+  for (const dx of [-bw / 2 + 0.12, bw / 2 - 0.12]) for (const dz of [-bd / 2 + 0.06, bd / 2 - 0.06]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, bh, 0.07), legMat);
+    leg.position.set(bx + dx, garageFloorY + bh / 2, bz + dz); scene.add(leg);
+  }
+  // pegboard back panel on the wall
+  const peg = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.9, 0.04), new THREE.MeshStandardMaterial({ color: 0x6a7075, roughness: 0.8 }));
+  peg.position.set(bx, garageFloorY + bh + 0.55, GA.y + 0.06); scene.add(peg);
+}
+
 // Carport between house and garage — open posts on west side (garage walls support east side)
 [[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
   const baseY = terrainHeight(px, pz);
@@ -2219,12 +2234,13 @@ addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);      // west
     leaf.rotation.y = Math.atan2(-dz, dx);
     scene.add(leaf);
   };
-  // Sliding gate retracted (open): parked along the fence just north of the opening, on its track inside the line
-  const slideLen = 3.5, slideH = 1.5;
+  // Cantilever sliding gate, 4.0 m clear opening, retracted (open): parked along the fence just
+  // north of the opening on its run-back, on the track inside the line
+  const slideLen = 4.0, slideH = 1.5;
   placeLeaf(gateT[0] - ux * (slideLen / 2 + 0.15) + nx * 0.12,
             gateT[1] - uz * (slideLen / 2 + 0.15) + nz * 0.12, slideLen, slideH, ux, uz);
-  // Branka (1 m) hinged at the south jamb, swung ~90° inward (open)
-  const brankaLen = 1.0, brankaH = 1.4;
+  // Wicket (branka) 0.9 m — a separate pedestrian gate beside the drive, swung ~90° inward (open)
+  const brankaLen = 0.9, brankaH = 1.5;
   placeLeaf(gateB[0] + nx * (brankaLen / 2), gateB[1] + nz * (brankaLen / 2), brankaLen, brankaH, nx, nz);
   // Gate posts at both jambs
   for (const [gx, gz] of [gateT, gateB]) {

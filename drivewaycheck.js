@@ -4,15 +4,15 @@
 const ROWS = "abcdefghijklmnopqrstuvwxyz";
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-// Nominal manufacturer dimensions (m): length, width (excl. mirrors), turning circle Ø.
-// Parked nose-north; cx is the bay lane centre; the fleet noses line up at z = 20.0.
-const NOSE_Z = 20.0;
+// Nominal manufacturer dimensions (m): length, width (excl. mirrors), turning circle Ø. Parked
+// nose-north; cx = lane centre; noseZ = front bumper. Carport cars are spaced to leave ~0.8 m
+// walkways to the two pedestrian doors; garage cars sit south of the north-wall workbench.
 const VEH = [
-  { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3f8f52", cx: 22.85 },
-  { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#7f858c", cx: 25.95 },
-  { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#3a6ea5", cx: 29.5 },
-  { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#e08a1e", cx: 32.9, moto: true },
-  { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#c0392b", cx: 36.45 },
+  { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3f8f52", cx: 22.98, noseZ: 20.0 },
+  { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#7f858c", cx: 25.83, noseZ: 20.0 },
+  { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#3a6ea5", cx: 29.5,  noseZ: 20.7 },
+  { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#e08a1e", cx: 32.9,  noseZ: 20.7, moto: true },
+  { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#c0392b", cx: 36.45, noseZ: 20.0 },
 ];
 
 function renderDrivewayCheckSVG(garden) {
@@ -89,9 +89,21 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + ga.d) - 4}" class="bay" fill="#7a6f52" text-anchor="middle">GARAGE</text>`);
   out.push(`    <text x="${px(pk.x + pk.w / 2)}" y="${px(pk.y + pk.d) - 4}" class="bay" fill="#556" text-anchor="middle" transform="rotate(90 ${px(pk.x + pk.w / 2)} ${px(pk.y + pk.d) - 4})">PARKING</text>`);
 
+  // Garage workbench across the north wall (full width) — cars park south of it
+  out.push(`    <rect x="${px(ga.x + 0.15)}" y="${px(ga.y)}" width="${px(ga.w - 0.3)}" height="${px(0.65)}" fill="#8a6a44" stroke="#5a4530" stroke-width="1"/>`);
+  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + 0.45)}" class="vlbl" text-anchor="middle" fill="#fff">workbench</text>`);
+  // Carport walkways to the two pedestrian doors (keep clear of parked cars)
+  out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(0.8)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
+  out.push(`    <rect x="${px(cp.x + cp.w - 0.85)}" y="${px(cp.y)}" width="${px(0.85)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
+  // Pedestrian doors + swing arcs (house entry on the W wall, garage personnel door on the garage W wall)
+  out.push(`    <line x1="${px(cp.x)}" y1="${px(21.29)}" x2="${px(cp.x)}" y2="${px(22.71)}" stroke="#1f7a3d" stroke-width="3"/>`);
+  out.push(`    <path d="M ${px(cp.x)},${px(22.71)} A ${px(1.42)} ${px(1.42)} 0 0 0 ${px(cp.x + 1.42)},${px(22.71)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`);
+  out.push(`    <text x="${px(cp.x) + 3}" y="${px(23.6)}" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m</text>`);
+  out.push(`    <line x1="${px(ga.x)}" y1="${px(20.2)}" x2="${px(ga.x)}" y2="${px(21.1)}" stroke="#1f7a3d" stroke-width="3"/>`);
+  out.push(`    <circle cx="${px(ga.x)}" cy="${px(20.65)}" r="2.5" fill="#1f7a3d"/>`); // garage personnel door (labelled in the panel)
   // Vehicles to scale (nose north)
   for (const v of VEH) {
-    const cz = NOSE_Z + v.l / 2, w = px(v.w), l = px(v.l);
+    const cz = v.noseZ + v.l / 2, w = px(v.w), l = px(v.l);
     out.push(`    <g transform="translate(${px(v.cx)},${px(cz)})">`);
     if (v.moto) {
       out.push(`      <rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${l}" rx="${w / 2}" fill="${v.col}" stroke="#1a1a1a" stroke-width="1"/>`);
@@ -107,7 +119,7 @@ function renderDrivewayCheckSVG(garden) {
 
   // Gate + access swept path + turning circle (getting to the carport)
   out.push(`    <line x1="${px(gt.x1)}" y1="${px(gt.y1)}" x2="${px(gt.x2)}" y2="${px(gt.y2)}" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>`);
-  out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate 3.5 m</text>`);
+  out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate 4.0 m</text>`);
   out.push(`    <circle cx="${px(29.5)}" cy="${px(28.4)}" r="${px(5.6)}" fill="#c0392b" fill-opacity="0.05" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>`);
   out.push(`    <text x="${px(29.5)}" y="${px(28.4)}" class="dim">turning Ø 11.2 m</text>`);
   out.push(`    <path d="M ${px(gt.x1 - 0.3)},${px(30)} Q ${px(34)},${px(29)} ${px(28)},${px(27.8)} T ${px(24.4)},${px(24)}" fill="none" stroke="#c0392b" stroke-width="1.6" stroke-dasharray="3,3" marker-end="url(#arrow)"/>`);
@@ -136,11 +148,20 @@ function renderDrivewayCheckSVG(garden) {
     out.push(`    <text x="0" y="${y}" class="ok" font-size="8.5">${esc(verdict[bay])}</text>`);
     y += 20;
   }
-  y += 4;
+  out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Door &amp; exit clearance (carport)</text>`);
+  y += 12;
+  for (const line of [
+    "W walkway 0.8 m → house door (opens in): OK.",
+    "E walkway 0.85 m → garage door: OK.",
+    "Between the cars ~1.0 m → inner doors ~0.5 m",
+    "each: tight — get out on the outer side.",
+    "Keep both side strips clear (no parking on them).",
+  ]) { out.push(`    <text x="0" y="${y}" class="pt" fill="#555">${esc(line)}</text>`); y += 12; }
+  y += 6;
   out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Access from the gate</text>`);
   y += 12;
   for (const line of [
-    "Gate leaf 3.5 m, drive ~4.5 m — straight run OK.",
+    "Gate 4.0 m clear (+ separate 0.9 m wicket).",
     "Turning Ø 11.2 m met by driveway + apron L.",
     "Drive in forward, back-and-fill, leave forward.",
     "A6 allroad (Ø 12.1 m) is the tightest: still OK,",
