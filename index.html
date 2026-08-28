@@ -1783,26 +1783,23 @@ const waterNormal = (() => {
   for (const x of [16.05, 19.3]) {
     winZ(x, HB[3], 1, 0.9, 1.25, ty + 0.9);
   }
-  // Entry door — on the SOLID east wall of the south part (z > 22.53, clear of the terrace notch),
-  // facing the carport. z=22 would sit in the notch void; the wall there is set back to x=20.58.
-  const doorZ = 24.2;
-  const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 1.42), frameMat);
-  d2.position.set(HB[2] + 0.03, ty + 1.075, doorZ);
+  // Entrance door — in the east NOTCH (back wall x=EN[0]=20.58), into the entrance hall (zádveří),
+  // at the south end of the notch, south of the living-room portal. NOT the south-part solid wall
+  // (that is the technical room). Faces east; a landing + short flight drop to the notch/carport.
+  const doorZ = 21.7;
+  const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 1.1), frameMat);
+  d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
   scene.add(d2);
-  // Entrance landing at FFL + a 3-step flight down to the carport slab (0.5 m lower). A proper
-  // landing at the threshold, then even risers — so the door reads as reached by steps, not perched
-  // on a block. Treads rest on the slab (each box runs down to the carport level).
-  const carportY = terrainHeight(HB[2] + 1.3, doorZ);   // flat carport slab (−0.50)
+  const groundY = terrainHeight(EN[0] + 1.4, doorZ);
   const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
-  const rise = ty - carportY, stepW = 1.9;
-  const flight = [
-    { x0: HB[2],        x1: HB[2] + 0.55, top: ty },                  // landing, flush with the threshold
-    { x0: HB[2] + 0.55, x1: HB[2] + 0.84, top: ty - rise / 3 },
-    { x0: HB[2] + 0.84, x1: HB[2] + 1.13, top: ty - 2 * rise / 3 },
-    { x0: HB[2] + 1.13, x1: HB[2] + 1.42, top: carportY + 0.02 },
-  ];
+  const rise = Math.max(0, ty - groundY), stepW = 1.5;
+  const flight = rise < 0.18
+    ? [{ x0: EN[0], x1: EN[0] + 0.45, top: ty }]                       // near-level onto the terrace: just a sill
+    : [ { x0: EN[0],        x1: EN[0] + 0.5, top: ty },
+        { x0: EN[0] + 0.5,  x1: EN[0] + 0.8, top: ty - rise / 2 },
+        { x0: EN[0] + 0.8,  x1: EN[0] + 1.1, top: groundY + 0.02 } ];
   for (const tr of flight) {
-    const w = tr.x1 - tr.x0, h = Math.max(0.08, tr.top - carportY);
+    const w = tr.x1 - tr.x0, h = Math.max(0.06, tr.top - groundY);
     const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, stepW), stepMat);
     st.position.set((tr.x0 + tr.x1) / 2, tr.top - h / 2, doorZ);
     st.receiveShadow = true; st.castShadow = true;
