@@ -77,6 +77,12 @@ const GARDEN = {
       id: "garage",
       name: "Garage 7.18 × 7.05 m",
       fixed: true,
+      // interior openings: from/w in plot meters along the wall (x for N/S walls, y for W/E),
+      // h = clear height above the interior floor slab
+      meta: { wallT: 0.3, openings: [
+        { wall: "S", from: 28.72, w: 5, h: 2.05, kind: "gate" },
+        { wall: "W", from: 20.2, w: 0.9, h: 2.15, kind: "door" }
+      ] },
       parts: [
         { kind: "rect", x: 27.63, y: 19.4, w: 7.18, d: 7.05, fill: "#888", opacity: 0.88, stroke: "#3a3a3a", sw: 2 },
         { kind: "rect", x: 28.72, y: 26.28, w: 5, d: 0.33, fill: "#222" },

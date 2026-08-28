@@ -13,6 +13,7 @@ Interactive 3D model of a residential garden.
   - First-person mode (WASD + mouse look)
   - Hover labels for major elements
   - Camera presets (top-down, isometric, walking eye level, etc.)
+  - Garage interior — hollow shell with real gate + door openings, open/closed gate toggle
 - [`editor.html`](editor.html) — interactive 2D editor (drag-drop on a grid, mouse or touch); exports an updated `layout.js` or SVG
 - [`plan.js`](plan.js) — renders the 2D SVG plan from `layout.js`
 - [`zahrada-plan.svg`](zahrada-plan.svg) — static 2D plan, generated: `node generate-svg.js`
