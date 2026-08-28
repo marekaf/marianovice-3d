@@ -1,11 +1,19 @@
-// Renders zahrada-driveway-check.svg — a top-down driveway maneuvering check: can a passenger car
-// get from the gate to under the carport and park / reverse / turn around comfortably?
+// Renders zahrada-driveway-check.svg — a top-down parking & maneuvering check: do the specific
+// vehicles fit their assigned bays, and can a car get from the gate to the carport comfortably?
 // Regenerate with: node generate-driveway-check.js
 const ROWS = "abcdefghijklmnopqrstuvwxyz";
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-// Vehicle envelope (typical mid-size passenger car — Škoda Octavia class)
-const CAR = { len: 4.69, wid: 1.83, turnDia: 11.2 };  // curb-to-curb turning circle ≈ 11.2 m
+// Nominal manufacturer dimensions (m): length, width (excl. mirrors), turning circle Ø.
+// Parked nose-north; cx is the bay lane centre; the fleet noses line up at z = 20.0.
+const NOSE_Z = 20.0;
+const VEH = [
+  { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3f8f52", cx: 22.85 },
+  { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#7f858c", cx: 25.95 },
+  { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#3a6ea5", cx: 29.5 },
+  { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#e08a1e", cx: 32.9, moto: true },
+  { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#c0392b", cx: 36.45 },
+];
 
 function renderDrivewayCheckSVG(garden) {
   const EL = Object.fromEntries(garden.elements.map((e) => [e.id, e]));
@@ -21,6 +29,8 @@ function renderDrivewayCheckSVG(garden) {
 
   const cp = EL.carport.parts.find((p) => p.kind === "rect");
   const ga = EL.garage.parts.find((p) => p.kind === "rect");
+  const gaDoor = EL.garage.parts.filter((p) => p.kind === "rect")[1]; // 5 m door on the S wall
+  const pk = EL.parking.parts.find((p) => p.kind === "rect");
   const dw = EL.driveway.parts.find((p) => p.kind === "polygon").points;
   const gt = EL.gate.parts.find((p) => p.kind === "line");
 
@@ -36,15 +46,16 @@ function renderDrivewayCheckSVG(garden) {
     .title{font-size:18px;font-weight:700;text-anchor:middle}
     .sub{font-size:11px;fill:#666;text-anchor:middle}
     .axis{font-size:9px;fill:#777;text-anchor:middle;font-weight:600}
-    .lbl{font-size:10px;font-weight:700;text-anchor:middle}
-    .dim{font-size:9px;fill:#1f6f43;text-anchor:middle;font-weight:600}
+    .bay{font-size:10px;font-weight:700}
+    .vlbl{font-size:8px;font-weight:700;fill:#fff}
+    .dim{font-size:9px;fill:#c0392b;text-anchor:middle;font-weight:600}
     .ph{font-size:11px;font-weight:700}
-    .pt{font-size:9px}
+    .pt{font-size:8.5px}
     .ok{font-size:10px;font-weight:700;fill:#1f7a3d}
   </style>`);
   out.push(`  <rect width="1100" height="880" fill="white"/>`);
-  out.push(`  <text x="440" y="26" class="title">Driveway maneuvering check — gate → carport</text>`);
-  out.push(`  <text x="440" y="44" class="sub">Passenger car ${CAR.len} × ${CAR.wid} m, turning circle Ø ${CAR.turnDia} m · park / reverse / turn-around</text>`);
+  out.push(`  <text x="430" y="26" class="title">Parking &amp; maneuvering — vehicle fit</text>`);
+  out.push(`  <text x="430" y="44" class="sub">M4 + Ténéré in the garage · Scala + A6 allroad under the carport · E46 next to the garage</text>`);
 
   out.push(`  <g transform="translate(70, 96)">`);
   out.push(`    <g clip-path="url(#plot)"><rect x="-50" y="-10" width="900" height="720" fill="url(#mg)"/></g>`);
@@ -56,9 +67,9 @@ function renderDrivewayCheckSVG(garden) {
   for (let j = 0; j < rows; j++) rl.push(`<text x="-12" y="${j * cell + 22}">${ROWS[j]}</text>`);
   out.push(`    <g class="axis">${rl.join("")}</g>`);
 
-  // Context: house + fence-relevant elements faint
+  // Context faint
   out.push(`    <g clip-path="url(#plot)" fill="#f1f1f1" stroke="#d6d6d6" stroke-width="0.8">`);
-  for (const id of ["house", "garage", "sauna", "saunaShelter", "pergola"]) {
+  for (const id of ["house", "sauna", "saunaShelter", "pergola"]) {
     const e = EL[id]; if (!e) continue;
     for (const p of e.parts) {
       if (p.kind === "rect") out.push(`      <rect x="${px(p.x)}" y="${px(p.y)}" width="${px(p.w)}" height="${px(p.d)}"/>`);
@@ -67,65 +78,77 @@ function renderDrivewayCheckSVG(garden) {
   }
   out.push(`    </g>`);
 
-  // Driveway surface
-  out.push(`    <polygon points="${dw.map(([x, y]) => `${px(x)},${px(y)}`).join(" ")}" fill="#dfe7ee" stroke="#8aa0b4" stroke-width="1.2"/>`);
-  // Garage slab + carport bay
-  out.push(`    <rect x="${px(ga.x)}" y="${px(ga.y)}" width="${px(ga.w)}" height="${px(ga.d)}" fill="#e6e0d4" stroke="#9a9074" stroke-width="1"/>`);
-  out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(cp.w)}" height="${px(cp.d)}" fill="#cfe8d6" stroke="#4a9a5c" stroke-width="1.6"/>`);
-  out.push(`    <text x="${px(cp.x + cp.w / 2)}" y="${px(cp.y + cp.d / 2)}" class="lbl" fill="#2f6f43">CARPORT</text>`);
-  out.push(`    <text x="${px(cp.x + cp.w / 2)}" y="${px(cp.y + cp.d / 2) + 13}" class="dim">6.35 × 7.05 m (45 m²)</text>`);
-  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + ga.d / 2)}" class="lbl" fill="#777">GARAGE</text>`);
+  // Driveway + bays
+  out.push(`    <polygon points="${dw.map(([x, y]) => `${px(x)},${px(y)}`).join(" ")}" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>`);
+  out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(cp.w)}" height="${px(cp.d)}" fill="#e7f3ea" stroke="#3f8f52" stroke-width="1.6"/>`);
+  out.push(`    <rect x="${px(ga.x)}" y="${px(ga.y)}" width="${px(ga.w)}" height="${px(ga.d)}" fill="#efe9dd" stroke="#9a9074" stroke-width="1.6"/>`);
+  out.push(`    <rect x="${px(pk.x)}" y="${px(pk.y)}" width="${px(pk.w)}" height="${px(pk.d)}" fill="#eef2f6" stroke="#6b8199" stroke-width="1.4" stroke-dasharray="4,3"/>`);
+  // Garage door opening (5 m) marked on the S wall
+  out.push(`    <line x1="${px(gaDoor.x)}" y1="${px(ga.y + ga.d)}" x2="${px(gaDoor.x + gaDoor.w)}" y2="${px(ga.y + ga.d)}" stroke="#3a2a18" stroke-width="3"/>`);
+  out.push(`    <text x="${px(cp.x + cp.w / 2)}" y="${px(cp.y + cp.d) - 4}" class="bay" fill="#2f6f43" text-anchor="middle">CARPORT</text>`);
+  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + ga.d) - 4}" class="bay" fill="#7a6f52" text-anchor="middle">GARAGE</text>`);
+  out.push(`    <text x="${px(pk.x + pk.w / 2)}" y="${px(pk.y + pk.d) - 4}" class="bay" fill="#556" text-anchor="middle" transform="rotate(90 ${px(pk.x + pk.w / 2)} ${px(pk.y + pk.d) - 4})">PARKING</text>`);
 
-  // Gate opening (car leaf) marker
+  // Vehicles to scale (nose north)
+  for (const v of VEH) {
+    const cz = NOSE_Z + v.l / 2, w = px(v.w), l = px(v.l);
+    out.push(`    <g transform="translate(${px(v.cx)},${px(cz)})">`);
+    if (v.moto) {
+      out.push(`      <rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${l}" rx="${w / 2}" fill="${v.col}" stroke="#1a1a1a" stroke-width="1"/>`);
+      out.push(`      <line x1="${-px(0.45)}" y1="${-l / 2 + px(0.5)}" x2="${px(0.45)}" y2="${-l / 2 + px(0.5)}" stroke="#1a1a1a" stroke-width="1.4"/>`);
+    } else {
+      out.push(`      <rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${l}" rx="4" fill="${v.col}" fill-opacity="0.9" stroke="#111" stroke-width="1.2"/>`);
+      out.push(`      <rect x="${-w / 2 + 2}" y="${-l / 2 + 3}" width="${w - 4}" height="${px(1.0)}" rx="2" fill="#2a3542"/>`); // windscreen (front = north)
+    }
+    out.push(`    </g>`);
+    const lab = v.name.replace("Yamaha ", "").replace(" allroad", " allr.").replace(" Compact", " Comp.").replace("Škoda ", "").replace("BMW ", "");
+    out.push(`    <text x="${px(v.cx)}" y="${px(cz)}" class="vlbl" text-anchor="middle" transform="rotate(90 ${px(v.cx)} ${px(cz)})">${esc(lab)}</text>`);
+  }
+
+  // Gate + access swept path + turning circle (getting to the carport)
   out.push(`    <line x1="${px(gt.x1)}" y1="${px(gt.y1)}" x2="${px(gt.x2)}" y2="${px(gt.y2)}" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>`);
-  out.push(`    <text x="${px(gt.x1) + 10}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate 3.5 m</text>`);
-
-  // Parked car under the carport (nose north), plus the turning-circle envelope
-  const carRect = (cx, cz, ang, fill) => {
-    const w = px(CAR.wid), l = px(CAR.len);
-    return `<g transform="translate(${px(cx)},${px(cz)}) rotate(${ang})"><rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${l}" rx="4" fill="${fill}" fill-opacity="0.85" stroke="#1a1a1a" stroke-width="1.2"/><rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${px(1.1)}" rx="3" fill="#2a3542"/></g>`;
-  };
-  // Turning circle centred in the apron/driveway in front of the bays
-  const tcx = 29.5, tcz = 28.2, R = CAR.turnDia / 2;
-  out.push(`    <circle cx="${px(tcx)}" cy="${px(tcz)}" r="${px(R)}" fill="#c0392b" fill-opacity="0.06" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>`);
-  out.push(`    <text x="${px(tcx)}" y="${px(tcz)}" class="dim" fill="#c0392b">turning Ø ${CAR.turnDia} m</text>`);
-  // Suggested swept path gate → carport (approach curve + park)
-  out.push(`    <path d="M ${px(gt.x1 - 0.3)},${px(30)} Q ${px(34)},${px(29)} ${px(29)},${px(27.6)} T ${px(24.46)},${px(23.2)}" fill="none" stroke="#c0392b" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrow)"/>`);
-  out.push(`    ${carRect(24.46, 22.6, 0, "#3a6ea5")}`);          // parked under carport
-  out.push(`    ${carRect(41.5, 30.0, 100, "#9aa7b3")}`);        // arriving at the gate
-
-  // Key clear-run dimension (N–S through carport + apron)
-  out.push(`    <line x1="${px(19.6)}" y1="${px(19.4)}" x2="${px(19.6)}" y2="${px(30.1)}" stroke="#1f6f43" stroke-width="0.8" marker-end="url(#arrow)"/>`);
-  out.push(`    <text x="${px(18.4)}" y="${px(24.8)}" class="dim" transform="rotate(-90 ${px(18.4)} ${px(24.8)})">clear run 10.7 m</text>`);
+  out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate 3.5 m</text>`);
+  out.push(`    <circle cx="${px(29.5)}" cy="${px(28.4)}" r="${px(5.6)}" fill="#c0392b" fill-opacity="0.05" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>`);
+  out.push(`    <text x="${px(29.5)}" y="${px(28.4)}" class="dim">turning Ø 11.2 m</text>`);
+  out.push(`    <path d="M ${px(gt.x1 - 0.3)},${px(30)} Q ${px(34)},${px(29)} ${px(28)},${px(27.8)} T ${px(24.4)},${px(24)}" fill="none" stroke="#c0392b" stroke-width="1.6" stroke-dasharray="3,3" marker-end="url(#arrow)"/>`);
 
   out.push(`  </g>`);
 
   // Compass
   out.push(`  <g transform="translate(840, 92)"><circle r="22" fill="white" stroke="#555" stroke-width="1.3"/><path d="M 0 -17 L 5 3 L 0 -5 L -5 3 Z" fill="#2a2a2a"/><path d="M 0 5 L 5 -3 L 0 17 L -5 -3 Z" fill="#999"/><text y="-26" font-size="12" font-weight="700" text-anchor="middle">N</text></g>`);
 
-  // Verdict panel
-  const P = 872, notes = [
-    ["Gate (car leaf)", "3.5 m ≥ 2.75 m needed. OK."],
-    ["Driveway width", "~4.5 m — ample for a straight run."],
-    ["Carport bay", "6.35 × 7.05 m double; nose-in +2.4 m."],
-    ["Apron in front", "3.3–4.0 m → 10.7 m clear N–S run."],
-    ["90° swing in", "4.5 m lane → 6.35 m bay: fine for a car"],
-    ["", "(a long van: one correction)."],
-    ["Turn-around", "L of drive + 45 m² bay meets Ø 11.2 m:"],
-    ["", "in forward, back-and-fill, out forward."],
-    ["Reverse out", "straight back to lane, fwd to gate."],
-  ];
-  out.push(`  <g transform="translate(${P}, 150)">`);
-  out.push(`    <text x="0" y="0" class="ph">ASSESSMENT</text>`);
-  out.push(`    <text x="0" y="20" class="ok">✓ Comfortable for a passenger car</text>`);
-  let y = 40;
-  for (const [k, v] of notes) {
-    if (k) out.push(`    <text x="0" y="${y}" class="pt" font-weight="700">${esc(k)}</text>`);
-    out.push(`    <text x="0" y="${y + (k ? 11 : 0)}" class="pt" fill="#444">${esc(v)}</text>`);
-    y += k ? 27 : 12;
+  // Fit table
+  out.push(`  <g transform="translate(872, 150)">`);
+  out.push(`    <text x="0" y="0" class="ph">VEHICLE FIT (nominal specs)</text>`);
+  out.push(`    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vehicle</text><text x="118" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">L × W m</text><text x="150" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>`);
+  out.push(`    <line x1="0" y1="20" x2="150" y2="20" stroke="#bbb" stroke-width="0.8"/>`);
+  let y = 33;
+  const grp = { carport: "CARPORT 6.35 × 7.05 — two side-by-side", garage: "GARAGE 7.18 × 7.05 (door 5.0 m)", parking: "PARKING 3.2 × 7.05 — single bay" };
+  const verdict = { carport: "✓ both fit; ~0.65 m gaps (fold mirrors)", garage: "✓ car + bike, 2 m gap; room to spare", parking: "✓ 0.72 m each side, 2.8 m spare" };
+  for (const bay of ["carport", "garage", "parking"]) {
+    out.push(`    <text x="0" y="${y}" class="pt" font-weight="700" fill="#333">${esc(grp[bay])}</text>`);
+    y += 13;
+    for (const v of VEH.filter((v) => v.bay === bay)) {
+      out.push(`    <rect x="0" y="${y - 7}" width="8" height="8" fill="${v.col}"/>`);
+      out.push(`    <text x="13" y="${y}" class="pt">${esc(v.name)}</text><text x="118" y="${y}" class="pt" text-anchor="end">${v.l.toFixed(2)} × ${v.w.toFixed(2)}</text><text x="150" y="${y}" class="pt" text-anchor="end">${v.turn.toFixed(1)}</text>`);
+      y += 12;
+    }
+    out.push(`    <text x="0" y="${y}" class="ok" font-size="8.5">${esc(verdict[bay])}</text>`);
+    y += 20;
   }
-  out.push(`    <text x="0" y="${y + 6}" class="pt" fill="#888">Envelope: Škoda Octavia class. A larger</text>`);
-  out.push(`    <text x="0" y="${y + 18}" class="pt" fill="#888">SUV/van (Ø ~12 m) fits with less slack.</text>`);
+  y += 4;
+  out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Access from the gate</text>`);
+  y += 12;
+  for (const line of [
+    "Gate leaf 3.5 m, drive ~4.5 m — straight run OK.",
+    "Turning Ø 11.2 m met by driveway + apron L.",
+    "Drive in forward, back-and-fill, leave forward.",
+    "A6 allroad (Ø 12.1 m) is the tightest: still OK,",
+    "reverse the last bit into the carport if needed.",
+  ]) { out.push(`    <text x="0" y="${y}" class="pt" fill="#555">${esc(line)}</text>`); y += 12; }
+  y += 6;
+  out.push(`    <text x="0" y="${y}" class="pt" fill="#888">Widths exclude mirrors (~+0.25 m). Fold mirrors</text>`);
+  out.push(`    <text x="0" y="${y + 12}" class="pt" fill="#888">for the side-by-side carport pair.</text>`);
   out.push(`  </g>`);
 
   out.push(`</svg>`);
