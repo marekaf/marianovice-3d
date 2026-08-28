@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interiors — orthographic views</title>
+<style>
+  body { margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f3f2ef; }
+  #info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); color: white; padding: 10px 14px; z-index: 100; border-radius: 6px; max-width: 300px; }
+  #info h3 { margin: 0 0 4px 0; font-size: 15px; }
+  #info small { opacity: 0.85; }
+  #info a { color: #5dade2; }
+  #views { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 10px 12px; z-index: 100; border-radius: 6px; width: 168px; }
+  #views h4 { color: #fff; margin: 0 0 8px 0; font-size: 12px; opacity: 0.85; }
+  #views button { display: block; width: 100%; margin: 4px 0; padding: 6px 12px; cursor: pointer; background: #5dade2; color: white; border: none; border-radius: 4px; font-size: 13px; text-align: left; }
+  #views button:hover { background: #3a8fc9; }
+  #views button.active { background: #2c6f9e; }
+  #views button.export { background: #2f9e5f; margin-top: 10px; }
+  #views button.export:hover { background: #23804a; }
+  #views label { display: block; color: #fff; font-size: 12px; margin: 5px 0; cursor: pointer; }
+  #viewlabel { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: white; padding: 7px 16px; z-index: 100; border-radius: 6px; font-size: 13px; font-weight: 600; }
+  #scalebar { position: absolute; bottom: 14px; left: 14px; z-index: 100; background: rgba(255,255,255,0.85); border: 1px solid #999; border-radius: 4px; padding: 6px 10px; font-size: 11px; color: #222; }
+  #scaleline { height: 0; border-bottom: 3px solid #222; margin-bottom: 3px; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="info">
+  <h3>Interiors — garage</h3>
+  <small id="dims"></small><br>
+  <small>Drag: pan · Scroll: zoom · Cutaway 3D also rotates<br>
+  <a href="index.html">← back to the garden model</a></small>
+</div>
+<div id="viewlabel"></div>
+<div id="views">
+  <h4>VIEW</h4>
+  <button data-view="plan">Floor plan</button>
+  <button data-view="north">North wall</button>
+  <button data-view="south">South wall (gate)</button>
+  <button data-view="east">East wall</button>
+  <button data-view="west">West wall (door)</button>
+  <button data-view="cut3d">Cutaway 3D</button>
+  <label><input type="checkbox" id="toggleGate"> Gate open</label>
+  <label><input type="checkbox" id="toggleVehicles" checked> Vehicles</label>
+  <label><input type="checkbox" id="toggleCeiling" checked> Ceiling</label>
+  <button class="export" id="exportBtn">⬇ Export PNG</button>
+</div>
+<div id="scalebar"><div id="scaleline"></div><span id="scaletext"></span></div>
+
+<script src="layout.js"></script>
+<script src="interiors3d.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf3f2ef);
+
+// Flat, even light — elevations should read like drawings, not renders (no shadow map)
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d5d0, 1.05));
+const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+sun.position.set(-6, 14, 9);
+scene.add(sun);
+
+// The garage in plot coordinates with its interior floor at y = 0
+const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: 0 });
+for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.furniture, gar.gateClosed, gar.gateOpen, gar.ceiling, gar.light]) scene.add(grp);
+const vehicles = INTERIORS3D.garageVehicles(THREE, GARDEN, 0);
+scene.add(vehicles);
+
+const GA = gar.dims.rect;
+const cx = GA.x + GA.w / 2, cz = GA.y + GA.d / 2;
+const inW = GA.w - 2 * gar.dims.wallT, inD = GA.d - 2 * gar.dims.wallT;
+const ceilHigh = gar.dims.roofHigh - gar.dims.pitch * gar.dims.wallT - 0.06;
+const ceilLow = gar.dims.roofHigh - gar.dims.pitch * (GA.w - gar.dims.wallT) - 0.06;
+document.getElementById('dims').textContent =
+  `${GA.w.toFixed(2)} × ${GA.d.toFixed(2)} m outside · ${inW.toFixed(2)} × ${inD.toFixed(2)} m inside · ceiling ${ceilLow.toFixed(2)}–${ceilHigh.toFixed(2)} m`;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 200);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = false;
+
+// Each view: camera placement, what to hide (the wall you look through), extents to fit (m)
+const VIEWS = {
+  plan:  { label: 'FLOOR PLAN (north up)',        pos: [cx, 40, cz],      up: [0, 0, -1], target: [cx, 0, cz],   hide: ['ceiling'],           fitW: GA.w + 1.6, fitH: GA.d + 1.6, rotate: false },
+  north: { label: 'NORTH WALL — workbench',       pos: [cx, 1.7, cz + 40], up: [0, 1, 0], target: [cx, 1.7, cz], hide: ['S', 'ceiling'],      fitW: GA.w + 1.2, fitH: 4.4, rotate: false },
+  south: { label: 'SOUTH WALL — sectional gate',  pos: [cx, 1.7, cz - 40], up: [0, 1, 0], target: [cx, 1.7, cz], hide: ['N', 'ceiling'],      fitW: GA.w + 1.2, fitH: 4.4, rotate: false },
+  east:  { label: 'EAST WALL',                    pos: [cx - 40, 1.7, cz], up: [0, 1, 0], target: [cx, 1.7, cz], hide: ['W', 'ceiling'],      fitW: GA.d + 1.2, fitH: 4.4, rotate: false },
+  west:  { label: 'WEST WALL — personnel door',   pos: [cx + 40, 1.7, cz], up: [0, 1, 0], target: [cx, 1.7, cz], hide: ['E', 'ceiling'],      fitW: GA.d + 1.2, fitH: 4.4, rotate: false },
+  cut3d: { label: 'CUTAWAY 3D (S + E walls off)', pos: [cx + 11, 10, cz + 11], up: [0, 1, 0], target: [cx, 0.8, cz], hide: ['S', 'E', 'ceiling'], fitW: 13, fitH: 9, rotate: true },
+};
+let cur = 'plan';
+
+function applyVisibility() {
+  const hidden = new Set(VIEWS[cur].hide);
+  for (const k of ['N', 'S', 'E', 'W']) gar.walls[k].visible = !hidden.has(k);
+  gar.ceiling.visible = document.getElementById('toggleCeiling').checked && !hidden.has('ceiling');
+  const gateOpen = document.getElementById('toggleGate').checked;
+  gar.gateClosed.visible = !hidden.has('S') && !gateOpen;
+  gar.gateOpen.visible = !hidden.has('S') && gateOpen;
+  vehicles.visible = document.getElementById('toggleVehicles').checked;
+}
+
+function fitFrustum() {
+  const v = VIEWS[cur];
+  const aspect = innerWidth / innerHeight;
+  let halfH = (v.fitH / 2) * 1.08;
+  if ((v.fitW / 2) * 1.08 > halfH * aspect) halfH = (v.fitW / 2) * 1.08 / aspect;
+  camera.left = -halfH * aspect; camera.right = halfH * aspect;
+  camera.top = halfH; camera.bottom = -halfH;
+  camera.updateProjectionMatrix();
+}
+
+function setView(name) {
+  cur = name;
+  const v = VIEWS[name];
+  camera.up.set(...v.up);
+  camera.position.set(...v.pos);
+  camera.zoom = 1;
+  controls.target.set(...v.target);
+  controls.enableRotate = v.rotate;
+  fitFrustum();
+  controls.update();
+  applyVisibility();
+  document.getElementById('viewlabel').textContent = 'GARAGE — ' + v.label;
+  document.querySelectorAll('#views button[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  updateScalebar();
+}
+
+function updateScalebar() {
+  const mPerPx = (camera.right - camera.left) / (camera.zoom * innerWidth);
+  const px = 1 / mPerPx;
+  document.getElementById('scaleline').style.width = px + 'px';
+  document.getElementById('scaletext').textContent = '1 m';
+}
+
+document.querySelectorAll('#views button[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+for (const id of ['toggleGate', 'toggleVehicles', 'toggleCeiling']) {
+  document.getElementById(id).addEventListener('change', applyVisibility);
+}
+controls.addEventListener('change', updateScalebar);
+
+// PNG export of exactly what is on screen — render synchronously, then read the canvas
+document.getElementById('exportBtn').addEventListener('click', () => {
+  renderer.render(scene, camera);
+  const a = document.createElement('a');
+  a.download = `garage-${cur}.png`;
+  a.href = renderer.domElement.toDataURL('image/png');
+  a.click();
+});
+
+window.addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  fitFrustum();
+  updateScalebar();
+});
+
+// Deep-link a view via URL hash: #plan / #north / …
+const h = location.hash.slice(1);
+setView(VIEWS[h] ? h : 'plan');
+window.addEventListener('hashchange', () => { const n = location.hash.slice(1); if (VIEWS[n]) setView(n); });
+
+renderer.setAnimationLoop(() => {
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
