@@ -1225,17 +1225,43 @@ for (let i = 1; i < 5; i++) {
 
 // Garage workbench across the north wall (full width) — cars must park south of it, toward the door
 {
-  const bw = GA.w - 0.3, bd = 0.65, bh = 0.9, bx = GA.x + GA.w / 2, bz = GA.y + 0.1 + bd / 2;
+  const { d: bd, h: bh } = EL.garage.meta.workbench;
+  const backZ = GA.y + GAT;                        // bench + pegboard sit on the INNER wall face
+  const bw = GA.w - 2 * GAT - 0.2, bx = GA.x + GA.w / 2, bz = backZ + bd / 2;
   const legMat = new THREE.MeshStandardMaterial({ color: 0x565b60, roughness: 0.6, metalness: 0.3 });
-  const top = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.07, bd), new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 0.7 }));
-  top.position.set(bx, garageFloorY + bh, bz); top.castShadow = true; top.receiveShadow = true; scene.add(top);
-  for (const dx of [-bw / 2 + 0.12, bw / 2 - 0.12]) for (const dz of [-bd / 2 + 0.06, bd / 2 - 0.06]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, bh, 0.07), legMat);
-    leg.position.set(bx + dx, garageFloorY + bh / 2, bz + dz); scene.add(leg);
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 0.7 });
+  const steelMat = new THREE.MeshStandardMaterial({ color: 0x3d4248, roughness: 0.45, metalness: 0.5 });
+  const bench = new THREE.Group();
+  const put = (mesh, x, y, z) => { mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true; bench.add(mesh); };
+  // Thick butcher top with a small front overhang
+  put(new THREE.Mesh(new THREE.BoxGeometry(bw, 0.08, bd + 0.05), woodMat), bx, garageFloorY + bh - 0.04, bz + 0.025);
+  // 3 leg pairs + lower shelf
+  for (const dx of [-bw / 2 + 0.15, 0, bw / 2 - 0.15]) for (const dz of [-bd / 2 + 0.07, bd / 2 - 0.07]) {
+    put(new THREE.Mesh(new THREE.BoxGeometry(0.09, bh - 0.08, 0.09), legMat), bx + dx, garageFloorY + (bh - 0.08) / 2, bz + dz);
   }
-  // pegboard back panel on the wall
-  const peg = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.9, 0.04), new THREE.MeshStandardMaterial({ color: 0x6a7075, roughness: 0.8 }));
-  peg.position.set(bx, garageFloorY + bh + 0.55, GA.y + 0.06); scene.add(peg);
+  put(new THREE.Mesh(new THREE.BoxGeometry(bw - 0.2, 0.05, bd - 0.16), woodMat), bx, garageFloorY + 0.2, bz);
+  // Pegboard with hung tools
+  put(new THREE.Mesh(new THREE.BoxGeometry(bw, 1.0, 0.05), new THREE.MeshStandardMaterial({ color: 0x6a7075, roughness: 0.8 })), bx, garageFloorY + bh + 0.62, backZ + 0.025);
+  const toolZ = backZ + 0.08, toolY = garageFloorY + bh + 0.62;
+  put(new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.3, 0.035), woodMat), bx - 1.2, toolY, toolZ);          // hammer handle
+  put(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.055, 0.055), steelMat), bx - 1.2, toolY + 0.17, toolZ); // hammer head
+  put(new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.26, 0.02), steelMat), bx - 0.75, toolY + 0.03, toolZ); // wrench
+  put(new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.2, 0.02), steelMat), bx - 0.55, toolY + 0.06, toolZ);  // wrench, smaller
+  for (let i = 0; i < 3; i++) {
+    put(new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.2, 0.022), new THREE.MeshStandardMaterial({ color: [0xc0392b, 0xe08a1e, 0x2e6da4][i], roughness: 0.6 })), bx + 0.35 + i * 0.14, toolY + 0.05, toolZ); // screwdrivers
+  }
+  const coil = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.025, 6, 14), new THREE.MeshStandardMaterial({ color: 0xe08a1e, roughness: 0.7 }));
+  put(coil, bx + 1.1, toolY + 0.02, toolZ);                                                                // coiled cable
+  // Vice at the right end of the top
+  put(new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.07, 0.14), steelMat), bx + bw / 2 - 0.35, garageFloorY + bh + 0.035, bz - 0.05);
+  put(new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.13, 0.2), steelMat), bx + bw / 2 - 0.35, garageFloorY + bh + 0.13, bz - 0.05);
+  const viceHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 8), steelMat);
+  viceHandle.rotation.x = Math.PI / 2;
+  put(viceHandle, bx + bw / 2 - 0.35, garageFloorY + bh + 0.1, bz + 0.09);
+  // Toolbox on the lower shelf
+  put(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.24), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.5, metalness: 0.3 })), bx - bw / 2 + 0.6, garageFloorY + 0.325, bz);
+  put(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.03), steelMat), bx - bw / 2 + 0.6, garageFloorY + 0.45, bz);
+  scene.add(bench);
 }
 
 // Carport between house and garage — open posts on west side (garage walls support east side)
