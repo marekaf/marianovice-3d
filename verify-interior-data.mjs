@@ -238,9 +238,19 @@ if (process.argv[3]) {
     if (axisOf(w) === 'x') { modelFaces.H.push([r.z0, r.x0, r.x1], [r.z1, r.x0, r.x1]); }
     else { modelFaces.V.push([r.x0, r.z0, r.z1], [r.x1, r.z0, r.z1]); }
   }
-  const covered = (k, l) => modelFaces[k].some(([at, f, t]) => Math.abs(at - l.at) <= TOL && f < l.to - 0.05 && t > l.from + 0.05);
-  for (const l of dxfV) if (l.to - l.from >= 1.0 && !covered('V', l)) note('WARN', `DXF vertical wall x=${l.at.toFixed(3)} z ${l.from.toFixed(2)}–${l.to.toFixed(2)} missing in model`);
-  for (const l of dxfH) if (l.to - l.from >= 1.0 && !covered('H', l)) note('WARN', `DXF horizontal wall z=${l.at.toFixed(3)} x ${l.from.toFixed(2)}–${l.to.toFixed(2)} missing in model`);
+  // coverage FRACTION, not any-overlap — a 3 m wall is not "covered" by touching 5 cm of it
+  const coveredFrac = (k, l) => {
+    const spans = modelFaces[k]
+      .filter(([at]) => Math.abs(at - l.at) <= TOL)
+      .map(([, f, t]) => [Math.max(f, l.from), Math.min(t, l.to)])
+      .filter(([f, t]) => t > f)
+      .sort((a, b) => a[0] - b[0]);
+    let cov = 0, cur = l.from;
+    for (const [f, t] of spans) { if (t > cur) { cov += t - Math.max(f, cur); cur = Math.max(cur, t); } }
+    return cov / (l.to - l.from);
+  };
+  for (const l of dxfV) if (l.to - l.from >= 0.8 && coveredFrac('V', l) < 0.7) note('WARN', `DXF vertical wall x=${l.at.toFixed(3)} z ${l.from.toFixed(2)}–${l.to.toFixed(2)} only ${(coveredFrac('V', l) * 100).toFixed(0)}% in model`);
+  for (const l of dxfH) if (l.to - l.from >= 0.8 && coveredFrac('H', l) < 0.7) note('WARN', `DXF horizontal wall z=${l.at.toFixed(3)} x ${l.from.toFixed(2)}–${l.to.toFixed(2)} only ${(coveredFrac('H', l) * 100).toFixed(0)}% in model`);
 }
 
 const errs = problems.filter(p => p.sev === 'ERR');
