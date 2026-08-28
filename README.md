@@ -14,7 +14,7 @@ Interactive 3D model of a residential garden.
   - Hover labels for major elements
   - Camera presets (top-down, isometric, walking eye level, etc.)
   - Garage interior — hollow shell with real gate + door openings, open/closed gate toggle
-- [`interior.html`](interior.html) — dedicated interiors page (garage): orthographic floor plan + one elevation per wall (the wall you look through is hidden), cutaway 3D, PNG export with a scale bar
+- [`interior.html`](interior.html) — dedicated interiors page: orthographic floor plan + one elevation per wall (the wall you look through is hidden), cutaway 3D, PNG export with a scale bar. Ships with the garage; the house appears when a local (gitignored) `house-interior.js` room-data file is present
 - [`interiors3d.js`](interiors3d.js) — shared garage-interior builder consumed by both viewers
 - [`editor.html`](editor.html) — interactive 2D editor (drag-drop on a grid, mouse or touch); exports an updated `layout.js` or SVG
 - [`plan.js`](plan.js) — renders the 2D SVG plan from `layout.js`
