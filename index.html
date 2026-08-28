@@ -52,7 +52,8 @@
   <label><input type="checkbox" id="toggleTrees" checked> Trees</label>
   <label><input type="checkbox" id="toggleRoof" checked> Roof</label>
   <label><input type="checkbox" id="toggleGate"> Garage gate open</label>
-  <label><input type="checkbox" id="toggleFurniture" checked> Furniture + cars</label>
+  <label><input type="checkbox" id="toggleVehicles" checked> Vehicles parked</label>
+  <label><input type="checkbox" id="toggleFurniture" checked> Furniture</label>
   <label><input type="checkbox" id="toggleAxes"> XYZ axes</label>
   <label><input type="checkbox" id="toggleFP"> First-person (WASD)</label>
 </div>
@@ -1080,20 +1081,26 @@ const garageMinY = Math.min(...[[GA.x, GA.y], [GA.x + GA.w, GA.y], [GA.x, GA.y +
 // Hollow shell — floor slab + 4 walls with openings from EL.garage.meta (see layout.js for units)
 const GAT = EL.garage.meta.wallT;
 const garageWallMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.7 });
-function garageBox(x0, y0, z0, x1, y1, z1) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), garageWallMat);
+const garagePaintMat = new THREE.MeshStandardMaterial({ color: 0xe8e5df, roughness: 0.9 });
+const garageFloorMat = new THREE.MeshStandardMaterial({ color: 0xb9bcc0, roughness: 0.35 });
+// faceMats: BoxGeometry material slots by face — {px, nx, py, ny, pz, nz}; unlisted faces get the wall material
+function garageBox(x0, y0, z0, x1, y1, z1, faceMats) {
+  const mats = faceMats ? ['px', 'nx', 'py', 'ny', 'pz', 'nz'].map(f => faceMats[f] || garageWallMat) : garageWallMat;
+  const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mats);
   m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
   m.castShadow = true;
   m.receiveShadow = true;
   scene.add(m);
 }
-// Floor slab over the whole footprint — its side faces double as the plinth down to grade
-garageBox(GA.x, garageMinY, GA.y, GA.x + GA.w, garageFloorY, GA.y + GA.d);
-function garageWall(axis, fix0, fix1, a0, a1, openings) {
-  // axis 'x': wall runs along x at z∈[fix0,fix1]; axis 'z': runs along z at x∈[fix0,fix1]
+// Floor slab over the whole footprint — its side faces double as the plinth down to grade;
+// the top face is the polished-concrete interior floor
+garageBox(GA.x, garageMinY, GA.y, GA.x + GA.w, garageFloorY, GA.y + GA.d, { py: garageFloorMat });
+function garageWall(axis, fix0, fix1, a0, a1, openings, innerFace) {
+  // axis 'x': wall runs along x at z∈[fix0,fix1]; axis 'z': runs along z at x∈[fix0,fix1].
+  // innerFace = which box face looks into the room (gets the paint)
   const seg = (s0, s1, y0, y1) => axis === 'x'
-    ? garageBox(s0, y0, fix0, s1, y1, fix1)
-    : garageBox(fix0, y0, s0, fix1, y1, s1);
+    ? garageBox(s0, y0, fix0, s1, y1, fix1, { [innerFace]: garagePaintMat })
+    : garageBox(fix0, y0, s0, fix1, y1, s1, { [innerFace]: garagePaintMat });
   let at = a0;
   for (const o of [...openings].sort((p, q) => p.from - q.from)) {
     if (o.from > at) seg(at, o.from, garageFloorY, garageWallTop);
@@ -1103,10 +1110,10 @@ function garageWall(axis, fix0, fix1, a0, a1, openings) {
   if (at < a1) seg(at, a1, garageFloorY, garageWallTop);
 }
 const GOP = EL.garage.meta.openings;
-garageWall('x', GA.y, GA.y + GAT, GA.x, GA.x + GA.w, GOP.filter(o => o.wall === 'N'));
-garageWall('x', GA.y + GA.d - GAT, GA.y + GA.d, GA.x, GA.x + GA.w, GOP.filter(o => o.wall === 'S'));
-garageWall('z', GA.x, GA.x + GAT, GA.y + GAT, GA.y + GA.d - GAT, GOP.filter(o => o.wall === 'W'));
-garageWall('z', GA.x + GA.w - GAT, GA.x + GA.w, GA.y + GAT, GA.y + GA.d - GAT, GOP.filter(o => o.wall === 'E'));
+garageWall('x', GA.y, GA.y + GAT, GA.x, GA.x + GA.w, GOP.filter(o => o.wall === 'N'), 'pz');
+garageWall('x', GA.y + GA.d - GAT, GA.y + GA.d, GA.x, GA.x + GA.w, GOP.filter(o => o.wall === 'S'), 'nz');
+garageWall('z', GA.x, GA.x + GAT, GA.y + GAT, GA.y + GA.d - GAT, GOP.filter(o => o.wall === 'W'), 'px');
+garageWall('z', GA.x + GA.w - GAT, GA.x + GA.w, GA.y + GAT, GA.y + GA.d - GAT, GOP.filter(o => o.wall === 'E'), 'nx');
 // Interior floors override terrain in first-person mode (indoors = flat slab, not graded terrain)
 const walkSurfaces = [
   { x0: GA.x, z0: GA.y, x1: GA.x + GA.w, z1: GA.y + GA.d, y: garageFloorY },
@@ -1122,6 +1129,37 @@ const garageRoofHigh = garageWallTop + 1.2;
   const m = new THREE.Mesh(geom, roofMat);
   m.castShadow = true;
   roofGroup.add(m);
+}
+// Interior ceiling — wooden cladding just under the roof plane, battens, hex LED cluster.
+// Lives in roofGroup so the Roof toggle opens the dollhouse view all the way through.
+{
+  const clr = x => garageRoofHigh - garagePitch * (x - GA.x) - 0.06;
+  const x0 = GA.x + GAT, x1 = GA.x + GA.w - GAT, z0 = GA.y + GAT, z1 = GA.y + GA.d - GAT;
+  const cladMat = new THREE.MeshStandardMaterial({ color: 0x9a7b52, roughness: 0.85, side: THREE.DoubleSide });
+  roofGroup.add(new THREE.Mesh(makePultRoofWE(x0, x1, z0, z1, clr(x0), clr(x1)), cladMat));
+  const battenMat = new THREE.MeshStandardMaterial({ color: 0x6e5233, roughness: 0.9 });
+  for (let bx = x0 + 0.35; bx < x1; bx += 0.45) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, z1 - z0), battenMat);
+    b.position.set(bx, clr(bx) - 0.02, (z0 + z1) / 2);
+    roofGroup.add(b);
+  }
+  // Honeycomb of 5 hexagon rings (6-segment torus = hexagon), flush with the ceiling slope
+  const ledMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const lx = GA.x + GA.w / 2, lz = 23.0;
+  const led = new THREE.Group();
+  for (const [ox, oz] of [[0, 0], [0.68, 0], [-0.68, 0], [0.34, 0.59], [-0.34, -0.59]]) {
+    const hex = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.028, 8, 6), ledMat);
+    hex.rotation.x = Math.PI / 2;
+    hex.position.set(ox, 0, oz);
+    led.add(hex);
+  }
+  led.rotation.z = -Math.atan(garagePitch);
+  led.position.set(lx, clr(lx) - 0.07, lz);
+  roofGroup.add(led);
+  // Fill light so the interior reads even with the sun outside; stays on when the roof is hidden
+  const glow = new THREE.PointLight(0xf2f6ff, 1.6, 10, 1);
+  glow.position.set(lx, clr(lx) - 0.4, lz);
+  scene.add(glow);
 }
 // Fill garage walls up to the roof plane: N/S triangles + west band under the high edge
 const garageFillMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.7, side: THREE.DoubleSide });
@@ -2081,6 +2119,8 @@ addWallClimber(10.8, 19.18, 14.6, 19.18, 0, -1, 2.4);   // atrium south wall, fo
 }
 
 // Car builder — body + hood/trunk steps + glass cabin + wheels
+const vehiclesGroup = new THREE.Group();
+scene.add(vehiclesGroup);
 const carWheelMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
 const carGlassMat = new THREE.MeshStandardMaterial({ color: 0x101820, metalness: 0.9, roughness: 0.06 });
 function addCar(x, z, color, rotY, baseY = terrainHeight(x, z), l = 4.3, w = 1.82) {
@@ -2109,7 +2149,7 @@ function addCar(x, z, color, rotY, baseY = terrainHeight(x, z), l = 4.3, w = 1.8
   g.rotation.y = rotY;
   // Body is drawn at 4.3 × 1.82 m; scale to the vehicle's real footprint
   g.scale.set(w / 1.82, 1, l / 4.3);
-  furnitureGroup.add(g);
+  vehiclesGroup.add(g);
 }
 
 // Motorbike — two wheels, slim body, seat, handlebar; front toward −z like the cars
@@ -2134,7 +2174,7 @@ function addMoto(x, z, color, rotY, baseY, l, w) {
   g.traverse(o => { if (o.isMesh) o.castShadow = true; });
   g.position.set(x, baseY, z);
   g.rotation.y = rotY;
-  furnitureGroup.add(g);
+  vehiclesGroup.add(g);
 }
 
 // Vehicle fleet from layout.js (shared with drivewaycheck.js) — nose north unless reversed
@@ -2179,6 +2219,10 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
     }
     return inside;
   };
+  // Bed plants along the garage N face: sphere radius ≈ 0.72 × size, so cap the size or the
+  // foliage pokes through the 0.3 m wall into the (hollow) garage interior
+  const capAtGarage = (x, z, s) => (z < GA.y && z > GA.y - 2 && x > GA.x - 1 && x < GA.x + GA.w + 1)
+    ? Math.min(s, Math.max(0.2, (GA.y - 0.02 - z) / 0.72)) : s;
   for (const el of GARDEN.elements.filter(e => e.meta && e.meta.plant)) {
     const rects = el.parts.filter(p => p.kind === 'rect');
     const poly = el.parts.find(p => p.kind === 'polygon');
@@ -2231,7 +2275,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
       const pt = sample();
       if (!pt || !inPlot(pt[0], pt[1])) continue;
       const baseY = terrainHeight(pt[0], pt[1]);
-      const sz = (kind === 'meadow' ? 0.28 : 0.48) + Math.random() * (kind === 'meadow' ? 0.18 : 0.32);
+      const sz = capAtGarage(pt[0], pt[1], (kind === 'meadow' ? 0.28 : 0.48) + Math.random() * (kind === 'meadow' ? 0.18 : 0.32));
       const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
       q.position.set(pt[0], baseY + sz * 0.38, pt[1]);
       q.scale.setScalar(sz * 0.72);
@@ -2246,7 +2290,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
     for (let i = 0; i < nShr; i++) {
       const pt = sample();
       if (!pt || !inPlot(pt[0], pt[1])) continue;
-      addBush(pt[0], pt[1], 0.45 + Math.random() * 0.35, 0x5f8452);
+      addBush(pt[0], pt[1], capAtGarage(pt[0], pt[1], 0.45 + Math.random() * 0.35), 0x5f8452);
     }
   }
 }
@@ -2418,6 +2462,7 @@ document.getElementById('toggleGate').addEventListener('change', e => {
   garageGateClosed.visible = !e.target.checked;
 });
 document.getElementById('toggleFurniture').addEventListener('change', e => furnitureGroup.visible = e.target.checked);
+document.getElementById('toggleVehicles').addEventListener('change', e => vehiclesGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);
 
 // ───────────────────────── DATE + TIME SLIDERS ─────────────────────────
