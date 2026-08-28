@@ -329,7 +329,8 @@ const cutRectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Mat
 // sloping down only on the +x (garden) side; nothing on the other sides so it never bleeds into
 // the carport. Applied AFTER the cuts so an adjacent cut's blend can't clip the flat pad (no gaps).
 const fillPads = [
-  { x0: 20.58, z0: 11.58, x1: 23.58, z1: 19.4, level: 2.44, eastBlend: 2.6 }, // soil under the E terrace, slope into the garden
+  { x0: 20.58, z0: 11.58, x1: 23.58, z1: 19.4, level: 2.44, eastBlend: 2.6 },  // soil under the E terrace, slope into the garden
+  { x0: 20.58, z0: 19.18, x1: 21.28, z1: 22.6, level: 2.44, eastBlend: 0.06 }, // notch floor filled to FFL up to the entrance door (joins the terrace); sharp edge to the carport
 ];
 function gradedHeight(x, z) {
   const base = basePlaneHeight(x, z);
@@ -1790,18 +1791,18 @@ const waterNormal = (() => {
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 1.1), frameMat);
   d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
   scene.add(d2);
-  // Generous landing at FFL (comfortable to stand + open the door), then a flight of ~0.17 m risers
-  // down to the carport — not one 0.5 m block.
-  const groundY = terrainHeight(EN[0] + 2.2, doorZ);
+  // The door opens LEVEL onto the notch floor (filled to FFL, joining the terrace to the north). A
+  // paved landing fills the notch; the steps DOWN to the carport are at the notch opening (x=HB[2]),
+  // centred on the door, facing the carport — they do NOT cross the notch.
   const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
-  const rise = Math.max(0, ty - groundY), platW = 2.0, tread = 0.3;
+  addTerrainPlatform([[EN[0], 19.4], [HB[2], 19.4], [HB[2], 22.6], [EN[0], 22.6]], 0.05, 0xcdc7bb); // FFL landing in the notch
+  const openX = HB[2], groundY = terrainHeight(openX + 1.4, doorZ);   // carport slab (−0.50)
+  const rise = Math.max(0, ty - groundY), tread = 0.32, stepW = 2.0;
   const nSteps = rise < 0.18 ? 0 : Math.max(1, Math.round(rise / 0.17));
-  const parts = [{ x0: EN[0], x1: EN[0] + 1.2, top: ty }];             // landing: 1.2 m deep
-  for (let i = 1; i <= nSteps; i++) parts.push({ x0: EN[0] + 1.2 + (i - 1) * tread, x1: EN[0] + 1.2 + i * tread, top: ty - rise * i / nSteps });
-  for (const tr of parts) {
-    const w = tr.x1 - tr.x0, h = Math.max(0.06, tr.top - groundY);
-    const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, platW), stepMat);
-    st.position.set((tr.x0 + tr.x1) / 2, tr.top - h / 2, doorZ);
+  for (let i = 1; i <= nSteps; i++) {
+    const top = ty - rise * i / nSteps, h = Math.max(0.06, top - groundY);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(tread, h, stepW), stepMat);
+    st.position.set(openX + (i - 0.5) * tread, top - h / 2, doorZ);   // centred on the door
     st.receiveShadow = true; st.castShadow = true;
     scene.add(st);
   }
@@ -2205,15 +2206,15 @@ const gateT = lerp2(eL1, eL2, tBranaT);   // vehicle-gate north jamb (= the post
 const gateB = lerp2(eL1, eL2, tBranaB);   // vehicle-gate south jamb
 const gateGL = Math.hypot(gateB[0] - gateT[0], gateB[1] - gateT[1]);
 const gux = (gateB[0] - gateT[0]) / gateGL, guz = (gateB[1] - gateT[1]) / gateGL;  // along the opening (→ south)
-const wicketN = [gateT[0] - gux * 0.9, gateT[1] - guz * 0.9];   // wicket north jamb, 0.9 m N of the gate
-addFenceSegment(eL1[0], eL1[1], wicketN[0], wicketN[1]);  // fence up to the wicket
-// wicketN → gateT = 0.9 m wicket opening (pedestrian, north of and off the driveway)
-addFenceSegment(gateB[0], gateB[1], eL2[0], eL2[1]);      // fence south of the vehicle gate
+const wicketS = [gateB[0] + gux * 0.9, gateB[1] + guz * 0.9];   // wicket south jamb, 0.9 m S of the gate
+addFenceSegment(eL1[0], eL1[1], gateT[0], gateT[1]);     // fence north of the gate (the run-back parks behind it)
+// gateT → gateB = vehicle gate; gateB → wicketS = 0.9 m wicket opening (SOUTH, opposite the run-back)
+addFenceSegment(wicketS[0], wicketS[1], eL2[0], eL2[1]); // fence south of the wicket
 addFenceSegment(pSE[0], pSE[1], pSW[0], pSW[1]);          // south
 addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);          // west
 
-// Entrance: posuvná brána (cantilever sliding, 4.0 m clear) + a SEPARATE 0.9 m wicket (branka) to
-// the NORTH, off the driveway; a post stands between the wicket and the gate. Both shown OPEN.
+// Entrance: posuvná brána (cantilever sliding, 4.0 m clear) retracting NORTH + a SEPARATE 0.9 m
+// wicket (branka) to the SOUTH — opposite side, so it never overlaps the retracted gate. Both OPEN.
 {
   const ux = gux, uz = guz;                 // along the opening (→ south)
   const nx = -uz, nz = ux;                  // inward normal (−x into the plot)
@@ -2244,11 +2245,11 @@ addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);          // west
   const slideLen = 4.0, slideH = 1.5;
   placeLeaf(gateT[0] - ux * (slideLen / 2 + 0.2) + nx * 0.18,
             gateT[1] - uz * (slideLen / 2 + 0.2) + nz * 0.18, slideLen, slideH, ux, uz);
-  // Wicket 0.9 m at its north jamb, swung ~90° inward (open)
+  // Wicket 0.9 m (south of the gate), hinged at gateB, swung ~90° inward (open)
   const brankaLen = 0.9, brankaH = 1.5;
-  placeLeaf(wicketN[0] + nx * (brankaLen / 2), wicketN[1] + nz * (brankaLen / 2), brankaLen, brankaH, nx, nz);
-  // Posts: wicket N jamb, the post BETWEEN wicket & gate (gateT), and the gate S jamb (gateB)
-  for (const [gx, gz] of [wicketN, gateT, gateB]) {
+  placeLeaf(gateB[0] + nx * (brankaLen / 2), gateB[1] + nz * (brankaLen / 2), brankaLen, brankaH, nx, nz);
+  // Posts: gate N jamb (gateT), the post BETWEEN gate & wicket (gateB), and the wicket S jamb (wicketS)
+  for (const [gx, gz] of [gateT, gateB, wicketS]) {
     const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.75, 0.14), postMat);
     post.position.set(gx, terrainHeight(gx, gz) + 0.875, gz); post.castShadow = true;
     scene.add(post);
