@@ -235,6 +235,15 @@ const GARDEN = {
       ]
     },
     {
+      id: "raisedBedsPad",
+      name: "Raised-beds pad (flat) 3.1 × 5.6 m",
+      short: "Raised-beds pad",
+      parts: [
+        { kind: "rect", x: 0.7, y: 9.7, w: 3.1, d: 5.6, clipToPlot: true, fill: "#c8c2b0", opacity: 0.55, stroke: "#9a9074", sw: 1 },
+        { kind: "text", x: 3.9, y: 12.5, text: "beds pad — flat", cls: "lbl-sm", fill: "#5a5030", anchor: "start" }
+      ]
+    },
+    {
       id: "raisedBed1",
       name: "Raised bed 1 (1.0 × 2.0 m)",
       parts: [
