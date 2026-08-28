@@ -1783,13 +1783,15 @@ const waterNormal = (() => {
   for (const x of [16.05, 19.3]) {
     winZ(x, HB[3], 1, 0.9, 1.25, ty + 0.9);
   }
-  // Entry doors — on east wall of south part (from carport to vestibule)
+  // Entry door — on the SOLID east wall of the south part (z > 22.53, clear of the terrace notch),
+  // facing the carport. z=22 would sit in the notch void; the wall there is set back to x=20.58.
+  const doorZ = 24.2;
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.15, 1.42), frameMat);
-  d2.position.set(HB[2] + 0.03, ty + 1.075, 22);
+  d2.position.set(HB[2] + 0.03, ty + 1.075, doorZ);
   scene.add(d2);
   // Entry steps — door threshold is at FFL (±0.000); the carport slab is 0.5 m lower, so drop in
   // two nested treads. Each tread rests on the slab (its box runs down to the carport level).
-  const carportY = terrainHeight(HB[2] + 0.9, 22);   // flat carport slab (−0.50)
+  const carportY = terrainHeight(HB[2] + 0.9, doorZ);   // flat carport slab (−0.50)
   const stepMat = new THREE.MeshStandardMaterial({ color: 0x9a9a94, roughness: 0.9 });
   const treads = [
     { x0: HB[2], x1: HB[2] + 0.32, top: ty },              // upper tread, flush with the threshold
@@ -1798,7 +1800,7 @@ const waterNormal = (() => {
   for (const tr of treads) {
     const w = tr.x1 - tr.x0, h = Math.max(0.1, tr.top - carportY);
     const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, 1.5), stepMat);
-    st.position.set((tr.x0 + tr.x1) / 2, tr.top - h / 2, 22);
+    st.position.set((tr.x0 + tr.x1) / 2, tr.top - h / 2, doorZ);
     st.receiveShadow = true; st.castShadow = true;
     scene.add(st);
   }

@@ -10,8 +10,8 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const VEH = [
   { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3f8f52", cx: 22.98, noseZ: 20.0 },
   { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#7f858c", cx: 25.83, noseZ: 20.0 },
-  { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#3a6ea5", cx: 29.5,  noseZ: 20.7 },
-  { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#e08a1e", cx: 32.9,  noseZ: 20.7, moto: true },
+  { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#3a6ea5", cx: 30.7,  noseZ: 20.7, reversed: true }, // reverse-parked (low car) squarely in the 5 m door
+  { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#e08a1e", cx: 33.1,  noseZ: 20.7, moto: true },
   { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#c0392b", cx: 36.45, noseZ: 20.0 },
 ];
 
@@ -96,22 +96,31 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(0.8)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
   out.push(`    <rect x="${px(cp.x + cp.w - 0.85)}" y="${px(cp.y)}" width="${px(0.85)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
   // Pedestrian doors + swing arcs (house entry on the W wall, garage personnel door on the garage W wall)
-  out.push(`    <line x1="${px(cp.x)}" y1="${px(21.29)}" x2="${px(cp.x)}" y2="${px(22.71)}" stroke="#1f7a3d" stroke-width="3"/>`);
-  // Opens INWARD (into the vestibule): hinge on the S side, so the swing takes no carport space
-  out.push(`    <path d="M ${px(cp.x)},${px(21.29)} A ${px(1.42)} ${px(1.42)} 0 0 0 ${px(cp.x - 1.42)},${px(22.71)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`);
-  out.push(`    <text x="${px(cp.x) + 3}" y="${px(23.6)}" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m (opens in)</text>`);
+  out.push(`    <line x1="${px(cp.x)}" y1="${px(23.49)}" x2="${px(cp.x)}" y2="${px(24.91)}" stroke="#1f7a3d" stroke-width="3"/>`);
+  // On the solid S-part wall (z > 22.53), opens INWARD (hinge on the S side) — no carport space used
+  out.push(`    <path d="M ${px(cp.x)},${px(23.49)} A ${px(1.42)} ${px(1.42)} 0 0 0 ${px(cp.x - 1.42)},${px(24.91)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`);
+  out.push(`    <text x="${px(cp.x) + 3}" y="${px(25.8)}" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m (opens in)</text>`);
   out.push(`    <line x1="${px(ga.x)}" y1="${px(20.2)}" x2="${px(ga.x)}" y2="${px(21.1)}" stroke="#1f7a3d" stroke-width="3"/>`);
   out.push(`    <circle cx="${px(ga.x)}" cy="${px(20.65)}" r="2.5" fill="#1f7a3d"/>`); // garage personnel door (labelled in the panel)
-  // Vehicles to scale (nose north)
+  // Vehicles to scale, drawn with the two front doors open. `reversed` = parked nose-out (front
+  // toward the south/door). fy = front edge in local y; rs = local direction toward the rear.
   for (const v of VEH) {
     const cz = v.noseZ + v.l / 2, w = px(v.w), l = px(v.l);
+    const fy = v.reversed ? l / 2 : -l / 2, rs = v.reversed ? -1 : 1;
     out.push(`    <g transform="translate(${px(v.cx)},${px(cz)})">`);
     if (v.moto) {
       out.push(`      <rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${l}" rx="${w / 2}" fill="${v.col}" stroke="#1a1a1a" stroke-width="1"/>`);
       out.push(`      <line x1="${-px(0.45)}" y1="${-l / 2 + px(0.5)}" x2="${px(0.45)}" y2="${-l / 2 + px(0.5)}" stroke="#1a1a1a" stroke-width="1.4"/>`);
     } else {
+      // Open front doors: hinged 0.85 m back from the front, swung ~70° out (door leaf 1.0 m)
+      const doorL = px(1.0), s = 0.94, c = 0.34, hy = fy + rs * px(0.85);
+      for (const sx of [-1, 1]) {
+        const hx = sx * w / 2;
+        out.push(`      <line x1="${hx}" y1="${hy}" x2="${hx + sx * doorL * s}" y2="${hy + rs * doorL * c}" stroke="${v.col}" stroke-width="3" stroke-linecap="round"/>`);
+      }
       out.push(`      <rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${l}" rx="4" fill="${v.col}" fill-opacity="0.9" stroke="#111" stroke-width="1.2"/>`);
-      out.push(`      <rect x="${-w / 2 + 2}" y="${-l / 2 + 3}" width="${w - 4}" height="${px(1.0)}" rx="2" fill="#2a3542"/>`); // windscreen (front = north)
+      out.push(`      <rect x="${-w / 2 + 2}" y="${fy + rs * px(0.35) - (rs < 0 ? px(1.0) : 0)}" width="${w - 4}" height="${px(1.0)}" rx="2" fill="#2a3542"/>`); // windscreen, just behind the front
+      out.push(`      <line x1="${-w / 2 + 2}" y1="${fy}" x2="${w / 2 - 2}" y2="${fy}" stroke="#e6edf4" stroke-width="2.4" stroke-linecap="round"/>`); // front bumper (lighter = front)
     }
     out.push(`    </g>`);
     const lab = v.name.replace("Yamaha ", "").replace(" allroad", " allr.").replace(" Compact", " Comp.").replace("Škoda ", "").replace("BMW ", "");
@@ -133,8 +142,8 @@ function renderDrivewayCheckSVG(garden) {
   // Fit table
   out.push(`  <g transform="translate(872, 150)">`);
   out.push(`    <text x="0" y="0" class="ph">VEHICLE FIT (nominal specs)</text>`);
-  out.push(`    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vehicle</text><text x="118" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">L × W m</text><text x="150" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>`);
-  out.push(`    <line x1="0" y1="20" x2="150" y2="20" stroke="#bbb" stroke-width="0.8"/>`);
+  out.push(`    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vehicle</text><text x="142" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">L × W m</text><text x="170" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>`);
+  out.push(`    <line x1="0" y1="20" x2="170" y2="20" stroke="#bbb" stroke-width="0.8"/>`);
   let y = 33;
   const grp = { carport: "CARPORT 6.35 × 7.05 — two side-by-side", garage: "GARAGE 7.18 × 7.05 (door 5.0 m)", parking: "PARKING 3.2 × 7.05 — single bay" };
   const verdict = { carport: "✓ both fit; ~0.65 m gaps (fold mirrors)", garage: "✓ car + bike, 2 m gap; room to spare", parking: "✓ 0.72 m each side, 2.8 m spare" };
@@ -142,8 +151,9 @@ function renderDrivewayCheckSVG(garden) {
     out.push(`    <text x="0" y="${y}" class="pt" font-weight="700" fill="#333">${esc(grp[bay])}</text>`);
     y += 13;
     for (const v of VEH.filter((v) => v.bay === bay)) {
+      const sn = v.name.replace("Yamaha ", "").replace("Škoda ", "").replace("BMW ", "").replace("Audi ", "");
       out.push(`    <rect x="0" y="${y - 7}" width="8" height="8" fill="${v.col}"/>`);
-      out.push(`    <text x="13" y="${y}" class="pt">${esc(v.name)}</text><text x="118" y="${y}" class="pt" text-anchor="end">${v.l.toFixed(2)} × ${v.w.toFixed(2)}</text><text x="150" y="${y}" class="pt" text-anchor="end">${v.turn.toFixed(1)}</text>`);
+      out.push(`    <text x="13" y="${y}" class="pt">${esc(sn)}</text><text x="142" y="${y}" class="pt" text-anchor="end">${v.l.toFixed(2)} × ${v.w.toFixed(2)}</text><text x="170" y="${y}" class="pt" text-anchor="end">${v.turn.toFixed(1)}</text>`);
       y += 12;
     }
     out.push(`    <text x="0" y="${y}" class="ok" font-size="8.5">${esc(verdict[bay])}</text>`);
