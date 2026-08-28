@@ -43,6 +43,7 @@
   <button onclick="setPreset('north')">From north</button>
   <button onclick="setPreset('south')">From south (orchard)</button>
   <button onclick="setPreset('ground')">Eye level (1.7 m)</button>
+  <button onclick="setPreset('garage')">Garage interior</button>
   <button onclick="startTour()" style="background:#e07b3b">▶ Garden walk</button>
 </div>
 
@@ -50,6 +51,7 @@
   <label><input type="checkbox" id="togglePlot" checked> Fence</label>
   <label><input type="checkbox" id="toggleTrees" checked> Trees</label>
   <label><input type="checkbox" id="toggleRoof" checked> Roof</label>
+  <label><input type="checkbox" id="toggleGate"> Garage gate open</label>
   <label><input type="checkbox" id="toggleFurniture" checked> Furniture + cars</label>
   <label><input type="checkbox" id="toggleAxes"> XYZ axes</label>
   <label><input type="checkbox" id="toggleFP"> First-person (WASD)</label>
@@ -306,6 +308,7 @@ const cutRects = [
   { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
   { x0: 27.63, z0: 26.45, x1: 34.81, z1: 27.25, level: 1.965, blend: 3.5 }, // level apron in front of the garage door
   { x0: 21.28, z0: 19.4, x1: 27.63, z1: 26.45, level: 1.965, blend: 2.0 },  // flat carport slab at garage floor level (−0.50 m)
+  { x0: 27.63, z0: 19.4, x1: 34.81, z1: 26.45, level: 1.94, blend: 0.8 },   // under the garage floor slab — 2.5 cm below slab top so the grade never pokes through nor z-fights
   { x0: 21.28, z0: 26.44, x1: 38.5, z1: 30.5, level: 1.965, blend: 1.5 },   // keep driveway ≤ carport level (no hump above the slab; falls on to the gate)
   { x0: 3.5, z0: 1.0, x1: 10.5, z1: 4.0, level: 2.28, blend: 1.0 },         // one flat platform for sauna + hot-tub shelter
   { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 2.876, blend: 1.0 },        // one flat pad containing all 4 raised beds
@@ -1074,7 +1077,41 @@ const garageFloorY = houseBaseY - 0.5;
 const garageWallTop = garageFloorY + 2.3;
 const garageMinY = Math.min(...[[GA.x, GA.y], [GA.x + GA.w, GA.y], [GA.x, GA.y + GA.d], [GA.x + GA.w, GA.y + GA.d]]
   .map(([x, z]) => terrainHeight(x, z)));
-addBox(GA.x, GA.y, GA.w, GA.d, garageWallTop - garageMinY, 0x888888, { skipTerrain: true, yOffset: garageMinY });
+
+// Hollow shell — floor slab + 4 walls with openings from EL.garage.meta (see layout.js for units)
+const GAT = EL.garage.meta.wallT;
+const garageWallMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.7 });
+function garageBox(x0, y0, z0, x1, y1, z1) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), garageWallMat);
+  m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  scene.add(m);
+}
+// Floor slab over the whole footprint — its side faces double as the plinth down to grade
+garageBox(GA.x, garageMinY, GA.y, GA.x + GA.w, garageFloorY, GA.y + GA.d);
+function garageWall(axis, fix0, fix1, a0, a1, openings) {
+  // axis 'x': wall runs along x at z∈[fix0,fix1]; axis 'z': runs along z at x∈[fix0,fix1]
+  const seg = (s0, s1, y0, y1) => axis === 'x'
+    ? garageBox(s0, y0, fix0, s1, y1, fix1)
+    : garageBox(fix0, y0, s0, fix1, y1, s1);
+  let at = a0;
+  for (const o of [...openings].sort((p, q) => p.from - q.from)) {
+    if (o.from > at) seg(at, o.from, garageFloorY, garageWallTop);
+    seg(o.from, o.from + o.w, garageFloorY + o.h, garageWallTop);
+    at = o.from + o.w;
+  }
+  if (at < a1) seg(at, a1, garageFloorY, garageWallTop);
+}
+const GOP = EL.garage.meta.openings;
+garageWall('x', GA.y, GA.y + GAT, GA.x, GA.x + GA.w, GOP.filter(o => o.wall === 'N'));
+garageWall('x', GA.y + GA.d - GAT, GA.y + GA.d, GA.x, GA.x + GA.w, GOP.filter(o => o.wall === 'S'));
+garageWall('z', GA.x, GA.x + GAT, GA.y + GAT, GA.y + GA.d - GAT, GOP.filter(o => o.wall === 'W'));
+garageWall('z', GA.x + GA.w - GAT, GA.x + GA.w, GA.y + GAT, GA.y + GA.d - GAT, GOP.filter(o => o.wall === 'E'));
+// Interior floors override terrain in first-person mode (indoors = flat slab, not graded terrain)
+const walkSurfaces = [
+  { x0: GA.x, z0: GA.y, x1: GA.x + GA.w, z1: GA.y + GA.d, y: garageFloorY },
+];
 
 // Garage pult roof — high at the carport junction (west), low at the east eave; no N/S overhang
 const garagePitch = 1.2 / GA.w;
@@ -1144,17 +1181,22 @@ const carportWestY = garageWallTop + 0.5;
   }
 }
 
-// Garage doors (south wall of garage, outside) — base on the garage slab
+// Garage doors (south wall of garage, outside) — base on the garage slab.
+// Two gate states share the opening: closed leaf in the wall plane, or the same leaf
+// parked horizontally under the roof (sectional door open). A checkbox flips them.
 const doorRect = EL.garage.parts.filter(p => p.kind === 'rect')[1];
 const garageDoorX = doorRect.x + doorRect.w / 2;
 const garageDoorZ = GA.y + GA.d;
 const garageDoorBaseY = garageFloorY;
-const garageDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(doorRect.w, 2.05, 0.08),
-  new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 })
-);
+const garageGateClosed = new THREE.Group();
+const garageGateOpen = new THREE.Group();
+scene.add(garageGateClosed);
+scene.add(garageGateOpen);
+garageGateOpen.visible = false;
+const garageDoorMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 });
+const garageDoor = new THREE.Mesh(new THREE.BoxGeometry(doorRect.w, 2.05, 0.08), garageDoorMat);
 garageDoor.position.set(garageDoorX, garageDoorBaseY + 1.025, garageDoorZ + 0.04);
-scene.add(garageDoor);
+garageGateClosed.add(garageDoor);
 // Horizontal section lines on garage door
 for (let i = 1; i < 5; i++) {
   const line = new THREE.Mesh(
@@ -1162,7 +1204,14 @@ for (let i = 1; i < 5; i++) {
     new THREE.MeshStandardMaterial({ color: 0x111111 })
   );
   line.position.set(garageDoorX, garageDoorBaseY + 0.4 * i, garageDoorZ + 0.09);
-  scene.add(line);
+  garageGateClosed.add(line);
+}
+{
+  const g = GOP.find(o => o.kind === 'gate');
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(g.w, 0.06, 2.05), garageDoorMat);
+  panel.position.set(garageDoorX, garageFloorY + g.h + 0.1, GA.y + GA.d - GAT - 2.05 / 2 - 0.15);
+  panel.castShadow = true;
+  garageGateOpen.add(panel);
 }
 
 // Garage personnel door 900×2150 on the west wall (under the carport)
@@ -2265,7 +2314,8 @@ window.setPreset = function(name) {
     east:   [70, 6, 30],
     north:  [22, 8, -25],
     south:  [22, 8, 60],
-    ground: [22, 1.7, 17]
+    ground: [22, 1.7, 17],
+    garage: [31.2, garageFloorY + 1.7, 21.2]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -2273,7 +2323,8 @@ window.setPreset = function(name) {
     east:   [22, 5, 22],
     north:  [22, 5, 17],
     south:  [22, 5, 22],
-    ground: [22, 1.7, 30]
+    ground: [22, 1.7, 30],
+    garage: [31.2, garageFloorY + 1.2, 26.4]
   };
   const p = positions[name];
   const t = targets[name];
@@ -2305,6 +2356,10 @@ window.addEventListener('hashchange', applyHashView);
 document.getElementById('togglePlot').addEventListener('change', e => fenceGroup.visible = e.target.checked);
 document.getElementById('toggleTrees').addEventListener('change', e => treesGroup.visible = e.target.checked);
 document.getElementById('toggleRoof').addEventListener('change', e => roofGroup.visible = e.target.checked);
+document.getElementById('toggleGate').addEventListener('change', e => {
+  garageGateOpen.visible = e.target.checked;
+  garageGateClosed.visible = !e.target.checked;
+});
 document.getElementById('toggleFurniture').addEventListener('change', e => furnitureGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);
 
@@ -2456,7 +2511,11 @@ function fpUpdate() {
   if (fpState.keys['a']) fpCamera.position.addScaledVector(right, -fpSpeed);
   if (fpState.keys['d']) fpCamera.position.addScaledVector(right, fpSpeed);
   // Stay above terrain
-  const tY = terrainHeight(fpCamera.position.x, fpCamera.position.z);
+  let tY = terrainHeight(fpCamera.position.x, fpCamera.position.z);
+  for (const s of walkSurfaces) {
+    if (fpCamera.position.x >= s.x0 && fpCamera.position.x <= s.x1 &&
+        fpCamera.position.z >= s.z0 && fpCamera.position.z <= s.z1) tY = s.y;
+  }
   fpCamera.position.y = tY + 1.7;
   // Apply look direction
   const lookAt = _v3.set(
