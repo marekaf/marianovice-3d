@@ -33,23 +33,23 @@
       <rect x="467.64" y="39.6" width="100.8" height="64.8"/>
       <rect x="493.2" y="63" width="50.4" height="18"/>
     </g>
-    <polygon points="383.04,349.2 497.34,349.2 497.34,475.92 626.58,475.92 626.58,349.2 684.18,349.2 684.18,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>
+    <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 614.34,348.84 671.94,348.84 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>
     <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#e7f3ea" stroke="#3f8f52" stroke-width="1.6"/>
-    <rect x="497.34" y="349.2" width="129.24" height="126.9" fill="#efe9dd" stroke="#9a9074" stroke-width="1.6"/>
-    <rect x="626.58" y="349.2" width="57.6" height="126.9" fill="#eef2f6" stroke="#6b8199" stroke-width="1.4" stroke-dasharray="4,3"/>
-    <line x1="516.96" y1="476.1" x2="606.96" y2="476.1" stroke="#3a2a18" stroke-width="3"/>
+    <rect x="497.34" y="348.84" width="117" height="126.9" fill="#efe9dd" stroke="#9a9074" stroke-width="1.6"/>
+    <rect x="614.34" y="348.84" width="57.6" height="126.9" fill="#eef2f6" stroke="#6b8199" stroke-width="1.4" stroke-dasharray="4,3"/>
+    <line x1="510.84" y1="475.74" x2="600.84" y2="475.74" stroke="#3a2a18" stroke-width="3"/>
     <text x="440.19" y="472.1" class="bay" fill="#2f6f43" text-anchor="middle">CARPORT</text>
-    <text x="561.96" y="472.1" class="bay" fill="#7a6f52" text-anchor="middle">GARAGE</text>
-    <text x="655.38" y="472.1" class="bay" fill="#556" text-anchor="middle" transform="rotate(90 655.38 472.1)">PARKING</text>
-    <rect x="504.54" y="354.6" width="114.84" height="13.5" fill="#8a6a44" stroke="#5a4530" stroke-width="1"/>
-    <text x="561.96" y="363.6" class="vlbl" text-anchor="middle" fill="#fff">workbench</text>
+    <text x="555.84" y="471.74" class="bay" fill="#7a6f52" text-anchor="middle">GARAGE</text>
+    <text x="643.14" y="471.74" class="bay" fill="#556" text-anchor="middle" transform="rotate(90 643.14 471.74)">PARKING</text>
+    <rect x="503.64" y="353.34" width="104.4" height="13.5" fill="#8a6a44" stroke="#5a4530" stroke-width="1"/>
+    <text x="555.84" y="362.34" class="vlbl" text-anchor="middle" fill="#fff">workbench</text>
     <rect x="383.04" y="349.2" width="14.4" height="126.9" fill="#fbe9c7" fill-opacity="0.7"/>
     <rect x="482.04" y="349.2" width="15.3" height="126.9" fill="#fbe9c7" fill-opacity="0.7"/>
     <line x1="370.44" y1="380.7" x2="370.44" y2="400.5" stroke="#1f7a3d" stroke-width="3"/>
     <path d="M 370.44,380.7 A 19.8 19.8 0 0 0 350.64,400.5" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>
     <text x="367.44" y="376.2" class="dim" fill="#1f7a3d" text-anchor="end">house door (in the notch)</text>
-    <line x1="497.34" y1="363.6" x2="497.34" y2="379.8" stroke="#1f7a3d" stroke-width="3"/>
-    <circle cx="497.34" cy="371.7" r="2.5" fill="#1f7a3d"/>
+    <line x1="497.34" y1="380.34" x2="497.34" y2="406.08" stroke="#1f7a3d" stroke-width="3"/>
+    <circle cx="497.34" cy="393.12" r="2.5" fill="#1f7a3d"/>
     <g transform="translate(413.64,399.24)">
       <line x1="-16.11" y1="-9.540000000000003" x2="-33.03" y2="-3.4200000000000026" stroke="#3a72b8" stroke-width="3.2" stroke-linecap="round"/>
       <line x1="16.11" y1="-9.540000000000003" x2="33.03" y2="-3.4200000000000026" stroke="#3a72b8" stroke-width="3.2" stroke-linecap="round"/>
@@ -79,14 +79,14 @@
       <line x1="-8.1" y1="-12.329999999999998" x2="8.1" y2="-12.329999999999998" stroke="#1a1a1a" stroke-width="1.4"/>
     </g>
     <text x="595.8" y="398.43" class="vlbl" text-anchor="middle" transform="rotate(90 595.8 398.43)">Ténéré 700</text>
-    <g transform="translate(656.1,398.34)">
+    <g transform="translate(643.14,398.34)">
       <line x1="-15.84" y1="-9.540000000000003" x2="-32.4216" y2="-3.5424000000000024" stroke="#1a3b63" stroke-width="3.2" stroke-linecap="round"/>
       <line x1="15.84" y1="-9.540000000000003" x2="32.4216" y2="-3.5424000000000024" stroke="#1a3b63" stroke-width="3.2" stroke-linecap="round"/>
       <rect x="-15.84" y="-38.34" width="31.68" height="76.68" rx="4" fill="#1a3b63" fill-opacity="0.9" stroke="#111" stroke-width="1.2"/>
       <rect x="-13.84" y="-19.440000000000005" width="27.68" height="9" rx="2" fill="#2a3542"/>
       <line x1="-13.84" y1="-38.34" x2="13.84" y2="-38.34" stroke="#e6edf4" stroke-width="2.4" stroke-linecap="round"/>
     </g>
-    <text x="656.1" y="398.34" class="vlbl" text-anchor="middle" transform="rotate(90 656.1 398.34)">E46 Comp.</text>
+    <text x="643.14" y="398.34" class="vlbl" text-anchor="middle" transform="rotate(90 643.14 398.34)">E46 Comp.</text>
     <line x1="788.94" y1="502.02" x2="781.92" y2="583.02" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>
     <text x="796.94" y="542.52" class="dim" text-anchor="start">gate 4.0 m</text>
     <circle cx="531" cy="511.2" r="100.8" fill="#c0392b" fill-opacity="0.05" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>
@@ -104,12 +104,12 @@
     <rect x="0" y="51" width="8" height="8" fill="#b3a06e"/>
     <text x="13" y="58" class="pt">A6 allroad</text><text x="142" y="58" class="pt" text-anchor="end">4.95 × 1.90</text><text x="170" y="58" class="pt" text-anchor="end">12.1</text>
     <text x="0" y="70" class="ok" font-size="8.5">✓ both fit; ~0.65 m gaps (fold mirrors)</text>
-    <text x="0" y="90" class="pt" font-weight="700" fill="#333">GARAGE 7.18 × 7.05 (door 5.0 m)</text>
+    <text x="0" y="90" class="pt" font-weight="700" fill="#333">GARAGE 6.50 × 7.05 (door 5.0 m)</text>
     <rect x="0" y="96" width="8" height="8" fill="#0f5aa8"/>
     <text x="13" y="103" class="pt">M4 F82</text><text x="142" y="103" class="pt" text-anchor="end">4.67 × 1.87</text><text x="170" y="103" class="pt" text-anchor="end">11.9</text>
     <rect x="0" y="108" width="8" height="8" fill="#462482"/>
     <text x="13" y="115" class="pt">Ténéré 700</text><text x="142" y="115" class="pt" text-anchor="end">2.37 × 0.91</text><text x="170" y="115" class="pt" text-anchor="end">5.0</text>
-    <text x="0" y="127" class="ok" font-size="8.5">✓ car + bike, 2 m gap; room to spare</text>
+    <text x="0" y="127" class="ok" font-size="8.5">✓ car + bike, ~1 m between them</text>
     <text x="0" y="147" class="pt" font-weight="700" fill="#333">PARKING 3.2 × 7.05 — single bay</text>
     <rect x="0" y="153" width="8" height="8" fill="#1a3b63"/>
     <text x="13" y="160" class="pt">E46 Compact</text><text x="142" y="160" class="pt" text-anchor="end">4.26 × 1.76</text><text x="170" y="160" class="pt" text-anchor="end">10.6</text>

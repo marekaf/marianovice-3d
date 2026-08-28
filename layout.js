@@ -32,7 +32,7 @@ const GARDEN = {
     { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#b3a06e", cx: 25.83, noseZ: 20.0, hinge: 1.80, doorLen: 1.05 },
     { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#0f5aa8", cx: 30.7,  noseZ: 20.95, reversed: true, hinge: 2.00, doorLen: 1.35 }, // reverse-parked (low coupe) squarely in the 5 m door
     { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#462482", cx: 33.1,  noseZ: 20.95, moto: true },
-    { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#1a3b63", cx: 36.45, noseZ: 20.0, hinge: 1.60, doorLen: 0.98 }
+    { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#1a3b63", cx: 35.73, noseZ: 20.0, hinge: 1.60, doorLen: 0.98 }
   ],
   elements: [
     {
@@ -87,20 +87,20 @@ const GARDEN = {
     },
     {
       id: "garage",
-      name: "Garage 7.18 × 7.05 m",
+      name: "Garage 6.50 × 7.05 m",
       fixed: true,
       // interior openings: from/w in plot meters along the wall (x for N/S walls, y for W/E),
       // h = clear height above the interior floor slab
-      meta: { wallT: 0.3, workbench: { d: 0.75, h: 0.9 }, openings: [
-        { wall: "S", from: 28.72, w: 5, h: 2.05, kind: "gate" },
-        { wall: "W", from: 20.2, w: 0.9, h: 2.15, kind: "door" }
+      meta: { wallT: 0.25, workbench: { d: 0.75, h: 0.9 }, openings: [
+        { wall: "S", from: 28.38, w: 5, h: 2.05, kind: "gate" },
+        { wall: "W", from: 21.13, w: 1.425, h: 2.15, kind: "door" }
       ] },
       parts: [
-        { kind: "rect", x: 27.63, y: 19.4, w: 7.18, d: 7.05, fill: "#888", opacity: 0.88, stroke: "#3a3a3a", sw: 2 },
-        { kind: "rect", x: 28.72, y: 26.28, w: 5, d: 0.33, fill: "#222" },
-        { kind: "rect", x: 27.5, y: 20.2, w: 0.26, d: 0.9, fill: "#222" },
-        { kind: "text", x: 31.17, y: 22.67, text: "GARAGE", cls: "lbl-w", size: 14, weight: 700 },
-        { kind: "text", x: 31.17, y: 23.67, text: "7.18 × 7.05 m", cls: "dim", fill: "#fff" }
+        { kind: "rect", x: 27.63, y: 19.38, w: 6.5, d: 7.05, fill: "#888", opacity: 0.88, stroke: "#3a3a3a", sw: 2 },
+        { kind: "rect", x: 28.38, y: 26.26, w: 5, d: 0.33, fill: "#222" },
+        { kind: "rect", x: 27.5, y: 21.13, w: 0.26, d: 1.425, fill: "#222" },
+        { kind: "text", x: 30.88, y: 22.67, text: "GARAGE", cls: "lbl-w", size: 14, weight: 700 },
+        { kind: "text", x: 30.88, y: 23.67, text: "6.50 × 7.05 m", cls: "dim", fill: "#fff" }
       ]
     },
     {
@@ -108,16 +108,16 @@ const GARDEN = {
       name: "Parking along garage 3.2 × 7.05 m",
       short: "Parking",
       parts: [
-        { kind: "rect", x: 34.81, y: 19.4, w: 3.2, d: 7.05, stroke: "#888", sw: 1.2, dash: "4,3" },
-        { kind: "text", x: 36.41, y: 22.6, text: "parking", cls: "lbl-sm", fill: "#666" },
-        { kind: "text", x: 36.41, y: 23.4, text: "3.2 × 7.05 m", cls: "dim" }
+        { kind: "rect", x: 34.13, y: 19.38, w: 3.2, d: 7.05, stroke: "#888", sw: 1.2, dash: "4,3" },
+        { kind: "text", x: 35.73, y: 22.6, text: "parking", cls: "lbl-sm", fill: "#666" },
+        { kind: "text", x: 35.73, y: 23.4, text: "3.2 × 7.05 m", cls: "dim" }
       ]
     },
     {
       id: "driveway",
       name: "Driveway 4.5 m × ~22 m",
       parts: [
-        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.44], [34.81, 26.44], [34.81, 19.4], [38.01, 19.4], [38.01, 27.02], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
+        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [34.13, 19.38], [37.33, 19.38], [37.33, 27.02], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
         { kind: "text", x: 30.83, y: 28.33, text: "driveway", cls: "lbl-sm" },
         { kind: "text", x: 30.83, y: 29.17, text: "4.5 m × ~22 m", cls: "dim" }
       ]

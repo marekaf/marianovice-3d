@@ -40,11 +40,11 @@
       <rect x="370.44" y="208.44" width="54" height="140.76" />
       <rect x="171" y="90" width="18" height="39.06" />
       <rect x="383.04" y="349.2" width="114.3" height="126.9" />
-      <rect x="497.34" y="349.2" width="129.24" height="126.9" />
-      <rect x="516.96" y="473.04" width="90" height="5.94" />
-      <rect x="495" y="363.6" width="4.68" height="16.2" />
-      <rect x="626.58" y="349.2" width="57.6" height="126.9" />
-      <polygon points="383.04,349.2 497.34,349.2 497.34,475.92 626.58,475.92 626.58,349.2 684.18,349.2 684.18,486.36 788.94,502.02 781.92,583.02 383.04,534.96" />
+      <rect x="497.34" y="348.84" width="117" height="126.9" />
+      <rect x="510.84" y="472.68" width="90" height="5.94" />
+      <rect x="495" y="380.34" width="4.68" height="25.65" />
+      <rect x="614.34" y="348.84" width="57.6" height="126.9" />
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 614.34,348.84 671.94,348.84 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" />
       <line x1="788.94" y1="502.02" x2="781.92" y2="583.02" />
       <rect x="759.6" y="601.2" width="14.76" height="25.38" />
       <rect x="720" y="399.6" width="45" height="45" />
@@ -182,14 +182,14 @@
       <rect x="63" y="36" width="54" height="54" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
       <rect x="27" y="432" width="46.8" height="64.8" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
       <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
-      <rect x="497.34" y="349.2" width="129.24" height="126.9" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
-      <rect x="516.96" y="473.04" width="90" height="5.94" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
-      <rect x="495" y="363.6" width="4.68" height="16.2" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
-      <rect x="626.58" y="349.2" width="57.6" height="126.9" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="497.34" y="348.84" width="117" height="126.9" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
+      <rect x="510.84" y="472.68" width="90" height="5.94" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
+      <rect x="495" y="380.34" width="4.68" height="25.65" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
+      <rect x="614.34" y="348.84" width="57.6" height="126.9" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
       <rect x="370.44" y="208.44" width="54" height="140.76" fill="#e6cfa6" fill-opacity="0.75" stroke="#b0801f" stroke-width="1.6" />
       <rect x="170.64" y="129.24" width="18" height="346.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
       <rect x="188.64" y="286.74" width="77.4" height="58.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
-      <polygon points="383.04,349.2 497.34,349.2 497.34,475.92 626.58,475.92 626.58,349.2 684.18,349.2 684.18,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1.6" />
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 614.34,348.84 671.94,348.84 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="31.5" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="9" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="5.76" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
@@ -213,21 +213,21 @@
     <circle cx="440.19" cy="412.65" r="8" fill="#c25e12"/>
     <text x="440.19" y="415.84999999999997" class="tag" fill="#fff">5</text>
     <text x="440.19" y="430.65" class="zlvl">−0.50</text>
-    <circle cx="561.96" cy="412.65" r="8" fill="#c25e12"/>
-    <text x="561.96" y="415.84999999999997" class="tag" fill="#fff">6</text>
-    <text x="561.96" y="430.65" class="zlvl">−0.50</text>
-    <circle cx="655.38" cy="412.65" r="8" fill="#e08a1e"/>
-    <text x="655.38" y="415.84999999999997" class="tag" fill="#fff">7</text>
-    <text x="655.38" y="430.65" class="zlvl">−1.01</text>
+    <circle cx="555.84" cy="412.29" r="8" fill="#c25e12"/>
+    <text x="555.84" y="415.49" class="tag" fill="#fff">6</text>
+    <text x="555.84" y="430.29" class="zlvl">−0.50</text>
+    <circle cx="643.14" cy="412.29" r="8" fill="#e08a1e"/>
+    <text x="643.14" y="415.49" class="tag" fill="#fff">7</text>
+    <text x="643.14" y="430.29" class="zlvl">−0.98</text>
     <circle cx="397.44" cy="278.82" r="8" fill="#b0801f"/>
     <text x="397.44" y="282.02" class="tag" fill="#fff">8</text>
     <text x="397.44" y="296.82" class="zlvl">−0.02</text>
     <circle cx="179.64" cy="302.49" r="8" fill="#5a9a3c"/>
     <text x="179.64" y="305.69" class="tag" fill="#fff">9</text>
     <text x="179.64" y="320.49" class="zlvl">+0.05</text>
-    <circle cx="585.99" cy="466.11" r="8" fill="#2f6fae"/>
-    <text x="585.99" y="469.31" class="tag" fill="#fff">10</text>
-    <text x="585.99" y="484.11" class="zlvl">fall</text>
+    <circle cx="585.99" cy="465.93" r="8" fill="#2f6fae"/>
+    <text x="585.99" y="469.13" class="tag" fill="#fff">10</text>
+    <text x="585.99" y="483.93" class="zlvl">fall</text>
     <circle cx="675" cy="118.8" r="8" fill="#bf9000"/>
     <text x="675" y="122" class="tag" fill="#fff">11</text>
     <text x="675" y="136.8" class="zlvl">−1.51</text>
@@ -272,8 +272,8 @@
     <text x="0" y="165" class="td">3  Hot-tub shelter</text><text x="118" y="165" class="td" text-anchor="end">−0.19</text><text x="158" y="165" class="td" text-anchor="end">396.81</text><text x="196" y="165" class="td" text-anchor="end">0.47</text>
     <text x="0" y="177" class="td">4  Greenhouse</text><text x="118" y="177" class="td" text-anchor="end">+0.83</text><text x="158" y="177" class="td" text-anchor="end">397.82</text><text x="196" y="177" class="td" text-anchor="end">0.24</text>
     <text x="0" y="189" class="td">5  Carport slab</text><text x="118" y="189" class="td" text-anchor="end">−0.50</text><text x="158" y="189" class="td" text-anchor="end">396.50</text><text x="196" y="189" class="td" text-anchor="end">0.54</text>
-    <text x="0" y="201" class="td">6  Garage slab/apron</text><text x="118" y="201" class="td" text-anchor="end">−0.50</text><text x="158" y="201" class="td" text-anchor="end">396.50</text><text x="196" y="201" class="td" text-anchor="end">0.22/0.35f</text>
-    <text x="0" y="213" class="td">7  Parking</text><text x="118" y="213" class="td" text-anchor="end">−1.01</text><text x="158" y="213" class="td" text-anchor="end">395.99</text><text x="196" y="213" class="td" text-anchor="end">0.37</text>
+    <text x="0" y="201" class="td">6  Garage slab/apron</text><text x="118" y="201" class="td" text-anchor="end">−0.50</text><text x="158" y="201" class="td" text-anchor="end">396.50</text><text x="196" y="201" class="td" text-anchor="end">0.22/0.32f</text>
+    <text x="0" y="213" class="td">7  Parking</text><text x="118" y="213" class="td" text-anchor="end">−0.98</text><text x="158" y="213" class="td" text-anchor="end">396.02</text><text x="196" y="213" class="td" text-anchor="end">0.37</text>
     <text x="0" y="225" class="td">8  Terrace E (fill)</text><text x="118" y="225" class="td" text-anchor="end">−0.02</text><text x="158" y="225" class="td" text-anchor="end">396.98</text><text x="196" y="225" class="td" text-anchor="end">0.50f</text>
     <text x="0" y="237" class="td">9  Terrace W</text><text x="118" y="237" class="td" text-anchor="end">+0.05</text><text x="158" y="237" class="td" text-anchor="end">397.05</text><text x="196" y="237" class="td" text-anchor="end">posts</text>
     <text x="0" y="249" class="td">10  Driveway</text><text x="118" y="249" class="td" text-anchor="end">—</text><text x="158" y="249" class="td" text-anchor="end">—</text><text x="196" y="249" class="td" text-anchor="end">Δ1.18</text>

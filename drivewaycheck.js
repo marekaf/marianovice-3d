@@ -92,8 +92,8 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <line x1="${px(notchX)}" y1="${px(21.15)}" x2="${px(notchX)}" y2="${px(22.25)}" stroke="#1f7a3d" stroke-width="3"/>`);
   out.push(`    <path d="M ${px(notchX)},${px(21.15)} A ${px(1.1)} ${px(1.1)} 0 0 0 ${px(notchX - 1.1)},${px(22.25)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`); // opens inward (west)
   out.push(`    <text x="${px(notchX) - 3}" y="${px(20.9)}" class="dim" fill="#1f7a3d" text-anchor="end">house door (in the notch)</text>`);
-  out.push(`    <line x1="${px(ga.x)}" y1="${px(20.2)}" x2="${px(ga.x)}" y2="${px(21.1)}" stroke="#1f7a3d" stroke-width="3"/>`);
-  out.push(`    <circle cx="${px(ga.x)}" cy="${px(20.65)}" r="2.5" fill="#1f7a3d"/>`); // garage personnel door (labelled in the panel)
+  out.push(`    <line x1="${px(ga.x)}" y1="${px(21.13)}" x2="${px(ga.x)}" y2="${px(22.56)}" stroke="#1f7a3d" stroke-width="3"/>`);
+  out.push(`    <circle cx="${px(ga.x)}" cy="${px(21.84)}" r="2.5" fill="#1f7a3d"/>`); // garage personnel door (labelled in the panel)
   // Vehicles to scale, drawn with the two front doors open. `reversed` = parked nose-out (front
   // toward the south/door). fy = front edge in local y; rs = local direction toward the rear.
   for (const v of VEH) {
@@ -139,8 +139,8 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vehicle</text><text x="142" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">L × W m</text><text x="170" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>`);
   out.push(`    <line x1="0" y1="20" x2="170" y2="20" stroke="#bbb" stroke-width="0.8"/>`);
   let y = 33;
-  const grp = { carport: "CARPORT 6.35 × 7.05 — two side-by-side", garage: "GARAGE 7.18 × 7.05 (door 5.0 m)", parking: "PARKING 3.2 × 7.05 — single bay" };
-  const verdict = { carport: "✓ both fit; ~0.65 m gaps (fold mirrors)", garage: "✓ car + bike, 2 m gap; room to spare", parking: "✓ 0.72 m each side, 2.8 m spare" };
+  const grp = { carport: "CARPORT 6.35 × 7.05 — two side-by-side", garage: "GARAGE 6.50 × 7.05 (door 5.0 m)", parking: "PARKING 3.2 × 7.05 — single bay" };
+  const verdict = { carport: "✓ both fit; ~0.65 m gaps (fold mirrors)", garage: "✓ car + bike, ~1 m between them", parking: "✓ 0.72 m each side, 2.8 m spare" };
   for (const bay of ["carport", "garage", "parking"]) {
     out.push(`    <text x="0" y="${y}" class="pt" font-weight="700" fill="#333">${esc(grp[bay])}</text>`);
     y += 13;
