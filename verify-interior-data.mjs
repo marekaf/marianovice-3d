@@ -27,6 +27,74 @@ for (const w of allWalls) {
   }
 }
 
+// 1b. wall-wall overlaps (coincident faces z-fight and read as double walls)
+for (let i = 0; i < allWalls.length; i++) for (let j = i + 1; j < allWalls.length; j++) {
+  const A = wallRect(allWalls[i]), B = wallRect(allWalls[j]);
+  const ox = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0);
+  const oz = Math.min(A.z1, B.z1) - Math.max(A.z0, B.z0);
+  if (ox > TOL && oz > TOL) note('ERR', `walls overlap ${ox.toFixed(2)}×${oz.toFixed(2)} m at (${Math.max(A.x0, B.x0).toFixed(2)}, ${Math.max(A.z0, B.z0).toFixed(2)})`);
+}
+
+// 1c. dangling ends: each wall end must touch another wall, the outline edge, or a block
+{
+  const xs = data.outline.map(p => p[0]), zs = data.outline.map(p => p[1]);
+  const onOutline = (x, z) => data.outline.some((p, i) => {
+    const q = data.outline[(i + 1) % data.outline.length];
+    return Math.abs((q[0] - p[0]) * (z - p[1]) - (q[1] - p[1]) * (x - p[0])) < 0.05 &&
+      x >= Math.min(p[0], q[0]) - TOL && x <= Math.max(p[0], q[0]) + TOL &&
+      z >= Math.min(p[1], q[1]) - TOL && z <= Math.max(p[1], q[1]) + TOL;
+  });
+  for (const w of allWalls) {
+    if (w.block) continue;
+    const r = wallRect(w), ax = axisOf(w);
+    // end EDGE (full thickness segment); corner contact with another wall counts as supported
+    const edges = ax === 'x'
+      ? [[r.x0, r.z0, r.x0, r.z1], [r.x1, r.z0, r.x1, r.z1]]
+      : [[r.x0, r.z0, r.x1, r.z0], [r.x0, r.z1, r.x1, r.z1]];
+    for (const [ex0, ez0, ex1, ez1] of edges) {
+      const touched = onOutline((ex0 + ex1) / 2, (ez0 + ez1) / 2) || onOutline(ex0, ez0) || onOutline(ex1, ez1) ||
+        allWalls.some(o => {
+          if (o === w) return false;
+          const q = wallRect(o);
+          return Math.min(ex1, q.x1) - Math.max(ex0, q.x0) >= -TOL && Math.min(ez1, q.z1) - Math.max(ez0, q.z0) >= -TOL;
+        });
+      if (!touched) note('ERR', `wall end mid-air at (${((ex0 + ex1) / 2).toFixed(2)}, ${((ez0 + ez1) / 2).toFixed(2)})`);
+    }
+  }
+}
+
+// 1d. stairs must not collide with walls or block a door swing zone
+if (data.stairs) {
+  const s = data.stairs;
+  for (const w of allWalls) {
+    const r = wallRect(w);
+    const ox = Math.min(s.x1, r.x1) - Math.max(s.x0, r.x0);
+    const oz = Math.min(s.z1, r.z1) - Math.max(s.z0, r.z0);
+    if (ox > TOL && oz > TOL) note('ERR', `stairs collide with wall at (${Math.max(s.x0, r.x0).toFixed(2)}, ${Math.max(s.z0, r.z0).toFixed(2)})`);
+  }
+  for (const w of allWalls) {
+    const ax = axisOf(w), r = wallRect(w);
+    for (const o of w.openings || []) {
+      if (o.h < 1.9 || (o.sill || 0) > 0.1) continue;
+      const from = (ax === 'x' ? r.x0 : r.z0) + o.at;
+      // 0.7 m clear zone on both sides of a door; the stairs' first 0.3 m of rise is walkable
+      const zone = ax === 'x'
+        ? { x0: from, x1: from + o.w, z0: r.z0 - 0.7, z1: r.z1 + 0.7 }
+        : { x0: r.x0 - 0.7, x1: r.x1 + 0.7, z0: from, z1: from + o.w };
+      const ox = Math.min(s.x1, zone.x1) - Math.max(s.x0, zone.x0);
+      const oz = Math.min(s.z1, zone.z1) - Math.max(s.z0, zone.z0);
+      if (ox > 0.1 && oz > 0.1) {
+        const run = axisOf({ a: [s.x0, s.z0], b: [s.x1, s.z1] });
+        const enc = run === 'x'
+          ? (s.toward === 'E' ? Math.max(s.x0, zone.x0) - s.x0 : s.x1 - Math.min(s.x1, zone.x1))
+          : (s.toward === 'S' ? Math.max(s.z0, zone.z0) - s.z0 : s.z1 - Math.min(s.z1, zone.z1));
+        const riseAtZone = (enc / (run === 'x' ? s.x1 - s.x0 : s.z1 - s.z0)) * s.steps * s.rise;
+        if (riseAtZone > 0.3) note('ERR', `door at (${zone.x0.toFixed(2)}–${zone.x1.toFixed(2)}, ${zone.z0.toFixed(2)}–${zone.z1.toFixed(2)}) opens into the stairs ${riseAtZone.toFixed(1)} m up`);
+      }
+    }
+  }
+}
+
 // 2. room perimeter closure: each edge must be covered by wall bodies or their openings
 function coverageGaps(edge) {
   // edge: {axis:'x'|'z', at, from, to, side} — a room boundary line segment
