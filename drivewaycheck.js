@@ -7,12 +7,14 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 // Nominal manufacturer dimensions (m): length, width (excl. mirrors), turning circle Ø. Parked
 // nose-north; cx = lane centre; noseZ = front bumper. Carport cars are spaced to leave ~0.8 m
 // walkways to the two pedestrian doors; garage cars sit south of the north-wall workbench.
+// hinge = A-pillar distance back from the front bumper; doorLen = front-door leaf length (a coupe
+// like the M4 has one long door, hatchbacks/estates shorter front doors).
 const VEH = [
-  { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3f8f52", cx: 22.98, noseZ: 20.0 },
-  { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#7f858c", cx: 25.83, noseZ: 20.0 },
-  { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#3a6ea5", cx: 30.7,  noseZ: 20.7, reversed: true }, // reverse-parked (low car) squarely in the 5 m door
+  { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3f8f52", cx: 22.98, noseZ: 20.0, hinge: 1.65, doorLen: 1.00 },
+  { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#7f858c", cx: 25.83, noseZ: 20.0, hinge: 1.80, doorLen: 1.05 },
+  { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#3a6ea5", cx: 30.7,  noseZ: 20.7, reversed: true, hinge: 2.00, doorLen: 1.35 }, // reverse-parked (low coupe) squarely in the 5 m door
   { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#e08a1e", cx: 33.1,  noseZ: 20.7, moto: true },
-  { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#c0392b", cx: 36.45, noseZ: 20.0 },
+  { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#c0392b", cx: 36.45, noseZ: 20.0, hinge: 1.60, doorLen: 0.98 },
 ];
 
 function renderDrivewayCheckSVG(garden) {
@@ -112,14 +114,16 @@ function renderDrivewayCheckSVG(garden) {
       out.push(`      <rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${l}" rx="${w / 2}" fill="${v.col}" stroke="#1a1a1a" stroke-width="1"/>`);
       out.push(`      <line x1="${-px(0.45)}" y1="${-l / 2 + px(0.5)}" x2="${px(0.45)}" y2="${-l / 2 + px(0.5)}" stroke="#1a1a1a" stroke-width="1.4"/>`);
     } else {
-      // Open front doors: hinged 0.85 m back from the front, swung ~70° out (door leaf 1.0 m)
-      const doorL = px(1.0), s = 0.94, c = 0.34, hy = fy + rs * px(0.85);
+      // Open front doors: hinged at the A-pillar, swung ~70° out. Leaf length is per-vehicle
+      // (the coupe's door is noticeably longer). The door sits BEHIND the windscreen.
+      const s = 0.94, c = 0.34, hy = fy + rs * px(v.hinge), dl = px(v.doorLen);
       for (const sx of [-1, 1]) {
         const hx = sx * w / 2;
-        out.push(`      <line x1="${hx}" y1="${hy}" x2="${hx + sx * doorL * s}" y2="${hy + rs * doorL * c}" stroke="${v.col}" stroke-width="3" stroke-linecap="round"/>`);
+        out.push(`      <line x1="${hx}" y1="${hy}" x2="${hx + sx * dl * s}" y2="${hy + rs * dl * c}" stroke="${v.col}" stroke-width="3.2" stroke-linecap="round"/>`);
       }
       out.push(`      <rect x="${-w / 2}" y="${-l / 2}" width="${w}" height="${l}" rx="4" fill="${v.col}" fill-opacity="0.9" stroke="#111" stroke-width="1.2"/>`);
-      out.push(`      <rect x="${-w / 2 + 2}" y="${fy + rs * px(0.35) - (rs < 0 ? px(1.0) : 0)}" width="${w - 4}" height="${px(1.0)}" rx="2" fill="#2a3542"/>`); // windscreen, just behind the front
+      const wa = fy + rs * px(v.hinge - 0.55), wb = fy + rs * px(v.hinge - 0.05);
+      out.push(`      <rect x="${-w / 2 + 2}" y="${Math.min(wa, wb)}" width="${w - 4}" height="${Math.abs(wb - wa)}" rx="2" fill="#2a3542"/>`); // windscreen, just ahead of the doors
       out.push(`      <line x1="${-w / 2 + 2}" y1="${fy}" x2="${w / 2 - 2}" y2="${fy}" stroke="#e6edf4" stroke-width="2.4" stroke-linecap="round"/>`); // front bumper (lighter = front)
     }
     out.push(`    </g>`);
