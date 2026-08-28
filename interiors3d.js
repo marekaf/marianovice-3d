@@ -251,7 +251,113 @@ const INTERIORS3D = (() => {
     };
   }
 
-  return { buildGarage, buildVehicle, garageVehicles };
+  // Generic room-data house builder for the interiors page. `data` comes from a LOCAL,
+  // gitignored file (house-interior.js) — this code carries no dimensions of its own.
+  // Data contract: outline (polygon, local meters), rooms[{x0,z0,x1,z1,name,id,area,ceil?}],
+  // extWalls[{face:'N|S|E|W', a:[x,z], b:[x,z], openings}], intWalls[same minus face],
+  // openings[{at (m from wall min-corner along its axis), w, h, sill?}], stairs, clearH.
+  // Returns groups parented under `root`, positioned at data.originPlot in plot coordinates.
+  function buildHouse(THREE, data, opts = {}) {
+    const floorY = opts.floorY ?? 0;
+    const H = (data.clearH ?? 2.52) + 0.2;
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xe8e5df, roughness: 0.9 });
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0xd7c9a8, roughness: 0.6 });
+    const ceilMat = new THREE.MeshStandardMaterial({ color: 0xf4f2ee, roughness: 0.9, side: THREE.DoubleSide });
+
+    const root = new THREE.Group();
+    const walls = { N: new THREE.Group(), S: new THREE.Group(), E: new THREE.Group(), W: new THREE.Group() };
+    const intGroup = new THREE.Group();
+    const floor = new THREE.Group();
+    const ceiling = new THREE.Group();
+    const labels = new THREE.Group();
+    for (const g of [walls.N, walls.S, walls.E, walls.W, intGroup, floor, ceiling, labels]) root.add(g);
+
+    const mkBox = (target, x0, y0, z0, x1, y1, z1, mat) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat);
+      m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      target.add(m);
+    };
+
+    function wallRect(target, w) {
+      const [ax, az] = w.a, [bx, bz] = w.b;
+      const alongX = (bx - ax) >= (bz - az);
+      const L = alongX ? bx - ax : bz - az;
+      const seg = (s0, s1, y0, y1) => alongX
+        ? mkBox(target, ax + s0, y0, az, ax + s1, y1, bz, wallMat)
+        : mkBox(target, ax, y0, az + s0, bx, y1, az + s1, wallMat);
+      let cur = 0;
+      for (const o of [...(w.openings || [])].sort((p, q) => p.at - q.at)) {
+        if (o.at > cur) seg(cur, o.at, floorY, floorY + H);
+        const sill = o.sill || 0;
+        if (sill > 0) seg(o.at, o.at + o.w, floorY, floorY + sill);
+        if (sill + o.h < H) seg(o.at, o.at + o.w, floorY + sill + o.h, floorY + H);
+        cur = o.at + o.w;
+      }
+      if (cur < L) seg(cur, L, floorY, floorY + H);
+    }
+    for (const w of data.extWalls) wallRect(walls[w.face], w);
+    for (const w of data.intWalls) wallRect(intGroup, w);
+
+    // Floor slab from the outline polygon (same shape convention as the garden viewer)
+    {
+      const shape = new THREE.Shape();
+      shape.moveTo(data.outline[0][0], -data.outline[0][1]);
+      for (let i = 1; i < data.outline.length; i++) shape.lineTo(data.outline[i][0], -data.outline[i][1]);
+      shape.closePath();
+      const geom = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: false });
+      geom.rotateX(-Math.PI / 2);
+      // Extrusion grows +y after the rotation — shift down so the slab TOP is the floor level
+      geom.translate(0, floorY - 0.12, 0);
+      const m = new THREE.Mesh(geom, floorMat);
+      m.receiveShadow = true;
+      floor.add(m);
+    }
+
+    for (const r of data.rooms) {
+      if (r.ceil !== 'open') mkBox(ceiling, r.x0, floorY + (data.clearH ?? 2.52), r.z0, r.x1, floorY + (data.clearH ?? 2.52) + 0.05, r.z1, ceilMat);
+      // Room label lying on the floor — reads upright in the north-up plan view
+      const cv = document.createElement('canvas');
+      cv.width = 512; cv.height = 160;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#2a2a2a';
+      ctx.textAlign = 'center';
+      ctx.font = '700 52px -apple-system, sans-serif';
+      ctx.fillText(r.name, 256, 66);
+      ctx.font = '400 40px -apple-system, sans-serif';
+      ctx.fillText(`${r.id} · ${r.area} m²`, 256, 122);
+      const tex = new THREE.CanvasTexture(cv);
+      const w = Math.min(2.2, (r.x1 - r.x0) * 0.9);
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 160 / 512),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+      label.rotation.x = -Math.PI / 2;
+      label.position.set((r.x0 + r.x1) / 2, floorY + 0.02, (r.z0 + r.z1) / 2);
+      labels.add(label);
+    }
+
+    if (data.stairs) {
+      const s = data.stairs;
+      const stepMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });
+      const runAxis = (s.x1 - s.x0) >= (s.z1 - s.z0) ? 'x' : 'z';
+      const L = runAxis === 'x' ? s.x1 - s.x0 : s.z1 - s.z0;
+      const going = L / s.steps;
+      for (let i = 0; i < s.steps; i++) {
+        const p0 = i * going, p1 = (i + 1) * going, top = floorY + (i + 1) * s.rise;
+        if (runAxis === 'z') mkBox(intGroup, s.x0, floorY, s.toward === 'S' ? s.z0 + p0 : s.z1 - p1, s.x1, top, s.toward === 'S' ? s.z0 + p1 : s.z1 - p0, stepMat);
+        else mkBox(intGroup, s.toward === 'E' ? s.x0 + p0 : s.x1 - p1, floorY, s.z0, s.toward === 'E' ? s.x0 + p1 : s.x1 - p0, top, s.z1, stepMat);
+      }
+    }
+
+    root.position.set(data.originPlot.x, 0, data.originPlot.z);
+    const xs = data.outline.map(p => p[0]), zs = data.outline.map(p => p[1]);
+    return {
+      root, walls, int: intGroup, floor, ceiling, labels,
+      dims: { w: Math.max(...xs), d: Math.max(...zs), floorY, clearH: data.clearH ?? 2.52, originPlot: data.originPlot },
+    };
+  }
+
+  return { buildGarage, buildVehicle, garageVehicles, buildHouse };
 })();
 
 if (typeof module !== "undefined") module.exports = { INTERIORS3D };

@@ -10,11 +10,14 @@
   #info h3 { margin: 0 0 4px 0; font-size: 15px; }
   #info small { opacity: 0.85; }
   #info a { color: #5dade2; }
-  #views { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 10px 12px; z-index: 100; border-radius: 6px; width: 168px; }
-  #views h4 { color: #fff; margin: 0 0 8px 0; font-size: 12px; opacity: 0.85; }
+  #views { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 10px 12px; z-index: 100; border-radius: 6px; width: 178px; }
+  #views h4 { color: #fff; margin: 8px 0 6px 0; font-size: 12px; opacity: 0.85; }
+  #views h4:first-child { margin-top: 0; }
   #views button { display: block; width: 100%; margin: 4px 0; padding: 6px 12px; cursor: pointer; background: #5dade2; color: white; border: none; border-radius: 4px; font-size: 13px; text-align: left; }
   #views button:hover { background: #3a8fc9; }
   #views button.active { background: #2c6f9e; }
+  #views .bswitch { display: flex; gap: 4px; }
+  #views .bswitch button { text-align: center; font-weight: 700; }
   #views button.export { background: #2f9e5f; margin-top: 10px; }
   #views button.export:hover { background: #23804a; }
   #views label { display: block; color: #fff; font-size: 12px; margin: 5px 0; cursor: pointer; }
@@ -33,29 +36,36 @@
 </head>
 <body>
 <div id="info">
-  <h3>Interiors — garage</h3>
+  <h3>Interiors</h3>
   <small id="dims"></small><br>
   <small>Drag: pan · Scroll: zoom · Cutaway 3D also rotates<br>
   <a href="index.html">← back to the garden model</a></small>
 </div>
 <div id="viewlabel"></div>
 <div id="views">
+  <h4>BUILDING</h4>
+  <div class="bswitch">
+    <button data-building="garage">Garage</button>
+    <button data-building="house" id="houseBtn" style="display:none">House</button>
+  </div>
   <h4>VIEW</h4>
   <button data-view="plan">Floor plan</button>
   <button data-view="north">North wall</button>
-  <button data-view="south">South wall (gate)</button>
+  <button data-view="south">South wall</button>
   <button data-view="east">East wall</button>
-  <button data-view="west">West wall (door)</button>
+  <button data-view="west">West wall</button>
   <button data-view="cut3d">Cutaway 3D</button>
-  <label><input type="checkbox" id="toggleGate"> Gate open</label>
-  <label><input type="checkbox" id="toggleVehicles" checked> Vehicles</label>
+  <label id="rowGate"><input type="checkbox" id="toggleGate"> Gate open</label>
+  <label id="rowVehicles"><input type="checkbox" id="toggleVehicles" checked> Vehicles</label>
   <label><input type="checkbox" id="toggleCeiling" checked> Ceiling</label>
+  <label id="rowLabels" style="display:none"><input type="checkbox" id="toggleLabels" checked> Room labels</label>
   <button class="export" id="exportBtn">⬇ Export PNG</button>
 </div>
 <div id="scalebar"><div id="scaleline"></div><span id="scaletext"></span></div>
 
 <script src="layout.js"></script>
 <script src="interiors3d.js"></script>
+<script src="house-interior.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -69,52 +79,82 @@ const sun = new THREE.DirectionalLight(0xffffff, 0.9);
 sun.position.set(-6, 14, 9);
 scene.add(sun);
 
-// The garage in plot coordinates with its interior floor at y = 0
-const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: 0 });
-for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.furniture, gar.gateClosed, gar.gateOpen, gar.ceiling, gar.light]) scene.add(grp);
-const vehicles = INTERIORS3D.garageVehicles(THREE, GARDEN, 0);
-scene.add(vehicles);
+// Garage at its real level (−0.5 m below the house floor at 0)
+const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: -0.5 });
+const garRoot = new THREE.Group();
+for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.furniture, gar.gateClosed, gar.gateOpen, gar.ceiling, gar.light]) garRoot.add(grp);
+const vehicles = INTERIORS3D.garageVehicles(THREE, GARDEN, -0.5);
+garRoot.add(vehicles);
+scene.add(garRoot);
+
+// House — only when the LOCAL (gitignored) house-interior.js is present
+const hasHouse = typeof HOUSE_INTERIOR !== 'undefined';
+let hou = null;
+if (hasHouse) {
+  hou = INTERIORS3D.buildHouse(THREE, HOUSE_INTERIOR, { floorY: 0 });
+  scene.add(hou.root);
+  document.getElementById('houseBtn').style.display = '';
+}
 
 const GA = gar.dims.rect;
-const cx = GA.x + GA.w / 2, cz = GA.y + GA.d / 2;
-const inW = GA.w - 2 * gar.dims.wallT, inD = GA.d - 2 * gar.dims.wallT;
-const ceilHigh = gar.dims.roofHigh - gar.dims.pitch * gar.dims.wallT - 0.06;
-const ceilLow = gar.dims.roofHigh - gar.dims.pitch * (GA.w - gar.dims.wallT) - 0.06;
-document.getElementById('dims').textContent =
-  `${GA.w.toFixed(2)} × ${GA.d.toFixed(2)} m outside · ${inW.toFixed(2)} × ${inD.toFixed(2)} m inside · ceiling ${ceilLow.toFixed(2)}–${ceilHigh.toFixed(2)} m`;
-
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
 
-const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 200);
+const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 300);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = false;
 
-// Each view: camera placement, what to hide (the wall you look through), extents to fit (m)
-const VIEWS = {
-  plan:  { label: 'FLOOR PLAN (north up)',        pos: [cx, 40, cz],      up: [0, 0, -1], target: [cx, 0, cz],   hide: ['ceiling'],           fitW: GA.w + 1.6, fitH: GA.d + 1.6, rotate: false },
-  north: { label: 'NORTH WALL — workbench',       pos: [cx, 1.7, cz + 40], up: [0, 1, 0], target: [cx, 1.7, cz], hide: ['S', 'ceiling'],      fitW: GA.w + 1.2, fitH: 4.4, rotate: false },
-  south: { label: 'SOUTH WALL — sectional gate',  pos: [cx, 1.7, cz - 40], up: [0, 1, 0], target: [cx, 1.7, cz], hide: ['N', 'ceiling'],      fitW: GA.w + 1.2, fitH: 4.4, rotate: false },
-  east:  { label: 'EAST WALL',                    pos: [cx - 40, 1.7, cz], up: [0, 1, 0], target: [cx, 1.7, cz], hide: ['W', 'ceiling'],      fitW: GA.d + 1.2, fitH: 4.4, rotate: false },
-  west:  { label: 'WEST WALL — personnel door',   pos: [cx + 40, 1.7, cz], up: [0, 1, 0], target: [cx, 1.7, cz], hide: ['E', 'ceiling'],      fitW: GA.d + 1.2, fitH: 4.4, rotate: false },
-  cut3d: { label: 'CUTAWAY 3D (S + E walls off)', pos: [cx + 11, 10, cz + 11], up: [0, 1, 0], target: [cx, 0.8, cz], hide: ['S', 'E', 'ceiling'], fitW: 13, fitH: 9, rotate: true },
+// Per-building view sets: camera placement, what to hide (the wall you look through), fit extents
+function mkViews(cx, cz, midY, w, d, wallH, label) {
+  return {
+    plan:  { label: `${label} — FLOOR PLAN (north up)`, pos: [cx, 60, cz], up: [0, 0, -1], target: [cx, 0, cz], hide: ['ceiling'], fitW: w + 1.6, fitH: d + 1.6, rotate: false },
+    north: { label: `${label} — NORTH WALL`, pos: [cx, midY, cz + 60], up: [0, 1, 0], target: [cx, midY, cz], hide: ['S', 'ceiling'], fitW: w + 1.2, fitH: wallH, rotate: false },
+    south: { label: `${label} — SOUTH WALL`, pos: [cx, midY, cz - 60], up: [0, 1, 0], target: [cx, midY, cz], hide: ['N', 'ceiling'], fitW: w + 1.2, fitH: wallH, rotate: false },
+    east:  { label: `${label} — EAST WALL`, pos: [cx - 60, midY, cz], up: [0, 1, 0], target: [cx, midY, cz], hide: ['W', 'ceiling'], fitW: d + 1.2, fitH: wallH, rotate: false },
+    west:  { label: `${label} — WEST WALL`, pos: [cx + 60, midY, cz], up: [0, 1, 0], target: [cx, midY, cz], hide: ['E', 'ceiling'], fitW: d + 1.2, fitH: wallH, rotate: false },
+    cut3d: { label: `${label} — CUTAWAY 3D (S + E walls off)`, pos: [cx + Math.max(w, d), Math.max(w, d) * 0.9, cz + Math.max(w, d)], up: [0, 1, 0], target: [cx, 0.8, cz], hide: ['S', 'E', 'ceiling'], fitW: w + d * 0.6, fitH: (w + d) * 0.42, rotate: true },
+  };
+}
+const BUILDINGS = {
+  garage: {
+    root: garRoot, walls: gar.walls, ceiling: gar.ceiling,
+    views: mkViews(GA.x + GA.w / 2, GA.y + GA.d / 2, -0.5 + 1.6, GA.w, GA.d, 4.4, 'GARAGE'),
+    dims: `garage · ${GA.w.toFixed(2)} × ${GA.d.toFixed(2)} m outside · floor −0.50 m`,
+  },
 };
-let cur = 'plan';
+if (hasHouse) {
+  const o = hou.dims.originPlot;
+  BUILDINGS.house = {
+    root: hou.root, walls: hou.walls, ceiling: hou.ceiling,
+    views: mkViews(o.x + hou.dims.w / 2, o.z + hou.dims.d / 2, 1.5, hou.dims.w, hou.dims.d, 3.6, 'HOUSE 1.NP'),
+    dims: `house 1.NP · ${hou.dims.w.toFixed(2)} × ${hou.dims.d.toFixed(2)} m outside · clear height ${hou.dims.clearH.toFixed(2)} m`,
+  };
+}
+
+let curB = 'garage', curV = 'plan';
 
 function applyVisibility() {
-  const hidden = new Set(VIEWS[cur].hide);
-  for (const k of ['N', 'S', 'E', 'W']) gar.walls[k].visible = !hidden.has(k);
-  gar.ceiling.visible = document.getElementById('toggleCeiling').checked && !hidden.has('ceiling');
-  const gateOpen = document.getElementById('toggleGate').checked;
-  gar.gateClosed.visible = !hidden.has('S') && !gateOpen;
-  gar.gateOpen.visible = !hidden.has('S') && gateOpen;
-  vehicles.visible = document.getElementById('toggleVehicles').checked;
+  const B = BUILDINGS[curB];
+  const hidden = new Set(B.views[curV].hide);
+  for (const b in BUILDINGS) BUILDINGS[b].root.visible = (b === curB);
+  for (const k of ['N', 'S', 'E', 'W']) B.walls[k].visible = !hidden.has(k);
+  B.ceiling.visible = document.getElementById('toggleCeiling').checked && !hidden.has('ceiling');
+  if (curB === 'garage') {
+    const gateOpen = document.getElementById('toggleGate').checked;
+    gar.gateClosed.visible = !hidden.has('S') && !gateOpen;
+    gar.gateOpen.visible = !hidden.has('S') && gateOpen;
+    vehicles.visible = document.getElementById('toggleVehicles').checked;
+  }
+  if (hasHouse) hou.labels.visible = curB === 'house' && document.getElementById('toggleLabels').checked;
+  document.getElementById('rowGate').style.display = curB === 'garage' ? '' : 'none';
+  document.getElementById('rowVehicles').style.display = curB === 'garage' ? '' : 'none';
+  document.getElementById('rowLabels').style.display = curB === 'house' ? '' : 'none';
 }
 
 function fitFrustum() {
-  const v = VIEWS[cur];
+  const v = BUILDINGS[curB].views[curV];
   const aspect = innerWidth / innerHeight;
   let halfH = (v.fitH / 2) * 1.08;
   if ((v.fitW / 2) * 1.08 > halfH * aspect) halfH = (v.fitW / 2) * 1.08 / aspect;
@@ -124,8 +164,8 @@ function fitFrustum() {
 }
 
 function setView(name) {
-  cur = name;
-  const v = VIEWS[name];
+  curV = name;
+  const v = BUILDINGS[curB].views[name];
   camera.up.set(...v.up);
   camera.position.set(...v.pos);
   camera.zoom = 1;
@@ -134,20 +174,28 @@ function setView(name) {
   fitFrustum();
   controls.update();
   applyVisibility();
-  document.getElementById('viewlabel').textContent = 'GARAGE — ' + v.label;
+  document.getElementById('viewlabel').textContent = v.label;
+  document.getElementById('dims').textContent = BUILDINGS[curB].dims;
   document.querySelectorAll('#views button[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  document.querySelectorAll('#views button[data-building]').forEach(b => b.classList.toggle('active', b.dataset.building === curB));
   updateScalebar();
+}
+
+function setBuilding(b) {
+  if (!BUILDINGS[b]) return;
+  curB = b;
+  setView(curV);
 }
 
 function updateScalebar() {
   const mPerPx = (camera.right - camera.left) / (camera.zoom * innerWidth);
-  const px = 1 / mPerPx;
-  document.getElementById('scaleline').style.width = px + 'px';
+  document.getElementById('scaleline').style.width = (1 / mPerPx) + 'px';
   document.getElementById('scaletext').textContent = '1 m';
 }
 
 document.querySelectorAll('#views button[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
-for (const id of ['toggleGate', 'toggleVehicles', 'toggleCeiling']) {
+document.querySelectorAll('#views button[data-building]').forEach(b => b.addEventListener('click', () => setBuilding(b.dataset.building)));
+for (const id of ['toggleGate', 'toggleVehicles', 'toggleCeiling', 'toggleLabels']) {
   document.getElementById(id).addEventListener('change', applyVisibility);
 }
 controls.addEventListener('change', updateScalebar);
@@ -156,7 +204,7 @@ controls.addEventListener('change', updateScalebar);
 document.getElementById('exportBtn').addEventListener('click', () => {
   renderer.render(scene, camera);
   const a = document.createElement('a');
-  a.download = `garage-${cur}.png`;
+  a.download = `${curB}-${curV}.png`;
   a.href = renderer.domElement.toDataURL('image/png');
   a.click();
 });
@@ -167,10 +215,16 @@ window.addEventListener('resize', () => {
   updateScalebar();
 });
 
-// Deep-link a view via URL hash: #plan / #north / …
-const h = location.hash.slice(1);
-setView(VIEWS[h] ? h : 'plan');
-window.addEventListener('hashchange', () => { const n = location.hash.slice(1); if (VIEWS[n]) setView(n); });
+// Deep-link via URL hash: #plan / #house-plan / #garage-cut3d / …
+function applyHash() {
+  const h = location.hash.slice(1);
+  if (!h) return setView('plan');
+  const [a, b] = h.includes('-') ? h.split('-') : [null, h];
+  if (a && BUILDINGS[a]) curB = a;
+  setView(BUILDINGS[curB].views[b] ? b : 'plan');
+}
+applyHash();
+window.addEventListener('hashchange', applyHash);
 
 renderer.setAnimationLoop(() => {
   controls.update();
