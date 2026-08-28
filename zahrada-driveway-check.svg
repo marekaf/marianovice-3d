@@ -75,7 +75,7 @@
     </g>
     <text x="552.6" y="419.13" class="vlbl" text-anchor="middle" transform="rotate(90 552.6 419.13)">M4 F82</text>
     <g transform="translate(595.8,398.43)">
-      <rect x="-8.19" y="-21.33" width="16.38" height="42.66" rx="8.19" fill="#e08a1e" stroke="#1a1a1a" stroke-width="1"/>
+      <rect x="-8.19" y="-21.33" width="16.38" height="42.66" rx="8.19" fill="#462482" stroke="#1a1a1a" stroke-width="1"/>
       <line x1="-8.1" y1="-12.329999999999998" x2="8.1" y2="-12.329999999999998" stroke="#1a1a1a" stroke-width="1.4"/>
     </g>
     <text x="595.8" y="398.43" class="vlbl" text-anchor="middle" transform="rotate(90 595.8 398.43)">Ténéré 700</text>
@@ -107,7 +107,7 @@
     <text x="0" y="90" class="pt" font-weight="700" fill="#333">GARAGE 7.18 × 7.05 (door 5.0 m)</text>
     <rect x="0" y="96" width="8" height="8" fill="#0f5aa8"/>
     <text x="13" y="103" class="pt">M4 F82</text><text x="142" y="103" class="pt" text-anchor="end">4.67 × 1.87</text><text x="170" y="103" class="pt" text-anchor="end">11.9</text>
-    <rect x="0" y="108" width="8" height="8" fill="#e08a1e"/>
+    <rect x="0" y="108" width="8" height="8" fill="#462482"/>
     <text x="13" y="115" class="pt">Ténéré 700</text><text x="142" y="115" class="pt" text-anchor="end">2.37 × 0.91</text><text x="170" y="115" class="pt" text-anchor="end">5.0</text>
     <text x="0" y="127" class="ok" font-size="8.5">✓ car + bike, 2 m gap; room to spare</text>
     <text x="0" y="147" class="pt" font-weight="700" fill="#333">PARKING 3.2 × 7.05 — single bay</text>

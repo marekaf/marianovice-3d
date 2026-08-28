@@ -31,7 +31,7 @@ const GARDEN = {
     { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3a72b8", cx: 22.98, noseZ: 20.0, hinge: 1.65, doorLen: 1.00 },
     { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#b3a06e", cx: 25.83, noseZ: 20.0, hinge: 1.80, doorLen: 1.05 },
     { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#0f5aa8", cx: 30.7,  noseZ: 20.95, reversed: true, hinge: 2.00, doorLen: 1.35 }, // reverse-parked (low coupe) squarely in the 5 m door
-    { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#e08a1e", cx: 33.1,  noseZ: 20.95, moto: true },
+    { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#462482", cx: 33.1,  noseZ: 20.95, moto: true },
     { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#1a3b63", cx: 36.45, noseZ: 20.0, hinge: 1.60, doorLen: 0.98 }
   ],
   elements: [
