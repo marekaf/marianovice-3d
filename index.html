@@ -1790,17 +1790,17 @@ const waterNormal = (() => {
   const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 1.1), frameMat);
   d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
   scene.add(d2);
-  const groundY = terrainHeight(EN[0] + 1.4, doorZ);
+  // Generous landing at FFL (comfortable to stand + open the door), then a flight of ~0.17 m risers
+  // down to the carport — not one 0.5 m block.
+  const groundY = terrainHeight(EN[0] + 2.2, doorZ);
   const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
-  const rise = Math.max(0, ty - groundY), stepW = 1.5;
-  const flight = rise < 0.18
-    ? [{ x0: EN[0], x1: EN[0] + 0.45, top: ty }]                       // near-level onto the terrace: just a sill
-    : [ { x0: EN[0],        x1: EN[0] + 0.5, top: ty },
-        { x0: EN[0] + 0.5,  x1: EN[0] + 0.8, top: ty - rise / 2 },
-        { x0: EN[0] + 0.8,  x1: EN[0] + 1.1, top: groundY + 0.02 } ];
-  for (const tr of flight) {
+  const rise = Math.max(0, ty - groundY), platW = 2.0, tread = 0.3;
+  const nSteps = rise < 0.18 ? 0 : Math.max(1, Math.round(rise / 0.17));
+  const parts = [{ x0: EN[0], x1: EN[0] + 1.2, top: ty }];             // landing: 1.2 m deep
+  for (let i = 1; i <= nSteps; i++) parts.push({ x0: EN[0] + 1.2 + (i - 1) * tread, x1: EN[0] + 1.2 + i * tread, top: ty - rise * i / nSteps });
+  for (const tr of parts) {
     const w = tr.x1 - tr.x0, h = Math.max(0.06, tr.top - groundY);
-    const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, stepW), stepMat);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(w, h, platW), stepMat);
     st.position.set((tr.x0 + tr.x1) / 2, tr.top - h / 2, doorZ);
     st.receiveShadow = true; st.castShadow = true;
     scene.add(st);
