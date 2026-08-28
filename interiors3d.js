@@ -300,7 +300,9 @@ const INTERIORS3D = (() => {
       }
       if (cur < L) seg(cur, L, floorY, floorY + H);
     }
-    for (const w of data.extWalls) wallRect(walls[w.face], w);
+    // face N/S/E/W = true facade plane (hidden by the elevation that looks through it);
+    // any other tag (e.g. 'court' for atrium/notch returns) stays visible in every view
+    for (const w of data.extWalls) wallRect(walls[w.face] || intGroup, w);
     for (const w of data.intWalls) wallRect(intGroup, w);
 
     // Floor slab from the outline polygon (same shape convention as the garden viewer)
