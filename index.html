@@ -2056,7 +2056,7 @@ addWallClimber(10.8, 19.18, 14.6, 19.18, 0, -1, 2.4);   // atrium south wall, fo
 // Car builder — body + hood/trunk steps + glass cabin + wheels
 const carWheelMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
 const carGlassMat = new THREE.MeshStandardMaterial({ color: 0x101820, metalness: 0.9, roughness: 0.06 });
-function addCar(x, z, color, rotY, baseY = terrainHeight(x, z)) {
+function addCar(x, z, color, rotY, baseY = terrainHeight(x, z), l = 4.3, w = 1.82) {
   const g = new THREE.Group();
   const paint = new THREE.MeshStandardMaterial({ color, metalness: 0.8, roughness: 0.3 });
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.55, 4.3), paint);
@@ -2080,15 +2080,45 @@ function addCar(x, z, color, rotY, baseY = terrainHeight(x, z)) {
   g.traverse(o => { if (o.isMesh) o.castShadow = true; });
   g.position.set(x, baseY, z);
   g.rotation.y = rotY;
+  // Body is drawn at 4.3 × 1.82 m; scale to the vehicle's real footprint
+  g.scale.set(w / 1.82, 1, l / 4.3);
   furnitureGroup.add(g);
 }
 
-// Cars in garage (2 pcs) — both on the garage slab
-addCar(29, 22, 0x224488, 0, garageFloorY);
-addCar(32.5, 22, 0xaa3333, 0, garageFloorY);
+// Motorbike — two wheels, slim body, seat, handlebar; front toward −z like the cars
+function addMoto(x, z, color, rotY, baseY, l, w) {
+  const g = new THREE.Group();
+  const paint = new THREE.MeshStandardMaterial({ color, metalness: 0.6, roughness: 0.4 });
+  for (const wz of [-(l / 2 - 0.35), l / 2 - 0.35]) {
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.12, 12), carWheelMat);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(0, 0.32, wz);
+    g.add(wheel);
+  }
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, l * 0.55), paint);
+  body.position.y = 0.75;
+  g.add(body);
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.7), carWheelMat);
+  seat.position.set(0, 0.98, 0.35);
+  g.add(seat);
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(w, 0.05, 0.05), carWheelMat);
+  bar.position.set(0, 1.05, -(l / 2 - 0.55));
+  g.add(bar);
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  g.position.set(x, baseY, z);
+  g.rotation.y = rotY;
+  furnitureGroup.add(g);
+}
 
-// Car on 2-spot parking (1 shown) — length along the pad's x-axis
-addCar(36.4, 22.9, 0x8a8f94, 0);
+// Vehicle fleet from layout.js (shared with drivewaycheck.js) — nose north unless reversed
+for (const v of GARDEN.vehicles) {
+  const cz = v.noseZ + v.l / 2;
+  const col = parseInt(v.col.slice(1), 16);
+  const baseY = v.bay === 'garage' ? garageFloorY : terrainHeight(v.cx, cz);
+  const rotY = v.reversed ? Math.PI : 0;
+  if (v.moto) addMoto(v.cx, cz, col, rotY, baseY, v.l, v.w);
+  else addCar(v.cx, cz, col, rotY, baseY, v.l, v.w);
+}
 
 // ───────────────────────── BUSHES AROUND HOUSE ─────────────────────────
 const bushPositions = [
@@ -2315,7 +2345,7 @@ window.setPreset = function(name) {
     north:  [22, 8, -25],
     south:  [22, 8, 60],
     ground: [22, 1.7, 17],
-    garage: [31.2, garageFloorY + 1.7, 21.2]
+    garage: [28.0, garageFloorY + 1.6, 26.0]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -2324,7 +2354,7 @@ window.setPreset = function(name) {
     north:  [22, 5, 17],
     south:  [22, 5, 22],
     ground: [22, 1.7, 30],
-    garage: [31.2, garageFloorY + 1.2, 26.4]
+    garage: [33.2, garageFloorY + 0.7, 20.0]
   };
   const p = positions[name];
   const t = targets[name];

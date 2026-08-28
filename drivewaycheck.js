@@ -4,20 +4,8 @@
 const ROWS = "abcdefghijklmnopqrstuvwxyz";
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-// Nominal manufacturer dimensions (m): length, width (excl. mirrors), turning circle Ø. Parked
-// nose-north; cx = lane centre; noseZ = front bumper. Carport cars are spaced to leave ~0.8 m
-// walkways to the two pedestrian doors; garage cars sit south of the north-wall workbench.
-// hinge = A-pillar distance back from the front bumper; doorLen = front-door leaf length (a coupe
-// like the M4 has one long door, hatchbacks/estates shorter front doors).
-const VEH = [
-  { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3f8f52", cx: 22.98, noseZ: 20.0, hinge: 1.65, doorLen: 1.00 },
-  { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#7f858c", cx: 25.83, noseZ: 20.0, hinge: 1.80, doorLen: 1.05 },
-  { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#3a6ea5", cx: 30.7,  noseZ: 20.7, reversed: true, hinge: 2.00, doorLen: 1.35 }, // reverse-parked (low coupe) squarely in the 5 m door
-  { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#e08a1e", cx: 33.1,  noseZ: 20.7, moto: true },
-  { name: "BMW E46 Compact",   l: 4.26, w: 1.76, turn: 10.6, bay: "parking", col: "#c0392b", cx: 36.45, noseZ: 20.0, hinge: 1.60, doorLen: 0.98 },
-];
-
 function renderDrivewayCheckSVG(garden) {
+  const VEH = garden.vehicles;
   const EL = Object.fromEntries(garden.elements.map((e) => [e.id, e]));
   const S = garden.m2px;
   const px = (m) => Math.round(m * S * 100) / 100;
