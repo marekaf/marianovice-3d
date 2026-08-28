@@ -72,7 +72,7 @@ const GARDEN = {
       name: "Path sauna → west terrace",
       short: "Sauna path",
       parts: [
-        { kind: "rect", x: 9.5, y: 4, w: 1, d: 3.17, fill: "#cdc1ad", opacity: 0.7 }
+        { kind: "rect", x: 9.5, y: 5, w: 1, d: 2.17, fill: "#cdc1ad", opacity: 0.7 }
       ]
     },
     {
@@ -209,18 +209,18 @@ const GARDEN = {
       id: "sauna",
       name: "Sauna 4 × 3 m",
       parts: [
-        { kind: "rect", x: 6.5, y: 1, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2 },
-        { kind: "text", x: 8.5, y: 2.33, text: "SAUNA", cls: "lbl-w" },
-        { kind: "text", x: 8.5, y: 3.22, text: "4 × 3 m", cls: "dim", fill: "#fff" }
+        { kind: "rect", x: 6.5, y: 2, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2 },
+        { kind: "text", x: 8.5, y: 3.33, text: "SAUNA", cls: "lbl-w" },
+        { kind: "text", x: 8.5, y: 4.22, text: "4 × 3 m", cls: "dim", fill: "#fff" }
       ]
     },
     {
       id: "saunaShelter",
       name: "Sauna shelter 3 × 3 m (covers hot tub)",
       parts: [
-        { kind: "rect", x: 3.5, y: 1, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4,3" },
-        { kind: "text", x: 5, y: 4.67, text: "shelter", cls: "lbl-sm", fill: "#5a4828" },
-        { kind: "text", x: 5, y: 5.4, text: "3 × 3 m", cls: "dim" }
+        { kind: "rect", x: 3.5, y: 2, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4,3" },
+        { kind: "text", x: 5, y: 5.67, text: "shelter", cls: "lbl-sm", fill: "#5a4828" },
+        { kind: "text", x: 5, y: 6.4, text: "3 × 3 m", cls: "dim" }
       ]
     },
     {
@@ -236,20 +236,20 @@ const GARDEN = {
       id: "softub",
       name: "Softub hot tub ø 1.8 m",
       parts: [
-        { kind: "circle", cx: 5, cy: 2.5, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5 },
-        { kind: "text", x: 5, y: 2.72, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f" }
+        { kind: "circle", cx: 5, cy: 3.5, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5 },
+        { kind: "text", x: 5, y: 3.72, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f" }
       ]
     },
     {
       id: "pergola",
       name: "Pergola + grill 6 × 4 m",
       parts: [
-        { kind: "rect", x: 25.78, y: 1, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
-        { kind: "rect", x: 25.98, y: 1.2, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9 },
-        { kind: "rect", x: 27.4, y: 2.5, w: 2.8, d: 1, fill: "#8a6a4a" },
-        { kind: "text", x: 28.78, y: 2.86, text: "pergola + grill", cls: "lbl" },
-        { kind: "text", x: 28.78, y: 3.6, text: "6 × 4 m", cls: "dim" },
-        { kind: "text", x: 28.78, y: 4.5, text: "by north fence", cls: "lbl-sm", fill: "#5a4828" }
+        { kind: "rect", x: 25.78, y: 2, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
+        { kind: "rect", x: 25.98, y: 2.2, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9 },
+        { kind: "rect", x: 27.4, y: 3.5, w: 2.8, d: 1, fill: "#8a6a4a" },
+        { kind: "text", x: 28.78, y: 3.86, text: "pergola + grill", cls: "lbl" },
+        { kind: "text", x: 28.78, y: 4.6, text: "6 × 4 m", cls: "dim" },
+        { kind: "text", x: 28.78, y: 5.5, text: "2 m off N fence", cls: "lbl-sm", fill: "#5a4828" }
       ]
     },
     {
@@ -390,9 +390,9 @@ const GARDEN = {
       short: "Sauna bed",
       meta: { plant: "mixed" },
       parts: [
-        { kind: "rect", x: 0.6, y: 0.8, w: 2.6, d: 3.2, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "rect", x: 2, y: 4.2, w: 6, d: 1.6, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 1.9, y: 2.5, text: "sauna bed Z4", rotate: -90 }
+        { kind: "rect", x: 0.6, y: 1.8, w: 2.6, d: 3.2, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 2, y: 5.2, w: 6, d: 1.6, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 1.9, y: 3.5, text: "sauna bed Z4", rotate: -90 }
       ]
     },
     {
@@ -401,8 +401,8 @@ const GARDEN = {
       short: "Pergola beds",
       meta: { plant: "mixed" },
       parts: [
-        { kind: "rect", x: 23.2, y: 1, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "rect", x: 32.4, y: 1, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 23.2, y: 2, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 32.4, y: 2, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 24.2, y: 5.7, text: "climbers Z5" }
       ]
     },

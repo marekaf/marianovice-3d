@@ -27,11 +27,11 @@
     <g class="axis"><text x="-12" y="22">a</text><text x="-12" y="58">b</text><text x="-12" y="94">c</text><text x="-12" y="130">d</text><text x="-12" y="166">e</text><text x="-12" y="202">f</text><text x="-12" y="238">g</text><text x="-12" y="274">h</text><text x="-12" y="310">i</text><text x="-12" y="346">j</text><text x="-12" y="382">k</text><text x="-12" y="418">l</text><text x="-12" y="454">m</text><text x="-12" y="490">n</text><text x="-12" y="526">o</text><text x="-12" y="562">p</text><text x="-12" y="598">q</text><text x="-12" y="634">r</text></g>
     <g clip-path="url(#plot)" fill="#f1f1f1" stroke="#d6d6d6" stroke-width="0.8">
       <polygon points="188.64,129.24 383.04,129.24 383.04,208.44 370.44,208.44 370.44,405.54 383.04,405.54 383.04,475.74 188.64,475.74 188.64,345.24 266.04,345.24 266.04,286.74 188.64,286.74"/>
-      <rect x="117" y="18" width="72" height="54"/>
-      <rect x="63" y="18" width="54" height="54"/>
-      <rect x="464.04" y="18" width="108" height="72"/>
-      <rect x="467.64" y="21.6" width="100.8" height="64.8"/>
-      <rect x="493.2" y="45" width="50.4" height="18"/>
+      <rect x="117" y="36" width="72" height="54"/>
+      <rect x="63" y="36" width="54" height="54"/>
+      <rect x="464.04" y="36" width="108" height="72"/>
+      <rect x="467.64" y="39.6" width="100.8" height="64.8"/>
+      <rect x="493.2" y="63" width="50.4" height="18"/>
     </g>
     <polygon points="383.04,349.2 497.34,349.2 497.34,475.92 626.58,475.92 626.58,349.2 684.18,349.2 684.18,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>
     <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#e7f3ea" stroke="#3f8f52" stroke-width="1.6"/>
