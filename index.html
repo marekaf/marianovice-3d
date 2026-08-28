@@ -1312,7 +1312,6 @@ const drivewayGeom = (() => {
   // Concave outline: SH-clipping needs convex clips, so split into convex pieces
   const dwParts = [
     [[21.28, 19.4], [27.63, 19.4], [27.63, 26.44], [21.28, 26.44]],
-    [[34.13, 19.38], [37.33, 19.38], [37.33, 27.02], [34.13, 26.43]],   // parking bay east of the garage
     [[21.28, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]],
   ];
   const clipCell = (poly, clipPts) => {
@@ -2332,7 +2331,6 @@ hoverRect('saunaShelter', 2.5);
 hoverRect('pergola', 2.5);
 hoverRect('eastTerrace', 0.4);
 addHoverTarget(wtSidewalk.x, wtSidewalk.y, wtSidewalk.w, wtSidewalk.d, 0.4, 'West terrace — sidewalk');
-hoverRect('parking', 0.3);
 {
   const fp = circlesOf('firePit')[0];
   addHoverTarget(fp.cx - 1, fp.cy - 1, 3, 3, 0.5, EL.firePit.name);

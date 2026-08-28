@@ -43,8 +43,7 @@
       <rect x="497.34" y="348.84" width="117" height="126.9" />
       <rect x="510.84" y="472.68" width="90" height="5.94" />
       <rect x="495" y="380.34" width="4.68" height="25.65" />
-      <rect x="614.34" y="348.84" width="57.6" height="126.9" />
-      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 614.34,348.84 671.94,348.84 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" />
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" />
       <line x1="788.94" y1="502.02" x2="781.92" y2="583.02" />
       <rect x="759.6" y="601.2" width="14.76" height="25.38" />
       <rect x="720" y="399.6" width="45" height="45" />
@@ -185,11 +184,10 @@
       <rect x="497.34" y="348.84" width="117" height="126.9" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
       <rect x="510.84" y="472.68" width="90" height="5.94" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
       <rect x="495" y="380.34" width="4.68" height="25.65" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
-      <rect x="614.34" y="348.84" width="57.6" height="126.9" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
       <rect x="370.44" y="208.44" width="54" height="140.76" fill="#e6cfa6" fill-opacity="0.75" stroke="#b0801f" stroke-width="1.6" />
       <rect x="170.64" y="129.24" width="18" height="346.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
       <rect x="188.64" y="286.74" width="77.4" height="58.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
-      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 614.34,348.84 671.94,348.84 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1.6" />
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="31.5" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="9" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="5.76" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
@@ -216,32 +214,29 @@
     <circle cx="555.84" cy="412.29" r="8" fill="#c25e12"/>
     <text x="555.84" y="415.49" class="tag" fill="#fff">6</text>
     <text x="555.84" y="430.29" class="zlvl">−0.50</text>
-    <circle cx="643.14" cy="412.29" r="8" fill="#e08a1e"/>
-    <text x="643.14" y="415.49" class="tag" fill="#fff">7</text>
-    <text x="643.14" y="430.29" class="zlvl">−0.98</text>
     <circle cx="397.44" cy="278.82" r="8" fill="#b0801f"/>
-    <text x="397.44" y="282.02" class="tag" fill="#fff">8</text>
+    <text x="397.44" y="282.02" class="tag" fill="#fff">7</text>
     <text x="397.44" y="296.82" class="zlvl">−0.02</text>
     <circle cx="179.64" cy="302.49" r="8" fill="#5a9a3c"/>
-    <text x="179.64" y="305.69" class="tag" fill="#fff">9</text>
+    <text x="179.64" y="305.69" class="tag" fill="#fff">8</text>
     <text x="179.64" y="320.49" class="zlvl">+0.05</text>
-    <circle cx="585.99" cy="465.93" r="8" fill="#2f6fae"/>
-    <text x="585.99" y="469.13" class="tag" fill="#fff">10</text>
-    <text x="585.99" y="483.93" class="zlvl">fall</text>
+    <circle cx="585.99" cy="466.11" r="8" fill="#2f6fae"/>
+    <text x="585.99" y="469.31" class="tag" fill="#fff">9</text>
+    <text x="585.99" y="484.11" class="zlvl">fall</text>
     <circle cx="675" cy="118.8" r="8" fill="#bf9000"/>
-    <text x="675" y="122" class="tag" fill="#fff">11</text>
+    <text x="675" y="122" class="tag" fill="#fff">10</text>
     <text x="675" y="136.8" class="zlvl">−1.51</text>
     <circle cx="40.5" cy="225" r="8" fill="#bf9000"/>
-    <text x="40.5" y="228.2" class="tag" fill="#fff">12</text>
+    <text x="40.5" y="228.2" class="tag" fill="#fff">11</text>
     <text x="40.5" y="243" class="zlvl">+0.41</text>
     <circle cx="46.8" cy="518.4" r="8" fill="#bf9000"/>
-    <text x="46.8" y="521.6" class="tag" fill="#fff">13</text>
+    <text x="46.8" y="521.6" class="tag" fill="#fff">12</text>
     <text x="46.8" y="536.4" class="zlvl">+0.98</text>
     <circle cx="766.98" cy="613.89" r="8" fill="#e08a1e"/>
-    <text x="766.98" y="617.09" class="tag" fill="#fff">14</text>
+    <text x="766.98" y="617.09" class="tag" fill="#fff">13</text>
     <text x="766.98" y="631.89" class="zlvl">−0.84</text>
     <circle cx="21.65" cy="13.41" r="8" fill="#e08a1e"/>
-    <text x="21.65" y="16.61" class="tag" fill="#fff">15</text>
+    <text x="21.65" y="16.61" class="tag" fill="#fff">14</text>
     <text x="21.65" y="31.41" class="zlvl">+0.21</text>
   </g>
   <g transform="translate(838, 92)">
@@ -273,19 +268,18 @@
     <text x="0" y="177" class="td">4  Greenhouse</text><text x="118" y="177" class="td" text-anchor="end">+0.83</text><text x="158" y="177" class="td" text-anchor="end">397.82</text><text x="196" y="177" class="td" text-anchor="end">0.24</text>
     <text x="0" y="189" class="td">5  Carport slab</text><text x="118" y="189" class="td" text-anchor="end">−0.50</text><text x="158" y="189" class="td" text-anchor="end">396.50</text><text x="196" y="189" class="td" text-anchor="end">0.54</text>
     <text x="0" y="201" class="td">6  Garage slab/apron</text><text x="118" y="201" class="td" text-anchor="end">−0.50</text><text x="158" y="201" class="td" text-anchor="end">396.50</text><text x="196" y="201" class="td" text-anchor="end">0.22/0.32f</text>
-    <text x="0" y="213" class="td">7  Parking</text><text x="118" y="213" class="td" text-anchor="end">−0.98</text><text x="158" y="213" class="td" text-anchor="end">396.02</text><text x="196" y="213" class="td" text-anchor="end">0.37</text>
-    <text x="0" y="225" class="td">8  Terrace E (fill)</text><text x="118" y="225" class="td" text-anchor="end">−0.02</text><text x="158" y="225" class="td" text-anchor="end">396.98</text><text x="196" y="225" class="td" text-anchor="end">0.50f</text>
-    <text x="0" y="237" class="td">9  Terrace W</text><text x="118" y="237" class="td" text-anchor="end">+0.05</text><text x="158" y="237" class="td" text-anchor="end">397.05</text><text x="196" y="237" class="td" text-anchor="end">posts</text>
-    <text x="0" y="249" class="td">10  Driveway</text><text x="118" y="249" class="td" text-anchor="end">—</text><text x="158" y="249" class="td" text-anchor="end">—</text><text x="196" y="249" class="td" text-anchor="end">Δ1.18</text>
-    <text x="0" y="261" class="td">11  Fire-pit seating</text><text x="118" y="261" class="td" text-anchor="end">−1.51</text><text x="158" y="261" class="td" text-anchor="end">395.49</text><text x="196" y="261" class="td" text-anchor="end">0.28</text>
-    <text x="0" y="273" class="td">12  Raised-beds pad</text><text x="118" y="273" class="td" text-anchor="end">+0.41</text><text x="158" y="273" class="td" text-anchor="end">397.41</text><text x="196" y="273" class="td" text-anchor="end">0.32</text>
-    <text x="0" y="285" class="td">13  Compost</text><text x="118" y="285" class="td" text-anchor="end">+0.98</text><text x="158" y="285" class="td" text-anchor="end">397.98</text><text x="196" y="285" class="td" text-anchor="end">0.13</text>
-    <text x="0" y="297" class="td">14  Bin store</text><text x="118" y="297" class="td" text-anchor="end">−0.84</text><text x="158" y="297" class="td" text-anchor="end">396.16</text><text x="196" y="297" class="td" text-anchor="end">0.08</text>
-    <text x="0" y="309" class="td">15  Tool store</text><text x="118" y="309" class="td" text-anchor="end">+0.21</text><text x="158" y="309" class="td" text-anchor="end">397.21</text><text x="196" y="309" class="td" text-anchor="end">0.13</text>
-    <text x="0" y="329" class="note">±0.000 = house FF = 397.00 Bpv.</text>
-    <text x="0" y="340" class="note">Pads cut to lowest corner (no fill</text>
-    <text x="0" y="350" class="note">under structures); cut m = max dig.</text>
-    <text x="0" y="361" class="note">Driveway graded to fall, not flat.</text>
-    <text x="0" y="372" class="note">Decks are level on posts over grade.</text>
+    <text x="0" y="213" class="td">7  Terrace E (fill)</text><text x="118" y="213" class="td" text-anchor="end">−0.02</text><text x="158" y="213" class="td" text-anchor="end">396.98</text><text x="196" y="213" class="td" text-anchor="end">0.50f</text>
+    <text x="0" y="225" class="td">8  Terrace W</text><text x="118" y="225" class="td" text-anchor="end">+0.05</text><text x="158" y="225" class="td" text-anchor="end">397.05</text><text x="196" y="225" class="td" text-anchor="end">posts</text>
+    <text x="0" y="237" class="td">9  Driveway</text><text x="118" y="237" class="td" text-anchor="end">—</text><text x="158" y="237" class="td" text-anchor="end">—</text><text x="196" y="237" class="td" text-anchor="end">Δ1.18</text>
+    <text x="0" y="249" class="td">10  Fire-pit seating</text><text x="118" y="249" class="td" text-anchor="end">−1.51</text><text x="158" y="249" class="td" text-anchor="end">395.49</text><text x="196" y="249" class="td" text-anchor="end">0.28</text>
+    <text x="0" y="261" class="td">11  Raised-beds pad</text><text x="118" y="261" class="td" text-anchor="end">+0.41</text><text x="158" y="261" class="td" text-anchor="end">397.41</text><text x="196" y="261" class="td" text-anchor="end">0.32</text>
+    <text x="0" y="273" class="td">12  Compost</text><text x="118" y="273" class="td" text-anchor="end">+0.98</text><text x="158" y="273" class="td" text-anchor="end">397.98</text><text x="196" y="273" class="td" text-anchor="end">0.13</text>
+    <text x="0" y="285" class="td">13  Bin store</text><text x="118" y="285" class="td" text-anchor="end">−0.84</text><text x="158" y="285" class="td" text-anchor="end">396.16</text><text x="196" y="285" class="td" text-anchor="end">0.08</text>
+    <text x="0" y="297" class="td">14  Tool store</text><text x="118" y="297" class="td" text-anchor="end">+0.21</text><text x="158" y="297" class="td" text-anchor="end">397.21</text><text x="196" y="297" class="td" text-anchor="end">0.13</text>
+    <text x="0" y="317" class="note">±0.000 = house FF = 397.00 Bpv.</text>
+    <text x="0" y="328" class="note">Pads cut to lowest corner (no fill</text>
+    <text x="0" y="338" class="note">under structures); cut m = max dig.</text>
+    <text x="0" y="349" class="note">Driveway graded to fall, not flat.</text>
+    <text x="0" y="360" class="note">Decks are level on posts over grade.</text>
   </g>
 </svg>
