@@ -2200,19 +2200,22 @@ const GT = EL.gate.parts.find(p => p.kind === 'line');
 const eL1 = pEK, eL2 = pSE;
 const tBranaT = (GT.y1 - eL1[1]) / (eL2[1] - eL1[1]);
 const tBranaB = (GT.y2 - eL1[1]) / (eL2[1] - eL1[1]);
-const gateT = lerp2(eL1, eL2, tBranaT);
-const gateB = lerp2(eL1, eL2, tBranaB);
-addFenceSegment(eL1[0], eL1[1], gateT[0], gateT[1]);  // east lower 1 (before gate)
-addFenceSegment(gateB[0], gateB[1], eL2[0], eL2[1]);  // east lower 2 (after gate)
-addFenceSegment(pSE[0], pSE[1], pSW[0], pSW[1]);      // south
-addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);      // west
+const gateT = lerp2(eL1, eL2, tBranaT);   // vehicle-gate north jamb (= the post between wicket & gate)
+const gateB = lerp2(eL1, eL2, tBranaB);   // vehicle-gate south jamb
+const gateGL = Math.hypot(gateB[0] - gateT[0], gateB[1] - gateT[1]);
+const gux = (gateB[0] - gateT[0]) / gateGL, guz = (gateB[1] - gateT[1]) / gateGL;  // along the opening (→ south)
+const wicketN = [gateT[0] - gux * 0.9, gateT[1] - guz * 0.9];   // wicket north jamb, 0.9 m N of the gate
+addFenceSegment(eL1[0], eL1[1], wicketN[0], wicketN[1]);  // fence up to the wicket
+// wicketN → gateT = 0.9 m wicket opening (pedestrian, north of and off the driveway)
+addFenceSegment(gateB[0], gateB[1], eL2[0], eL2[1]);      // fence south of the vehicle gate
+addFenceSegment(pSE[0], pSE[1], pSW[0], pSW[1]);          // south
+addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);          // west
 
-// Entrance = posuvná brána (sliding gate, ~3.5 m) + 1 m branka (pedestrian gate), both shown OPEN.
-// Opening runs gateT (north) → gateB (south); interior is west, so the inward normal points −x.
+// Entrance: posuvná brána (cantilever sliding, 4.0 m clear) + a SEPARATE 0.9 m wicket (branka) to
+// the NORTH, off the driveway; a post stands between the wicket and the gate. Both shown OPEN.
 {
-  const gL = Math.hypot(gateB[0] - gateT[0], gateB[1] - gateT[1]);
-  const ux = (gateB[0] - gateT[0]) / gL, uz = (gateB[1] - gateT[1]) / gL;   // along the opening
-  const nx = -uz, nz = ux;                                                   // inward normal (−x into the plot)
+  const ux = gux, uz = guz;                 // along the opening (→ south)
+  const nx = -uz, nz = ux;                  // inward normal (−x into the plot)
   const barMat = new THREE.MeshStandardMaterial({ color: 0x33343a, roughness: 0.5, metalness: 0.45 });
   const postMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 });
   // Framed leaf: rails + vertical pickets, centred at origin, length along local +X, thin in Z.
@@ -2236,16 +2239,15 @@ addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);      // west
     leaf.rotation.y = Math.atan2(-dz, dx);
     scene.add(leaf);
   };
-  // Cantilever sliding gate, 4.0 m clear opening, retracted (open): parked along the fence just
-  // north of the opening on its run-back, on the track inside the line
+  // Sliding gate 4.0 m, retracted north on its run-back (open), on the track just inside the line
   const slideLen = 4.0, slideH = 1.5;
-  placeLeaf(gateT[0] - ux * (slideLen / 2 + 0.15) + nx * 0.12,
-            gateT[1] - uz * (slideLen / 2 + 0.15) + nz * 0.12, slideLen, slideH, ux, uz);
-  // Wicket (branka) 0.9 m — a separate pedestrian gate beside the drive, swung ~90° inward (open)
+  placeLeaf(gateT[0] - ux * (slideLen / 2 + 0.2) + nx * 0.18,
+            gateT[1] - uz * (slideLen / 2 + 0.2) + nz * 0.18, slideLen, slideH, ux, uz);
+  // Wicket 0.9 m at its north jamb, swung ~90° inward (open)
   const brankaLen = 0.9, brankaH = 1.5;
-  placeLeaf(gateB[0] + nx * (brankaLen / 2), gateB[1] + nz * (brankaLen / 2), brankaLen, brankaH, nx, nz);
-  // Gate posts at both jambs
-  for (const [gx, gz] of [gateT, gateB]) {
+  placeLeaf(wicketN[0] + nx * (brankaLen / 2), wicketN[1] + nz * (brankaLen / 2), brankaLen, brankaH, nx, nz);
+  // Posts: wicket N jamb, the post BETWEEN wicket & gate (gateT), and the gate S jamb (gateB)
+  for (const [gx, gz] of [wicketN, gateT, gateB]) {
     const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.75, 0.14), postMat);
     post.position.set(gx, terrainHeight(gx, gz) + 0.875, gz); post.castShadow = true;
     scene.add(post);
