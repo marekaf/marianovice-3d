@@ -5,8 +5,9 @@
 // when a DXF wall map is given (mm, [[x,y],[x,y]] segments) — that every model wall face
 // lies on a DXF line and every long DXF wall run has a model wall (both directions).
 import { createRequire } from 'module';
+import { resolve } from 'path';
 const require = createRequire(import.meta.url);
-const data = Object.values(require('./' + process.argv[2]))[0];
+const data = Object.values(require(resolve(process.argv[2])))[0];
 const TOL = 0.03;
 const problems = [];
 const note = (sev, msg) => problems.push({ sev, msg });
@@ -95,6 +96,48 @@ if (data.stairs) {
   }
 }
 
+// 1e. door egress: the 0.7 m clear zone on both sides of every door must be free of
+// wall bodies (incl. block masses like the fireplace); and a wall that is 100% opening
+// (a portal) must bear on another wall at both ends — otherwise its lintel floats
+{
+  const doorish = w => {
+    const ext = data.extWalls.includes(w);
+    return (w.openings || []).filter(o => ext ? o.door : (o.h >= 1.9 && (o.sill || 0) <= 0.1));
+  };
+  for (const w of allWalls) {
+    const ax = axisOf(w), r = wallRect(w);
+    for (const o of doorish(w)) {
+      const from = (ax === 'x' ? r.x0 : r.z0) + o.at;
+      const zone = ax === 'x'
+        ? { x0: from, x1: from + o.w, z0: r.z0 - 0.7, z1: r.z1 + 0.7 }
+        : { x0: r.x0 - 0.7, x1: r.x1 + 0.7, z0: from, z1: from + o.w };
+      for (const w2 of allWalls) {
+        if (w2 === w) continue;
+        const q = wallRect(w2);
+        const ox = Math.min(zone.x1, q.x1) - Math.max(zone.x0, q.x0);
+        const oz = Math.min(zone.z1, q.z1) - Math.max(zone.z0, q.z0);
+        if (ox > 0.05 && oz > 0.05) note('ERR', `door at (${from.toFixed(2)}, ${(ax === 'x' ? r.z0 : r.x0).toFixed(2)}) blocked by a wall/mass at (${Math.max(zone.x0, q.x0).toFixed(2)}, ${Math.max(zone.z0, q.z0).toFixed(2)})`);
+      }
+    }
+    const L = lenOf(w);
+    const openLen = (w.openings || []).reduce((a, o) => a + o.w, 0);
+    if (!w.block && openLen >= L * 0.95) {
+      const edges = ax === 'x'
+        ? [[r.x0, r.z0, r.x0, r.z1], [r.x1, r.z0, r.x1, r.z1]]
+        : [[r.x0, r.z0, r.x1, r.z0], [r.x0, r.z1, r.x1, r.z1]];
+      for (const [ex0, ez0, ex1, ez1] of edges) {
+        const bearing = allWalls.some(o2 => {
+          if (o2 === w) return false;
+          const q = wallRect(o2);
+          return Math.min(ex1, q.x1) - Math.max(ex0, q.x0) >= 0.1 - TOL && Math.min(ez1, q.z1) - Math.max(ez0, q.z0) >= -TOL ||
+                 Math.min(ez1, q.z1) - Math.max(ez0, q.z0) >= 0.1 - TOL && Math.min(ex1, q.x1) - Math.max(ex0, q.x0) >= -TOL;
+        });
+        if (!bearing) note('ERR', `portal lintel floats — no bearing at (${((ex0 + ex1) / 2).toFixed(2)}, ${((ez0 + ez1) / 2).toFixed(2)})`);
+      }
+    }
+  }
+}
+
 // 2. room perimeter closure: each edge must be covered by wall bodies or their openings
 function coverageGaps(edge) {
   // edge: {axis:'x'|'z', at, from, to, side} — a room boundary line segment
@@ -169,7 +212,7 @@ for (const r of data.rooms) if (!reach.has(r.id)) note('ERR', `room ${r.id} (${r
 
 // 4. DXF ground-truth cross-check
 if (process.argv[3]) {
-  const raw = require('./' + process.argv[3]);
+  const raw = require(resolve(process.argv[3]));
   const H = 19.25;
   const dxfV = [], dxfH = [];
   for (const [a, b] of raw) {

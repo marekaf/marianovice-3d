@@ -4,6 +4,7 @@
 // the garage gate must lie inside the driveway polygon edge. With a site-truth file
 // (local, DWG-derived): footprints, positions and openings must match it to 5 cm.
 import { createRequire } from 'module';
+import { resolve } from 'path';
 const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
 const problems = [];
@@ -50,7 +51,7 @@ for (const v of GARDEN.vehicles || []) {
 
 // DWG ground truth
 if (process.argv[2]) {
-  const truth = require('./' + process.argv[2]);
+  const truth = require(resolve(process.argv[2]));
   const cmp = (what, got, want) => { if (Math.abs(got - want) > TOL) note('ERR', `${what}: model ${got.toFixed(2)} vs DPS ${want.toFixed(2)} (Δ ${(got - want).toFixed(2)} m)`); };
   const house = EL.house.meta.bbox;
   cmp('house x', house[0], truth.house.x); cmp('house z', house[1], truth.house.z);
