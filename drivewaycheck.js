@@ -97,8 +97,9 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <rect x="${px(cp.x + cp.w - 0.85)}" y="${px(cp.y)}" width="${px(0.85)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
   // Pedestrian doors + swing arcs (house entry on the W wall, garage personnel door on the garage W wall)
   out.push(`    <line x1="${px(cp.x)}" y1="${px(21.29)}" x2="${px(cp.x)}" y2="${px(22.71)}" stroke="#1f7a3d" stroke-width="3"/>`);
-  out.push(`    <path d="M ${px(cp.x)},${px(22.71)} A ${px(1.42)} ${px(1.42)} 0 0 0 ${px(cp.x + 1.42)},${px(22.71)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`);
-  out.push(`    <text x="${px(cp.x) + 3}" y="${px(23.6)}" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m</text>`);
+  // Opens INWARD (into the vestibule): hinge on the S side, so the swing takes no carport space
+  out.push(`    <path d="M ${px(cp.x)},${px(21.29)} A ${px(1.42)} ${px(1.42)} 0 0 0 ${px(cp.x - 1.42)},${px(22.71)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`);
+  out.push(`    <text x="${px(cp.x) + 3}" y="${px(23.6)}" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m (opens in)</text>`);
   out.push(`    <line x1="${px(ga.x)}" y1="${px(20.2)}" x2="${px(ga.x)}" y2="${px(21.1)}" stroke="#1f7a3d" stroke-width="3"/>`);
   out.push(`    <circle cx="${px(ga.x)}" cy="${px(20.65)}" r="2.5" fill="#1f7a3d"/>`); // garage personnel door (labelled in the panel)
   // Vehicles to scale (nose north)

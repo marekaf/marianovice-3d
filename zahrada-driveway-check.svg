@@ -46,8 +46,8 @@
     <rect x="383.04" y="349.2" width="14.4" height="126.9" fill="#fbe9c7" fill-opacity="0.7"/>
     <rect x="482.04" y="349.2" width="15.3" height="126.9" fill="#fbe9c7" fill-opacity="0.7"/>
     <line x1="383.04" y1="383.22" x2="383.04" y2="408.78" stroke="#1f7a3d" stroke-width="3"/>
-    <path d="M 383.04,408.78 A 25.56 25.56 0 0 0 408.6,408.78" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>
-    <text x="386.04" y="424.8" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m</text>
+    <path d="M 383.04,383.22 A 25.56 25.56 0 0 0 357.48,408.78" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <text x="386.04" y="424.8" class="dim" fill="#1f7a3d" text-anchor="start">house door 1.4 m (opens in)</text>
     <line x1="497.34" y1="363.6" x2="497.34" y2="379.8" stroke="#1f7a3d" stroke-width="3"/>
     <circle cx="497.34" cy="371.7" r="2.5" fill="#1f7a3d"/>
     <g transform="translate(413.64,399.24)">
