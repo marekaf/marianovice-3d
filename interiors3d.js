@@ -74,12 +74,115 @@ const INTERIORS3D = (() => {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     target.add(mesh);
+    return mesh;
   }
 
   // Axis-aligned box from min/max corners
   function mkBox(THREE, target, x0, y0, z0, x1, y1, z1, mat) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat);
-    put(target, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    return put(target, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+  }
+
+  // Shared furniture materials — one set per page load
+  let FURN_MATS = null;
+  function furnMats(THREE) {
+    if (!FURN_MATS) FURN_MATS = {
+      wood: new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 0.7 }),
+      carc: new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 }),
+      front: new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: 0.5 }),
+      appliance: new THREE.MeshStandardMaterial({ color: 0x565b60, roughness: 0.4, metalness: 0.3 }),
+      ceramic: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 }),
+      glass: new THREE.MeshStandardMaterial({ color: 0xcfe8ef, transparent: true, opacity: 0.3, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false }),
+      mirror: new THREE.MeshStandardMaterial({ color: 0xcfdde6, metalness: 0.3, roughness: 0.08 }),  // high metalness reads black without an env map
+      plinth: new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.8 }),
+      mattress: new THREE.MeshStandardMaterial({ color: 0xeeeae0, roughness: 0.9 }),
+    };
+    return FURN_MATS;
+  }
+
+  // Built-in joinery + fixtures from room data — this code carries no dimensions of its own.
+  // Entry contract: { kind, room, x0,z0,z1,x1 (plan footprint, local m), y0? (bottom, default
+  // 0 — >0 = wall-hung), h (height from y0), label? }. Kinds:
+  //   cab   — carcass + fronts: front:'N'|'S'|'E'|'W' or array (island), modules:[w,…] split
+  //           widths along the run axis (+x for N/S fronts, +z for E/W), tags:['f'|'d'|'a'|'o']
+  //           per module (filler / door front / appliance front / open niche), plinth? (dark,
+  //           inset 50 mm on front faces, counted inside h), worktop? = thickness with 20 mm
+  //           front overhang, or {th,x0,z0,x1,z1} override rect
+  //   slab  — plain box, mat names a furnMats entry
+  //   glass — transparent panel (shower screen), no shadow
+  //   fix   — sanitary piece, type:'bath'|'wc'|'basin': ceramic box, bath/wc get an inset top
+  //   bed   — wood frame + mattress inset 50 mm
+  // Fronts are 18 mm boxes 12 mm proud of the carcass face, 5 mm inset per edge — the gap IS
+  // the module split; no handle/reveal detail at this LOD.
+  function buildFurniture(THREE, list, opts = {}) {
+    const floorY = opts.floorY ?? 0;
+    const M = furnMats(THREE);
+    const group = new THREE.Group();
+    const add = (x0, y0, z0, x1, y1, z1, mat) => mkBox(THREE, group, x0, y0, z0, x1, y1, z1, mat);
+    const FT = 0.018, PROUD = 0.012, INSET = 0.005;
+    for (const f of list) {
+      const y0 = floorY + (f.y0 ?? 0);
+      const y1 = y0 + f.h;
+      if (f.kind === 'cab') {
+        const fronts = Array.isArray(f.front) ? f.front : (f.front ? [f.front] : []);
+        const pl = f.plinth || 0;
+        if (pl > 0) {
+          let px0 = f.x0, pz0 = f.z0, px1 = f.x1, pz1 = f.z1;
+          if (fronts.includes('N')) pz0 += 0.05;
+          if (fronts.includes('S')) pz1 -= 0.05;
+          if (fronts.includes('W')) px0 += 0.05;
+          if (fronts.includes('E')) px1 -= 0.05;
+          add(px0, y0, pz0, px1, y0 + pl, pz1, M.plinth);
+        }
+        add(f.x0, y0 + pl, f.z0, f.x1, y1, f.z1, M.carc);
+        const alongX = fronts.length === 0 || fronts[0] === 'N' || fronts[0] === 'S';
+        const mods = f.modules || [alongX ? f.x1 - f.x0 : f.z1 - f.z0];
+        const tags = f.tags || mods.map(() => 'd');
+        const fy0 = y0 + pl + INSET, fy1 = y1 - INSET;
+        for (const face of fronts) {
+          let pos = alongX ? f.x0 : f.z0;
+          for (let i = 0; i < mods.length; i++) {
+            const m0 = pos + INSET, m1 = pos + mods[i] - INSET;
+            pos += mods[i];
+            const tag = tags[i];
+            if (tag === 'f' || tag === 'o') continue;
+            const mat = tag === 'a' ? M.appliance : M.front;
+            if (face === 'N') add(m0, fy0, f.z0 - PROUD, m1, fy1, f.z0 + (FT - PROUD), mat);
+            else if (face === 'S') add(m0, fy0, f.z1 - (FT - PROUD), m1, fy1, f.z1 + PROUD, mat);
+            else if (face === 'W') add(f.x0 - PROUD, fy0, m0, f.x0 + (FT - PROUD), fy1, m1, mat);
+            else add(f.x1 - (FT - PROUD), fy0, m0, f.x1 + PROUD, fy1, m1, mat);
+          }
+        }
+        if (f.worktop) {
+          if (typeof f.worktop === 'object') {
+            add(f.worktop.x0, y1, f.worktop.z0, f.worktop.x1, y1 + f.worktop.th, f.worktop.z1, M.wood);
+          } else {
+            let wx0 = f.x0, wz0 = f.z0, wx1 = f.x1, wz1 = f.z1;
+            if (fronts.includes('N')) wz0 -= 0.02;
+            if (fronts.includes('S')) wz1 += 0.02;
+            if (fronts.includes('W')) wx0 -= 0.02;
+            if (fronts.includes('E')) wx1 += 0.02;
+            add(wx0, y1, wz0, wx1, y1 + f.worktop, wz1, M.wood);
+          }
+        }
+      } else if (f.kind === 'slab') {
+        add(f.x0, y0, f.z0, f.x1, y1, f.z1, M[f.mat] || M.wood);
+      } else if (f.kind === 'glass') {
+        const m = add(f.x0, y0, f.z0, f.x1, y1, f.z1, M.glass);
+        m.renderOrder = 2;
+        m.castShadow = false;
+      } else if (f.kind === 'fix') {
+        add(f.x0, y0, f.z0, f.x1, y1, f.z1, M.ceramic);
+        if (f.type === 'bath' || f.type === 'wc') {
+          const i = Math.min(0.09, (f.x1 - f.x0) / 4, (f.z1 - f.z0) / 4);
+          add(f.x0 + i, y1 - 0.02, f.z0 + i, f.x1 - i, y1 + 0.005, f.z1 - i, M.appliance);
+        }
+      } else if (f.kind === 'bed') {
+        add(f.x0, y0, f.z0, f.x1, y1 - 0.12, f.z1, M.wood);
+        add(f.x0 + 0.05, y1 - 0.14, f.z0 + 0.05, f.x1 - 0.05, y1, f.z1 - 0.05, M.mattress);
+      }
+    }
+    return group;
   }
 
   // Sloped plane (pult roof / ceiling): y varies linearly from lowY at xMin to highY at xMax
@@ -498,16 +601,20 @@ const INTERIORS3D = (() => {
       }
     }
 
+    // Joinery parented to root, never to a facade group — elevation look-through keeps it visible
+    const furniture = data.furniture ? buildFurniture(THREE, data.furniture, { floorY }) : null;
+    if (furniture) root.add(furniture);
+
     root.position.set(data.originPlot.x, 0, data.originPlot.z);
     const xs = data.outline.map(p => p[0]), zs = data.outline.map(p => p[1]);
     root.add(wallIds);
     return {
-      root, walls, int: intGroup, floor, ceiling, labels, wallIds,
+      root, walls, int: intGroup, floor, ceiling, labels, wallIds, furniture,
       dims: { w: Math.max(...xs), d: Math.max(...zs), floorY, clearH: data.clearH ?? 2.52, originPlot: data.originPlot },
     };
   }
 
-  return { buildGarage, buildVehicle, garageVehicles, buildHouse };
+  return { buildGarage, buildVehicle, garageVehicles, buildHouse, buildFurniture };
 })();
 
 if (typeof module !== "undefined") module.exports = { INTERIORS3D };
