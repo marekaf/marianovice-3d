@@ -295,13 +295,13 @@ const INTERIORS3D = (() => {
         : mkBox(target, ax, y0, az + s0, bx, y1, az + s1, wallMat);
       let cur = 0;
       for (const o of [...(w.openings || [])].sort((p, q) => p.at - q.at)) {
-        if (o.at > cur) seg(cur, o.at, floorY, floorY + H);
+        if (o.at > cur) seg(cur, o.at, floorY, floorY + wallH);
         const sill = o.sill || 0;
         if (sill > 0) seg(o.at, o.at + o.w, floorY, floorY + sill);
-        if (sill + o.h < H) seg(o.at, o.at + o.w, floorY + sill + o.h, floorY + H);
+        if (sill + o.h < wallH) seg(o.at, o.at + o.w, floorY + sill + o.h, floorY + wallH);
         cur = o.at + o.w;
       }
-      if (cur < L) seg(cur, L, floorY, floorY + H);
+      if (cur < L) seg(cur, L, floorY, floorY + wallH);
     }
     // face N/S/E/W = true facade plane (hidden by the elevation that looks through it);
     // any other tag (e.g. 'court' for atrium/notch returns) stays visible in every view
