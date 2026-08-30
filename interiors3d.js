@@ -276,6 +276,26 @@ const INTERIORS3D = (() => {
     const floor = new THREE.Group();
     const ceiling = new THREE.Group();
     const labels = new THREE.Group();
+    const wallIds = new THREE.Group();
+    wallIds.visible = false;
+    const wallIdSprite = (id, x, y, z) => {
+      const cv = document.createElement('canvas');
+      cv.width = 128; cv.height = 64;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = 'rgba(20,20,20,0.85)';
+      ctx.fillRect(0, 0, 128, 64);
+      ctx.fillStyle = '#ffd54a';
+      ctx.font = '700 40px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(id, 64, 34);
+      const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false });
+      const sp = new THREE.Sprite(mat);
+      sp.scale.set(0.55, 0.28, 1);
+      sp.position.set(x, y, z);
+      sp.renderOrder = 10;
+      wallIds.add(sp);
+    };
     for (const g of [walls.N, walls.S, walls.E, walls.W, intGroup, floor, ceiling, labels]) root.add(g);
 
     const mkBox = (target, x0, y0, z0, x1, y1, z1, mat) => {
@@ -288,6 +308,7 @@ const INTERIORS3D = (() => {
 
     function wallRect(target, w) {
       const [ax, az] = w.a, [bx, bz] = w.b;
+      if (w.id) wallIdSprite(w.id, (ax + bx) / 2, floorY + (w.h ?? (w.profile ? 1.2 : wallH)) + 0.18, (az + bz) / 2);
       // Gable/štít: a height profile along x, extruded through the wall thickness
       if (w.profile) {
         const shape = new THREE.Shape();
@@ -472,8 +493,9 @@ const INTERIORS3D = (() => {
 
     root.position.set(data.originPlot.x, 0, data.originPlot.z);
     const xs = data.outline.map(p => p[0]), zs = data.outline.map(p => p[1]);
+    root.add(wallIds);
     return {
-      root, walls, int: intGroup, floor, ceiling, labels,
+      root, walls, int: intGroup, floor, ceiling, labels, wallIds,
       dims: { w: Math.max(...xs), d: Math.max(...zs), floorY, clearH: data.clearH ?? 2.52, originPlot: data.originPlot },
     };
   }

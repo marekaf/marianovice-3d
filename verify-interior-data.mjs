@@ -14,6 +14,7 @@ const note = (sev, msg) => problems.push({ sev, msg });
 
 const allWalls = [...data.extWalls, ...data.intWalls];
 const wallRect = w => ({ x0: w.a[0], z0: w.a[1], x1: w.b[0], z1: w.b[1] });
+const wid = w => w.id ? `[${w.id}] ` : '';
 const axisOf = w => (w.b[0] - w.a[0]) >= (w.b[1] - w.a[1]) ? 'x' : 'z';
 const lenOf = w => axisOf(w) === 'x' ? w.b[0] - w.a[0] : w.b[1] - w.a[1];
 
@@ -33,7 +34,7 @@ for (let i = 0; i < allWalls.length; i++) for (let j = i + 1; j < allWalls.lengt
   const A = wallRect(allWalls[i]), B = wallRect(allWalls[j]);
   const ox = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0);
   const oz = Math.min(A.z1, B.z1) - Math.max(A.z0, B.z0);
-  if (ox > TOL && oz > TOL) note('ERR', `walls overlap ${ox.toFixed(2)}×${oz.toFixed(2)} m at (${Math.max(A.x0, B.x0).toFixed(2)}, ${Math.max(A.z0, B.z0).toFixed(2)})`);
+  if (ox > TOL && oz > TOL) note('ERR', `${wid(allWalls[i])}${wid(allWalls[j])}walls overlap ${ox.toFixed(2)}×${oz.toFixed(2)} m at (${Math.max(A.x0, B.x0).toFixed(2)}, ${Math.max(A.z0, B.z0).toFixed(2)})`);
 }
 
 // 1c. dangling ends: each wall end must touch another wall, the outline edge, or a block
@@ -59,7 +60,7 @@ for (let i = 0; i < allWalls.length; i++) for (let j = i + 1; j < allWalls.lengt
           const q = wallRect(o);
           return Math.min(ex1, q.x1) - Math.max(ex0, q.x0) >= -TOL && Math.min(ez1, q.z1) - Math.max(ez0, q.z0) >= -TOL;
         });
-      if (!touched) note('ERR', `wall end mid-air at (${((ex0 + ex1) / 2).toFixed(2)}, ${((ez0 + ez1) / 2).toFixed(2)})`);
+      if (!touched) note('ERR', `${wid(w)}wall end mid-air at (${((ex0 + ex1) / 2).toFixed(2)}, ${((ez0 + ez1) / 2).toFixed(2)})`);
     }
   }
 }
@@ -116,7 +117,7 @@ if (data.stairs) {
         const q = wallRect(w2);
         const ox = Math.min(zone.x1, q.x1) - Math.max(zone.x0, q.x0);
         const oz = Math.min(zone.z1, q.z1) - Math.max(zone.z0, q.z0);
-        if (ox > 0.05 && oz > 0.05) note('ERR', `door at (${from.toFixed(2)}, ${(ax === 'x' ? r.z0 : r.x0).toFixed(2)}) blocked by a wall/mass at (${Math.max(zone.x0, q.x0).toFixed(2)}, ${Math.max(zone.z0, q.z0).toFixed(2)})`);
+        if (ox > 0.05 && oz > 0.05) note('ERR', `${wid(w)}door at (${from.toFixed(2)}, ${(ax === 'x' ? r.z0 : r.x0).toFixed(2)}) blocked by ${wid(w2) || 'a wall/mass '}at (${Math.max(zone.x0, q.x0).toFixed(2)}, ${Math.max(zone.z0, q.z0).toFixed(2)})`);
       }
     }
     const L = lenOf(w);
