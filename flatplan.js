@@ -22,9 +22,9 @@ const CAT = {
 // The flat areas, in schedule order. `level` (internal height) pins an explicit finished level;
 // otherwise the pad is cut to its lowest natural corner. `ids` groups several footprints as one row.
 const ZONES = [
-  { id: "pergola",      label: "Pergola + grill",   cat: "pad" },
-  { id: "sauna",        label: "Sauna",             cat: "pad", level: 2.28 }, // sauna + hot-tub share
-  { id: "saunaShelter", label: "Hot-tub shelter",   cat: "pad", level: 2.28 }, // one flat platform
+  { id: "pergola",      label: "Pergola + grill",   cat: "pad",  level: 2.2 },
+  { id: "sauna",        label: "Sauna",             cat: "pad", level: 3.5 }, // sauna + hot-tub share
+  { id: "saunaShelter", label: "Hot-tub shelter",   cat: "pad", level: 3.5 }, // one flat platform on the NW high ground
   { id: "greenhouse",   label: "Greenhouse",        cat: "pad" },
   { id: "carport",      label: "Carport slab",      cat: "apron", level: 1.965 },
   { id: "garage",       label: "Garage slab/apron", cat: "apron", level: 1.965 },
@@ -32,7 +32,7 @@ const ZONES = [
   { id: "westTerrace",  label: "Terrace W",         cat: "deck",  level: 2.515 },
   { id: "driveway",     label: "Driveway",          cat: "fall" },
   { id: "firePit",      label: "Fire-pit seating",  cat: "soft" },
-  { id: "raisedBedsPad", label: "Raised-beds pad",  cat: "soft", level: 2.876 },
+  { id: "raisedBedsPad", label: "Raised-beds pad",  cat: "soft", level: 3.5 },
   { id: "compost",      label: "Compost",           cat: "soft" },
   { id: "binStore",     label: "Bin store",         cat: "pad" },
   { id: "toolStore",    label: "Tool store",        cat: "pad" },
