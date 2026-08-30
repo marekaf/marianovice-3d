@@ -327,8 +327,8 @@ const INTERIORS3D = (() => {
     // flush with the wall tops; else fall back to one slab per non-open room
     const cH = data.clearH ?? 2.52;
     if (data.lid) {
-      // One plate over the outline minus the holes, built as axis-aligned boxes via grid
-      // decomposition — no shape triangulation to fail silently on the holes
+      // One plate over the outline minus the holes — a single mesh with faces only at real
+      // boundaries (top, bottom, outline + hole rims). No internal seams, nothing to z-fight.
       const holes = data.lid.holes || [];
       const inOutline = (x, z) => {
         let inside = false;
@@ -341,22 +341,57 @@ const INTERIORS3D = (() => {
       };
       const xs = [...new Set([...data.outline.map(p => p[0]), ...holes.flatMap(h => [h.x0, h.x1])])].sort((a, b) => a - b);
       const zs = [...new Set([...data.outline.map(p => p[1]), ...holes.flatMap(h => [h.z0, h.z1])])].sort((a, b) => a - b);
-      for (let zi = 0; zi < zs.length - 1; zi++) {
-        let runStart = null;
-        for (let xi = 0; xi <= xs.length - 1; xi++) {
-          const last = xi === xs.length - 1;
-          let solid = false;
-          if (!last) {
-            const cx = (xs[xi] + xs[xi + 1]) / 2, cz = (zs[zi] + zs[zi + 1]) / 2;
-            solid = inOutline(cx, cz) && !holes.some(h => cx > h.x0 && cx < h.x1 && cz > h.z0 && cz < h.z1);
-          }
-          if (solid && runStart === null) runStart = xs[xi];
-          if (!solid && runStart !== null) {
-            mkBox(ceiling, runStart, floorY + cH, zs[zi], xs[xi], floorY + cH + 0.2, zs[zi + 1], ceilMat);
-            runStart = null;
-          }
-        }
+      const solidAt = (xi, zi) => {
+        if (xi < 0 || zi < 0 || xi >= xs.length - 1 || zi >= zs.length - 1) return false;
+        const cx = (xs[xi] + xs[xi + 1]) / 2, cz = (zs[zi] + zs[zi + 1]) / 2;
+        return inOutline(cx, cz) && !holes.some(h => cx > h.x0 && cx < h.x1 && cz > h.z0 && cz < h.z1);
+      };
+      const y0 = floorY + cH, y1 = floorY + cH + 0.2;
+      const pos = [], nrm = [], idx = [];
+      const quad = (pts, n) => {
+        const i = pos.length / 3;
+        for (const p of pts) pos.push(...p);
+        for (let k = 0; k < 4; k++) nrm.push(...n);
+        idx.push(i, i + 1, i + 2, i, i + 2, i + 3);
+      };
+      for (let zi = 0; zi < zs.length - 1; zi++) for (let xi = 0; xi < xs.length - 1; xi++) {
+        if (!solidAt(xi, zi)) continue;
+        const x0 = xs[xi], x1 = xs[xi + 1], z0 = zs[zi], z1 = zs[zi + 1];
+        quad([[x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0]], [0, 1, 0]);
+        quad([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], [0, -1, 0]);
+        if (!solidAt(xi, zi - 1)) quad([[x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [x1, y0, z0]], [0, 0, -1]);
+        if (!solidAt(xi, zi + 1)) quad([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], [0, 0, 1]);
+        if (!solidAt(xi - 1, zi)) quad([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], [-1, 0, 0]);
+        if (!solidAt(xi + 1, zi)) quad([[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], [1, 0, 0]);
       }
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      geom.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+      geom.setIndex(idx);
+      const m = new THREE.Mesh(geom, ceilMat);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      ceiling.add(m);
+      if (data.hatch) {
+        const h = data.hatch;
+        const lidMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });
+        mkBox(ceiling, h.x0, floorY + cH - 0.02, h.z0, h.x1, floorY + cH + 0.02, h.z1, lidMat);
+      }
+    }
+    // Fireplace — Hoxter insert in a masonry casing with the chimney continuing up through
+    // the cathedral; firebox glass on the north face toward the living room
+    if (data.fireplace) {
+      const f = data.fireplace;
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdedad2, roughness: 0.85 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(f.x1 - f.x0, 4.6, f.z1 - f.z0), bodyMat);
+      body.position.set((f.x0 + f.x1) / 2, floorY + 2.3, (f.z0 + f.z1) / 2);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      intGroup.add(body);
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.55, 0.03),
+        new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.15, metalness: 0.4 }));
+      glass.position.set((f.x0 + f.x1) / 2, floorY + 0.72, f.z0 - 0.005);
+      intGroup.add(glass);
     }
     if (data.ceilings) {
       for (const c of data.ceilings) mkBox(ceiling, c.x0, floorY + cH, c.z0, c.x1, floorY + H - 0.02, c.z1, ceilMat);
