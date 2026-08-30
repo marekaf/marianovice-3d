@@ -57,6 +57,7 @@
   <button data-view="cut3d">Cutaway 3D</button>
   <label id="rowGate"><input type="checkbox" id="toggleGate"> Gate open</label>
   <label id="rowVehicles"><input type="checkbox" id="toggleVehicles" checked> Vehicles</label>
+  <label><input type="checkbox" id="toggleCut"> Cut open S + E walls</label>
   <label><input type="checkbox" id="toggleCeiling" checked> Ceiling</label>
   <label id="rowLabels" style="display:none"><input type="checkbox" id="toggleLabels" checked> Room labels</label>
   <button class="export" id="exportBtn">⬇ Export PNG</button>
@@ -109,12 +110,12 @@ controls.enableDamping = false;
 // Per-building view sets: camera placement, what to hide (the wall you look through), fit extents
 function mkViews(cx, cz, midY, w, d, wallH, label) {
   return {
-    plan:  { label: `${label} — FLOOR PLAN (north up)`, pos: [cx, 60, cz], up: [0, 0, -1], target: [cx, 0, cz], hide: ['ceiling'], fitW: w + 1.6, fitH: d + 1.6, rotate: false },
-    north: { label: `${label} — NORTH WALL`, pos: [cx, midY, cz + 60], up: [0, 1, 0], target: [cx, midY, cz], hide: ['S', 'ceiling'], fitW: w + 1.2, fitH: wallH, rotate: false },
-    south: { label: `${label} — SOUTH WALL`, pos: [cx, midY, cz - 60], up: [0, 1, 0], target: [cx, midY, cz], hide: ['N', 'ceiling'], fitW: w + 1.2, fitH: wallH, rotate: false },
-    east:  { label: `${label} — EAST WALL`, pos: [cx - 60, midY, cz], up: [0, 1, 0], target: [cx, midY, cz], hide: ['W', 'ceiling'], fitW: d + 1.2, fitH: wallH, rotate: false },
-    west:  { label: `${label} — WEST WALL`, pos: [cx + 60, midY, cz], up: [0, 1, 0], target: [cx, midY, cz], hide: ['E', 'ceiling'], fitW: d + 1.2, fitH: wallH, rotate: false },
-    cut3d: { label: `${label} — CUTAWAY 3D (S + E walls off)`, pos: [cx + Math.max(w, d), Math.max(w, d) * 0.9, cz + Math.max(w, d)], up: [0, 1, 0], target: [cx, 0.8, cz], hide: ['S', 'E', 'ceiling'], fitW: w + d * 0.6, fitH: (w + d) * 0.42, rotate: true },
+    plan:  { label: `${label} — FLOOR PLAN (north up)`, pos: [cx, 60, cz], up: [0, 0, -1], target: [cx, 0, cz], lookThrough: [], cut: false, ceil: false, fitW: w + 1.6, fitH: d + 1.6, rotate: false },
+    north: { label: `${label} — NORTH WALL`, pos: [cx, midY, cz + 60], up: [0, 1, 0], target: [cx, midY, cz], lookThrough: ['S'], cut: false, ceil: false, fitW: w + 1.2, fitH: wallH, rotate: false },
+    south: { label: `${label} — SOUTH WALL`, pos: [cx, midY, cz - 60], up: [0, 1, 0], target: [cx, midY, cz], lookThrough: ['N'], cut: false, ceil: false, fitW: w + 1.2, fitH: wallH, rotate: false },
+    east:  { label: `${label} — EAST WALL`, pos: [cx - 60, midY, cz], up: [0, 1, 0], target: [cx, midY, cz], lookThrough: ['W'], cut: false, ceil: false, fitW: d + 1.2, fitH: wallH, rotate: false },
+    west:  { label: `${label} — WEST WALL`, pos: [cx + 60, midY, cz], up: [0, 1, 0], target: [cx, midY, cz], lookThrough: ['E'], cut: false, ceil: false, fitW: d + 1.2, fitH: wallH, rotate: false },
+    cut3d: { label: `${label} — CUTAWAY 3D`, pos: [cx + Math.max(w, d), Math.max(w, d) * 0.9, cz + Math.max(w, d)], up: [0, 1, 0], target: [cx, 0.8, cz], lookThrough: [], cut: true, ceil: false, fitW: w + d * 0.6, fitH: (w + d) * 0.42, rotate: true },
   };
 }
 const BUILDINGS = {
@@ -137,10 +138,11 @@ let curB = 'garage', curV = 'plan';
 
 function applyVisibility() {
   const B = BUILDINGS[curB];
-  const hidden = new Set(B.views[curV].hide);
+  const hidden = new Set(B.views[curV].lookThrough);
+  if (document.getElementById('toggleCut').checked) { hidden.add('S'); hidden.add('E'); }
   for (const b in BUILDINGS) BUILDINGS[b].root.visible = (b === curB);
   for (const k of ['N', 'S', 'E', 'W']) B.walls[k].visible = !hidden.has(k);
-  B.ceiling.visible = document.getElementById('toggleCeiling').checked && !hidden.has('ceiling');
+  B.ceiling.visible = document.getElementById('toggleCeiling').checked;
   if (curB === 'garage') {
     const gateOpen = document.getElementById('toggleGate').checked;
     gar.gateClosed.visible = !hidden.has('S') && !gateOpen;
@@ -171,6 +173,8 @@ function setView(name) {
   camera.zoom = 1;
   controls.target.set(...v.target);
   controls.enableRotate = v.rotate;
+  document.getElementById('toggleCut').checked = v.cut;
+  document.getElementById('toggleCeiling').checked = v.ceil;
   fitFrustum();
   controls.update();
   applyVisibility();
@@ -195,7 +199,7 @@ function updateScalebar() {
 
 document.querySelectorAll('#views button[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 document.querySelectorAll('#views button[data-building]').forEach(b => b.addEventListener('click', () => setBuilding(b.dataset.building)));
-for (const id of ['toggleGate', 'toggleVehicles', 'toggleCeiling', 'toggleLabels']) {
+for (const id of ['toggleGate', 'toggleVehicles', 'toggleCut', 'toggleCeiling', 'toggleLabels']) {
   document.getElementById(id).addEventListener('change', applyVisibility);
 }
 controls.addEventListener('change', updateScalebar);
