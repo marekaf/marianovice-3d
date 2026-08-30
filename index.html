@@ -306,7 +306,7 @@ const basePlaneHeight = (x, z) => TERRAIN.basePlaneHeight(x, z);
 // smoothstep bank rising to natural grade; min() leaves downhill areas untouched
 const CUT_BLEND = 1.8;
 const cutRects = [
-  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 28.5, level: 2.46, blend: 2.2 },  // west sidewalk; runs past the deck end and wraps the SW corner so the high ground banks up out in the garden, not against the deck
+  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 26.5, level: 2.46, blend: 2.2 },  // west sidewalk, ending at the deck/SW corner. Do NOT push z1 further south: holding the grade flat past the deck makes the SW garden bank up ~1 m right at the south fence, and the fence then rides over that bump. Ending here lets the garden rise gently inland instead.
   { x0: 10.48, z0: 15.93, x1: 14.93, z1: 19.18, level: 2.46 }, // atrium
   { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
   { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
@@ -373,7 +373,10 @@ function gradedHeight(x, z) {
   // carport pad's blend can't re-raise the SE corner over the gravel. First rect is the 1 m band + its lawn
   // run-out; second ties the SE corner across to the drive. Cut only (min against the post-pad height).
   for (const sp of [
-    { x0: 10.48, z0: 25.5, x1: 21.28, z1: 28.5, blend: 2.5, level: 1.9 },
+    // Narrow blend so the cut does NOT bleed west into the W terrace (x<10.48) — a wide blend there dug a
+    // dip at the SW corner and the natural SW garden then read as a bump next to it. z1 keeps a 1 m flat
+    // run-out south of the gravel so grass still can't climb the band.
+    { x0: 10.48, z0: 25.5, x1: 21.28, z1: 28.5, blend: 1.2, level: 1.9 },
     { x0: 16.5, z0: 26.43, x1: 22.2, z1: 29.5, blend: 1.5, level: 1.9 },
   ]) {
     const d = cutRectDist(sp, x, z);
