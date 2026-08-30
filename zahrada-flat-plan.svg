@@ -43,9 +43,9 @@
       <rect x="497.34" y="348.84" width="117" height="126.9" />
       <rect x="510.84" y="472.68" width="90" height="5.94" />
       <rect x="495" y="380.34" width="4.68" height="25.65" />
-      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" />
-      <line x1="788.94" y1="502.02" x2="781.92" y2="583.02" />
-      <rect x="759.6" y="601.2" width="14.76" height="25.38" />
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 671.94,486.36 776.52,502.02 767.34,583.02 383.04,534.96" />
+      <line x1="776.52" y1="502.02" x2="767.34" y2="583.02" />
+      <rect x="720" y="583.2" width="14.76" height="25.38" />
       <rect x="720" y="399.6" width="45" height="45" />
       <ellipse cx="549" cy="277.2" rx="79.2" ry="61.2" />
       <ellipse cx="540" cy="270" rx="50.4" ry="36" />
@@ -187,13 +187,13 @@
       <rect x="370.44" y="208.44" width="54" height="140.76" fill="#e6cfa6" fill-opacity="0.75" stroke="#b0801f" stroke-width="1.6" />
       <rect x="170.64" y="129.24" width="18" height="346.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
       <rect x="188.64" y="286.74" width="77.4" height="58.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
-      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 671.94,486.36 788.94,502.02 781.92,583.02 383.04,534.96" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1.6" />
+      <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 671.94,486.36 776.52,502.02 767.34,583.02 383.04,534.96" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="31.5" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="9" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <circle cx="675" cy="118.8" r="5.76" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <rect x="12.6" y="174.6" width="55.8" height="100.8" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <rect x="28.8" y="509.4" width="36" height="18" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
-      <rect x="759.6" y="601.2" width="14.76" height="25.38" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="720" y="583.2" width="14.76" height="25.38" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
       <rect x="4.5" y="3.6" width="34.29" height="19.62" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
     </g>
     <circle cx="518.04" cy="64.98" r="8" fill="#e08a1e"/>
@@ -220,9 +220,9 @@
     <circle cx="179.64" cy="302.49" r="8" fill="#5a9a3c"/>
     <text x="179.64" y="305.69" class="tag" fill="#fff">8</text>
     <text x="179.64" y="320.49" class="zlvl">+0.05</text>
-    <circle cx="585.99" cy="466.11" r="8" fill="#2f6fae"/>
-    <text x="585.99" y="469.31" class="tag" fill="#fff">9</text>
-    <text x="585.99" y="484.11" class="zlvl">fall</text>
+    <circle cx="579.78" cy="466.11" r="8" fill="#2f6fae"/>
+    <text x="579.78" y="469.31" class="tag" fill="#fff">9</text>
+    <text x="579.78" y="484.11" class="zlvl">fall</text>
     <circle cx="675" cy="118.8" r="8" fill="#bf9000"/>
     <text x="675" y="122" class="tag" fill="#fff">10</text>
     <text x="675" y="136.8" class="zlvl">−1.10</text>
@@ -232,9 +232,9 @@
     <circle cx="46.8" cy="518.4" r="8" fill="#bf9000"/>
     <text x="46.8" y="521.6" class="tag" fill="#fff">12</text>
     <text x="46.8" y="536.4" class="zlvl">+0.25</text>
-    <circle cx="766.98" cy="613.89" r="8" fill="#e08a1e"/>
-    <text x="766.98" y="617.09" class="tag" fill="#fff">13</text>
-    <text x="766.98" y="631.89" class="zlvl">−2.46</text>
+    <circle cx="727.38" cy="595.89" r="8" fill="#e08a1e"/>
+    <text x="727.38" y="599.09" class="tag" fill="#fff">13</text>
+    <text x="727.38" y="613.89" class="zlvl">−2.36</text>
     <circle cx="21.65" cy="13.41" r="8" fill="#e08a1e"/>
     <text x="21.65" y="16.61" class="tag" fill="#fff">14</text>
     <text x="21.65" y="31.41" class="zlvl">+1.61</text>
@@ -270,11 +270,11 @@
     <text x="0" y="201" class="td">6  Garage slab/apron</text><text x="118" y="201" class="td" text-anchor="end">−0.50</text><text x="158" y="201" class="td" text-anchor="end">396.50</text><text x="196" y="201" class="td" text-anchor="end">0.00/1.09f</text>
     <text x="0" y="213" class="td">7  Terrace E (fill)</text><text x="118" y="213" class="td" text-anchor="end">−0.02</text><text x="158" y="213" class="td" text-anchor="end">396.98</text><text x="196" y="213" class="td" text-anchor="end">0.57f</text>
     <text x="0" y="225" class="td">8  Terrace W</text><text x="118" y="225" class="td" text-anchor="end">+0.05</text><text x="158" y="225" class="td" text-anchor="end">397.05</text><text x="196" y="225" class="td" text-anchor="end">posts</text>
-    <text x="0" y="237" class="td">9  Driveway</text><text x="118" y="237" class="td" text-anchor="end">—</text><text x="158" y="237" class="td" text-anchor="end">—</text><text x="196" y="237" class="td" text-anchor="end">Δ2.02</text>
+    <text x="0" y="237" class="td">9  Driveway</text><text x="118" y="237" class="td" text-anchor="end">—</text><text x="158" y="237" class="td" text-anchor="end">—</text><text x="196" y="237" class="td" text-anchor="end">Δ1.97</text>
     <text x="0" y="249" class="td">10  Fire-pit seating</text><text x="118" y="249" class="td" text-anchor="end">−1.10</text><text x="158" y="249" class="td" text-anchor="end">395.90</text><text x="196" y="249" class="td" text-anchor="end">0.38</text>
     <text x="0" y="261" class="td">11  Raised-beds pad</text><text x="118" y="261" class="td" text-anchor="end">+1.04</text><text x="158" y="261" class="td" text-anchor="end">398.04</text><text x="196" y="261" class="td" text-anchor="end">0.29</text>
     <text x="0" y="273" class="td">12  Compost</text><text x="118" y="273" class="td" text-anchor="end">+0.25</text><text x="158" y="273" class="td" text-anchor="end">397.25</text><text x="196" y="273" class="td" text-anchor="end">0.17</text>
-    <text x="0" y="285" class="td">13  Bin store</text><text x="118" y="285" class="td" text-anchor="end">−2.46</text><text x="158" y="285" class="td" text-anchor="end">394.54</text><text x="196" y="285" class="td" text-anchor="end">0.04</text>
+    <text x="0" y="285" class="td">13  Bin store</text><text x="118" y="285" class="td" text-anchor="end">−2.36</text><text x="158" y="285" class="td" text-anchor="end">394.64</text><text x="196" y="285" class="td" text-anchor="end">0.12</text>
     <text x="0" y="297" class="td">14  Tool store</text><text x="118" y="297" class="td" text-anchor="end">+1.61</text><text x="158" y="297" class="td" text-anchor="end">398.61</text><text x="196" y="297" class="td" text-anchor="end">0.17</text>
     <text x="0" y="317" class="note">±0.000 = house FF = 397.00 Bpv.</text>
     <text x="0" y="328" class="note">Pads cut to lowest corner (no fill</text>

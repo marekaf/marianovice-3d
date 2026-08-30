@@ -107,7 +107,7 @@ const GARDEN = {
       id: "driveway",
       name: "Driveway 4.5 m × ~22 m",
       parts: [
-        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [37.33, 27.02], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
+        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [37.33, 27.02], [43.14, 27.89], [42.63, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
         { kind: "text", x: 30.83, y: 28.33, text: "driveway", cls: "lbl-sm" },
         { kind: "text", x: 30.83, y: 29.17, text: "4.5 m × ~22 m", cls: "dim" }
       ]
@@ -116,9 +116,9 @@ const GARDEN = {
       id: "gate",
       name: "Gate ~4.5 m",
       parts: [
-        { kind: "line", x1: 43.83, y1: 27.89, x2: 43.44, y2: 32.39, stroke: "#3a3a3a", sw: 6, cap: "round" },
-        { kind: "text", x: 44.44, y: 30, text: "GATE", cls: "lbl-sm", weight: 700, anchor: "start" },
-        { kind: "text", x: 44.44, y: 30.78, text: "4.0 m clear", cls: "dim", anchor: "start" }
+        { kind: "line", x1: 43.14, y1: 27.89, x2: 42.63, y2: 32.39, stroke: "#3a3a3a", sw: 6, cap: "round" },
+        { kind: "text", x: 43.7, y: 30, text: "GATE", cls: "lbl-sm", weight: 700, anchor: "start" },
+        { kind: "text", x: 43.7, y: 30.78, text: "4.0 m clear", cls: "dim", anchor: "start" }
       ]
     },
     {
@@ -126,8 +126,8 @@ const GARDEN = {
       name: "Bin store (plastic box) 1.41 × 0.82 m",
       short: "Bin store",
       parts: [
-        { kind: "rect", x: 42.2, y: 33.4, w: 0.82, d: 1.41, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
-        { kind: "text", x: 41.9, y: 34.2, text: "bins", cls: "lbl-sm", fill: "#333", anchor: "end" }
+        { kind: "rect", x: 40, y: 32.4, w: 0.82, d: 1.41, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
+        { kind: "text", x: 39.9, y: 33.3, text: "bins", cls: "lbl-sm", fill: "#333", anchor: "end" }
       ]
     },
     {
