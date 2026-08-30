@@ -186,7 +186,7 @@ function verify(data, name, dxfPath) {
   if (data.furniture) {
     const KINDS = { cab: 1, slab: 1, glass: 1, fix: 1, bed: 1 };
     const FIXT = { bath: 1, wc: 1, basin: 1 };
-    const MATS = { wood: 1, front: 1, carc: 1, appliance: 1, ceramic: 1, mirror: 1, plinth: 1, mattress: 1 };
+    const MATS = { wood: 1, front: 1, carc: 1, appliance: 1, ceramic: 1, mirror: 1, plinth: 1, mattress: 1, green: 1, stone: 1 };
     const TAGS = { f: 1, d: 1, a: 1, o: 1 };
     const fid = f => `[${f.label || `${f.kind}@${f.x0},${f.z0}`}] `;
     const topOf = f => (f.y0 ?? 0) + f.h + (typeof f.worktop === 'number' ? f.worktop : (f.worktop?.th ?? 0));
@@ -194,6 +194,8 @@ function verify(data, name, dxfPath) {
       if (!KINDS[f.kind]) note('ERR', `${fid(f)}unknown kind '${f.kind}'`);
       if (f.kind === 'fix' && !FIXT[f.type]) note('ERR', `${fid(f)}unknown fix type '${f.type}'`);
       if (f.kind === 'slab' && f.mat && !MATS[f.mat]) note('ERR', `${fid(f)}unknown mat '${f.mat}'`);
+      if (f.fmat && !MATS[f.fmat]) note('ERR', `${fid(f)}unknown fmat '${f.fmat}'`);
+      if (f.wmat && !MATS[f.wmat]) note('ERR', `${fid(f)}unknown wmat '${f.wmat}'`);
       if (!(f.x1 > f.x0) || !(f.z1 > f.z0) || !(f.h > 0)) note('ERR', `${fid(f)}degenerate box`);
       if (f.tags && f.modules && f.tags.length !== f.modules.length) note('ERR', `${fid(f)}tags/modules length mismatch`);
       if (f.tags && f.tags.some(t => !TAGS[t])) note('ERR', `${fid(f)}unknown front tag`);

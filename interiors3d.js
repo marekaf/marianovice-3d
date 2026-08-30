@@ -94,8 +94,10 @@ const INTERIORS3D = (() => {
       ceramic: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 }),
       glass: new THREE.MeshStandardMaterial({ color: 0xcfe8ef, transparent: true, opacity: 0.3, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false }),
       mirror: new THREE.MeshStandardMaterial({ color: 0xcfdde6, metalness: 0.3, roughness: 0.08 }),  // high metalness reads black without an env map
-      plinth: new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.8 }),
+      plinth: new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.8 }),
       mattress: new THREE.MeshStandardMaterial({ color: 0xeeeae0, roughness: 0.9 }),
+      green: new THREE.MeshStandardMaterial({ color: 0x7f8a7d, roughness: 0.55 }),
+      stone: new THREE.MeshStandardMaterial({ color: 0xdcd9d2, roughness: 0.35 }),
     };
     return FURN_MATS;
   }
@@ -107,7 +109,8 @@ const INTERIORS3D = (() => {
   //           widths along the run axis (+x for N/S fronts, +z for E/W), tags:['f'|'d'|'a'|'o']
   //           per module (filler / door front / appliance front / open niche), plinth? (dark,
   //           inset 50 mm on front faces, counted inside h), worktop? = thickness with 20 mm
-  //           front overhang, or {th,x0,z0,x1,z1} override rect
+  //           front overhang, or {th,x0,z0,x1,z1} override rect; fmat?/wmat? name a furnMats
+  //           entry for the 'd' fronts / the worktop (defaults: front / wood)
   //   slab  — plain box, mat names a furnMats entry
   //   glass — transparent panel (shower screen), no shadow
   //   fix   — sanitary piece, type:'bath'|'wc'|'basin': ceramic box, bath/wc get an inset top
@@ -146,7 +149,7 @@ const INTERIORS3D = (() => {
             pos += mods[i];
             const tag = tags[i];
             if (tag === 'f' || tag === 'o') continue;
-            const mat = tag === 'a' ? M.appliance : M.front;
+            const mat = tag === 'a' ? M.appliance : (M[f.fmat] || M.front);
             if (face === 'N') add(m0, fy0, f.z0 - PROUD, m1, fy1, f.z0 + (FT - PROUD), mat);
             else if (face === 'S') add(m0, fy0, f.z1 - (FT - PROUD), m1, fy1, f.z1 + PROUD, mat);
             else if (face === 'W') add(f.x0 - PROUD, fy0, m0, f.x0 + (FT - PROUD), fy1, m1, mat);
@@ -154,15 +157,16 @@ const INTERIORS3D = (() => {
           }
         }
         if (f.worktop) {
+          const wMat = M[f.wmat] || M.wood;
           if (typeof f.worktop === 'object') {
-            add(f.worktop.x0, y1, f.worktop.z0, f.worktop.x1, y1 + f.worktop.th, f.worktop.z1, M.wood);
+            add(f.worktop.x0, y1, f.worktop.z0, f.worktop.x1, y1 + f.worktop.th, f.worktop.z1, wMat);
           } else {
             let wx0 = f.x0, wz0 = f.z0, wx1 = f.x1, wz1 = f.z1;
             if (fronts.includes('N')) wz0 -= 0.02;
             if (fronts.includes('S')) wz1 += 0.02;
             if (fronts.includes('W')) wx0 -= 0.02;
             if (fronts.includes('E')) wx1 += 0.02;
-            add(wx0, y1, wz0, wx1, y1 + f.worktop, wz1, M.wood);
+            add(wx0, y1, wz0, wx1, y1 + f.worktop, wz1, wMat);
           }
         }
       } else if (f.kind === 'slab') {
