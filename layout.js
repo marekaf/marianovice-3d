@@ -39,9 +39,9 @@ const GARDEN = {
       id: "house",
       name: "House 10.8 × 19.25 m",
       fixed: true,
-      meta: { bbox: [10.48, 7.18, 21.28, 26.43], coreX: [14.78, 21.28], atrium: [10.48, 15.93, 14.78, 19.18], eNotch: [20.58, 11.58, 21.28, 22.53] },
+      meta: { bbox: [10.48, 7.18, 21.28, 26.43], coreX: [14.93, 21.28], atrium: [10.48, 15.93, 14.93, 19.18], eNotch: [20.58, 11.58, 21.28, 22.53] },
       parts: [
-        { kind: "polygon", points: [[10.48, 7.18], [21.28, 7.18], [21.28, 11.58], [20.58, 11.58], [20.58, 22.53], [21.28, 22.53], [21.28, 26.43], [10.48, 26.43], [10.48, 19.18], [14.78, 19.18], [14.78, 15.93], [10.48, 15.93]], fill: "#d4b896", opacity: 0.95, stroke: "#7a5e3e", sw: 2.5 },
+        { kind: "polygon", points: [[10.48, 7.18], [21.28, 7.18], [21.28, 11.58], [20.58, 11.58], [20.58, 22.53], [21.28, 22.53], [21.28, 26.43], [10.48, 26.43], [10.48, 19.18], [14.93, 19.18], [14.93, 15.93], [10.48, 15.93]], fill: "#d4b896", opacity: 0.95, stroke: "#7a5e3e", sw: 2.5 },
         { kind: "text", x: 18.03, y: 17.78, text: "HOUSE", cls: "lbl", size: 20, weight: 700 },
         { kind: "text", x: 18.03, y: 19.06, text: "10.8 × 19.25 m", cls: "lbl" }
       ]
@@ -52,7 +52,7 @@ const GARDEN = {
       short: "West terrace",
       parts: [
         { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 19.25, fill: "#a87d4a", opacity: 0.55, stroke: "#5a3e25", sw: 0.8 },
-        { kind: "rect", x: 10.48, y: 15.93, w: 4.3, d: 3.25, fill: "#a87d4a", opacity: 0.55, stroke: "#5a3e25", sw: 0.8 },
+        { kind: "rect", x: 10.48, y: 15.93, w: 4.45, d: 3.25, fill: "#a87d4a", opacity: 0.55, stroke: "#5a3e25", sw: 0.8 },
         { kind: "text", x: 12.61, y: 17.33, text: "west terrace", cls: "lbl-sm" },
         { kind: "text", x: 12.61, y: 18.11, text: "atrium + 1 m sidewalk", cls: "dim" }
       ]
