@@ -267,8 +267,9 @@ const INTERIORS3D = (() => {
     const floorMat = new THREE.MeshStandardMaterial({ color: 0xd7c9a8, roughness: 0.6 });
     const ceilMat = new THREE.MeshStandardMaterial({ color: 0xf4f2ee, roughness: 0.9, side: THREE.DoubleSide });
 
-    // Walls stop at the clear height — the lid (strop plate) rests ON them
-    const wallH = data.lid ? (data.clearH ?? 2.52) : H;
+    // Walls stop at the clear height — the lid (strop plate) rests ON them. They run 1 cm
+    // INTO the plate so no wall-top face is coplanar with the lid underside (z-fighting).
+    const wallH = data.lid ? (data.clearH ?? 2.52) + 0.01 : H;
     const root = new THREE.Group();
     const walls = { N: new THREE.Group(), S: new THREE.Group(), E: new THREE.Group(), W: new THREE.Group() };
     const intGroup = new THREE.Group();
@@ -326,27 +327,36 @@ const INTERIORS3D = (() => {
     // flush with the wall tops; else fall back to one slab per non-open room
     const cH = data.clearH ?? 2.52;
     if (data.lid) {
-      // One continuous plate over the whole outline, with punched holes
-      const shape = new THREE.Shape();
-      shape.moveTo(data.outline[0][0], -data.outline[0][1]);
-      for (let i = 1; i < data.outline.length; i++) shape.lineTo(data.outline[i][0], -data.outline[i][1]);
-      shape.closePath();
-      for (const hole of data.lid.holes || []) {
-        const hp = new THREE.Path();
-        hp.moveTo(hole.x0, -hole.z0);
-        hp.lineTo(hole.x0, -hole.z1);
-        hp.lineTo(hole.x1, -hole.z1);
-        hp.lineTo(hole.x1, -hole.z0);
-        hp.closePath();
-        shape.holes.push(hp);
+      // One plate over the outline minus the holes, built as axis-aligned boxes via grid
+      // decomposition — no shape triangulation to fail silently on the holes
+      const holes = data.lid.holes || [];
+      const inOutline = (x, z) => {
+        let inside = false;
+        const pts = data.outline;
+        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+          const [xi, zi] = pts[i], [xj, zj] = pts[j];
+          if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+        }
+        return inside;
+      };
+      const xs = [...new Set([...data.outline.map(p => p[0]), ...holes.flatMap(h => [h.x0, h.x1])])].sort((a, b) => a - b);
+      const zs = [...new Set([...data.outline.map(p => p[1]), ...holes.flatMap(h => [h.z0, h.z1])])].sort((a, b) => a - b);
+      for (let zi = 0; zi < zs.length - 1; zi++) {
+        let runStart = null;
+        for (let xi = 0; xi <= xs.length - 1; xi++) {
+          const last = xi === xs.length - 1;
+          let solid = false;
+          if (!last) {
+            const cx = (xs[xi] + xs[xi + 1]) / 2, cz = (zs[zi] + zs[zi + 1]) / 2;
+            solid = inOutline(cx, cz) && !holes.some(h => cx > h.x0 && cx < h.x1 && cz > h.z0 && cz < h.z1);
+          }
+          if (solid && runStart === null) runStart = xs[xi];
+          if (!solid && runStart !== null) {
+            mkBox(ceiling, runStart, floorY + cH, zs[zi], xs[xi], floorY + cH + 0.2, zs[zi + 1], ceilMat);
+            runStart = null;
+          }
+        }
       }
-      const geom = new THREE.ExtrudeGeometry(shape, { depth: 0.2, bevelEnabled: false });
-      geom.rotateX(-Math.PI / 2);
-      geom.translate(0, floorY + cH, 0);
-      const m = new THREE.Mesh(geom, ceilMat);
-      m.castShadow = true;
-      m.receiveShadow = true;
-      ceiling.add(m);
     }
     if (data.ceilings) {
       for (const c of data.ceilings) mkBox(ceiling, c.x0, floorY + cH, c.z0, c.x1, floorY + H - 0.02, c.z1, ceilMat);
@@ -357,7 +367,7 @@ const INTERIORS3D = (() => {
       }
     }
     for (const r of data.rooms) {
-      if (!data.ceilings && r.ceil !== 'open') mkBox(ceiling, r.x0, floorY + cH, r.z0, r.x1, floorY + cH + 0.05, r.z1, ceilMat);
+      if (!data.lid && !data.ceilings && r.ceil !== 'open') mkBox(ceiling, r.x0, floorY + cH, r.z0, r.x1, floorY + cH + 0.05, r.z1, ceilMat);
       if (r.noLabel) continue;
       // Room label lying on the floor — reads upright in the north-up plan view
       const cv = document.createElement('canvas');
