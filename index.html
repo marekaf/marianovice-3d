@@ -307,7 +307,7 @@ const basePlaneHeight = (x, z) => TERRAIN.basePlaneHeight(x, z);
 const CUT_BLEND = 1.8;
 const cutRects = [
   { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
-  { x0: 10.48, z0: 15.93, x1: 14.78, z1: 19.18, level: 2.46 }, // atrium
+  { x0: 10.48, z0: 15.93, x1: 14.93, z1: 19.18, level: 2.46 }, // atrium
   { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
   { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
 ];
@@ -1754,7 +1754,7 @@ const waterNormal = (() => {
     winX(HB[0], -1, z, w, 2.27, ty + 0.05);
   }
   // Living-room portal to the atrium — floor level (0 step onto the atrium courtyard)
-  winX(HA[2], -1, 17.55, 2.5, 2.27, ty + 0.05);
+  winX(HA[2], -1, 17.555, 3.25, 2.27, ty + 0.05);
   // South windows O1 900×1250 (koupelna + technická), sill 0.9
   for (const x of [16.05, 19.3]) {
     winZ(x, HB[3], 1, 0.9, 1.25, ty + 0.9);
@@ -1787,7 +1787,7 @@ const waterNormal = (() => {
 
 // ───────────────────────── CHIMNEY (inside house footprint, NOT in atrium, south side) ─────────────────────────
 {
-  // Atrium: x=10.48-14.78, z=15.93-19.18. Chimney in south part (living room)
+  // Atrium: x=10.48-14.93, z=15.93-19.18. Chimney in south part (living room)
   const cx = 17, cz = 22, ch = wallH + roofRise + 1.0;  // peak + 1 m above
   const baseY = houseTerrainY;
   const chimney = new THREE.Mesh(
