@@ -226,6 +226,7 @@ function applyHash() {
 applyHash();
 window.addEventListener('hashchange', applyHash);
 
+window.DEBUG = { scene, camera, gar, hou: hasHouse ? hou : null };
 renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);

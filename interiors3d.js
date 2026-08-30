@@ -320,8 +320,19 @@ const INTERIORS3D = (() => {
       floor.add(m);
     }
 
+    // Ceiling: explicit zone slabs (the loft floor plates) when the data provides them,
+    // flush with the wall tops; else fall back to one slab per non-open room
+    const cH = data.clearH ?? 2.52;
+    if (data.ceilings) {
+      for (const c of data.ceilings) mkBox(ceiling, c.x0, floorY + cH, c.z0, c.x1, floorY + H - 0.02, c.z1, ceilMat);
+      if (data.hatch) {
+        const h = data.hatch;
+        const lidMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });
+        mkBox(ceiling, h.x0, floorY + cH - 0.02, h.z0, h.x1, floorY + cH + 0.02, h.z1, lidMat);
+      }
+    }
     for (const r of data.rooms) {
-      if (r.ceil !== 'open') mkBox(ceiling, r.x0, floorY + (data.clearH ?? 2.52), r.z0, r.x1, floorY + (data.clearH ?? 2.52) + 0.05, r.z1, ceilMat);
+      if (!data.ceilings && r.ceil !== 'open') mkBox(ceiling, r.x0, floorY + cH, r.z0, r.x1, floorY + cH + 0.05, r.z1, ceilMat);
       if (r.noLabel) continue;
       // Room label lying on the floor — reads upright in the north-up plan view
       const cv = document.createElement('canvas');
