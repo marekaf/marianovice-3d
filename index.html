@@ -310,12 +310,15 @@ const cutRects = [
   { x0: 10.48, z0: 15.93, x1: 14.93, z1: 19.18, level: 2.46 }, // atrium
   { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
   { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
-  // South-wall gravel apron. Must be a CUT (min), not a level pad: the whole south side is uphill, so a
-  // pad's edge blend would raise the grade back up and hump it over the sokl / poke it up through the
-  // west deck at the SW corner. A cut only lowers, giving a flat 1 m band that dies gently into the garden.
-  // z0 reaches ~1 m under the house (hidden by the walls) so the coarse ground grid stays flat at the wall
-  // face — otherwise it interpolates up toward the uncut grade under the house and buries the gravel.
-  { x0: 10.48, z0: 25.5, x1: 21.28, z1: 27.45, level: 2.345, blend: 2.2 },
+  // South-wall gravel apron. The south/east side of the house sits at the paved grade (396.50 = −0.50 m,
+  // internal 1.965, level with the carport/drive), half a metre below the FFL — the marmolit plinth bridges
+  // the difference. So this is a deep CUT (min, never fills) to just under that grade; a flat band that dies
+  // gently into the uphill garden. z0 reaches ~1 m under the house (hidden by the walls) so the coarse ground
+  // grid stays flat at the wall face instead of interpolating up toward the uncut grade under the house.
+  { x0: 10.48, z0: 25.5, x1: 21.28, z1: 27.45, level: 1.9, blend: 2.2 },
+  // SE corner — ties the south gravel grade down to the carport/drive so no grass wedge is left standing
+  // between the two hardscapes; the garden banks up south and west of it.
+  { x0: 18.8, z0: 26.43, x1: 21.28, z1: 29.5, level: 1.9, blend: 1.5 },
 ];
 // Level pads — force the footprint flat to `level` (cut where the grade is higher, fill where it is
 // lower), smoothstep bank to grade at the edges. The real NW→SE fall drops the SE hardscape below its
@@ -1390,13 +1393,13 @@ scene.add(driveway);
 
 // Gravel margin (kačírek) — grey level strips along the N and S facades only (the E and W sides
 // carry terraces). The north wall is downhill so a draped strip sits cleanly on the grade. The south
-// wall is uphill: draping a thin quad on the coarse ground grid lets grass poke through, so it is a
-// fixed-level slab — a dead-level 1 m band along the wall, ending at the carport corner (x 20.3) where
-// the grade drops to the drive.
+// wall is a fixed-level slab set at the paved grade (396.50 = internal 1.965, level with the carport
+// drive) — a dead-level 1 m band the full wall length; grass can't overgrow it because the apron is cut
+// below it.
 {
   addTerrainPlatform([[10.48, 6.73], [21.28, 6.73], [21.28, 7.18], [10.48, 7.18]], 0.07, 0x9a9a97);  // N wall (draped)
   {
-    const gx0 = 10.48, gx1 = 20.3, gz0 = 26.43, gz1 = 27.45, top = 2.42;
+    const gx0 = 10.48, gx1 = 21.28, gz0 = 26.43, gz1 = 27.45, top = 1.965;
     const slab = new THREE.Mesh(
       new THREE.BoxGeometry(gx1 - gx0, 0.14, gz1 - gz0),
       new THREE.MeshStandardMaterial({ color: 0x9a9a97, roughness: 0.9 })
@@ -1421,9 +1424,10 @@ scene.add(driveway);
   const soklMat = new THREE.MeshStandardMaterial({ color: 0x453f38, roughness: 0.95 }); // marmolit MAR2 M092, HBW 6
   const soklTop = houseBaseY + 0.25;
   const runs = [
-    { a0: 10.48, a1: 21.28, c: 7.18, axis: 'x', dir: -1 },
-    { a0: 10.48, a1: 21.28, c: 26.43, axis: 'x', dir: 1 },
-    { a0: 7.18, a1: 11.58, c: 21.28, axis: 'z', dir: 1 },
+    { a0: 10.48, a1: 21.28, c: 7.18, axis: 'x', dir: -1 },   // N wall
+    { a0: 10.48, a1: 21.28, c: 26.43, axis: 'x', dir: 1 },   // S wall
+    { a0: 7.18, a1: 11.58, c: 21.28, axis: 'z', dir: 1 },    // E wall, north of the terrace notch
+    { a0: 19.38, a1: 26.43, c: 21.28, axis: 'z', dir: 1 },   // E wall facing the carport (down to the SE corner)
   ];
   for (const r of runs) {
     const len = r.a1 - r.a0;
