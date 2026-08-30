@@ -306,10 +306,16 @@ const basePlaneHeight = (x, z) => TERRAIN.basePlaneHeight(x, z);
 // smoothstep bank rising to natural grade; min() leaves downhill areas untouched
 const CUT_BLEND = 1.8;
 const cutRects = [
-  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 27.0, level: 2.46 },      // sidewalk strip along the house west wall
+  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 28.5, level: 2.46, blend: 2.2 },  // west sidewalk; runs past the deck end and wraps the SW corner so the high ground banks up out in the garden, not against the deck
   { x0: 10.48, z0: 15.93, x1: 14.93, z1: 19.18, level: 2.46 }, // atrium
   { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
   { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
+  // South-wall gravel apron. Must be a CUT (min), not a level pad: the whole south side is uphill, so a
+  // pad's edge blend would raise the grade back up and hump it over the sokl / poke it up through the
+  // west deck at the SW corner. A cut only lowers, giving a flat 1 m band that dies gently into the garden.
+  // z0 reaches ~1 m under the house (hidden by the walls) so the coarse ground grid stays flat at the wall
+  // face — otherwise it interpolates up toward the uncut grade under the house and buries the gravel.
+  { x0: 10.48, z0: 25.5, x1: 21.28, z1: 27.45, level: 2.345, blend: 2.2 },
 ];
 // Level pads — force the footprint flat to `level` (cut where the grade is higher, fill where it is
 // lower), smoothstep bank to grade at the edges. The real NW→SE fall drops the SE hardscape below its
@@ -319,10 +325,6 @@ const levelPads = [
   { x0: 3.5, z0: 2.17, x1: 10.5, z1: 5.17, level: 2.45, blend: 1.2 },      // sauna + hot-tub platform, on grade
   { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 3.15, blend: 1.2 },         // flat pad containing all 4 raised beds (SW high ground)
   { x0: 25.78, z0: 1.61, x1: 31.78, z1: 5.61, level: 1.05, blend: 1.2 },    // flat pad under the pergola (toward the low NE)
-  // Flat apron along the whole south wall (also carries the heat-pump gravel bed). The south side is
-  // the uphill side, so a narrow strip left the lawn banking up steeply right over the sokl; a 1 m
-  // apron with a gentle bank pushes that rise out into the garden so the marmolit reads as a clean band.
-  { x0: 10.48, z0: 26.43, x1: 21.28, z1: 27.45, level: 2.345, blend: 1.2 },
 ];
 // Pond basin — smooth bowl carved to the pond's downhill edge level
 const PBOWL = (() => {
@@ -1387,15 +1389,21 @@ driveway.receiveShadow = true;
 scene.add(driveway);
 
 // Gravel margin (kačírek) — grey level strips along the N and S facades only (the E and W sides
-// carry terraces). 0.45 m wide, 1 m at the heat pump; draped on the flat drip-strip terrain.
+// carry terraces). The north wall is downhill so a draped strip sits cleanly on the grade. The south
+// wall is uphill: draping a thin quad on the coarse ground grid lets grass poke through, so it is a
+// fixed-level slab — a dead-level 1 m band along the wall, ending at the carport corner (x 20.3) where
+// the grade drops to the drive.
 {
-  const strips = [
-    [10.48, 6.73, 21.28, 7.18],    // N wall
-    [10.48, 26.43, 21.28, 26.88],  // S wall
-    [15.7, 26.43, 19.7, 27.5],     // 1 m heat-pump bed (S wall)
-  ];
-  for (const [x0, z0, x1, z1] of strips) {
-    addTerrainPlatform([[x0, z0], [x1, z0], [x1, z1], [x0, z1]], 0.07, 0x9a9a97);
+  addTerrainPlatform([[10.48, 6.73], [21.28, 6.73], [21.28, 7.18], [10.48, 7.18]], 0.07, 0x9a9a97);  // N wall (draped)
+  {
+    const gx0 = 10.48, gx1 = 20.3, gz0 = 26.43, gz1 = 27.45, top = 2.42;
+    const slab = new THREE.Mesh(
+      new THREE.BoxGeometry(gx1 - gx0, 0.14, gz1 - gz0),
+      new THREE.MeshStandardMaterial({ color: 0x9a9a97, roughness: 0.9 })
+    );
+    slab.position.set((gx0 + gx1) / 2, top - 0.07, (gz0 + gz1) / 2);
+    slab.receiveShadow = true;
+    scene.add(slab);
   }
   // Heat pump (tepelné čerpadlo) outdoor unit on the 1 m gravel bed, S wall between bathroom & technical room
   {
