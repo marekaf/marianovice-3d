@@ -207,6 +207,10 @@ for (const r of data.rooms) {
     for (const [f, t] of coverageGaps(e)) {
       // a gap is fine if another room adjoins it (open-plan boundary) or the segment
       // lies inside another room's rect (deliberate carve-out overlap)
+      const voidHole = (data.floorHoles || []).find(h =>
+        e.axis === 'x' ? (e.at >= h.z0 - TOL && e.at <= h.z1 + TOL && f >= h.x0 - TOL && t <= h.x1 + TOL)
+                       : (e.at >= h.x0 - TOL && e.at <= h.x1 + TOL && f >= h.z0 - TOL && t <= h.z1 + TOL));
+      if (voidHole) { note('INFO', `room ${r.id} ${e.name} edge ${f.toFixed(2)}–${t.toFixed(2)} opens to a floor opening (stair/gallery)`); continue; }
       const other = data.rooms.find(o => o !== r && (
         e.axis === 'x' ? ((Math.abs(o.z1 - e.at) < TOL || Math.abs(o.z0 - e.at) < TOL || (o.z0 < e.at && o.z1 > e.at)) && o.x0 < t - TOL && o.x1 > f + TOL)
                        : ((Math.abs(o.x1 - e.at) < TOL || Math.abs(o.x0 - e.at) < TOL || (o.x0 < e.at && o.x1 > e.at)) && o.z0 < t - TOL && o.z1 > f + TOL)));
