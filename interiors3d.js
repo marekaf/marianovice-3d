@@ -68,6 +68,20 @@ const INTERIORS3D = (() => {
     return group;
   }
 
+  // Centre-position a mesh and enable shadows
+  function put(target, mesh, x, y, z) {
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    target.add(mesh);
+  }
+
+  // Axis-aligned box from min/max corners
+  function mkBox(THREE, target, x0, y0, z0, x1, y1, z1, mat) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat);
+    put(target, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+  }
+
   // Sloped plane (pult roof / ceiling): y varies linearly from lowY at xMin to highY at xMax
   function slopedPlane(THREE, xMin, xMax, zMin, zMax, yAtXMin, yAtXMax) {
     const geom = new THREE.BufferGeometry();
@@ -217,7 +231,6 @@ const INTERIORS3D = (() => {
       const legMat = new THREE.MeshStandardMaterial({ color: 0x565b60, roughness: 0.6, metalness: 0.3 });
       const woodMat = new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: 0.7 });
       const steelMat = new THREE.MeshStandardMaterial({ color: 0x3d4248, roughness: 0.45, metalness: 0.5 });
-      const put = (target, mesh, x, y, z) => { mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true; target.add(mesh); };
       // Thick butcher top with a small front overhang
       put(furniture, new THREE.Mesh(new THREE.BoxGeometry(bw, 0.08, bd + 0.05), woodMat), bx, floorY + bh - 0.04, bz + 0.025);
       // 3 leg pairs + lower shelf
@@ -298,13 +311,7 @@ const INTERIORS3D = (() => {
     };
     for (const g of [walls.N, walls.S, walls.E, walls.W, intGroup, floor, ceiling, labels]) root.add(g);
 
-    const mkBox = (target, x0, y0, z0, x1, y1, z1, mat) => {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat);
-      m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
-      m.castShadow = true;
-      m.receiveShadow = true;
-      target.add(m);
-    };
+    const mkB = mkBox.bind(null, THREE);
 
     function wallRect(target, w) {
       const [ax, az] = w.a, [bx, bz] = w.b;
@@ -334,8 +341,8 @@ const INTERIORS3D = (() => {
       const L = alongX ? bx - ax : bz - az;
       const wh = w.h ?? wallH;   // knee walls / railings carry their own height
       const seg = (s0, s1, y0, y1) => alongX
-        ? mkBox(target, ax + s0, y0, az, ax + s1, y1, bz, wallMat)
-        : mkBox(target, ax, y0, az + s0, bx, y1, az + s1, wallMat);
+        ? mkB(target, ax + s0, y0, az, ax + s1, y1, bz, wallMat)
+        : mkB(target, ax, y0, az + s0, bx, y1, az + s1, wallMat);
       let cur = 0;
       for (const o of [...(w.openings || [])].sort((p, q) => p.at - q.at)) {
         if (o.at > cur) seg(cur, o.at, floorY, floorY + wh);
@@ -430,7 +437,7 @@ const INTERIORS3D = (() => {
       if (data.hatch) {
         const h = data.hatch;
         const lidMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });
-        mkBox(ceiling, h.x0, floorY + cH - 0.02, h.z0, h.x1, floorY + cH + 0.02, h.z1, lidMat);
+        mkB(ceiling, h.x0, floorY + cH - 0.02, h.z0, h.x1, floorY + cH + 0.02, h.z1, lidMat);
       }
     }
     // Fireplace — Hoxter insert in a masonry casing with the chimney continuing up through
@@ -449,15 +456,15 @@ const INTERIORS3D = (() => {
       intGroup.add(glass);
     }
     if (data.ceilings) {
-      for (const c of data.ceilings) mkBox(ceiling, c.x0, floorY + cH, c.z0, c.x1, floorY + H - 0.02, c.z1, ceilMat);
+      for (const c of data.ceilings) mkB(ceiling, c.x0, floorY + cH, c.z0, c.x1, floorY + H - 0.02, c.z1, ceilMat);
       if (data.hatch) {
         const h = data.hatch;
         const lidMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });
-        mkBox(ceiling, h.x0, floorY + cH - 0.02, h.z0, h.x1, floorY + cH + 0.02, h.z1, lidMat);
+        mkB(ceiling, h.x0, floorY + cH - 0.02, h.z0, h.x1, floorY + cH + 0.02, h.z1, lidMat);
       }
     }
     for (const r of data.rooms) {
-      if (!data.lid && !data.ceilings && r.ceil !== 'open') mkBox(ceiling, r.x0, floorY + cH, r.z0, r.x1, floorY + cH + 0.05, r.z1, ceilMat);
+      if (!data.lid && !data.ceilings && r.ceil !== 'open') mkB(ceiling, r.x0, floorY + cH, r.z0, r.x1, floorY + cH + 0.05, r.z1, ceilMat);
       if (r.noLabel) continue;
       // Room label lying on the floor — reads upright in the north-up plan view
       const cv = document.createElement('canvas');
@@ -486,8 +493,8 @@ const INTERIORS3D = (() => {
       const going = L / s.steps;
       for (let i = 0; i < s.steps; i++) {
         const p0 = i * going, p1 = (i + 1) * going, top = floorY + (i + 1) * s.rise;
-        if (runAxis === 'z') mkBox(intGroup, s.x0, floorY, s.toward === 'S' ? s.z0 + p0 : s.z1 - p1, s.x1, top, s.toward === 'S' ? s.z0 + p1 : s.z1 - p0, stepMat);
-        else mkBox(intGroup, s.toward === 'E' ? s.x0 + p0 : s.x1 - p1, floorY, s.z0, s.toward === 'E' ? s.x0 + p1 : s.x1 - p0, top, s.z1, stepMat);
+        if (runAxis === 'z') mkB(intGroup, s.x0, floorY, s.toward === 'S' ? s.z0 + p0 : s.z1 - p1, s.x1, top, s.toward === 'S' ? s.z0 + p1 : s.z1 - p0, stepMat);
+        else mkB(intGroup, s.toward === 'E' ? s.x0 + p0 : s.x1 - p1, floorY, s.z0, s.toward === 'E' ? s.x0 + p1 : s.x1 - p0, top, s.z1, stepMat);
       }
     }
 
