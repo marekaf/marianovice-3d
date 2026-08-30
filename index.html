@@ -373,7 +373,10 @@ function gradedHeight(x, z) {
   // carport pad's blend can't re-raise the SE corner over the gravel. First rect is the 1 m band + its lawn
   // run-out; second ties the SE corner across to the drive. Cut only (min against the post-pad height).
   for (const sp of [
-    { x0: 10.48, z0: 25.5, x1: 21.28, z1: 28.5, blend: 2.5, level: 1.9 },
+    // Narrow blend so the cut does NOT bleed west into the W terrace (x<10.48) — a wide blend there dug a
+    // dip at the SW corner and the natural SW garden then read as a bump next to it. z1 keeps a 1 m flat
+    // run-out south of the gravel so grass still can't climb the band.
+    { x0: 10.48, z0: 25.5, x1: 21.28, z1: 28.5, blend: 1.2, level: 1.9 },
     { x0: 16.5, z0: 26.43, x1: 22.2, z1: 29.5, blend: 1.5, level: 1.9 },
   ]) {
     const d = cutRectDist(sp, x, z);
