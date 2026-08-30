@@ -1,0 +1,29 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Layout geometry (inside plot / fence-through / collisions / index.html trees)
+        run: node validate-layout.js
+
+      - name: 2D drawings match layout.js
+        run: |
+          node generate-svg.js
+          node generate-flat-plan.js
+          node generate-driveway-check.js
+          if ! git diff --quiet -- '*.svg'; then
+            echo "::error::committed SVGs are stale — run the generators and commit the result"
+            git --no-pager diff --stat -- '*.svg'
+            exit 1
+          fi
