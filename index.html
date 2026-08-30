@@ -1059,11 +1059,13 @@ for (const [wz0, wz1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
   // Gable ends (štít) from the knee up to the ridge
   tri(renderFillMat, GABLE[0], springY, HB[1], GABLE[1], springY, HB[1], gmidX, springY + roofRise, HB[1]);
   tri(renderFillMat, GABLE[0], springY, HB[3], GABLE[1], springY, HB[3], gmidX, springY + roofRise, HB[3]);
-  // Knee strips closing the 0.28 gap between the general wall top and the gable spring
+  // Knee strips closing the 0.28 gap between the general wall top and the gable spring.
+  // The box is centred on (kx,kz), so its outer face must be nudged inward by half its 0.05 m
+  // half-thickness or the strip stands 5 cm proud of the flush gable facade below it.
   const knee = (w, d, kx, kz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, KNEE, d), renderFillMat); m.position.set(kx, wallTopY + KNEE / 2, kz); m.castShadow = true; scene.add(m); };
-  knee(0.1, HB[3] - HB[1], GABLE[1], (HB[1] + HB[3]) / 2);  // east gable wall
-  knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[1]);             // north gable end
-  knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[3]);             // south gable end
+  knee(0.1, HB[3] - HB[1], GABLE[1] - 0.05, (HB[1] + HB[3]) / 2);  // east gable wall
+  knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[1] + 0.05);             // north gable end
+  knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[3] - 0.05);             // south gable end
   // West lean-to end gaps at all four edges (incl. the open-atrium sides)
   for (const z of [HB[1], HA[1], HA[3], HB[3]]) {
     tri(renderFillMat, HB[0], wallTopY, z, GABLE[0], wallTopY, z, GABLE[0], springY, z);
