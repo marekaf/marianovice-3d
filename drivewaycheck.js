@@ -90,7 +90,8 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <path d="M ${px(notchX)},${px(21.15)} A ${px(1.1)} ${px(1.1)} 0 0 0 ${px(notchX - 1.1)},${px(22.25)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`); // opens inward (west)
   out.push(`    <text x="${px(notchX) - 3}" y="${px(20.9)}" class="dim" fill="#1f7a3d" text-anchor="end">house door (in the notch)</text>`);
   out.push(`    <line x1="${px(ga.x)}" y1="${px(21.13)}" x2="${px(ga.x)}" y2="${px(22.56)}" stroke="#1f7a3d" stroke-width="3"/>`);
-  out.push(`    <circle cx="${px(ga.x)}" cy="${px(21.84)}" r="2.5" fill="#1f7a3d"/>`); // garage personnel door (labelled in the panel)
+  out.push(`    <path d="M ${px(ga.x)},${px(22.56)} A ${px(1.43)} ${px(1.43)} 0 0 0 ${px(ga.x + 1.43)},${px(21.13)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`); // garage personnel door opens INSIDE (east, into the garage)
+  out.push(`    <circle cx="${px(ga.x)}" cy="${px(21.13)}" r="1.8" fill="#1f7a3d"/>`); // hinge
   // Vehicles to scale, drawn with the two front doors open. `reversed` = parked nose-out (front
   // toward the south/door). fy = front edge in local y; rs = local direction toward the rear.
   for (const v of VEH) {
@@ -121,6 +122,12 @@ function renderDrivewayCheckSVG(garden) {
   // Gate + access swept path + turning circle (getting to the carport)
   out.push(`    <line x1="${px(gt.x1)}" y1="${px(gt.y1)}" x2="${px(gt.x2)}" y2="${px(gt.y2)}" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>`);
   out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate 4.0 m</text>`);
+  // Wicket (branka) — separate 0.9 m pedestrian gate immediately S of the vehicle gate, post between them
+  { const gl = Math.hypot(gt.x2 - gt.x1, gt.y2 - gt.y1), wx = (gt.x2 - gt.x1) / gl, wy = (gt.y2 - gt.y1) / gl;
+    const wSx = gt.x2 + wx * 0.9, wSy = gt.y2 + wy * 0.9;
+    out.push(`    <circle cx="${px(gt.x2)}" cy="${px(gt.y2)}" r="2" fill="#7a6f52"/>`);
+    out.push(`    <line x1="${px(gt.x2)}" y1="${px(gt.y2)}" x2="${px(wSx)}" y2="${px(wSy)}" stroke="#1f7a3d" stroke-width="3" stroke-dasharray="2,2"/>`);
+    out.push(`    <text x="${px(wSx) + 8}" y="${px((gt.y2 + wSy) / 2)}" class="dim" fill="#1f7a3d" text-anchor="start">wicket 0.9 m</text>`); }
   out.push(`    <circle cx="${px(29.5)}" cy="${px(28.4)}" r="${px(5.6)}" fill="#c0392b" fill-opacity="0.05" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>`);
   out.push(`    <text x="${px(29.5)}" y="${px(28.4)}" class="dim">turning Ø 11.2 m</text>`);
   out.push(`    <path d="M ${px(gt.x1 - 0.3)},${px(30)} Q ${px(34)},${px(29)} ${px(28)},${px(27.8)} T ${px(24.4)},${px(24)}" fill="none" stroke="#c0392b" stroke-width="1.6" stroke-dasharray="3,3" marker-end="url(#arrow)"/>`);
