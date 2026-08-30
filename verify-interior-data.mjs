@@ -138,6 +138,32 @@ if (data.stairs) {
   }
 }
 
+// 1f. ceiling panels sit BETWEEN walls — a panel overlapping a wall body is a lid on wall
+// tops, not a ceiling; and the hatch must punch a real hole (no panel may cover it)
+if (data.ceilings) {
+  for (const c of data.ceilings) {
+    for (const w of allWalls) {
+      if (w.block) continue;
+      const r = wallRect(w);
+      const ox = Math.min(c.x1, r.x1) - Math.max(c.x0, r.x0);
+      const oz = Math.min(c.z1, r.z1) - Math.max(c.z0, r.z0);
+      if (ox > TOL && oz > TOL) note('ERR', `ceiling panel (${c.x0},${c.z0})–(${c.x1},${c.z1}) lies over a wall at (${Math.max(c.x0, r.x0).toFixed(2)}, ${Math.max(c.z0, r.z0).toFixed(2)})`);
+    }
+    if (data.hatch) {
+      const h = data.hatch;
+      const ox = Math.min(c.x1, h.x1) - Math.max(c.x0, h.x0);
+      const oz = Math.min(c.z1, h.z1) - Math.max(c.z0, h.z0);
+      if (ox > TOL && oz > TOL) note('ERR', `ceiling panel covers the attic hatch at (${h.x0}, ${h.z0})`);
+    }
+    if (data.stairs) {
+      const s = data.stairs;
+      const ox = Math.min(c.x1, s.x1) - Math.max(c.x0, s.x0);
+      const oz = Math.min(c.z1, s.z1) - Math.max(c.z0, s.z0);
+      if (ox > TOL && oz > TOL) note('ERR', `ceiling panel covers the stairwell at (${s.x0}, ${s.z0})`);
+    }
+  }
+}
+
 // 2. room perimeter closure: each edge must be covered by wall bodies or their openings
 function coverageGaps(edge) {
   // edge: {axis:'x'|'z', at, from, to, side} — a room boundary line segment
