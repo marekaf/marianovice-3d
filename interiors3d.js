@@ -290,46 +290,28 @@ const INTERIORS3D = (() => {
       const [ax, az] = w.a, [bx, bz] = w.b;
       const alongX = (bx - ax) >= (bz - az);
       const L = alongX ? bx - ax : bz - az;
+      const wh = w.h ?? wallH;   // knee walls / railings carry their own height
       const seg = (s0, s1, y0, y1) => alongX
         ? mkBox(target, ax + s0, y0, az, ax + s1, y1, bz, wallMat)
         : mkBox(target, ax, y0, az + s0, bx, y1, az + s1, wallMat);
       let cur = 0;
       for (const o of [...(w.openings || [])].sort((p, q) => p.at - q.at)) {
-        if (o.at > cur) seg(cur, o.at, floorY, floorY + wallH);
+        if (o.at > cur) seg(cur, o.at, floorY, floorY + wh);
         const sill = o.sill || 0;
         if (sill > 0) seg(o.at, o.at + o.w, floorY, floorY + sill);
-        if (sill + o.h < wallH) seg(o.at, o.at + o.w, floorY + sill + o.h, floorY + wallH);
+        if (sill + o.h < wh) seg(o.at, o.at + o.w, floorY + sill + o.h, floorY + wh);
         cur = o.at + o.w;
       }
-      if (cur < L) seg(cur, L, floorY, floorY + wallH);
+      if (cur < L) seg(cur, L, floorY, floorY + wh);
     }
     // face N/S/E/W = true facade plane (hidden by the elevation that looks through it);
     // any other tag (e.g. 'court' for atrium/notch returns) stays visible in every view
     for (const w of data.extWalls) wallRect(walls[w.face] || intGroup, w);
     for (const w of data.intWalls) wallRect(intGroup, w);
 
-    // Floor slab from the outline polygon (same shape convention as the garden viewer)
-    {
-      const shape = new THREE.Shape();
-      shape.moveTo(data.outline[0][0], -data.outline[0][1]);
-      for (let i = 1; i < data.outline.length; i++) shape.lineTo(data.outline[i][0], -data.outline[i][1]);
-      shape.closePath();
-      const geom = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: false });
-      geom.rotateX(-Math.PI / 2);
-      // Extrusion grows +y after the rotation — shift down so the slab TOP is the floor level
-      geom.translate(0, floorY - 0.12, 0);
-      const m = new THREE.Mesh(geom, floorMat);
-      m.receiveShadow = true;
-      floor.add(m);
-    }
-
-    // Ceiling: explicit zone slabs (the loft floor plates) when the data provides them,
-    // flush with the wall tops; else fall back to one slab per non-open room
-    const cH = data.clearH ?? 2.52;
-    if (data.lid) {
-      // One plate over the outline minus the holes — a single mesh with faces only at real
-      // boundaries (top, bottom, outline + hole rims). No internal seams, nothing to z-fight.
-      const holes = data.lid.holes || [];
+    // Plate builder: outline minus holes as ONE mesh with faces only at real boundaries
+    // (top, bottom, outline + hole rims) — used by the ceiling lid and the loft floor
+    function plate(target, holes, y0, y1, mat) {
       const inOutline = (x, z) => {
         let inside = false;
         const pts = data.outline;
@@ -346,7 +328,6 @@ const INTERIORS3D = (() => {
         const cx = (xs[xi] + xs[xi + 1]) / 2, cz = (zs[zi] + zs[zi + 1]) / 2;
         return inOutline(cx, cz) && !holes.some(h => cx > h.x0 && cx < h.x1 && cz > h.z0 && cz < h.z1);
       };
-      const y0 = floorY + cH, y1 = floorY + cH + 0.2;
       const pos = [], nrm = [], idx = [];
       const quad = (pts, n) => {
         const i = pos.length / 3;
@@ -368,10 +349,42 @@ const INTERIORS3D = (() => {
       geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
       geom.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
       geom.setIndex(idx);
-      const m = new THREE.Mesh(geom, ceilMat);
+      const m = new THREE.Mesh(geom, mat);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      target.add(m);
+    }
+
+    // Sloped ceiling planes (loft SDK under the roof): y varies linearly with x
+    for (const sl of data.slopes || []) {
+      const m = new THREE.Mesh(slopedPlane(THREE, sl.x0, sl.x1, sl.z0, sl.z1, floorY + sl.y0, floorY + sl.y1), ceilMat);
       m.castShadow = true;
       m.receiveShadow = true;
       ceiling.add(m);
+    }
+
+    // Floor: plate with holes (loft — open over the cathedral/stairwell) or plain outline extrude
+    if (data.floorHoles) {
+      plate(floor, data.floorHoles, floorY - 0.12, floorY, floorMat);
+    } else {
+      const shape = new THREE.Shape();
+      shape.moveTo(data.outline[0][0], -data.outline[0][1]);
+      for (let i = 1; i < data.outline.length; i++) shape.lineTo(data.outline[i][0], -data.outline[i][1]);
+      shape.closePath();
+      const geom = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: false });
+      geom.rotateX(-Math.PI / 2);
+      // Extrusion grows +y after the rotation — shift down so the slab TOP is the floor level
+      geom.translate(0, floorY - 0.12, 0);
+      const m = new THREE.Mesh(geom, floorMat);
+      m.receiveShadow = true;
+      floor.add(m);
+    }
+
+    // Ceiling: explicit zone slabs (the loft floor plates) when the data provides them,
+    // flush with the wall tops; else fall back to one slab per non-open room
+    const cH = data.clearH ?? 2.52;
+    if (data.lid) {
+      plate(ceiling, data.lid.holes || [], floorY + cH, floorY + cH + 0.2, ceilMat);
       if (data.hatch) {
         const h = data.hatch;
         const lidMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });

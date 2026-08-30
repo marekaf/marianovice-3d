@@ -152,6 +152,7 @@ if (data.ceilings) {
   for (const c of data.ceilings) {
     for (const w of allWalls) {
       if (w.block) continue;
+      if ((w.h ?? 99) < (data.clearH ?? 2.52) - 0.05) continue;  // knee walls/railings end below the ceiling
       const r = wallRect(w);
       const ox = Math.min(c.x1, r.x1) - Math.max(c.x0, r.x0);
       const oz = Math.min(c.z1, r.z1) - Math.max(c.z0, r.z0);
@@ -233,7 +234,7 @@ for (const w of allWalls) {
   }
 }
 for (const [a, b] of openPairs) links.push({ rooms: [a, b], ext: false });   // open-plan boundaries connect too
-const reach = new Set();
+const reach = new Set(data.entryRooms || []);   // loft floors: entered from below (stairs/ladder)
 for (const l of links) if (l.ext) l.rooms.forEach(id => reach.add(id));
 let grew = true;
 while (grew) {
