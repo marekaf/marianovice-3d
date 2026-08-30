@@ -107,7 +107,7 @@ const GARDEN = {
       id: "driveway",
       name: "Driveway 4.5 m × ~22 m",
       parts: [
-        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [37.33, 27.02], [43.14, 27.89], [42.63, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
+        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [37.33, 27.02], [43.08, 27.89], [42.55, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
         { kind: "text", x: 30.83, y: 28.33, text: "driveway", cls: "lbl-sm" },
         { kind: "text", x: 30.83, y: 29.17, text: "4.5 m × ~22 m", cls: "dim" }
       ]
@@ -179,7 +179,7 @@ const GARDEN = {
         { kind: "circle", cx: 34, cy: 1.3, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 38, cy: 1.6, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 41, cy: 1.2, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 43, cy: 1.4, r: 0.5, fill: "#4d7a4d" }
+        { kind: "circle", cx: 40.5, cy: 1.8, r: 0.5, fill: "#4d7a4d" }
       ]
     },
     {
@@ -187,12 +187,12 @@ const GARDEN = {
       name: "Trees along east fence (privacy)",
       short: "East trees",
       parts: [
-        { kind: "circle", cx: 42.5, cy: 8, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 42.5, cy: 12, r: 0.5, fill: "#4d7a4d" },
+        { kind: "circle", cx: 41.8, cy: 8, r: 0.5, fill: "#4d7a4d" },
+        { kind: "circle", cx: 42, cy: 12, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 42.5, cy: 16, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 42.5, cy: 20, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 42, cy: 33, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 42, cy: 35, r: 0.5, fill: "#4d7a4d" }
+        { kind: "circle", cx: 41, cy: 33.5, r: 0.5, fill: "#4d7a4d" }
       ]
     },
     {
@@ -307,8 +307,8 @@ const GARDEN = {
       name: "Privacy screen — south neighbour (2 × 2 m louvre)",
       meta: { screen: { h: 2.0 } },
       parts: [
-        { kind: "rect", x: 14.0, y: 31.7, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
-        { kind: "text", x: 15.2, y: 31.4, text: "paraván J", cls: "lbl-sm", fill: "#3a3a3e" }
+        { kind: "rect", x: 14.0, y: 31.4, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
+        { kind: "text", x: 15.2, y: 31.1, text: "paraván J", cls: "lbl-sm", fill: "#3a3a3e" }
       ]
     },
     {
@@ -317,7 +317,7 @@ const GARDEN = {
       short: "Orchard meadow",
       meta: { plant: "meadow" },
       parts: [
-        { kind: "rect", x: 0.2, y: 21.3, w: 5.2, d: 10.6, clipToPlot: true, fill: "#b5c98a", opacity: 0.35, stroke: "#8aa85a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 0.5, y: 21.3, w: 5.2, d: 8.8, clipToPlot: true, fill: "#b5c98a", opacity: 0.35, stroke: "#8aa85a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 4.8, y: 24.6, text: "meadow Z12", rotate: -90 }
       ]
     },
@@ -325,13 +325,13 @@ const GARDEN = {
       id: "orchard",
       name: "Orchard ~5.5 × 11 m",
       parts: [
-        { kind: "rect", x: 0, y: 21.11, w: 5.56, d: 11.11, fill: "#7fa66f", opacity: 0.4, clipToPlot: true },
+        { kind: "rect", x: 0.4, y: 21.11, w: 5.56, d: 9.0, fill: "#7fa66f", opacity: 0.4, clipToPlot: true },
         { kind: "circle", cx: 1.2, cy: 22, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 4, cy: 23.5, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 1.2, cy: 26, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 4, cy: 27.5, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 1.2, cy: 30, r: 0.5, fill: "#5a8a5a" },
-        { kind: "circle", cx: 4, cy: 31, r: 0.5, fill: "#5a8a5a" },
+        { kind: "circle", cx: 4, cy: 29, r: 0.5, fill: "#5a8a5a" },
         { kind: "text", x: 2.78, y: 27.22, text: "orchard", cls: "lbl", rotate: -90 },
         { kind: "text", x: 6.39, y: 27.22, text: "~5.5 × 11 m", cls: "dim", anchor: "start" }
       ]
@@ -402,7 +402,7 @@ const GARDEN = {
       short: "Arrival strip",
       meta: { plant: "perennials" },
       parts: [
-        { kind: "polygon", points: [[21.3, 29.95], [43.2, 32.55], [43.05, 35], [21.3, 32.4]], fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "polygon", points: [[21.3, 29.95], [42.4, 32.2], [41.8, 33.6], [21.3, 32.4]], fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 30, y: 31.9, text: "arrival strip Z6" }
       ]
     },
@@ -412,7 +412,7 @@ const GARDEN = {
       short: "East understory",
       meta: { plant: "shrubs" },
       parts: [
-        { kind: "rect", x: 41.2, y: 4.5, w: 2.8, d: 16.5, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 40, y: 4.5, w: 2.2, d: 16.5, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 41.9, y: 12.6, text: "east understory Z7", rotate: -90 }
       ]
     },
@@ -482,7 +482,7 @@ const GARDEN = {
       short: "Rain garden",
       meta: { plant: "perennials" },
       parts: [
-        { kind: "rect", x: 38.2, y: 2.2, w: 4, d: 3.8, fill: "#7aa88a", opacity: 0.45, stroke: "#4a7a6a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 38.2, y: 2.2, w: 3.7, d: 3.8, fill: "#7aa88a", opacity: 0.45, stroke: "#4a7a6a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 40.2, y: 4.35, text: "rain garden Z11" }
       ]
     },

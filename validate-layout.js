@@ -86,10 +86,23 @@ for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
   if (hit) collisions.push(`${A.id} ⨯ ${B.id}`);
 }
 
+// ── Check 3: hardcoded trees / conifers / bushes in index.html outside plot ─
+let htmlOut = [];
+try {
+  const html = require("fs").readFileSync(require("path").join(__dirname, "index.html"), "utf8");
+  const hits = [];
+  for (const m of html.matchAll(/add(?:Tree|Conifer)\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/g)) hits.push(["tree/conifer", +m[1], +m[2]]);
+  const bp = html.match(/bushPositions\s*=\s*\[([\s\S]*?)\];/);
+  if (bp) for (const m of bp[1].matchAll(/\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/g)) hits.push(["bush", +m[1], +m[2]]);
+  htmlOut = hits.filter(([, x, z]) => !inPoly(x, z, PLOT));
+} catch (e) { /* index.html not readable */ }
+
 // ── Report ────────────────────────────────────────────────────────────────
 console.log(`plot: ${PLOT.length} verts, ${GARDEN.elements.length} elements checked\n`);
 console.log(`OUTSIDE / FENCE-THROUGH (${outside.length}):`);
 outside.length ? outside.forEach(o => console.log(`  ✗ ${o.id.padEnd(16)} ${o.kind}`)) : console.log("  ✓ none");
 console.log(`\nUNEXPECTED COLLISIONS (${collisions.length}):`);
 collisions.length ? collisions.forEach(c => console.log(`  ✗ ${c}`)) : console.log("  ✓ none");
-process.exit(outside.length + collisions.length ? 1 : 0);
+console.log(`\nHARDCODED index.html TREES/BUSHES OUTSIDE (${htmlOut.length}):`);
+htmlOut.length ? htmlOut.forEach(([t, x, z]) => console.log(`  ✗ ${t} at (${x}, ${z})`)) : console.log("  ✓ none");
+process.exit(outside.length + collisions.length + htmlOut.length ? 1 : 0);
