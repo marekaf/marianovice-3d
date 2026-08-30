@@ -14,6 +14,7 @@ const note = (sev, msg) => problems.push({ sev, msg });
 
 const allWalls = [...data.extWalls, ...data.intWalls];
 const wallRect = w => ({ x0: w.a[0], z0: w.a[1], x1: w.b[0], z1: w.b[1] });
+const wid = w => w.id ? `[${w.id}] ` : '';
 const axisOf = w => (w.b[0] - w.a[0]) >= (w.b[1] - w.a[1]) ? 'x' : 'z';
 const lenOf = w => axisOf(w) === 'x' ? w.b[0] - w.a[0] : w.b[1] - w.a[1];
 
@@ -33,7 +34,7 @@ for (let i = 0; i < allWalls.length; i++) for (let j = i + 1; j < allWalls.lengt
   const A = wallRect(allWalls[i]), B = wallRect(allWalls[j]);
   const ox = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0);
   const oz = Math.min(A.z1, B.z1) - Math.max(A.z0, B.z0);
-  if (ox > TOL && oz > TOL) note('ERR', `walls overlap ${ox.toFixed(2)}×${oz.toFixed(2)} m at (${Math.max(A.x0, B.x0).toFixed(2)}, ${Math.max(A.z0, B.z0).toFixed(2)})`);
+  if (ox > TOL && oz > TOL) note('ERR', `${wid(allWalls[i])}${wid(allWalls[j])}walls overlap ${ox.toFixed(2)}×${oz.toFixed(2)} m at (${Math.max(A.x0, B.x0).toFixed(2)}, ${Math.max(A.z0, B.z0).toFixed(2)})`);
 }
 
 // 1c. dangling ends: each wall end must touch another wall, the outline edge, or a block
@@ -53,13 +54,16 @@ for (let i = 0; i < allWalls.length; i++) for (let j = i + 1; j < allWalls.lengt
       ? [[r.x0, r.z0, r.x0, r.z1], [r.x1, r.z0, r.x1, r.z1]]
       : [[r.x0, r.z0, r.x1, r.z0], [r.x0, r.z1, r.x1, r.z1]];
     for (const [ex0, ez0, ex1, ez1] of edges) {
-      const touched = onOutline((ex0 + ex1) / 2, (ez0 + ez1) / 2) || onOutline(ex0, ez0) || onOutline(ex1, ez1) ||
+      const inSlope = (data.slopes || []).some(sl =>
+        (ex0 + ex1) / 2 >= sl.x0 - TOL && (ex0 + ex1) / 2 <= sl.x1 + TOL &&
+        (ez0 + ez1) / 2 >= sl.z0 - TOL && (ez0 + ez1) / 2 <= sl.z1 + TOL);
+      const touched = inSlope || onOutline((ex0 + ex1) / 2, (ez0 + ez1) / 2) || onOutline(ex0, ez0) || onOutline(ex1, ez1) ||
         allWalls.some(o => {
           if (o === w) return false;
           const q = wallRect(o);
           return Math.min(ex1, q.x1) - Math.max(ex0, q.x0) >= -TOL && Math.min(ez1, q.z1) - Math.max(ez0, q.z0) >= -TOL;
         });
-      if (!touched) note('ERR', `wall end mid-air at (${((ex0 + ex1) / 2).toFixed(2)}, ${((ez0 + ez1) / 2).toFixed(2)})`);
+      if (!touched) note('ERR', `${wid(w)}wall end mid-air at (${((ex0 + ex1) / 2).toFixed(2)}, ${((ez0 + ez1) / 2).toFixed(2)})`);
     }
   }
 }
@@ -116,7 +120,7 @@ if (data.stairs) {
         const q = wallRect(w2);
         const ox = Math.min(zone.x1, q.x1) - Math.max(zone.x0, q.x0);
         const oz = Math.min(zone.z1, q.z1) - Math.max(zone.z0, q.z0);
-        if (ox > 0.05 && oz > 0.05) note('ERR', `door at (${from.toFixed(2)}, ${(ax === 'x' ? r.z0 : r.x0).toFixed(2)}) blocked by a wall/mass at (${Math.max(zone.x0, q.x0).toFixed(2)}, ${Math.max(zone.z0, q.z0).toFixed(2)})`);
+        if (ox > 0.05 && oz > 0.05) note('ERR', `${wid(w)}door at (${from.toFixed(2)}, ${(ax === 'x' ? r.z0 : r.x0).toFixed(2)}) blocked by ${wid(w2) || 'a wall/mass '}at (${Math.max(zone.x0, q.x0).toFixed(2)}, ${Math.max(zone.z0, q.z0).toFixed(2)})`);
       }
     }
     const L = lenOf(w);
@@ -138,12 +142,21 @@ if (data.stairs) {
   }
 }
 
+// 1f-lid. with a lid ceiling, the stairwell and the hatch must lie fully inside punched holes
+if (data.lid) {
+  const inHole = r => (data.lid.holes || []).some(h =>
+    r.x0 >= h.x0 - TOL && r.x1 <= h.x1 + TOL && r.z0 >= h.z0 - TOL && r.z1 <= h.z1 + TOL);
+  if (data.stairs && !inHole(data.stairs)) note('ERR', 'lid has no hole over the stairwell');
+  if (data.hatch && !inHole(data.hatch)) note('ERR', 'lid has no hole for the attic hatch');
+}
+
 // 1f. ceiling panels sit BETWEEN walls — a panel overlapping a wall body is a lid on wall
 // tops, not a ceiling; and the hatch must punch a real hole (no panel may cover it)
 if (data.ceilings) {
   for (const c of data.ceilings) {
     for (const w of allWalls) {
       if (w.block) continue;
+      if ((w.h ?? 99) < (data.clearH ?? 2.52) - 0.05) continue;  // knee walls/railings end below the ceiling
       const r = wallRect(w);
       const ox = Math.min(c.x1, r.x1) - Math.max(c.x0, r.x0);
       const oz = Math.min(c.z1, r.z1) - Math.max(c.z0, r.z0);
@@ -198,6 +211,14 @@ for (const r of data.rooms) {
     for (const [f, t] of coverageGaps(e)) {
       // a gap is fine if another room adjoins it (open-plan boundary) or the segment
       // lies inside another room's rect (deliberate carve-out overlap)
+      const voidHole = (data.floorHoles || []).find(h =>
+        e.axis === 'x' ? (e.at >= h.z0 - TOL && e.at <= h.z1 + TOL && f >= h.x0 - TOL && t <= h.x1 + TOL)
+                       : (e.at >= h.x0 - TOL && e.at <= h.x1 + TOL && f >= h.z0 - TOL && t <= h.z1 + TOL));
+      if (voidHole) { note('INFO', `room ${r.id} ${e.name} edge ${f.toFixed(2)}–${t.toFixed(2)} opens to a floor opening (stair/gallery)`); continue; }
+      const underSlope = (data.slopes || []).find(sl =>
+        e.axis === 'x' ? (e.at >= sl.z0 - TOL && e.at <= sl.z1 + TOL && f >= sl.x0 - TOL && t <= sl.x1 + TOL)
+                       : (e.at >= sl.x0 - TOL && e.at <= sl.x1 + TOL && f >= sl.z0 - TOL && t <= sl.z1 + TOL));
+      if (underSlope) { note('INFO', `room ${r.id} ${e.name} edge ${f.toFixed(2)}–${t.toFixed(2)} bounded by the roof slope`); continue; }
       const other = data.rooms.find(o => o !== r && (
         e.axis === 'x' ? ((Math.abs(o.z1 - e.at) < TOL || Math.abs(o.z0 - e.at) < TOL || (o.z0 < e.at && o.z1 > e.at)) && o.x0 < t - TOL && o.x1 > f + TOL)
                        : ((Math.abs(o.x1 - e.at) < TOL || Math.abs(o.x0 - e.at) < TOL || (o.x0 < e.at && o.x1 > e.at)) && o.z0 < t - TOL && o.z1 > f + TOL)));
@@ -225,7 +246,7 @@ for (const w of allWalls) {
   }
 }
 for (const [a, b] of openPairs) links.push({ rooms: [a, b], ext: false });   // open-plan boundaries connect too
-const reach = new Set();
+const reach = new Set(data.entryRooms || []);   // loft floors: entered from below (stairs/ladder)
 for (const l of links) if (l.ext) l.rooms.forEach(id => reach.add(id));
 let grew = true;
 while (grew) {
