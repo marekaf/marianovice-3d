@@ -319,9 +319,9 @@ const levelPads = [
   { x0: 27.63, z0: 19.38, x1: 34.13, z1: 26.43, level: 1.94, blend: 0.8 },  // garage floor slab (2.5 cm below top, no z-fight)
   { x0: 27.63, z0: 26.43, x1: 34.13, z1: 27.25, level: 1.965, blend: 2.0 }, // level apron in front of the garage door
   { x0: 21.28, z0: 26.44, x1: 38.5, z1: 30.5, level: 1.965, blend: 1.5 },   // driveway held at carport level, banks down to the gate
-  { x0: 3.5, z0: 2.0, x1: 10.5, z1: 5.0, level: 3.5, blend: 1.2 },          // sauna + hot-tub platform on the NW high ground
+  { x0: 3.5, z0: 2.17, x1: 10.5, z1: 5.17, level: 3.5, blend: 1.2 },       // sauna + hot-tub platform on the NW high ground
   { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 3.5, blend: 1.2 },          // flat pad containing all 4 raised beds
-  { x0: 25.78, z0: 2.0, x1: 31.78, z1: 6.0, level: 2.2, blend: 1.2 },       // flat pad under the pergola
+  { x0: 25.78, z0: 1.61, x1: 31.78, z1: 5.61, level: 2.2, blend: 1.2 },     // flat pad under the pergola
   { x0: 10.48, z0: 26.43, x1: 21.28, z1: 26.93, level: 2.345, blend: 0.6 }, // drip strip — south wall
   { x0: 15.7, z0: 26.43, x1: 19.7, z1: 27.5, level: 2.345, blend: 0.6 },    // 1 m flat gravel bed for the heat-pump unit (S wall)
 ];
@@ -2149,16 +2149,23 @@ grassPositions.forEach(([x, z]) => {
 });
 
 // ───────────────────────── FENCE ─────────────────────────
-// East boundary has GATE gap along E_kink → JV (gate line from layout)
-const [pNW, pNE, pEK, pSE, pSW] = plotVerts;
-addFenceSegment(pNW[0], pNW[1], pNE[0], pNE[1]);   // north
-addFenceSegment(pNE[0], pNE[1], pEK[0], pEK[1]);   // east horní
-// East lower with brána gap
+// Fence follows the whole plot boundary (general polygon — any vertex count), with a GATE + wicket
+// gap on whichever edge the gate line sits on.
 function lerp2(a, b, t) {
   return [a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t];
 }
 const GT = EL.gate.parts.find(p => p.kind === 'line');
-const eL1 = pEK, eL2 = pSE;
+// Find the plot edge the gate belongs to (its centre projects nearest to that edge).
+const gmx = (GT.x1 + GT.x2) / 2, gmz = (GT.y1 + GT.y2) / 2;
+let gateEdge = 0, gBest = Infinity;
+for (let i = 0; i < plotVerts.length; i++) {
+  const a = plotVerts[i], b = plotVerts[(i + 1) % plotVerts.length];
+  const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1;
+  const t = Math.max(0, Math.min(1, ((gmx - a[0]) * dx + (gmz - a[1]) * dz) / L2));
+  const d = Math.hypot(gmx - (a[0] + t * dx), gmz - (a[1] + t * dz));
+  if (d < gBest) { gBest = d; gateEdge = i; }
+}
+const eL1 = plotVerts[gateEdge], eL2 = plotVerts[(gateEdge + 1) % plotVerts.length];
 const tBranaT = (GT.y1 - eL1[1]) / (eL2[1] - eL1[1]);
 const tBranaB = (GT.y2 - eL1[1]) / (eL2[1] - eL1[1]);
 const gateT = lerp2(eL1, eL2, tBranaT);   // vehicle-gate north jamb (= the post between wicket & gate)
@@ -2166,11 +2173,15 @@ const gateB = lerp2(eL1, eL2, tBranaB);   // vehicle-gate south jamb
 const gateGL = Math.hypot(gateB[0] - gateT[0], gateB[1] - gateT[1]);
 const gux = (gateB[0] - gateT[0]) / gateGL, guz = (gateB[1] - gateT[1]) / gateGL;  // along the opening (→ south)
 const wicketS = [gateB[0] + gux * 0.9, gateB[1] + guz * 0.9];   // wicket south jamb, 0.9 m S of the gate
-addFenceSegment(eL1[0], eL1[1], gateT[0], gateT[1]);     // fence north of the gate (the run-back parks behind it)
-// gateT → gateB = vehicle gate; gateB → wicketS = 0.9 m wicket opening (SOUTH, opposite the run-back)
-addFenceSegment(wicketS[0], wicketS[1], eL2[0], eL2[1]); // fence south of the wicket
-addFenceSegment(pSE[0], pSE[1], pSW[0], pSW[1]);          // south
-addFenceSegment(pSW[0], pSW[1], pNW[0], pNW[1]);          // west
+for (let i = 0; i < plotVerts.length; i++) {
+  const a = plotVerts[i], b = plotVerts[(i + 1) % plotVerts.length];
+  if (i === gateEdge) {
+    addFenceSegment(a[0], a[1], gateT[0], gateT[1]);       // fence north of the gate (run-back parks behind it)
+    addFenceSegment(wicketS[0], wicketS[1], b[0], b[1]);   // fence south of the 0.9 m wicket
+  } else {
+    addFenceSegment(a[0], a[1], b[0], b[1]);
+  }
+}
 
 // Entrance: posuvná brána (cantilever sliding, 4.0 m clear) retracting NORTH + a SEPARATE 0.9 m
 // wicket (branka) to the SOUTH — opposite side, so it never overlaps the retracted gate. Both OPEN.
