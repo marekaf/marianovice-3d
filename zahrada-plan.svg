@@ -8,7 +8,7 @@
       <path d="M 180 0 L 0 0 0 180" fill="none" stroke="#a0a0a0" stroke-width="1"/>
     </pattern>
     <clipPath id="plotShape">
-      <polygon points="0,0 794.88,0 794.88,420.84 775.98,637.38 20.7,547.38"/>
+      <polygon points="-38.88,5.58 753.48,-14.22 787.5,404.1 779.4,475.74 763.38,618.84 5.4,550.26"/>
     </clipPath>
   </defs>
   <style>
@@ -33,17 +33,17 @@
   </style>
   <rect x="0" y="0" width="1100" height="880" fill="white"/>
   <text x="550" y="28" class="title">Garden schematic plan</text>
-  <text x="550" y="46" class="subtitle">Pentagon plot 1429.25 m² · grid 2 × 2 m (columns 1–22, rows a–r)</text>
+  <text x="550" y="46" class="subtitle">Plot 1433.66 m² · grid 2 × 2 m (columns 1–22, rows a–q)</text>
   <g transform="translate(80, 110)">
     <g clip-path="url(#plotShape)"><rect x="-50" y="-10" width="900" height="700" fill="url(#majorgrid)"/></g>
-    <polygon points="0,0 794.88,0 794.88,420.84 775.98,637.38 20.7,547.38" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
+    <polygon points="-38.88,5.58 753.48,-14.22 787.5,404.1 779.4,475.74 763.38,618.84 5.4,550.26" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
     <g class="axis-labels" font-size="9" fill="#555" text-anchor="middle" font-weight="600"><text x="18" y="-6">1</text><text x="54" y="-6">2</text><text x="90" y="-6">3</text><text x="126" y="-6">4</text><text x="162" y="-6">5</text><text x="198" y="-6">6</text><text x="234" y="-6">7</text><text x="270" y="-6">8</text><text x="306" y="-6">9</text><text x="342" y="-6">10</text><text x="378" y="-6">11</text><text x="414" y="-6">12</text><text x="450" y="-6">13</text><text x="486" y="-6">14</text><text x="522" y="-6">15</text><text x="558" y="-6">16</text><text x="594" y="-6">17</text><text x="630" y="-6">18</text><text x="666" y="-6">19</text><text x="702" y="-6">20</text><text x="738" y="-6">21</text><text x="774" y="-6">22</text></g>
-    <g class="axis-labels" font-size="9" fill="#555" text-anchor="middle" font-weight="600"><text x="-10" y="22">a</text><text x="-10" y="58">b</text><text x="-10" y="94">c</text><text x="-10" y="130">d</text><text x="-10" y="166">e</text><text x="-10" y="202">f</text><text x="-10" y="238">g</text><text x="-10" y="274">h</text><text x="-10" y="310">i</text><text x="-10" y="346">j</text><text x="-10" y="382">k</text><text x="-10" y="418">l</text><text x="-10" y="454">m</text><text x="-10" y="490">n</text><text x="-10" y="526">o</text><text x="-10" y="562">p</text><text x="-10" y="598">q</text><text x="-10" y="634">r</text></g>
-    <text x="397.08" y="-21.96" class="strana">↔ 44.16 m (north)</text>
-    <text x="813.06" y="199.98" class="strana" transform="rotate(90, 813.06, 199.98)">↔ 23.38 m</text>
-    <text x="813.06" y="525.06" class="strana" transform="rotate(85, 813.06, 525.06)">↔ 12.08 m</text>
-    <text x="399.96" y="617.04" class="strana">↔ 42.27 m (south)</text>
-    <text x="-32.04" y="280.08" class="strana" transform="rotate(-90, -32.04, 280.08)">↔ 30.44 m (west)</text>
+    <g class="axis-labels" font-size="9" fill="#555" text-anchor="middle" font-weight="600"><text x="-10" y="22">a</text><text x="-10" y="58">b</text><text x="-10" y="94">c</text><text x="-10" y="130">d</text><text x="-10" y="166">e</text><text x="-10" y="202">f</text><text x="-10" y="238">g</text><text x="-10" y="274">h</text><text x="-10" y="310">i</text><text x="-10" y="346">j</text><text x="-10" y="382">k</text><text x="-10" y="418">l</text><text x="-10" y="454">m</text><text x="-10" y="490">n</text><text x="-10" y="526">o</text><text x="-10" y="562">p</text><text x="-10" y="598">q</text></g>
+    <text x="357.3" y="-27" class="strana">↔ 44.03 m (north)</text>
+    <text x="815.4" y="194.94" class="strana" transform="rotate(90, 815.4, 194.94)">↔ 23.32 m</text>
+    <text x="817.2" y="493.2" class="strana" transform="rotate(82, 817.2, 493.2)">↔ 12.01 m</text>
+    <text x="384.3" y="610.2" class="strana">↔ 42.28 m (south)</text>
+    <text x="-48.6" y="277.92" class="strana" transform="rotate(-90, -48.6, 277.92)">↔ 30.36 m (west)</text>
     <g stroke="#b22" stroke-width="0.6" fill="#b22">
       <line x1="189" y1="0" x2="189" y2="129.06" stroke-dasharray="3,2"/>
       <line x1="186" y1="0" x2="192" y2="0" stroke-width="1"/>

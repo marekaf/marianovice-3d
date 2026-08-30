@@ -1,5 +1,6 @@
 // Garden layout — single source of truth for the 2D plan, the 2D editor and the 3D viewer.
-// All coordinates in meters. Origin: plot NW corner. x → east, y → south (= z in the 3D viewer).
+// All coordinates in meters. Origin: fixed model datum (near the plot NW corner); the plot polygon is
+// the surveyed parcel boundary registered to the buildings. x → east, y → south (= z in the 3D viewer).
 // 2D pages render at m2px pixels per meter. Regenerate zahrada-plan.svg with: node generate-svg.js
 const GARDEN = {
   m2px: 18,
@@ -7,13 +8,13 @@ const GARDEN = {
   title: "Garden schematic plan",
   docMeta: { project: "Zahrada Mariánovice", place: "Mariánovice, Benešov", drawing: "Situace — osazovací koncept", revision: "R1" },
   plot: {
-    vertices: [[0, 0], [44.16, 0], [44.16, 23.38], [43.11, 35.41], [1.15, 30.41]],
+    vertices: [[-2.16, 0.31], [41.86, -0.79], [43.75, 22.45], [43.3, 26.43], [42.41, 34.38], [0.3, 30.57]],
     sideLabels: [
-      { text: "↔ 44.16 m (north)", at: [22.06, -1.22] },
-      { text: "↔ 23.38 m", at: [45.17, 11.11], rotate: 90 },
-      { text: "↔ 12.08 m", at: [45.17, 29.17], rotate: 85 },
-      { text: "↔ 42.27 m (south)", at: [22.22, 34.28] },
-      { text: "↔ 30.44 m (west)", at: [-1.78, 15.56], rotate: -90 }
+      { text: "↔ 44.03 m (north)", at: [19.85, -1.5] },
+      { text: "↔ 23.32 m", at: [45.3, 10.83], rotate: 90 },
+      { text: "↔ 12.01 m", at: [45.4, 27.4], rotate: 82 },
+      { text: "↔ 42.28 m (south)", at: [21.35, 33.9] },
+      { text: "↔ 30.36 m (west)", at: [-2.7, 15.44], rotate: -90 }
     ]
   },
   setbacks: [
