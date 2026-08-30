@@ -110,7 +110,8 @@ const INTERIORS3D = (() => {
   //           per module (filler / door front / appliance front / open niche), plinth? (dark,
   //           inset 50 mm on front faces, counted inside h), worktop? = thickness with 20 mm
   //           front overhang, or {th,x0,z0,x1,z1} override rect; fmat?/wmat? name a furnMats
-  //           entry for the 'd' fronts / the worktop (defaults: front / wood)
+  //           entry for the 'd' fronts / the worktop (defaults: front / wood); cmat? does the
+  //           same for the carcass box (default carc) — freestanding pieces with visible sides
   //   slab  — plain box, mat names a furnMats entry
   //   glass — transparent panel (shower screen), no shadow
   //   fix   — sanitary piece, type:'bath'|'wc'|'basin': ceramic box, bath/wc get an inset top
@@ -137,7 +138,7 @@ const INTERIORS3D = (() => {
           if (fronts.includes('E')) px1 -= 0.05;
           add(px0, y0, pz0, px1, y0 + pl, pz1, M.plinth);
         }
-        add(f.x0, y0 + pl, f.z0, f.x1, y1, f.z1, M.carc);
+        add(f.x0, y0 + pl, f.z0, f.x1, y1, f.z1, M[f.cmat] || M.carc);
         const alongX = fronts.length === 0 || fronts[0] === 'N' || fronts[0] === 'S';
         const mods = f.modules || [alongX ? f.x1 - f.x0 : f.z1 - f.z0];
         const tags = f.tags || mods.map(() => 'd');

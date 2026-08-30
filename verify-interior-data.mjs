@@ -196,6 +196,7 @@ function verify(data, name, dxfPath) {
       if (f.kind === 'slab' && f.mat && !MATS[f.mat]) note('ERR', `${fid(f)}unknown mat '${f.mat}'`);
       if (f.fmat && !MATS[f.fmat]) note('ERR', `${fid(f)}unknown fmat '${f.fmat}'`);
       if (f.wmat && !MATS[f.wmat]) note('ERR', `${fid(f)}unknown wmat '${f.wmat}'`);
+      if (f.cmat && !MATS[f.cmat]) note('ERR', `${fid(f)}unknown cmat '${f.cmat}'`);
       if (!(f.x1 > f.x0) || !(f.z1 > f.z0) || !(f.h > 0)) note('ERR', `${fid(f)}degenerate box`);
       if (f.tags && f.modules && f.tags.length !== f.modules.length) note('ERR', `${fid(f)}tags/modules length mismatch`);
       if (f.tags && f.tags.some(t => !TAGS[t])) note('ERR', `${fid(f)}unknown front tag`);
