@@ -138,6 +138,14 @@ if (data.stairs) {
   }
 }
 
+// 1f-lid. with a lid ceiling, the stairwell and the hatch must lie fully inside punched holes
+if (data.lid) {
+  const inHole = r => (data.lid.holes || []).some(h =>
+    r.x0 >= h.x0 - TOL && r.x1 <= h.x1 + TOL && r.z0 >= h.z0 - TOL && r.z1 <= h.z1 + TOL);
+  if (data.stairs && !inHole(data.stairs)) note('ERR', 'lid has no hole over the stairwell');
+  if (data.hatch && !inHole(data.hatch)) note('ERR', 'lid has no hole for the attic hatch');
+}
+
 // 1f. ceiling panels sit BETWEEN walls — a panel overlapping a wall body is a lid on wall
 // tops, not a ceiling; and the hatch must punch a real hole (no panel may cover it)
 if (data.ceilings) {

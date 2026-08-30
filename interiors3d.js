@@ -267,6 +267,8 @@ const INTERIORS3D = (() => {
     const floorMat = new THREE.MeshStandardMaterial({ color: 0xd7c9a8, roughness: 0.6 });
     const ceilMat = new THREE.MeshStandardMaterial({ color: 0xf4f2ee, roughness: 0.9, side: THREE.DoubleSide });
 
+    // Walls stop at the clear height — the lid (strop plate) rests ON them
+    const wallH = data.lid ? (data.clearH ?? 2.52) : H;
     const root = new THREE.Group();
     const walls = { N: new THREE.Group(), S: new THREE.Group(), E: new THREE.Group(), W: new THREE.Group() };
     const intGroup = new THREE.Group();
@@ -323,6 +325,29 @@ const INTERIORS3D = (() => {
     // Ceiling: explicit zone slabs (the loft floor plates) when the data provides them,
     // flush with the wall tops; else fall back to one slab per non-open room
     const cH = data.clearH ?? 2.52;
+    if (data.lid) {
+      // One continuous plate over the whole outline, with punched holes
+      const shape = new THREE.Shape();
+      shape.moveTo(data.outline[0][0], -data.outline[0][1]);
+      for (let i = 1; i < data.outline.length; i++) shape.lineTo(data.outline[i][0], -data.outline[i][1]);
+      shape.closePath();
+      for (const hole of data.lid.holes || []) {
+        const hp = new THREE.Path();
+        hp.moveTo(hole.x0, -hole.z0);
+        hp.lineTo(hole.x0, -hole.z1);
+        hp.lineTo(hole.x1, -hole.z1);
+        hp.lineTo(hole.x1, -hole.z0);
+        hp.closePath();
+        shape.holes.push(hp);
+      }
+      const geom = new THREE.ExtrudeGeometry(shape, { depth: 0.2, bevelEnabled: false });
+      geom.rotateX(-Math.PI / 2);
+      geom.translate(0, floorY + cH, 0);
+      const m = new THREE.Mesh(geom, ceilMat);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      ceiling.add(m);
+    }
     if (data.ceilings) {
       for (const c of data.ceilings) mkBox(ceiling, c.x0, floorY + cH, c.z0, c.x1, floorY + H - 0.02, c.z1, ceilMat);
       if (data.hatch) {
