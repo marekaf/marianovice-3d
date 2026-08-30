@@ -361,6 +361,14 @@ function gradedHeight(x, z) {
     const t = cutSmoothstep(d / blend);   // inside footprint (d=0): level; edge: banks to grade
     h = p.level + (base - p.level) * t;
   }
+  // Driveway graded down to the carport slab level so it falls to the gate in one clean grade. The
+  // ground rises just south of the carport, so without this the drive humps up between the parked cars
+  // and the gate. Cut only (min), banking back to grade at the garden edges.
+  {
+    const dw = { x0: 21.28, z0: 26.43, x1: 43.5, z1: 32.5, blend: 1.8, level: 1.925 };
+    const d = cutRectDist(dw, x, z);
+    if (d < dw.blend) h = Math.min(h, dw.level + (h - dw.level) * cutSmoothstep(d / dw.blend));
+  }
   const prr = Math.sqrt(((x - PBOWL.cx) / PBOWL.rx) ** 2 + ((z - PBOWL.cz) / PBOWL.rz) ** 2);
   if (prr < 1.3) {
     if (prr <= 1) h = Math.min(h, PBOWL.edge - PBOWL.depth * 0.5 * (1 + Math.cos(prr * Math.PI)));
