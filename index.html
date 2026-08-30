@@ -306,7 +306,7 @@ const basePlaneHeight = (x, z) => TERRAIN.basePlaneHeight(x, z);
 // smoothstep bank rising to natural grade; min() leaves downhill areas untouched
 const CUT_BLEND = 1.8;
 const cutRects = [
-  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 28.5, level: 2.46, blend: 2.2 },  // west sidewalk; runs past the deck end and wraps the SW corner so the high ground banks up out in the garden, not against the deck
+  { x0: 8.3, z0: 6.7, x1: 10.48, z1: 26.5, level: 2.46, blend: 2.2 },  // west sidewalk, ending at the deck/SW corner. Do NOT push z1 further south: holding the grade flat past the deck makes the SW garden bank up ~1 m right at the south fence, and the fence then rides over that bump. Ending here lets the garden rise gently inland instead.
   { x0: 10.48, z0: 15.93, x1: 14.93, z1: 19.18, level: 2.46 }, // atrium
   { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
   { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
