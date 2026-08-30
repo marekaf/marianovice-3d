@@ -310,15 +310,8 @@ const cutRects = [
   { x0: 10.48, z0: 15.93, x1: 14.93, z1: 19.18, level: 2.46 }, // atrium
   { x0: 10.48, z0: 6.68, x1: 21.28, z1: 7.18, level: 2.345, blend: 0.6 },   // drip strip — north wall
   { x0: 21.28, z0: 7.18, x1: 21.78, z1: 11.58, level: 2.345, blend: 0.6 },  // drip strip — east wall north of the notch
-  // South-wall gravel apron. The south/east side of the house sits at the paved grade (396.50 = −0.50 m,
-  // internal 1.965, level with the carport/drive), half a metre below the FFL — the marmolit plinth bridges
-  // the difference. So this is a deep CUT (min, never fills) to just under that grade; a flat band that dies
-  // gently into the uphill garden. z0 reaches ~1 m under the house (hidden by the walls) so the coarse ground
-  // grid stays flat at the wall face instead of interpolating up toward the uncut grade under the house.
-  { x0: 10.48, z0: 25.5, x1: 21.28, z1: 27.45, level: 1.9, blend: 2.2 },
-  // SE corner — ties the south gravel grade down to the carport/drive so no grass wedge is left standing
-  // between the two hardscapes; the garden banks up south and west of it.
-  { x0: 18.8, z0: 26.43, x1: 21.28, z1: 29.5, level: 1.9, blend: 1.5 },
+  // NOTE: the south-side cut to the paved grade (396.50) is applied AFTER the level pads — see gradedHeight —
+  // because the carport level pad's blend would otherwise re-raise the SE corner up over the gravel.
 ];
 // Level pads — force the footprint flat to `level` (cut where the grade is higher, fill where it is
 // lower), smoothstep bank to grade at the edges. The real NW→SE fall drops the SE hardscape below its
@@ -375,6 +368,16 @@ function gradedHeight(x, z) {
     const dw = { x0: 21.28, z0: 26.43, x1: 43.5, z1: 32.5, blend: 1.8, level: 1.925 };
     const d = cutRectDist(dw, x, z);
     if (d < dw.blend) h = Math.min(h, dw.level + (h - dw.level) * cutSmoothstep(d / dw.blend));
+  }
+  // South side down to the paved grade (396.50 = internal ~1.9). Applied here, AFTER the level pads, so the
+  // carport pad's blend can't re-raise the SE corner over the gravel. First rect is the 1 m band + its lawn
+  // run-out; second ties the SE corner across to the drive. Cut only (min against the post-pad height).
+  for (const sp of [
+    { x0: 10.48, z0: 25.5, x1: 21.28, z1: 28.5, blend: 2.5, level: 1.9 },
+    { x0: 16.5, z0: 26.43, x1: 22.2, z1: 29.5, blend: 1.5, level: 1.9 },
+  ]) {
+    const d = cutRectDist(sp, x, z);
+    if (d < sp.blend) h = Math.min(h, sp.level + (h - sp.level) * cutSmoothstep(d / sp.blend));
   }
   const prr = Math.sqrt(((x - PBOWL.cx) / PBOWL.rx) ** 2 + ((z - PBOWL.cz) / PBOWL.rz) ** 2);
   if (prr < 1.3) {
@@ -1427,7 +1430,7 @@ scene.add(driveway);
     { a0: 10.48, a1: 21.28, c: 7.18, axis: 'x', dir: -1 },   // N wall
     { a0: 10.48, a1: 21.28, c: 26.43, axis: 'x', dir: 1 },   // S wall
     { a0: 7.18, a1: 11.58, c: 21.28, axis: 'z', dir: 1 },    // E wall, north of the terrace notch
-    { a0: 19.38, a1: 26.43, c: 21.28, axis: 'z', dir: 1 },   // E wall facing the carport (down to the SE corner)
+    { a0: 22.53, a1: 26.43, c: 21.28, axis: 'z', dir: 1 },   // E wall of the technical room facing the carport (starts at the notch south edge, so it clads a real wall, not the open recessed entrance)
   ];
   for (const r of runs) {
     const len = r.a1 - r.a0;
