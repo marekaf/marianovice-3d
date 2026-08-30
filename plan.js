@@ -60,7 +60,7 @@
   </style>`);
     out.push(`  <rect x="0" y="0" width="1100" height="880" fill="white"/>`);
     out.push(`  <text x="550" y="28" class="title">${esc(garden.title)}</text>`);
-    out.push(`  <text x="550" y="46" class="subtitle">Pentagon plot ${r2(polyArea(garden.plot.vertices))} m² · grid ${garden.gridCellM} × ${garden.gridCellM} m (columns 1–${cols}, rows a–${ROWS[rows - 1]})</text>`);
+    out.push(`  <text x="550" y="46" class="subtitle">Plot ${r2(polyArea(garden.plot.vertices))} m² · grid ${garden.gridCellM} × ${garden.gridCellM} m (columns 1–${cols}, rows a–${ROWS[rows - 1]})</text>`);
     out.push(`  <g transform="translate(80, 110)">`);
     out.push(`    <g clip-path="url(#plotShape)"><rect x="-50" y="-10" width="900" height="700" fill="url(#majorgrid)"/></g>`);
     out.push(`    <polygon points="${plotPts}" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>`);
