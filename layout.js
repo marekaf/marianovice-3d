@@ -218,8 +218,8 @@ const GARDEN = {
       name: "Garden tool + mower store (plastic box) 1.905 × 1.09 m",
       short: "Tool store",
       parts: [
-        { kind: "rect", x: 0.25, y: 0.2, w: 1.905, d: 1.09, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
-        { kind: "text", x: 1.2, y: 0.9, text: "mower", cls: "lbl-sm", fill: "#fff" }
+        { kind: "rect", x: 0.25, y: 0.7, w: 1.905, d: 1.09, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
+        { kind: "text", x: 1.2, y: 1.4, text: "mower", cls: "lbl-sm", fill: "#fff" }
       ]
     },
     {

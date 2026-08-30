@@ -67,7 +67,7 @@
       <circle cx="756" cy="630" r="9" />
       <rect x="117" y="39.06" width="72" height="54" />
       <rect x="63" y="39.06" width="54" height="54" />
-      <rect x="4.5" y="3.6" width="34.29" height="19.62" />
+      <rect x="4.5" y="12.6" width="34.29" height="19.62" />
       <circle cx="90" cy="66.06" r="16.2" />
       <rect x="464.04" y="28.98" width="108" height="72" />
       <rect x="467.64" y="32.58" width="100.8" height="64.8" />
@@ -194,7 +194,7 @@
       <rect x="12.6" y="174.6" width="55.8" height="100.8" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <rect x="28.8" y="509.4" width="36" height="18" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <rect x="720" y="583.2" width="14.76" height="25.38" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
-      <rect x="4.5" y="3.6" width="34.29" height="19.62" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="4.5" y="12.6" width="34.29" height="19.62" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
     </g>
     <circle cx="518.04" cy="64.98" r="8" fill="#e08a1e"/>
     <text x="518.04" y="68.18" class="tag" fill="#fff">1</text>
@@ -235,9 +235,9 @@
     <circle cx="727.38" cy="595.89" r="8" fill="#e08a1e"/>
     <text x="727.38" y="599.09" class="tag" fill="#fff">13</text>
     <text x="727.38" y="613.89" class="zlvl">−2.36</text>
-    <circle cx="21.65" cy="13.41" r="8" fill="#e08a1e"/>
-    <text x="21.65" y="16.61" class="tag" fill="#fff">14</text>
-    <text x="21.65" y="31.41" class="zlvl">+1.61</text>
+    <circle cx="21.65" cy="22.41" r="8" fill="#e08a1e"/>
+    <text x="21.65" y="25.61" class="tag" fill="#fff">14</text>
+    <text x="21.65" y="40.41" class="zlvl">+1.59</text>
   </g>
   <g transform="translate(838, 92)">
     <circle cx="0" cy="0" r="24" fill="white" stroke="#555" stroke-width="1.3"/>
@@ -275,7 +275,7 @@
     <text x="0" y="261" class="td">11  Raised-beds pad</text><text x="118" y="261" class="td" text-anchor="end">+1.04</text><text x="158" y="261" class="td" text-anchor="end">398.04</text><text x="196" y="261" class="td" text-anchor="end">0.29</text>
     <text x="0" y="273" class="td">12  Compost</text><text x="118" y="273" class="td" text-anchor="end">+0.25</text><text x="158" y="273" class="td" text-anchor="end">397.25</text><text x="196" y="273" class="td" text-anchor="end">0.17</text>
     <text x="0" y="285" class="td">13  Bin store</text><text x="118" y="285" class="td" text-anchor="end">−2.36</text><text x="158" y="285" class="td" text-anchor="end">394.64</text><text x="196" y="285" class="td" text-anchor="end">0.12</text>
-    <text x="0" y="297" class="td">14  Tool store</text><text x="118" y="297" class="td" text-anchor="end">+1.61</text><text x="158" y="297" class="td" text-anchor="end">398.61</text><text x="196" y="297" class="td" text-anchor="end">0.17</text>
+    <text x="0" y="297" class="td">14  Tool store</text><text x="118" y="297" class="td" text-anchor="end">+1.59</text><text x="158" y="297" class="td" text-anchor="end">398.59</text><text x="196" y="297" class="td" text-anchor="end">0.17</text>
     <text x="0" y="317" class="note">±0.000 = house FF = 397.00 Bpv.</text>
     <text x="0" y="328" class="note">Pads cut to lowest corner (no fill</text>
     <text x="0" y="338" class="note">under structures); cut m = max dig.</text>
