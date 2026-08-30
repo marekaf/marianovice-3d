@@ -54,7 +54,10 @@ for (let i = 0; i < allWalls.length; i++) for (let j = i + 1; j < allWalls.lengt
       ? [[r.x0, r.z0, r.x0, r.z1], [r.x1, r.z0, r.x1, r.z1]]
       : [[r.x0, r.z0, r.x1, r.z0], [r.x0, r.z1, r.x1, r.z1]];
     for (const [ex0, ez0, ex1, ez1] of edges) {
-      const touched = onOutline((ex0 + ex1) / 2, (ez0 + ez1) / 2) || onOutline(ex0, ez0) || onOutline(ex1, ez1) ||
+      const inSlope = (data.slopes || []).some(sl =>
+        (ex0 + ex1) / 2 >= sl.x0 - TOL && (ex0 + ex1) / 2 <= sl.x1 + TOL &&
+        (ez0 + ez1) / 2 >= sl.z0 - TOL && (ez0 + ez1) / 2 <= sl.z1 + TOL);
+      const touched = inSlope || onOutline((ex0 + ex1) / 2, (ez0 + ez1) / 2) || onOutline(ex0, ez0) || onOutline(ex1, ez1) ||
         allWalls.some(o => {
           if (o === w) return false;
           const q = wallRect(o);
@@ -212,6 +215,10 @@ for (const r of data.rooms) {
         e.axis === 'x' ? (e.at >= h.z0 - TOL && e.at <= h.z1 + TOL && f >= h.x0 - TOL && t <= h.x1 + TOL)
                        : (e.at >= h.x0 - TOL && e.at <= h.x1 + TOL && f >= h.z0 - TOL && t <= h.z1 + TOL));
       if (voidHole) { note('INFO', `room ${r.id} ${e.name} edge ${f.toFixed(2)}–${t.toFixed(2)} opens to a floor opening (stair/gallery)`); continue; }
+      const underSlope = (data.slopes || []).find(sl =>
+        e.axis === 'x' ? (e.at >= sl.z0 - TOL && e.at <= sl.z1 + TOL && f >= sl.x0 - TOL && t <= sl.x1 + TOL)
+                       : (e.at >= sl.x0 - TOL && e.at <= sl.x1 + TOL && f >= sl.z0 - TOL && t <= sl.z1 + TOL));
+      if (underSlope) { note('INFO', `room ${r.id} ${e.name} edge ${f.toFixed(2)}–${t.toFixed(2)} bounded by the roof slope`); continue; }
       const other = data.rooms.find(o => o !== r && (
         e.axis === 'x' ? ((Math.abs(o.z1 - e.at) < TOL || Math.abs(o.z0 - e.at) < TOL || (o.z0 < e.at && o.z1 > e.at)) && o.x0 < t - TOL && o.x1 > f + TOL)
                        : ((Math.abs(o.x1 - e.at) < TOL || Math.abs(o.x0 - e.at) < TOL || (o.x0 < e.at && o.x1 > e.at)) && o.z0 < t - TOL && o.z1 > f + TOL)));
