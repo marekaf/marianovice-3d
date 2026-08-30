@@ -288,6 +288,27 @@ const INTERIORS3D = (() => {
 
     function wallRect(target, w) {
       const [ax, az] = w.a, [bx, bz] = w.b;
+      // Gable/štít: a height profile along x, extruded through the wall thickness
+      if (w.profile) {
+        const shape = new THREE.Shape();
+        shape.moveTo(w.profile[0][0], 0);
+        for (const [px, py] of w.profile) shape.lineTo(px, py);
+        shape.lineTo(w.profile[w.profile.length - 1][0], 0);
+        shape.closePath();
+        const geom = new THREE.ExtrudeGeometry(shape, { depth: bz - az, bevelEnabled: false });
+        geom.translate(0, floorY, az);
+        const m = new THREE.Mesh(geom, wallMat);
+        m.castShadow = true;
+        m.receiveShadow = true;
+        target.add(m);
+        for (const g of w.glazing || []) {
+          const gl = new THREE.Mesh(new THREE.BoxGeometry(g.x1 - g.x0, g.h, 0.05),
+            new THREE.MeshStandardMaterial({ color: 0x2a3540, roughness: 0.15, metalness: 0.6 }));
+          gl.position.set((g.x0 + g.x1) / 2, floorY + g.sill + g.h / 2, bz + 0.01);
+          target.add(gl);
+        }
+        return;
+      }
       const alongX = (bx - ax) >= (bz - az);
       const L = alongX ? bx - ax : bz - az;
       const wh = w.h ?? wallH;   // knee walls / railings carry their own height
