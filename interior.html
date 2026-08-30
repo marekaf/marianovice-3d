@@ -61,14 +61,15 @@
   <label><input type="checkbox" id="toggleCut"> Cut open S + E walls</label>
   <label><input type="checkbox" id="toggleCeiling" checked> Ceiling</label>
   <label id="rowLabels" style="display:none"><input type="checkbox" id="toggleLabels" checked> Room labels</label>
+  <label id="rowJoinery" style="display:none"><input type="checkbox" id="toggleJoinery" checked> Joinery</label>
   <label id="rowWallIds" style="display:none"><input type="checkbox" id="toggleWallIds"> Wall IDs</label>
   <button class="export" id="exportBtn">⬇ Export PNG</button>
 </div>
 <div id="scalebar"><div id="scaleline"></div><span id="scaletext"></span></div>
 
-<script src="layout.js?v=20260828g"></script>
-<script src="interiors3d.js?v=20260828g"></script>
-<script src="house-interior.js?v=20260828g"></script>
+<script src="layout.js?v=20260830a"></script>
+<script src="interiors3d.js?v=20260830a"></script>
+<script src="house-interior.js?v=20260830a"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -137,7 +138,7 @@ const BUILDINGS = {
 if (hasHouse) {
   const o = hou.dims.originPlot;
   BUILDINGS.house = {
-    root: hou.root, walls: hou.walls, ceiling: hou.ceiling, labels: hou.labels, wallIds: hou.wallIds,
+    root: hou.root, walls: hou.walls, ceiling: hou.ceiling, labels: hou.labels, wallIds: hou.wallIds, furniture: hou.furniture,
     views: mkViews(o.x + hou.dims.w / 2, o.z + hou.dims.d / 2, 1.5, hou.dims.w, hou.dims.d, 3.6, 'HOUSE 1.NP'),
     dims: `house 1.NP · ${hou.dims.w.toFixed(2)} × ${hou.dims.d.toFixed(2)} m outside · clear height ${hou.dims.clearH.toFixed(2)} m`,
   };
@@ -145,7 +146,7 @@ if (hasHouse) {
 if (hasLoft) {
   const o = loft.dims.originPlot;
   BUILDINGS.loft = {
-    root: loft.root, walls: loft.walls, ceiling: loft.ceiling, labels: loft.labels, wallIds: loft.wallIds,
+    root: loft.root, walls: loft.walls, ceiling: loft.ceiling, labels: loft.labels, wallIds: loft.wallIds, furniture: loft.furniture,
     views: mkViews(o.x + loft.dims.w / 2, o.z + loft.dims.d / 2, 2.72 + 1.1, loft.dims.w, loft.dims.d, 3.2, 'HOUSE PODKROVÍ'),
     dims: `podkroví · 2.01–2.03 · clear 0.85–2.27 m · floor +2.72`,
   };
@@ -168,6 +169,8 @@ function applyVisibility() {
   }
   for (const b in BUILDINGS) if (BUILDINGS[b].labels) BUILDINGS[b].labels.visible = (b === curB) && document.getElementById('toggleLabels').checked;
   for (const b in BUILDINGS) if (BUILDINGS[b].wallIds) BUILDINGS[b].wallIds.visible = (b === curB) && document.getElementById('toggleWallIds').checked;
+  for (const b in BUILDINGS) if (BUILDINGS[b].furniture) BUILDINGS[b].furniture.visible = (b === curB) && document.getElementById('toggleJoinery').checked;
+  document.getElementById('rowJoinery').style.display = BUILDINGS[curB].furniture ? '' : 'none';
   document.getElementById('rowWallIds').style.display = BUILDINGS[curB].wallIds ? '' : 'none';
   document.getElementById('rowGate').style.display = curB === 'garage' ? '' : 'none';
   document.getElementById('rowVehicles').style.display = curB === 'garage' ? '' : 'none';
@@ -218,7 +221,7 @@ function updateScalebar() {
 
 document.querySelectorAll('#views button[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 document.querySelectorAll('#views button[data-building]').forEach(b => b.addEventListener('click', () => setBuilding(b.dataset.building)));
-for (const id of ['toggleGate', 'toggleVehicles', 'toggleCut', 'toggleCeiling', 'toggleLabels', 'toggleWallIds']) {
+for (const id of ['toggleGate', 'toggleVehicles', 'toggleCut', 'toggleCeiling', 'toggleLabels', 'toggleJoinery', 'toggleWallIds']) {
   document.getElementById(id).addEventListener('change', applyVisibility);
 }
 controls.addEventListener('change', updateScalebar);
