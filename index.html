@@ -319,8 +319,10 @@ const levelPads = [
   { x0: 3.5, z0: 2.17, x1: 10.5, z1: 5.17, level: 2.45, blend: 1.2 },      // sauna + hot-tub platform, on grade
   { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 3.15, blend: 1.2 },         // flat pad containing all 4 raised beds (SW high ground)
   { x0: 25.78, z0: 1.61, x1: 31.78, z1: 5.61, level: 1.05, blend: 1.2 },    // flat pad under the pergola (toward the low NE)
-  { x0: 10.48, z0: 26.43, x1: 21.28, z1: 26.93, level: 2.345, blend: 0.6 }, // drip strip — south wall
-  { x0: 15.7, z0: 26.43, x1: 19.7, z1: 27.5, level: 2.345, blend: 0.6 },    // 1 m flat gravel bed for the heat-pump unit (S wall)
+  // Flat apron along the whole south wall (also carries the heat-pump gravel bed). The south side is
+  // the uphill side, so a narrow strip left the lawn banking up steeply right over the sokl; a 1 m
+  // apron with a gentle bank pushes that rise out into the garden so the marmolit reads as a clean band.
+  { x0: 10.48, z0: 26.43, x1: 21.28, z1: 27.45, level: 2.345, blend: 1.2 },
 ];
 // Pond basin — smooth bowl carved to the pond's downhill edge level
 const PBOWL = (() => {
