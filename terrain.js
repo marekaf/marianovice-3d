@@ -4,8 +4,8 @@
 const TERRAIN = {
   houseFFLInternal: 2.465, // internal height of the house finished floor = ±0.000
   bpvDatum: 397.00,        // Bpv elevation of ±0.000 (DPS koordinační situace C.3)
-  // Natural grade before cuts: NW→SE fall of ~7.9% toward the gate. Cut pads/decks are layered on top of this.
-  basePlaneHeight(x, z) { return Math.max(0, -0.06451 * x - 0.04531 * z + 4.2707); },
+  // Natural grade before cuts: SW→NE fall of ~7.9% (high SW corner, low toward the NE road/gate). Cut pads/decks layer on top.
+  basePlaneHeight(x, z) { return Math.max(0, -0.06451 * x + 0.04531 * z + 2.748); },
   relToHouse(internal) { return internal - this.houseFFLInternal; },   // meters relative to ±0.000
   bpv(internal) { return this.bpvDatum + (internal - this.houseFFLInternal); },
 };

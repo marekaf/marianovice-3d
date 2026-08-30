@@ -72,7 +72,7 @@ const GARDEN = {
       name: "Path sauna → west terrace",
       short: "Sauna path",
       parts: [
-        { kind: "rect", x: 9.5, y: 5, w: 1, d: 2.17, fill: "#cdc1ad", opacity: 0.7 }
+        { kind: "rect", x: 9.5, y: 5.17, w: 1, d: 2.01, fill: "#cdc1ad", opacity: 0.7 }
       ]
     },
     {
@@ -107,7 +107,7 @@ const GARDEN = {
       id: "driveway",
       name: "Driveway 4.5 m × ~22 m",
       parts: [
-        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [37.33, 27.02], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
+        { kind: "polygon", points: [[21.28, 19.4], [27.63, 19.4], [27.63, 26.43], [34.13, 26.43], [37.33, 27.02], [43.08, 27.89], [42.55, 32.39], [21.28, 29.72]], fill: "#cccccc", opacity: 0.55 },
         { kind: "text", x: 30.83, y: 28.33, text: "driveway", cls: "lbl-sm" },
         { kind: "text", x: 30.83, y: 29.17, text: "4.5 m × ~22 m", cls: "dim" }
       ]
@@ -116,9 +116,9 @@ const GARDEN = {
       id: "gate",
       name: "Gate ~4.5 m",
       parts: [
-        { kind: "line", x1: 43.83, y1: 27.89, x2: 43.44, y2: 32.39, stroke: "#3a3a3a", sw: 6, cap: "round" },
-        { kind: "text", x: 44.44, y: 30, text: "GATE", cls: "lbl-sm", weight: 700, anchor: "start" },
-        { kind: "text", x: 44.44, y: 30.78, text: "4.0 m clear", cls: "dim", anchor: "start" }
+        { kind: "line", x1: 43.14, y1: 27.89, x2: 42.63, y2: 32.39, stroke: "#3a3a3a", sw: 6, cap: "round" },
+        { kind: "text", x: 43.7, y: 30, text: "GATE", cls: "lbl-sm", weight: 700, anchor: "start" },
+        { kind: "text", x: 43.7, y: 30.78, text: "4.0 m clear", cls: "dim", anchor: "start" }
       ]
     },
     {
@@ -126,8 +126,8 @@ const GARDEN = {
       name: "Bin store (plastic box) 1.41 × 0.82 m",
       short: "Bin store",
       parts: [
-        { kind: "rect", x: 42.2, y: 33.4, w: 0.82, d: 1.41, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
-        { kind: "text", x: 41.9, y: 34.2, text: "bins", cls: "lbl-sm", fill: "#333", anchor: "end" }
+        { kind: "rect", x: 40, y: 32.4, w: 0.82, d: 1.41, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
+        { kind: "text", x: 39.9, y: 33.3, text: "bins", cls: "lbl-sm", fill: "#333", anchor: "end" }
       ]
     },
     {
@@ -179,7 +179,7 @@ const GARDEN = {
         { kind: "circle", cx: 34, cy: 1.3, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 38, cy: 1.6, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 41, cy: 1.2, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 43, cy: 1.4, r: 0.5, fill: "#4d7a4d" }
+        { kind: "circle", cx: 40.5, cy: 1.8, r: 0.5, fill: "#4d7a4d" }
       ]
     },
     {
@@ -187,30 +187,30 @@ const GARDEN = {
       name: "Trees along east fence (privacy)",
       short: "East trees",
       parts: [
-        { kind: "circle", cx: 42.5, cy: 8, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 42.5, cy: 12, r: 0.5, fill: "#4d7a4d" },
+        { kind: "circle", cx: 41.8, cy: 8, r: 0.5, fill: "#4d7a4d" },
+        { kind: "circle", cx: 42, cy: 12, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 42.5, cy: 16, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 42.5, cy: 20, r: 0.5, fill: "#4d7a4d" },
         { kind: "circle", cx: 42, cy: 33, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 42, cy: 35, r: 0.5, fill: "#4d7a4d" }
+        { kind: "circle", cx: 41, cy: 33.5, r: 0.5, fill: "#4d7a4d" }
       ]
     },
     {
       id: "sauna",
       name: "Sauna 4 × 3 m",
       parts: [
-        { kind: "rect", x: 6.5, y: 2, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2 },
-        { kind: "text", x: 8.5, y: 3.33, text: "SAUNA", cls: "lbl-w" },
-        { kind: "text", x: 8.5, y: 4.22, text: "4 × 3 m", cls: "dim", fill: "#fff" }
+        { kind: "rect", x: 6.5, y: 2.17, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2 },
+        { kind: "text", x: 8.5, y: 3.5, text: "SAUNA", cls: "lbl-w" },
+        { kind: "text", x: 8.5, y: 4.39, text: "4 × 3 m", cls: "dim", fill: "#fff" }
       ]
     },
     {
       id: "saunaShelter",
       name: "Sauna shelter 3 × 3 m (covers hot tub)",
       parts: [
-        { kind: "rect", x: 3.5, y: 2, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4,3" },
-        { kind: "text", x: 5, y: 5.67, text: "shelter", cls: "lbl-sm", fill: "#5a4828" },
-        { kind: "text", x: 5, y: 6.4, text: "3 × 3 m", cls: "dim" }
+        { kind: "rect", x: 3.5, y: 2.17, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4,3" },
+        { kind: "text", x: 5, y: 5.84, text: "shelter", cls: "lbl-sm", fill: "#5a4828" },
+        { kind: "text", x: 5, y: 6.57, text: "3 × 3 m", cls: "dim" }
       ]
     },
     {
@@ -218,28 +218,28 @@ const GARDEN = {
       name: "Garden tool + mower store (plastic box) 1.905 × 1.09 m",
       short: "Tool store",
       parts: [
-        { kind: "rect", x: 0.25, y: 0.2, w: 1.905, d: 1.09, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
-        { kind: "text", x: 1.2, y: 0.9, text: "mower", cls: "lbl-sm", fill: "#fff" }
+        { kind: "rect", x: 0.25, y: 0.7, w: 1.905, d: 1.09, clipToPlot: true, fill: "#5a5e64", opacity: 0.92, stroke: "#33363a", sw: 1 },
+        { kind: "text", x: 1.2, y: 1.4, text: "mower", cls: "lbl-sm", fill: "#fff" }
       ]
     },
     {
       id: "softub",
       name: "Softub hot tub ø 1.8 m",
       parts: [
-        { kind: "circle", cx: 5, cy: 3.5, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5 },
-        { kind: "text", x: 5, y: 3.72, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f" }
+        { kind: "circle", cx: 5, cy: 3.67, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5 },
+        { kind: "text", x: 5, y: 3.89, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f" }
       ]
     },
     {
       id: "pergola",
       name: "Pergola + grill 6 × 4 m",
       parts: [
-        { kind: "rect", x: 25.78, y: 2, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
-        { kind: "rect", x: 25.98, y: 2.2, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9 },
-        { kind: "rect", x: 27.4, y: 3.5, w: 2.8, d: 1, fill: "#8a6a4a" },
-        { kind: "text", x: 28.78, y: 3.86, text: "pergola + grill", cls: "lbl" },
-        { kind: "text", x: 28.78, y: 4.6, text: "6 × 4 m", cls: "dim" },
-        { kind: "text", x: 28.78, y: 5.5, text: "2 m off N fence", cls: "lbl-sm", fill: "#5a4828" }
+        { kind: "rect", x: 25.78, y: 1.61, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
+        { kind: "rect", x: 25.98, y: 1.81, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9 },
+        { kind: "rect", x: 27.4, y: 3.11, w: 2.8, d: 1, fill: "#8a6a4a" },
+        { kind: "text", x: 28.78, y: 3.47, text: "pergola + grill", cls: "lbl" },
+        { kind: "text", x: 28.78, y: 4.21, text: "6 × 4 m", cls: "dim" },
+        { kind: "text", x: 28.78, y: 5.11, text: "2 m off N fence", cls: "lbl-sm", fill: "#5a4828" }
       ]
     },
     {
@@ -307,8 +307,8 @@ const GARDEN = {
       name: "Privacy screen — south neighbour (2 × 2 m louvre)",
       meta: { screen: { h: 2.0 } },
       parts: [
-        { kind: "rect", x: 14.0, y: 31.7, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
-        { kind: "text", x: 15.2, y: 31.4, text: "paraván J", cls: "lbl-sm", fill: "#3a3a3e" }
+        { kind: "rect", x: 14.0, y: 31.4, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
+        { kind: "text", x: 15.2, y: 31.1, text: "paraván J", cls: "lbl-sm", fill: "#3a3a3e" }
       ]
     },
     {
@@ -317,7 +317,7 @@ const GARDEN = {
       short: "Orchard meadow",
       meta: { plant: "meadow" },
       parts: [
-        { kind: "rect", x: 0.2, y: 21.3, w: 5.2, d: 10.6, clipToPlot: true, fill: "#b5c98a", opacity: 0.35, stroke: "#8aa85a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 0.5, y: 21.3, w: 5.2, d: 8.8, clipToPlot: true, fill: "#b5c98a", opacity: 0.35, stroke: "#8aa85a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 4.8, y: 24.6, text: "meadow Z12", rotate: -90 }
       ]
     },
@@ -325,13 +325,13 @@ const GARDEN = {
       id: "orchard",
       name: "Orchard ~5.5 × 11 m",
       parts: [
-        { kind: "rect", x: 0, y: 21.11, w: 5.56, d: 11.11, fill: "#7fa66f", opacity: 0.4, clipToPlot: true },
+        { kind: "rect", x: 0.4, y: 21.11, w: 5.56, d: 9.0, fill: "#7fa66f", opacity: 0.4, clipToPlot: true },
         { kind: "circle", cx: 1.2, cy: 22, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 4, cy: 23.5, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 1.2, cy: 26, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 4, cy: 27.5, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 1.2, cy: 30, r: 0.5, fill: "#5a8a5a" },
-        { kind: "circle", cx: 4, cy: 31, r: 0.5, fill: "#5a8a5a" },
+        { kind: "circle", cx: 4, cy: 29, r: 0.5, fill: "#5a8a5a" },
         { kind: "text", x: 2.78, y: 27.22, text: "orchard", cls: "lbl", rotate: -90 },
         { kind: "text", x: 6.39, y: 27.22, text: "~5.5 × 11 m", cls: "dim", anchor: "start" }
       ]
@@ -380,9 +380,9 @@ const GARDEN = {
       short: "Sauna bed",
       meta: { plant: "mixed" },
       parts: [
-        { kind: "rect", x: 0.6, y: 1.8, w: 2.6, d: 3.2, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "rect", x: 2, y: 5.2, w: 6, d: 1.6, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 1.9, y: 3.5, text: "sauna bed Z4", rotate: -90 }
+        { kind: "rect", x: 0.6, y: 1.97, w: 2.6, d: 3.2, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 2, y: 5.37, w: 6, d: 1.6, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 1.9, y: 3.67, text: "sauna bed Z4", rotate: -90 }
       ]
     },
     {
@@ -391,9 +391,9 @@ const GARDEN = {
       short: "Pergola beds",
       meta: { plant: "mixed" },
       parts: [
-        { kind: "rect", x: 23.2, y: 2, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "rect", x: 32.4, y: 2, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 24.2, y: 5.7, text: "climbers Z5" }
+        { kind: "rect", x: 23.2, y: 1.61, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 32.4, y: 1.61, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 24.2, y: 5.31, text: "climbers Z5" }
       ]
     },
     {
@@ -402,7 +402,7 @@ const GARDEN = {
       short: "Arrival strip",
       meta: { plant: "perennials" },
       parts: [
-        { kind: "polygon", points: [[21.3, 29.95], [43.2, 32.55], [43.05, 35], [21.3, 32.4]], fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "polygon", points: [[21.3, 29.95], [42.4, 32.2], [41.8, 33.6], [21.3, 32.4]], fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 30, y: 31.9, text: "arrival strip Z6" }
       ]
     },
@@ -412,7 +412,7 @@ const GARDEN = {
       short: "East understory",
       meta: { plant: "shrubs" },
       parts: [
-        { kind: "rect", x: 41.2, y: 4.5, w: 2.8, d: 16.5, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 40, y: 4.5, w: 2.2, d: 16.5, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 41.9, y: 12.6, text: "east understory Z7", rotate: -90 }
       ]
     },
@@ -482,7 +482,7 @@ const GARDEN = {
       short: "Rain garden",
       meta: { plant: "perennials" },
       parts: [
-        { kind: "rect", x: 38.2, y: 2.2, w: 4, d: 3.8, fill: "#7aa88a", opacity: 0.45, stroke: "#4a7a6a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 38.2, y: 2.2, w: 3.7, d: 3.8, fill: "#7aa88a", opacity: 0.45, stroke: "#4a7a6a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 40.2, y: 4.35, text: "rain garden Z11" }
       ]
     },
