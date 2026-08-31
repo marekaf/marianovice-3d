@@ -158,10 +158,54 @@
     return (s.length >= 3 ? s : name).slice(0, 20);
   }
 
+  function partBox(p) {
+    if (p.kind === "rect") return [p.x, p.y, p.x + p.w, p.y + p.d];
+    if (p.kind === "circle") return [p.cx - p.r, p.cy - p.r, p.cx + p.r, p.cy + p.r];
+    if (p.kind === "ellipse") return [p.cx - p.rx, p.cy - p.ry, p.cx + p.rx, p.cy + p.ry];
+    if (p.kind === "polygon") {
+      const xs = p.points.map((q) => q[0]), ys = p.points.map((q) => q[1]);
+      return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+    }
+    return null;
+  }
+
+  function boxesOverlap(a, b) {
+    return Math.min(a[2], b[2]) - Math.max(a[0], b[0]) > 1e-6 && Math.min(a[3], b[3]) - Math.max(a[1], b[1]) > 1e-6;
+  }
+
+  function shapeArea(p) {
+    if (p.kind === "rect") return p.w * p.d;
+    if (p.kind === "polygon") return polyArea(p.points);
+    if (p.kind === "ellipse") return Math.PI * p.rx * p.ry;
+    if (p.kind === "circle") return Math.PI * p.r * p.r;
+    return 0;
+  }
+
+  // Same-kind parts that do not overlap are separate pieces of one element and their areas add up:
+  // an L-shaped terrace, two beds either side of the pergola, three climber strips. Parts that DO
+  // overlap are drawing detail over the same footprint — a garage door leaf proud of the wall, the
+  // pergola roof over its slab — so only the first part counts, or the quantity is inflated.
+  function footprintParts(shapes) {
+    const same = shapes.filter((p) => p.kind === shapes[0].kind);
+    const boxes = same.map(partBox);
+    for (let i = 0; i < same.length; i++)
+      for (let j = i + 1; j < same.length; j++)
+        if (boxesOverlap(boxes[i], boxes[j])) return [shapes[0]];
+    return same;
+  }
+
   function scheduleRow(el, cellM, garden) {
     const shapes = el.parts.filter((p) => p.kind !== "text");
     const circles = shapes.filter((p) => p.kind === "circle");
     const first = shapes[0];
+    const foot = footprintParts(shapes);
+    // "2.00 × 4.00 ×2" for identical pieces, "1.00 × 19.25 +1" when they differ.
+    const multi = () => {
+      if (foot.length < 2) return "";
+      const a0 = shapeArea(foot[0]);
+      const alike = foot.every((p) => Math.abs(shapeArea(p) - a0) < 1e-6);
+      return alike ? ` ×${foot.length}` : ` +${foot.length - 1}`;
+    };
     let size = "";
     let area = null;
     let bx = Infinity, by = Infinity;
@@ -172,11 +216,12 @@
       else if (p.kind === "circle") { bx = Math.min(bx, p.cx - p.r); by = Math.min(by, p.cy - p.r); }
       else if (p.kind === "line") { bx = Math.min(bx, p.x1, p.x2); by = Math.min(by, p.y1, p.y2); }
     }
-    if (first.kind === "rect") { size = `${r2(first.w)} × ${r2(first.d)}`; area = first.w * first.d; }
+    if (first.kind === "rect") { size = `${r2(first.w)} × ${r2(first.d)}${multi()}`; area = foot.reduce((t, p) => t + shapeArea(p), 0); }
     else if (first.kind === "polygon") {
       const xs = first.points.map((p) => p[0]), ys = first.points.map((p) => p[1]);
-      size = `${r2(Math.max(...xs) - Math.min(...xs))} × ${r2(Math.max(...ys) - Math.min(...ys))}`;
-      area = polyArea(first.points);
+      const w = Math.max(...xs) - Math.min(...xs), d = Math.max(...ys) - Math.min(...ys);
+      size = `${r2(w)} × ${r2(d)}${multi()}`;
+      area = foot.reduce((t, p) => t + shapeArea(p), 0);
     }
     else if (first.kind === "ellipse") {
       size = `${r2(2 * first.rx)} × ${r2(2 * first.ry)}`;
