@@ -118,6 +118,11 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// Nothing that casts a shadow moves on its own — the sun only moves when a slider does, and the
+// smoke particles cast none. Re-rendering a 4096² map every frame is pure waste, so the map is
+// redrawn only when the sun moves or something is shown or hidden.
+renderer.shadowMap.autoUpdate = false;
+const invalidateShadows = () => { renderer.shadowMap.needsUpdate = true; };
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 document.body.appendChild(renderer.domElement);
@@ -238,6 +243,7 @@ function updateSun() {
   const y = dist * Math.sin(elev);
   const z = -horizDist * Math.cos(az);
   sun.position.set(22 + x, Math.max(2, y), 17 + z);
+  invalidateShadows();
   let regime;
   // Below-horizon (night) handling
   if (elev < 0) {
@@ -2311,6 +2317,9 @@ document.getElementById('toggleGate').addEventListener('change', e => {
 document.getElementById('toggleFurniture').addEventListener('change', e => furnitureGroup.visible = e.target.checked);
 document.getElementById('toggleVehicles').addEventListener('change', e => vehiclesGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);
+for (const id of ['togglePlot', 'toggleTrees', 'toggleRoof', 'toggleGate', 'toggleFurniture', 'toggleVehicles', 'toggleAxes']) {
+  document.getElementById(id).addEventListener('change', invalidateShadows);
+}
 
 // ───────────────────────── DATE + TIME SLIDERS ─────────────────────────
 const timeSlider = document.getElementById('timeSlider');
