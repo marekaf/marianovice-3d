@@ -1,7 +1,7 @@
 // Verifies layout.js site geometry:
 //   node verify-exterior.mjs [site-truth.json]
 // Always: structures inside the plot, no structure overlaps, vehicles inside their bays,
-// the garage gate must lie inside the driveway polygon edge. With a site-truth file
+// the garage gate opens onto the driveway. With a site-truth file
 // (local, DWG-derived): footprints, positions and openings must match it to 5 cm.
 import { createRequire } from 'module';
 import { resolve } from 'path';
@@ -14,8 +14,7 @@ const rectOf = id => EL[id] && EL[id].parts.find(p => p.kind === 'rect');
 const TOL = 0.05;
 
 // structures inside the plot polygon
-const pts = GARDEN.plot.vertices;
-const inPlot = (x, z) => {
+const inPoly = (pts, x, z) => {
   let inside = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
     const [xi, zi] = pts[i], [xj, zj] = pts[j];
@@ -23,6 +22,7 @@ const inPlot = (x, z) => {
   }
   return inside;
 };
+const inPlot = (x, z) => inPoly(GARDEN.plot.vertices, x, z);
 const structures = ['garage', 'carport', 'parking', 'sauna', 'greenhouse', 'pergola'].map(id => [id, rectOf(id)]).filter(([, r]) => r);
 for (const [id, r] of structures) {
   for (const [cx, cz] of [[r.x, r.y], [r.x + r.w, r.y], [r.x, r.y + r.d], [r.x + r.w, r.y + r.d]]) {
@@ -46,6 +46,28 @@ for (const v of GARDEN.vehicles || []) {
   const x0 = v.cx - v.w / 2, x1 = v.cx + v.w / 2, z0 = v.noseZ, z1 = v.noseZ + v.l;
   if (x0 < b.x + inset - TOL || x1 > b.x + b.w - inset + TOL || z0 < b.y + inset - TOL || z1 > b.y + b.d - inset + TOL) {
     note('ERR', `${v.name} sticks out of the ${v.bay} bay (x ${x0.toFixed(2)}–${x1.toFixed(2)}, z ${z0.toFixed(2)}–${z1.toFixed(2)})`);
+  }
+}
+
+// The garage gate has to open onto the driveway, not onto a bed or the neighbour's side of the
+// fence. Probe just outside the wall rather than on it: the gate sits exactly on the driveway
+// polygon's edge, and a point on an edge is neither in nor out.
+const PROBE = 0.3;
+const dwEl = EL.driveway && EL.driveway.parts.find(p => p.kind === 'polygon');
+const gRect = rectOf('garage');
+if (dwEl && gRect) {
+  const drive = dwEl.points;
+  for (const o of (EL.garage.meta.openings || []).filter(o => o.kind === 'gate')) {
+    const along = o.wall === 'S' || o.wall === 'N';
+    const at = o.wall === 'S' ? gRect.y + gRect.d : o.wall === 'N' ? gRect.y
+             : o.wall === 'W' ? gRect.x : gRect.x + gRect.w;
+    const outward = o.wall === 'S' || o.wall === 'E' ? PROBE : -PROBE;
+    for (let k = 0; k <= 4; k++) {
+      const t = o.from + o.w * (0.1 + 0.8 * (k / 4));            // inset from the jambs
+      const [x, z] = along ? [t, at + outward] : [at + outward, t];
+      if (!inPlot(x, z)) note('ERR', `garage gate at (${x.toFixed(2)}, ${z.toFixed(2)}) opens outside the plot`);
+      else if (!inPoly(drive, x, z)) note('ERR', `garage gate at (${x.toFixed(2)}, ${z.toFixed(2)}) does not open onto the driveway`);
+    }
   }
 }
 
