@@ -2418,7 +2418,7 @@ window.addEventListener('mousemove', e => {
 const fpState = { active: false, keys: {} };
 const fpCamera = camera;
 let fpYaw = 0, fpPitch = 0;
-const fpSpeed = 0.18;
+const fpSpeed = 10.8;   // metres per second
 
 function lockPointer() {
   renderer.domElement.requestPointerLock();
@@ -2437,6 +2437,15 @@ document.getElementById('toggleFP').addEventListener('change', e => {
   }
 });
 
+// Escape releases pointer lock without firing the checkbox, which would leave fpState.active
+// true and OrbitControls disabled — mouse-look dead, WASD still moving, no way back.
+document.addEventListener('pointerlockchange', () => {
+  if (!fpState.active || document.pointerLockElement === renderer.domElement) return;
+  const cb = document.getElementById('toggleFP');
+  cb.checked = false;
+  cb.dispatchEvent(new Event('change'));
+});
+
 document.addEventListener('keydown', e => { fpState.keys[e.key.toLowerCase()] = true; });
 document.addEventListener('keyup', e => { fpState.keys[e.key.toLowerCase()] = false; });
 
@@ -2450,14 +2459,15 @@ document.addEventListener('mousemove', e => {
 // Per-frame scratch vectors — avoid allocating in the render loop
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
 
-function fpUpdate() {
+function fpUpdate(dt) {
   if (!fpState.active) return;
+  const step = fpSpeed * dt;
   const fwd = _v.set(Math.sin(fpYaw), 0, Math.cos(fpYaw));
   const right = _v2.set(Math.cos(fpYaw), 0, -Math.sin(fpYaw));
-  if (fpState.keys['w']) fpCamera.position.addScaledVector(fwd, -fpSpeed);
-  if (fpState.keys['s']) fpCamera.position.addScaledVector(fwd, fpSpeed);
-  if (fpState.keys['a']) fpCamera.position.addScaledVector(right, -fpSpeed);
-  if (fpState.keys['d']) fpCamera.position.addScaledVector(right, fpSpeed);
+  if (fpState.keys['w']) fpCamera.position.addScaledVector(fwd, -step);
+  if (fpState.keys['s']) fpCamera.position.addScaledVector(fwd, step);
+  if (fpState.keys['a']) fpCamera.position.addScaledVector(right, -step);
+  if (fpState.keys['d']) fpCamera.position.addScaledVector(right, step);
   // Stay above terrain
   let tY = terrainHeight(fpCamera.position.x, fpCamera.position.z);
   for (const s of walkSurfaces) {
@@ -2567,6 +2577,9 @@ function tourUpdate() {
 
 // ───────────────────────── ANIMATE ─────────────────────────
 const clock = new THREE.Clock();
+// Derived from getElapsedTime, not clock.getDelta() — getElapsedTime() consumes the delta
+// internally, so a second getDelta() call here would rob the smoke and water of their time.
+let fpPrevT = 0;
 function animate() {
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
@@ -2583,7 +2596,8 @@ function animate() {
   // Pond water ripple drift
   waterNormal.offset.x = t * 0.008;
   waterNormal.offset.y = t * 0.005;
-  if (fpState.active) fpUpdate();
+  if (fpState.active) fpUpdate(Math.min(t - fpPrevT, 0.1));   // clamp: a backgrounded tab resumes with a huge gap
+  fpPrevT = t;
   tourUpdate();
   // Skip controls.update() during tour/FP — OrbitControls.update() calls camera.lookAt(target)
   // which would override our custom lookAt and point camera at controls.target (house center)
