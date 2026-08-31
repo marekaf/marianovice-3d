@@ -226,12 +226,48 @@ for (const id of ['toggleGate', 'toggleVehicles', 'toggleCut', 'toggleCeiling', 
 }
 controls.addEventListener('change', updateScalebar);
 
+// The scale bar is a DOM overlay, so it is not in the WebGL buffer. A plan sheet without its scale
+// cannot be measured off, so redraw it into the exported bitmap rather than exporting the bare canvas.
+function paintScalebar(ctx, s) {
+  const mPerPx = (camera.right - camera.left) / (camera.zoom * innerWidth);
+  const line = (1 / mPerPx) * s;
+  const padX = 10 * s, padY = 6 * s, font = 11 * s;
+  const boxW = line + padX * 2, boxH = padY * 2 + 3 * s + 3 * s + font;
+  const x = 14 * s, y = ctx.canvas.height - 14 * s - boxH;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.strokeStyle = '#999';
+  ctx.lineWidth = s;
+  ctx.beginPath();
+  ctx.roundRect(x, y, boxW, boxH, 4 * s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 3 * s;
+  ctx.beginPath();
+  ctx.moveTo(x + padX, y + padY + 1.5 * s);
+  ctx.lineTo(x + padX + line, y + padY + 1.5 * s);
+  ctx.stroke();
+  ctx.fillStyle = '#222';
+  ctx.font = font + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+  ctx.textBaseline = 'top';
+  ctx.fillText('1 m', x + padX, y + padY + 6 * s);
+  ctx.restore();
+}
+
 // PNG export of exactly what is on screen — render synchronously, then read the canvas
 document.getElementById('exportBtn').addEventListener('click', () => {
   renderer.render(scene, camera);
+  const gl = renderer.domElement;
+  const out = document.createElement('canvas');
+  out.width = gl.width;
+  out.height = gl.height;
+  const ctx = out.getContext('2d');
+  ctx.drawImage(gl, 0, 0);
+  paintScalebar(ctx, gl.width / innerWidth);
   const a = document.createElement('a');
   a.download = `${curB}-${curV}.png`;
-  a.href = renderer.domElement.toDataURL('image/png');
+  a.href = out.toDataURL('image/png');
   a.click();
 });
 
