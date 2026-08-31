@@ -52,6 +52,29 @@ function pointInEl(x, y, el) {
 }
 const bbox = pts => ({ x0: Math.min(...pts.map(p => p[0])), x1: Math.max(...pts.map(p => p[0])), y0: Math.min(...pts.map(p => p[1])), y1: Math.max(...pts.map(p => p[1])) });
 
+function rectOverlap(A, B) {
+  for (const a of A.parts) {
+    if (a.kind !== "rect") continue;
+    for (const b of B.parts) {
+      if (b.kind !== "rect") continue;
+      if (Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 1e-9 &&
+          Math.min(a.y + a.d, b.y + b.d) - Math.max(a.y, b.y) > 1e-9) return true;
+    }
+  }
+  return false;
+}
+
+// Thinnest dimension of any part — sets how fine the collision sampling has to be.
+function minFeature(el) {
+  let m = Infinity;
+  for (const p of el.parts) {
+    if (p.kind === "rect") m = Math.min(m, p.w, p.d);
+    else if (p.kind === "circle") m = Math.min(m, 2 * p.r);
+    else if (p.kind === "polygon") { const b = bbox(p.points); m = Math.min(m, b.x1 - b.x0, b.y1 - b.y0); }
+  }
+  return m === Infinity ? 0.2 : m;
+}
+
 // ── Check 1: boundary / outside-plot ──────────────────────────────────────
 const outside = [];
 for (const el of GARDEN.elements) {
@@ -71,6 +94,9 @@ const SOLID = new Set(["house", "garage", "carport", "sauna", "saunaShelter", "s
 const key = (a, b) => [a, b].sort().join("|");
 const ALLOW = new Set([
   key("sauna", "saunaShelter"), key("sauna", "softub"), key("saunaShelter", "softub"),
+  // The garage's west personnel door leaf is drawn 0.13 m proud of the wall, over the carport slab
+  // it opens onto. The two slabs themselves are checked against each other in verify-exterior.mjs.
+  key("carport", "garage"),
 ].map(k => k));
 const collisions = [];
 const els = GARDEN.elements.filter(e => SOLID.has(e.id) && elFootprint(e).length);
@@ -79,10 +105,15 @@ for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
   if (ALLOW.has(key(A.id, B.id))) continue;
   const ba = bbox(elFootprint(A)), bb = bbox(elFootprint(B));
   if (ba.x1 < bb.x0 || bb.x1 < ba.x0 || ba.y1 < bb.y0 || bb.y1 < ba.y0) continue; // bbox miss
-  // sample A's bbox, look for a point inside both
-  let hit = false;
-  for (let x = ba.x0; x <= ba.x1 && !hit; x += 0.2) for (let y = ba.y0; y <= ba.y1 && !hit; y += 0.2)
-    if (pointInEl(x, y, A) && pointInEl(x, y, B)) hit = true;
+  // Rect pairs are decided exactly. Sampling is the fallback for circles and polygons, and its
+  // step must be finer than the thinnest part in play: at a fixed 0.2 m a 0.14 m privacy screen
+  // falls between two samples and an overlap reads as clear.
+  let hit = rectOverlap(A, B);
+  if (!hit) {
+    const step = Math.max(0.02, Math.min(minFeature(A), minFeature(B)) / 3);
+    for (let x = ba.x0; x <= ba.x1 && !hit; x += step) for (let y = ba.y0; y <= ba.y1 && !hit; y += step)
+      if (pointInEl(x, y, A) && pointInEl(x, y, B)) hit = true;
+  }
   if (hit) collisions.push(`${A.id} ⨯ ${B.id}`);
 }
 
