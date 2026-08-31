@@ -184,7 +184,7 @@ function renderFlatPlanSVG(garden) {
   </g>`);
 
   // Right panel — legend, datum note, levels schedule.
-  out.push(`  <g transform="translate(882, 150)">`);
+  out.push(`  <g transform="translate(872, 150)">`);
   out.push(`    <text x="0" y="0" class="panelh">LEGEND</text>`);
   let ly = 16;
   for (const key of ["pad", "apron", "deck", "fill", "fall", "soft"]) {
@@ -197,28 +197,30 @@ function renderFlatPlanSVG(garden) {
   ly += 6;
   out.push(`    <text x="0" y="${ly}" class="panelh">LEVELS SCHEDULE</text>`);
   ly += 13;
-  out.push(`    <text x="0" y="${ly}" class="th">#  area</text><text x="118" y="${ly}" class="th" text-anchor="end">±0.000</text><text x="158" y="${ly}" class="th" text-anchor="end">Bpv</text><text x="196" y="${ly}" class="th" text-anchor="end">cut m</text>`);
+  out.push(`    <text x="0" y="${ly}" class="th">#  area</text><text x="118" y="${ly}" class="th" text-anchor="end">±0.000</text><text x="158" y="${ly}" class="th" text-anchor="end">Bpv</text><text x="184" y="${ly}" class="th" text-anchor="end">cut m</text><text x="208" y="${ly}" class="th" text-anchor="end">fill m</text>`);
   ly += 4;
-  out.push(`    <line x1="0" y1="${ly}" x2="196" y2="${ly}" stroke="#bbb" stroke-width="0.8"/>`);
+  out.push(`    <line x1="0" y1="${ly}" x2="208" y2="${ly}" stroke="#bbb" stroke-width="0.8"/>`);
   ly += 12;
   for (const { z, i, info } of computed) {
     const rel = info.target != null ? fmtSigned(TERRAIN.relToHouse(info.target)) : "—";
     const bpv = info.target != null ? fmtBpv(TERRAIN.bpv(info.target)) : "—";
-    let cut;
-    if (z.cat === "deck") cut = "posts";
-    else if (z.cat === "fall") cut = "Δ" + info.delta.toFixed(2);
-    else if (z.cat === "fill") cut = info.fill.toFixed(2) + "f";
-    else if (info.fill > 0.02 && z.cat === "apron") cut = `${info.cut.toFixed(2)}/${info.fill.toFixed(2)}f`;
-    else cut = info.cut.toFixed(2);
-    out.push(`    <text x="0" y="${ly}" class="td">${i + 1}  ${esc(z.label)}</text><text x="118" y="${ly}" class="td" text-anchor="end">${esc(rel)}</text><text x="158" y="${ly}" class="td" text-anchor="end">${esc(bpv)}</text><text x="196" y="${ly}" class="td" text-anchor="end">${esc(cut)}</text>`);
+    let cut, fill;
+    if (z.cat === "deck") { cut = "posts"; fill = "—"; }
+    else if (z.cat === "fall") { cut = "Δ" + info.delta.toFixed(2); fill = "—"; }
+    else { cut = info.cut.toFixed(2); fill = info.fill > 0.005 ? info.fill.toFixed(2) : "—"; }
+    out.push(`    <text x="0" y="${ly}" class="td">${i + 1}  ${esc(z.label)}</text><text x="118" y="${ly}" class="td" text-anchor="end">${esc(rel)}</text><text x="158" y="${ly}" class="td" text-anchor="end">${esc(bpv)}</text><text x="184" y="${ly}" class="td" text-anchor="end">${esc(cut)}</text><text x="208" y="${ly}" class="td" text-anchor="end">${esc(fill)}</text>`);
     ly += 12;
   }
   ly += 8;
   out.push(`    <text x="0" y="${ly}" class="note">±0.000 = house FF = ${fmtBpv(TERRAIN.bpvDatum)} Bpv.</text>`);
   ly += 11;
-  out.push(`    <text x="0" y="${ly}" class="note">Pads cut to lowest corner (no fill</text>`);
+  out.push(`    <text x="0" y="${ly}" class="note">cut m = max dig, fill m = max build-up,</text>`);
   ly += 10;
-  out.push(`    <text x="0" y="${ly}" class="note">under structures); cut m = max dig.</text>`);
+  out.push(`    <text x="0" y="${ly}" class="note">each at its worst corner.</text>`);
+  ly += 11;
+  out.push(`    <text x="0" y="${ly}" class="note">Zones with no set level are cut to</text>`);
+  ly += 10;
+  out.push(`    <text x="0" y="${ly}" class="note">their lowest corner, so they need no fill.</text>`);
   ly += 11;
   out.push(`    <text x="0" y="${ly}" class="note">Driveway graded to fall, not flat.</text>`);
   ly += 11;
