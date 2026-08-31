@@ -1,5 +1,7 @@
 """Garden PoC: build scene from garden.json, save garden.blend, render two views.
 
+Write the JSON first:  node generate-blender-json.js
+
 Headless render: /Applications/Blender.app/Contents/MacOS/Blender -b -P blender/poc.py -- blender/garden.json
 Open in GUI:     /Applications/Blender.app/Contents/MacOS/Blender -P blender/poc.py -- blender/garden.json --no-render
 """
@@ -22,6 +24,12 @@ ASSETS = os.path.join(out_dir, "assets")
 with open(json_path) as f:
     GARDEN = json.load(f)
 
+# The grading plane comes from the JSON, not a second copy of the coefficients here — a local copy
+# silently stops matching terrain.js and the render no longer shows the site the web viewer shows.
+TERRAIN = GARDEN.get("terrain")
+if TERRAIN is None:
+    raise SystemExit("garden.json has no terrain block — regenerate it: node generate-blender-json.js")
+
 random.seed(42)
 scene = bpy.context.scene
 
@@ -35,14 +43,14 @@ def smoothstep01(t):
 
 
 CUT_Z = 2.46  # graded cut for the level west decks
-APRON_Z = -0.050 * 15.88 + 0.030 * 16.805 + 2.775 - 0.5  # garage floor level
+APRON_Z = (TERRAIN["a"] * 15.88 + TERRAIN["b"] * 16.805 + TERRAIN["c"]) - 0.5  # garage floor level
 DRIP_Z = 2.345  # drip-strip dig level along the facade
 DRIP_BANDS = [(10.48, 21.28, 6.68, 7.18), (10.48, 21.28, 26.43, 26.93), (21.28, 21.78, 7.18, 11.58)]
 
 
 def ground_h(x, y):
     """Terrain height in plan coords (x east, y south), incl. grading cuts."""
-    z = max(0.0, -0.050 * x + 0.030 * y + 2.775)
+    z = max(0.0, TERRAIN["a"] * x + TERRAIN["b"] * y + TERRAIN["c"])
     in_a = 6.5 <= x <= 10.6 and 6.7 <= y <= 28.8
     in_b = 10.48 <= x <= 14.78 and 15.93 <= y <= 19.18
     if in_a or in_b:
@@ -150,6 +158,11 @@ def mat_pbr(name, slug, scale=1.0, tint=None, tint_fac=0.85, tint_mode="MULTIPLY
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
 
     def img_node(path, ncol=False):
+        if path is None:
+            raise SystemExit(
+                "no texture found for material '%s' (slug '%s'). The Poly Haven and Fab assets are "
+                "gitignored, not shipped — download them into blender/assets/ as listed in "
+                "blender/assets/MANIFEST.md." % (name, slug))
         n = nt.nodes.new("ShaderNodeTexImage")
         n.image = bpy.data.images.load(path, check_existing=True)
         if ncol:
