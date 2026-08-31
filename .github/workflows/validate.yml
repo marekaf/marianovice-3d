@@ -17,13 +17,19 @@ jobs:
       - name: Layout geometry (inside plot / fence-through / collisions / index.html trees)
         run: node validate-layout.js
 
+      - name: Site geometry (structures in plot, no overlaps, vehicles fit their bays)
+        run: node verify-exterior.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js
           node generate-flat-plan.js
           node generate-driveway-check.js
-          if ! git diff --quiet -- '*.svg'; then
-            echo "::error::committed SVGs are stale — run the generators and commit the result"
+          # --porcelain, not `git diff`: a commit that DELETES a generated SVG leaves the
+          # regenerated file untracked, which git diff does not report at all.
+          if [ -n "$(git status --porcelain -- '*.svg')" ]; then
+            echo "::error::committed SVGs are stale or missing — run the generators and commit the result"
+            git status --porcelain -- '*.svg'
             git --no-pager diff --stat -- '*.svg'
             exit 1
           fi
