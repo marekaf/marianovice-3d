@@ -1115,7 +1115,8 @@ const garageMinY = Math.min(...[[GA.x, GA.y], [GA.x + GA.w, GA.y], [GA.x, GA.y +
 // so index.html and interior.html render the identical garage
 const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: garageFloorY, plinthTo: garageMinY });
 const { wallT: GAT, wallTop: garageWallTop, roofHigh: garageRoofHigh, pitch: garagePitch } = gar.dims;
-for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.furniture, gar.gateClosed, gar.gateOpen, gar.light]) scene.add(grp);
+for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.gateClosed, gar.gateOpen, gar.light]) scene.add(grp);
+furnitureGroup.add(gar.furniture);
 roofGroup.add(gar.ceiling);
 const garageGateClosed = gar.gateClosed, garageGateOpen = gar.gateOpen;
 // Interior floors override terrain in first-person mode (indoors = flat slab, not graded terrain)
