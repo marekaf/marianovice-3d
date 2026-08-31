@@ -59,12 +59,12 @@ const GARDEN = {
     },
     {
       id: "eastTerrace",
-      name: "East terrace 3 × 11 m",
+      name: "East terrace 3 × 7.82 m",
       parts: [
         { kind: "rect", x: 20.58, y: 11.58, w: 3, d: 7.82, fill: "#a87d4a", opacity: 0.78, stroke: "#5a3e25", sw: 1.2 },
         { kind: "text", x: 22.08, y: 16.39, text: "east terrace", cls: "lbl-w" },
         { kind: "text", x: 22.08, y: 17.28, text: "(E.02)", cls: "lbl-sm-w" },
-        { kind: "text", x: 22.08, y: 17.6, text: "3 × 11 m", cls: "dim", fill: "#fff" }
+        { kind: "text", x: 22.08, y: 17.6, text: "3 × 7.82 m", cls: "dim", fill: "#fff" }
       ]
     },
     {
@@ -286,7 +286,7 @@ const GARDEN = {
     },
     {
       id: "screenNorth",
-      name: "Privacy screen — north neighbour (2 × 2 m louvre)",
+      name: "Privacy screen — north neighbour (2.4 × 2 m louvre)",
       meta: { screen: { h: 2.0 } },
       parts: [
         { kind: "rect", x: 13.83, y: 0.2, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
@@ -295,7 +295,7 @@ const GARDEN = {
     },
     {
       id: "screenWest",
-      name: "Privacy screen — west neighbour (2 × 2 m louvre)",
+      name: "Privacy screen — west neighbour (2.4 × 2 m louvre)",
       meta: { screen: { h: 2.0 } },
       parts: [
         { kind: "rect", x: 0.86, y: 16.36, w: 0.14, d: 2.4, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
@@ -304,7 +304,7 @@ const GARDEN = {
     },
     {
       id: "screenSouth",
-      name: "Privacy screen — south neighbour (2 × 2 m louvre)",
+      name: "Privacy screen — south neighbour (2.4 × 2 m louvre)",
       meta: { screen: { h: 2.0 } },
       parts: [
         { kind: "rect", x: 14.0, y: 31.4, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
@@ -323,7 +323,7 @@ const GARDEN = {
     },
     {
       id: "orchard",
-      name: "Orchard ~5.5 × 11 m",
+      name: "Orchard 5.56 × 9 m",
       parts: [
         { kind: "rect", x: 0.4, y: 21.11, w: 5.56, d: 9.0, fill: "#7fa66f", opacity: 0.4, clipToPlot: true },
         { kind: "circle", cx: 1.2, cy: 22, r: 0.5, fill: "#5a8a5a" },
@@ -333,7 +333,7 @@ const GARDEN = {
         { kind: "circle", cx: 1.2, cy: 30, r: 0.5, fill: "#5a8a5a" },
         { kind: "circle", cx: 4, cy: 29, r: 0.5, fill: "#5a8a5a" },
         { kind: "text", x: 2.78, y: 27.22, text: "orchard", cls: "lbl", rotate: -90 },
-        { kind: "text", x: 6.39, y: 27.22, text: "~5.5 × 11 m", cls: "dim", anchor: "start" }
+        { kind: "text", x: 6.39, y: 27.22, text: "5.56 × 9 m", cls: "dim", anchor: "start" }
       ]
     },
     {
