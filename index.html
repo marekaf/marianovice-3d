@@ -2276,6 +2276,10 @@ window.setPreset = function(name) {
   };
   const p = positions[name];
   const t = targets[name];
+  // An unknown name reaches here from a stale or hand-typed URL hash. Spreading undefined throws,
+  // and applyHashView() runs before the toggles and sliders are wired, so the throw would leave
+  // the page with no working controls at all.
+  if (!p || !t) return;
   // Eye level — adjust Y to actual terrain height + 1.7 m
   if (name === 'ground') {
     p[1] = terrainHeight(p[0], p[2]) + 1.7;
