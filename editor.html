@@ -112,11 +112,18 @@
       const [bx, by] = bboxMin(el);
       coordEl.textContent = `${el.id} → ${cellAddress(bx + dxM, by + dyM)} (Δ ${dxM.toFixed(1)}, ${dyM.toFixed(1)} m)`;
     };
-    const onUp = () => {
+    const onUp = e => {
       g.removeEventListener('pointermove', onMove);
       g.removeEventListener('pointerup', onUp);
       g.removeEventListener('pointercancel', onUp);
       g.classList.remove('dragging');
+      // pointercancel means the browser took the gesture over — on touch, a drag that turns into
+      // a page scroll. The user never let go, so committing here saves a move they did not make.
+      if (e && e.type === 'pointercancel') {
+        g.removeAttribute('transform');
+        coordEl.textContent = '';
+        return;
+      }
       if (dxPx || dyPx) {
         shiftElement(el, dxPx / working.m2px, dyPx / working.m2px);
         render();
