@@ -256,7 +256,7 @@
     <rect x="0" y="53" width="12" height="10" fill="#e6cfa6" stroke="#b0801f" stroke-width="1"/>
     <text x="18" y="61" class="td">Level pad on soil fill — excavated soil placed under</text>
     <rect x="0" y="68" width="12" height="10" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1"/>
-    <text x="18" y="76" class="td">Hard surface — graded to fall (~2% to gate)</text>
+    <text x="18" y="76" class="td">Hard surface — graded to fall (3.6% to gate)</text>
     <rect x="0" y="83" width="12" height="10" fill="#fff2cc" stroke="#bf9000" stroke-width="1"/>
     <text x="18" y="91" class="td">Level soft/utility area — trim to level</text>
     <text x="0" y="112" class="panelh">LEVELS SCHEDULE</text>
@@ -281,7 +281,13 @@
     <text x="0" y="338" class="note">each at its worst corner.</text>
     <text x="0" y="349" class="note">Zones with no set level are cut to</text>
     <text x="0" y="359" class="note">their lowest corner, so they need no fill.</text>
-    <text x="0" y="370" class="note">Driveway graded to fall, not flat.</text>
-    <text x="0" y="381" class="note">Decks are level on posts over grade.</text>
+    <text x="0" y="370" class="note">Decks are level on posts over grade.</text>
+    <text x="0" y="388" class="panelh">DRIVEWAY GRADE</text>
+    <text x="0" y="401" class="note">West end at the garage slab: 396.50 Bpv.</text>
+    <text x="0" y="411" class="note">Gate end on existing ground: 395.89 Bpv.</text>
+    <text x="0" y="421" class="note">Falls 0.61 m over 16.8 m = 3.6%.</text>
+    <text x="0" y="431" class="note">The 4.5 m gate opening has 5.3%</text>
+    <text x="0" y="441" class="note">natural cross-slope. Warp the last few</text>
+    <text x="0" y="451" class="note">metres into it. It is not one plane.</text>
   </g>
 </svg>

@@ -15,7 +15,7 @@ const CAT = {
   apron: { fill: "#f6c9a0", stroke: "#c25e12", label: "Graded apron — level slab (cut & fill)" },
   deck:  { fill: "#d9ead3", stroke: "#5a9a3c", label: "Level deck at +0.050 — on posts, ground not graded" },
   fill:  { fill: "#e6cfa6", stroke: "#b0801f", label: "Level pad on soil fill — excavated soil placed under" },
-  fall:  { fill: "#cfe2f3", stroke: "#2f6fae", label: "Hard surface — graded to fall (~2% to gate)" },
+  fall:  { fill: "#cfe2f3", stroke: "#2f6fae", label: "Hard surface — graded to fall" },
   soft:  { fill: "#fff2cc", stroke: "#bf9000", label: "Level soft/utility area — trim to level" },
 };
 
@@ -30,7 +30,10 @@ const ZONES = [
   { id: "garage",       label: "Garage slab/apron", cat: "apron", level: 1.965 },
   { id: "eastTerrace",  label: "Terrace E (fill)",  cat: "fill",  level: 2.44 },
   { id: "westTerrace",  label: "Terrace W",         cat: "deck",  level: 2.515 },
-  { id: "driveway",     label: "Driveway",          cat: "fall" },
+  // The driveway is pinned at both ends: it leaves the garage/carport slab at that slab's level, and
+  // the gate end must meet existing ground at the parcel boundary. `grade` names those two ties.
+  { id: "driveway",     label: "Driveway",         cat: "fall",
+    grade: { tieTo: "garage", from: [27.63, 22.92], gate: [[43.08, 27.89], [42.55, 32.39]] } },
   { id: "firePit",      label: "Fire-pit seating",  cat: "soft" },
   { id: "raisedBedsPad", label: "Raised-beds pad",  cat: "soft", level: 3.15 },
   { id: "compost",      label: "Compost",           cat: "soft" },
@@ -61,11 +64,25 @@ function zoneCorners(parts) {
 }
 
 // Derived finished level + earthworks for a zone.
+// Fall, run and gate crossfall for a graded surface, from its two fixed ends. The gate end sits on
+// the parcel boundary, so it is taken at natural ground — the drive has to meet the road as built.
+function gradeInfo(g) {
+  const top = ZONES.find((z) => z.id === g.tieTo).level;
+  const [[gx1, gy1], [gx2, gy2]] = g.gate;
+  const z1 = TERRAIN.basePlaneHeight(gx1, gy1), z2 = TERRAIN.basePlaneHeight(gx2, gy2);
+  const mid = [(gx1 + gx2) / 2, (gy1 + gy2) / 2];
+  const bottom = TERRAIN.basePlaneHeight(mid[0], mid[1]);
+  const run = Math.hypot(mid[0] - g.from[0], mid[1] - g.from[1]);
+  const width = Math.hypot(gx2 - gx1, gy2 - gy1);
+  return { top, bottom, run, drop: top - bottom, fallPct: ((top - bottom) / run) * 100,
+           crossPct: (Math.abs(z2 - z1) / width) * 100, gateWidth: width };
+}
+
 function levelInfo(z, parts) {
   const gs = zoneCorners(parts).map(([x, y]) => TERRAIN.basePlaneHeight(x, y));
   const gmin = Math.min(...gs), gmax = Math.max(...gs);
   if (z.cat === "deck") return { target: z.level, cut: null, fill: null, note: "deck on posts" };
-  if (z.cat === "fall") return { target: null, cut: null, fill: null, delta: gmax - gmin };
+  if (z.cat === "fall") return { target: null, cut: null, fill: null, delta: gmax - gmin, grade: z.grade ? gradeInfo(z.grade) : null };
   const target = z.level !== undefined ? z.level : gmin;
   return { target, cut: Math.max(0, gmax - target), fill: Math.max(0, target - gmin) };
 }
@@ -191,7 +208,9 @@ function renderFlatPlanSVG(garden) {
     const c = CAT[key];
     const box = key === "fall" ? `fill="url(#fallhatch)"` : `fill="${c.fill}"`;
     out.push(`    <rect x="0" y="${ly - 8}" width="12" height="10" ${box} stroke="${c.stroke}" stroke-width="1"/>`);
-    out.push(`    <text x="18" y="${ly}" class="td">${esc(c.label)}</text>`);
+    const gz = key === "fall" && computed.find((e) => e.info.grade);
+    const label = gz ? `${c.label} (${gz.info.grade.fallPct.toFixed(1)}% to gate)` : c.label;
+    out.push(`    <text x="18" y="${ly}" class="td">${esc(label)}</text>`);
     ly += 15;
   }
   ly += 6;
@@ -222,9 +241,22 @@ function renderFlatPlanSVG(garden) {
   ly += 10;
   out.push(`    <text x="0" y="${ly}" class="note">their lowest corner, so they need no fill.</text>`);
   ly += 11;
-  out.push(`    <text x="0" y="${ly}" class="note">Driveway graded to fall, not flat.</text>`);
-  ly += 11;
   out.push(`    <text x="0" y="${ly}" class="note">Decks are level on posts over grade.</text>`);
+  const dw = computed.find((e) => e.info.grade);
+  if (dw) {
+    const gr = dw.info.grade;
+    ly += 18;
+    out.push(`    <text x="0" y="${ly}" class="panelh">DRIVEWAY GRADE</text>`);
+    ly += 13;
+    for (const line of [
+      `West end at the garage slab: ${fmtBpv(TERRAIN.bpv(gr.top))} Bpv.`,
+      `Gate end on existing ground: ${fmtBpv(TERRAIN.bpv(gr.bottom))} Bpv.`,
+      `Falls ${gr.drop.toFixed(2)} m over ${gr.run.toFixed(1)} m = ${gr.fallPct.toFixed(1)}%.`,
+      `The ${gr.gateWidth.toFixed(1)} m gate opening has ${gr.crossPct.toFixed(1)}%`,
+      `natural cross-slope. Warp the last few`,
+      `metres into it. It is not one plane.`,
+    ]) { out.push(`    <text x="0" y="${ly}" class="note">${esc(line)}</text>`); ly += 10; }
+  }
   out.push(`  </g>`);
 
   out.push(`</svg>`);
