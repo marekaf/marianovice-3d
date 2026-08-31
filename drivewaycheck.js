@@ -4,6 +4,52 @@
 const ROWS = "abcdefghijklmnopqrstuvwxyz";
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+const inPoly = (pts, x, y) => {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+};
+
+const distToEdge = (pts, x, y) => {
+  let m = Infinity;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [ax, ay] = pts[j], [bx, by] = pts[i];
+    const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy;
+    const t = L ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / L)) : 0;
+    m = Math.min(m, Math.hypot(x - (ax + t * dx), y - (ay + t * dy)));
+  }
+  return m;
+};
+
+const rectRing = (r) => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
+const insideRect = (r, x, y) => x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.d;
+
+// Biggest circle that fits inside the drivable area, inside the parcel, and clear of `blockers` —
+// the space a car has to turn in one sweep. Coarse grid, then refinements around the best point;
+// the drivable area is a simple strip, so a local refine does not get trapped away from the maximum.
+function largestClearCircle(area, plot, blockers = []) {
+  const xs = area.map((p) => p[0]), ys = area.map((p) => p[1]);
+  let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const clearance = (x, y) => {
+    if (!inPoly(area, x, y) || !inPoly(plot, x, y)) return -1;
+    if (blockers.some((r) => insideRect(r, x, y))) return -1;
+    return Math.min(distToEdge(area, x, y), distToEdge(plot, x, y),
+                    ...blockers.map((r) => distToEdge(rectRing(r), x, y)));
+  };
+  let best = { r: -1, x: x0, y: y0 };
+  for (let step = 0.25, pass = 0; pass < 7; pass++, step /= 3) {
+    for (let x = x0; x <= x1; x += step) for (let y = y0; y <= y1; y += step) {
+      const r = clearance(x, y);
+      if (r > best.r) best = { r, x, y };
+    }
+    x0 = best.x - step * 3; x1 = best.x + step * 3; y0 = best.y - step * 3; y1 = best.y + step * 3;
+  }
+  return best;
+}
+
 function renderDrivewayCheckSVG(garden) {
   const VEH = garden.vehicles;
   const EL = Object.fromEntries(garden.elements.map((e) => [e.id, e]));
@@ -23,6 +69,29 @@ function renderDrivewayCheckSVG(garden) {
   const dw = EL.driveway.parts.find((p) => p.kind === "polygon").points;
   const gt = EL.gate.parts.find((p) => p.kind === "line");
 
+  // A motorbike turns inside anything a car needs, so the widest car sets the requirement. Two
+  // numbers matter: what is clear with both bays occupied (the everyday case) and what opens up
+  // once the carport is empty. The bays are drivable but not dependably free.
+  const worst = VEH.filter((v) => !v.moto).reduce((a, v) => (v.turn > a.turn ? v : a));
+  const circle = largestClearCircle(dw, garden.plot.vertices, [cp, ga]);
+  const have = circle.r * 2;
+  const emptied = largestClearCircle(dw, garden.plot.vertices, [ga]).r * 2;
+  const fits = have >= worst.turn;
+  const turn = {
+    need: worst.turn, have, circle, fits,
+    headline: fits
+      ? `✓ one-sweep turn fits (Ø ${have.toFixed(1)} m clear)`
+      : `✗ no one-sweep turn: Ø ${have.toFixed(1)} m vs Ø ${worst.turn.toFixed(1)} m`,
+    lines: [
+      "Gate 4.0 m clear (+ separate 0.9 m wicket).",
+      `Tightest car is the ${worst.name.replace("Audi ", "")},`,
+      `kerb-to-kerb Ø ${worst.turn.toFixed(1)} m.`,
+      `Clear turning circle: Ø ${have.toFixed(1)} m with the bays`,
+      `in use, Ø ${emptied.toFixed(1)} m with the carport empty.`,
+      fits ? "Drive in and out forward." : "Every car reverses in or out of the gate.",
+    ],
+  };
+
   out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 880" font-family="-apple-system, BlinkMacSystemFont, sans-serif">`);
   out.push(`  <defs>
     <pattern id="cg" width="${cell}" height="${cell}" patternUnits="userSpaceOnUse"><path d="M ${cell} 0 L 0 0 0 ${cell}" fill="none" stroke="#e2e2e2" stroke-width="0.6"/></pattern>
@@ -41,6 +110,7 @@ function renderDrivewayCheckSVG(garden) {
     .ph{font-size:11px;font-weight:700}
     .pt{font-size:8.5px}
     .ok{font-size:10px;font-weight:700;fill:#1f7a3d}
+    .bad{font-size:10px;font-weight:700;fill:#c0392b}
   </style>`);
   out.push(`  <rect width="1100" height="880" fill="white"/>`);
   out.push(`  <text x="430" y="26" class="title">Parking &amp; maneuvering — vehicle fit</text>`);
@@ -119,7 +189,7 @@ function renderDrivewayCheckSVG(garden) {
     out.push(`    <text x="${px(v.cx)}" y="${px(cz)}" class="vlbl" text-anchor="middle" transform="rotate(90 ${px(v.cx)} ${px(cz)})">${esc(lab)}</text>`);
   }
 
-  // Gate + access swept path + turning circle (getting to the carport)
+  // Gate + access route + the turning space actually available (getting to the carport)
   out.push(`    <line x1="${px(gt.x1)}" y1="${px(gt.y1)}" x2="${px(gt.x2)}" y2="${px(gt.y2)}" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>`);
   out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate 4.0 m</text>`);
   // Wicket (branka) — separate 0.9 m pedestrian gate immediately S of the vehicle gate, post between them
@@ -128,8 +198,10 @@ function renderDrivewayCheckSVG(garden) {
     out.push(`    <circle cx="${px(gt.x2)}" cy="${px(gt.y2)}" r="2" fill="#7a6f52"/>`);
     out.push(`    <line x1="${px(gt.x2)}" y1="${px(gt.y2)}" x2="${px(wSx)}" y2="${px(wSy)}" stroke="#1f7a3d" stroke-width="3" stroke-dasharray="2,2"/>`);
     out.push(`    <text x="${px(wSx) + 8}" y="${px((gt.y2 + wSy) / 2)}" class="dim" fill="#1f7a3d" text-anchor="start">wicket 0.9 m</text>`); }
-  out.push(`    <circle cx="${px(29.5)}" cy="${px(28.4)}" r="${px(5.6)}" fill="#c0392b" fill-opacity="0.05" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>`);
-  out.push(`    <text x="${px(29.5)}" y="${px(28.4)}" class="dim">turning Ø 11.2 m</text>`);
+  out.push(`    <circle cx="${px(turn.circle.x)}" cy="${px(turn.circle.y)}" r="${px(turn.need / 2)}" fill="none" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>`);
+  out.push(`    <circle cx="${px(turn.circle.x)}" cy="${px(turn.circle.y)}" r="${px(turn.circle.r)}" fill="#1f7a3d" fill-opacity="0.07" stroke="#1f7a3d" stroke-width="1.4"/>`);
+  out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y)}" class="dim" fill="#1f7a3d">clear Ø ${turn.have.toFixed(1)} m</text>`);
+  out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y) + 11}" class="dim">needs Ø ${turn.need.toFixed(1)} m</text>`);
   out.push(`    <path d="M ${px(gt.x1 - 0.3)},${px(30)} Q ${px(34)},${px(29)} ${px(28)},${px(27.8)} T ${px(24.4)},${px(24)}" fill="none" stroke="#c0392b" stroke-width="1.6" stroke-dasharray="3,3" marker-end="url(#arrow)"/>`);
 
   out.push(`  </g>`);
@@ -170,13 +242,9 @@ function renderDrivewayCheckSVG(garden) {
   y += 6;
   out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Access from the gate</text>`);
   y += 12;
-  for (const line of [
-    "Gate 4.0 m clear (+ separate 0.9 m wicket).",
-    "Turning Ø 11.2 m met by driveway + apron L.",
-    "Drive in forward, back-and-fill, leave forward.",
-    "A6 allroad (Ø 12.1 m) is the tightest: still OK,",
-    "reverse the last bit into the carport if needed.",
-  ]) { out.push(`    <text x="0" y="${y}" class="pt" fill="#555">${esc(line)}</text>`); y += 12; }
+  out.push(`    <text x="0" y="${y}" class="${turn.fits ? "ok" : "bad"}" font-size="8.5">${esc(turn.headline)}</text>`);
+  y += 13;
+  for (const line of turn.lines) { out.push(`    <text x="0" y="${y}" class="pt" fill="#555">${esc(line)}</text>`); y += 12; }
   y += 6;
   out.push(`    <text x="0" y="${y}" class="pt" fill="#888">Widths exclude mirrors (~+0.25 m). Fold mirrors</text>`);
   out.push(`    <text x="0" y="${y + 12}" class="pt" fill="#888">for the side-by-side carport pair.</text>`);
