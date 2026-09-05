@@ -49,6 +49,7 @@
   <button onclick="setPreset('greenhouse')">Greenhouse</button>
   <button onclick="setPreset('raisedBeds')">Kitchen garden</button>
   <button onclick="setPreset('firepit')">Firepit seating</button>
+  <button onclick="setPreset('hiddenBench')">Hidden bench</button>
   <button onclick="startTour()" style="background:#e07b3b">▶ Garden walk</button>
 </div>
 
@@ -107,6 +108,7 @@
 <script src="greenhouse-model.js?v=20260905"></script>
 <script src="raised-beds-model.js?v=20260905"></script>
 <script src="firepit-model.js?v=20260905"></script>
+<script src="hidden-bench-model.js?v=20260905"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -121,8 +123,11 @@ const pergolaModel = PergolaModel.build(GARDEN);
 const greenhouseModel = GreenhouseModel.build(GARDEN, TERRAIN.plane);
 const raisedBedsModel = RaisedBedsModel.build(GARDEN);
 const firepitModel = FirepitModel.build(GARDEN, TERRAIN.plane);
+const garageGround = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
+const hiddenBenchModel = HiddenBenchModel.build(GARDEN, TERRAIN.plane, garageGround);
 const plantingClearances = [...SaunaModel.plantingClearances(GARDEN), ...pergolaModel.plantingClearances,
-  ...greenhouseModel.plantingClearances, ...raisedBedsModel.plantingClearances, ...firepitModel.plantingClearances];
+  ...greenhouseModel.plantingClearances, ...raisedBedsModel.plantingClearances, ...firepitModel.plantingClearances,
+  ...hiddenBenchModel.plantingClearances];
 function overlapsStructureAccess(x, y, radius) {
   return plantingClearances.some(r => {
     const dx = Math.max(r.x - x, 0, x - r.x - r.w);
@@ -350,7 +355,6 @@ const cutRects = [
 // Level pads — force the footprint flat to `level` (cut where the grade is higher, fill where it is
 // lower), smoothstep bank to grade at the edges. The real NW→SE fall drops the SE hardscape below its
 // slab level (cut alone can't lift it) and lifts the NW garden pads above theirs (cut alone pits them).
-const garageGround = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
 const levelPads = [
   { x0: garageGround.x, z0: garageGround.y, x1: garageGround.x + garageGround.w,
     z1: garageGround.y + garageGround.d, level: garageGround.level, blend: garageGround.blend },
@@ -786,7 +790,7 @@ woodTex.repeat.set(1 / 2, 1 / 2);
 
 // ───────────────────────── FENCE (GROUND) ─────────────────────────
 const plotVerts = GARDEN.plot.vertices;  // NW, NE, E_kink, SE, SW
-// Dense 0.7 m grid clipped to the plot pentagon — a 5-vertex ShapeGeometry can't express the graded cut
+// A 0.7 m grid with foot-contact vertices preserves grading beneath small supports.
 function pointInPlot(x, z) {
   let inside = false;
   for (let i = 0, j = plotVerts.length - 1; i < plotVerts.length; j = i++) {
@@ -810,11 +814,18 @@ function nearestOnPlotEdge(x, z) {
 const groundGeom = (() => {
   const xs = plotVerts.map(p => p[0]), zs = plotVerts.map(p => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
-  const nx = Math.ceil((x1 - x0) / 0.7), nz = Math.ceil((z1 - z0) / 0.7);
+  const contactPoints = hiddenBenchModel.feet.flatMap(foot => foot.bottomCorners);
+  const samples = (start, end, axis) => {
+    const count = Math.ceil((end - start) / 0.7);
+    return [...new Set([...Array.from({ length: count + 1 }, (_, i) => start + (end - start) * i / count),
+      ...contactPoints.map(point => point[axis]).filter(value => value > start && value < end)])].sort((a, b) => a - b);
+  };
+  const xSamples = samples(x0, x1, 0), zSamples = samples(z0, z1, 1);
+  const nx = xSamples.length - 1, nz = zSamples.length - 1;
   const gx = new Float64Array((nx + 1) * (nz + 1)), gz = new Float64Array((nx + 1) * (nz + 1));
   for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
-    gx[j * (nx + 1) + i] = x0 + (x1 - x0) * i / nx;
-    gz[j * (nx + 1) + i] = z0 + (z1 - z0) * j / nz;
+    gx[j * (nx + 1) + i] = xSamples[i];
+    gz[j * (nx + 1) + i] = zSamples[j];
   }
   const index = [];
   const used = new Uint8Array(gx.length);
@@ -1738,20 +1749,8 @@ const waterNormal = (() => {
 }
 
 // Zašívárna — hidden red bench off the garage north wall (Flera-style)
-{
-  const bx = 32.3, bz = 18.55, baseY = terrainHeight(bx, bz);
-  const redMat = new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4, metalness: 0.3 });
-  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.07, 0.5), redMat);
-  seat.position.set(bx, baseY + 0.45, bz);
-  const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.45, 0.06), redMat);
-  back.position.set(bx, baseY + 0.75, bz + 0.22);
-  for (const m of [seat, back]) { m.castShadow = true; furnitureGroup.add(m); }
-  for (const lx of [bx - 0.8, bx + 0.8]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.44), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6 }));
-    leg.position.set(lx, baseY + 0.21, bz);
-    furnitureGroup.add(leg);
-  }
-}
+const hiddenBenchGroup = buildModel(THREE, hiddenBenchModel);
+scene.add(hiddenBenchGroup);
 
 // Facade climbers — vine clusters flattened against the wall (garage E + atrium N/S walls)
 function addWallClimber(x1, z1, x2, z2, nx, nz, h = 2.2) {
@@ -2054,7 +2053,8 @@ window.setPreset = function(name) {
     pergola: [PG.x + PG.w + 5, pergolaModel.floorHeight + 3.4, PG.y + PG.d + 6.5],
     greenhouse: [GH.x - 1.1, greenhouseModel.floorHeight + 3.56, GH.y - 1.5],
     raisedBeds: [7, raisedBedsModel.floorHeight + 4, 16],
-    firepit: [FPC.cx - 4, firepitModel.floorHeight + 3.3, FPC.cy + 4]
+    firepit: [FPC.cx - 4, firepitModel.floorHeight + 3.3, FPC.cy + 4],
+    hiddenBench: [30.4, hiddenBenchModel.floorHeight + 1.6, 15.8]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -2068,7 +2068,8 @@ window.setPreset = function(name) {
     pergola: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.1, PG.y + PG.d / 2],
     greenhouse: [GH.x + GH.w / 2, greenhouseModel.floorHeight + 1.1, GH.y + GH.d / 2],
     raisedBeds: [2.25, raisedBedsModel.floorHeight + 0.5, 12.5],
-    firepit: [FPC.cx, firepitModel.floorHeight + 0.3, FPC.cy]
+    firepit: [FPC.cx, firepitModel.floorHeight + 0.3, FPC.cy],
+    hiddenBench: [32.3, hiddenBenchModel.floorHeight + 0.45, 18.55]
   };
   const p = positions[name];
   const t = targets[name];
@@ -2118,6 +2119,7 @@ document.getElementById('toggleFurniture').addEventListener('change', e => {
   greenhouseGroup.userData.categories.furniture.visible = e.target.checked;
   raisedBedsGroup.userData.categories.furniture.visible = e.target.checked;
   firepitGroup.userData.categories.furniture.visible = e.target.checked;
+  hiddenBenchGroup.userData.categories.furniture.visible = e.target.checked;
 });
 document.getElementById('toggleVehicles').addEventListener('change', e => vehiclesGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);

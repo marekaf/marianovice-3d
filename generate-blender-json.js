@@ -13,6 +13,7 @@ const { FIXTURE_SAMPLES } = require("./fixture-samples.js");
 const { GreenhouseModel } = require("./greenhouse-model.js");
 const { RaisedBedsModel } = require("./raised-beds-model.js");
 const { FirepitModel } = require("./firepit-model.js");
+const { HiddenBenchModel } = require("./hidden-bench-model.js");
 
 const out = path.join(__dirname, "blender", "garden.json");
 fs.writeFileSync(out, JSON.stringify({
@@ -24,6 +25,7 @@ fs.writeFileSync(out, JSON.stringify({
   greenhouseModel: GreenhouseModel.build(GARDEN, TERRAIN.plane),
   raisedBedsModel: RaisedBedsModel.build(GARDEN),
   firepitModel: FirepitModel.build(GARDEN, TERRAIN.plane),
+  hiddenBenchModel: HiddenBenchModel.build(GARDEN, TERRAIN.plane, GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5)),
   terrain: { ...TERRAIN.plane, houseFFLInternal: TERRAIN.houseFFLInternal, bpvDatum: TERRAIN.bpvDatum },
 }, null, 1));
 console.log("wrote " + out);
