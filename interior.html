@@ -46,6 +46,7 @@
   <h4>BUILDING</h4>
   <div class="bswitch">
     <button data-building="garage">Garage</button>
+    <button data-building="sauna">Sauna</button>
     <button data-building="house" id="houseBtn" style="display:none">House</button>
     <button data-building="loft" id="loftBtn" style="display:none">Loft</button>
   </div>
@@ -67,8 +68,10 @@
 </div>
 <div id="scalebar"><div id="scaleline"></div><span id="scaletext"></span></div>
 
+<script src="terrain.js?v=20260827"></script>
 <script src="layout.js?v=20260830a"></script>
 <script src="garage-model.js?v=20260905"></script>
+<script src="sauna-model.js?v=20260905c"></script>
 <script src="interiors3d.js?v=20260905b"></script>
 <script src="house-interior.js?v=20260830a"></script>
 <script type="module">
@@ -92,6 +95,14 @@ for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor
 const vehicles = INTERIORS3D.garageVehicles(THREE, GARDEN, -0.5);
 garRoot.add(vehicles);
 scene.add(garRoot);
+
+const saunaModel = SaunaModel.build(GARDEN, TERRAIN.plane);
+const saunaRoot = buildModel(THREE, { ...saunaModel, floorHeight: 0 });
+const saunaCategories = saunaRoot.userData.categories;
+saunaCategories.outdoor.visible = false;
+for (const light of saunaRoot.userData.lights) light.intensity = Math.min(0.35, light.userData.night);
+scene.add(saunaRoot);
+const SA = GARDEN.elements.find(e => e.id === 'sauna').parts.find(p => p.kind === 'rect');
 
 // House — only when the LOCAL (gitignored) house-interior.js is present
 const hasHouse = typeof HOUSE_INTERIOR !== 'undefined';
@@ -133,11 +144,22 @@ function mkViews(cx, cz, midY, w, d, wallH, label) {
 const garageViews = mkViews(GA.x + GA.w / 2, GA.y + GA.d / 2, -0.5 + 1.6, GA.w, GA.d, 4.4, 'GARAGE');
 garageViews.cut3d.fitH += 1;
 garageViews.cut3d.target[1] = 1.1;
+const saunaViews = mkViews(SA.x + SA.w / 2, SA.y + SA.d / 2, 1.1, SA.w, SA.d, 4.4, 'SAUNA');
+saunaViews.cut3d.fitH = 5.2;
+saunaViews.cut3d.target[1] = 1;
 const BUILDINGS = {
   garage: {
     root: garRoot, walls: gar.walls, ceiling: gar.ceiling,
     views: garageViews,
     dims: `garage · ${GA.w.toFixed(2)} × ${GA.d.toFixed(2)} m outside · floor −0.50 m`,
+  },
+  sauna: {
+    root: saunaRoot,
+    walls: { N: saunaCategories.N, S: saunaCategories.S, E: saunaCategories.E, W: saunaCategories.W },
+    ceiling: saunaCategories.roof,
+    furniture: saunaCategories.furniture,
+    views: saunaViews,
+    dims: `sauna · ${SA.w.toFixed(2)} × ${SA.d.toFixed(2)} m outside · clear height 2.50 m`,
   },
 };
 if (hasHouse) {
@@ -293,7 +315,10 @@ function applyHash() {
 applyHash();
 window.addEventListener('hashchange', applyHash);
 
-window.DEBUG = { scene, camera, gar, hou: hasHouse ? hou : null, loft: hasLoft ? loft : null };
+window.DEBUG = { scene, camera, gar,
+  sau: { root: saunaRoot, model: saunaModel, categories: saunaCategories, walls: BUILDINGS.sauna.walls,
+    ceiling: saunaCategories.roof, furniture: saunaCategories.furniture, dims: { rect: SA, floorY: 0, clearH: 2.5 } },
+  hou: hasHouse ? hou : null, loft: hasLoft ? loft : null };
 renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);

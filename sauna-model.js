@@ -42,19 +42,20 @@ const SaunaModel = (() => {
       }
     }
     const parts = [], lights = [];
+    let category = 'floor';
     const box = (name, x0, y0, z0, width, depth, height, material, bevel = 0.004) => {
       parts.push({ name, type: 'box', position: [x0 + width / 2, y0 + depth / 2, z0 + height / 2],
-        size: [width, depth, height], material, bevel });
+        size: [width, depth, height], material, bevel, category });
     };
     const cylinder = (name, position, radius, height, material, axis = 'z') => {
       parts.push({ name, type: 'cylinder', position, radiusTop: radius, radiusBottom: radius,
-        height, axis, segments: 24, material });
+        height, axis, segments: 24, material, category });
     };
     const lathe = (name, position, profile, material) => {
-      parts.push({ name, type: 'lathe', position, profile, segments: 64, material });
+      parts.push({ name, type: 'lathe', position, profile, segments: 64, material, category });
     };
     const slab = (name, x0, y0, width, depth, north, south, thickness, material) => {
-      parts.push({ name, type: 'mesh', material,
+      parts.push({ name, type: 'mesh', material, category,
         vertices: [[x0,y0,north], [x0+width,y0,north], [x0+width,y0+depth,south], [x0,y0+depth,south],
           [x0,y0,north+thickness], [x0+width,y0,north+thickness],
           [x0+width,y0+depth,south+thickness], [x0,y0+depth,south+thickness]],
@@ -64,6 +65,7 @@ const SaunaModel = (() => {
 
     box('sauna_foundation', x + 0.04, y + 0.04, -0.7, w - 0.08, d - 0.08, 0.64, 'foundation', 0.01);
     box('sauna_floor', x, y, -0.06, w, d, 0.06, 'interior_x');
+    category = 'outdoor';
     box('shelter_plinth', shelter.x + 0.06, shelter.y + 0.06, -0.7,
       shelter.w - 0.12, shelter.d - 0.12, 0.59, 'foundation', 0.01);
     const deckCount = Math.ceil(shelter.w / 0.14);
@@ -86,9 +88,13 @@ const SaunaModel = (() => {
       { name: 'window', from: 0.45, to: w - 1.5, bottom: 0.65, top: 2.16 },
       { name: 'door', from: w - 1.2, to: w - 0.25, bottom: 0, top: 2.16 },
     ];
+    category = 'N';
     box('wall_north', x, y, 0, w, 0.16, 2.6, 'interior_x');
+    category = 'W';
     box('wall_west', x, y + 0.16, 0, 0.16, d - 0.32, 2.6, 'interior_y');
+    category = 'E';
     box('wall_east', x + w - 0.16, y + 0.16, 0, 0.16, d - 0.32, 2.6, 'interior_y');
+    category = 'S';
     const cuts = [0, ...openings.flatMap(o => [o.from, o.to]), w];
     for (let i = 0; i < cuts.length - 1; i++) {
       const left = cuts[i], right = cuts[i + 1];
@@ -100,6 +106,7 @@ const SaunaModel = (() => {
       }
     }
     for (const side of ['north', 'south', 'east', 'west']) {
+      category = { north: 'N', south: 'S', east: 'E', west: 'W' }[side];
       const length = side === 'north' || side === 'south' ? w : d;
       const count = Math.ceil(length / 0.12), pitch = length / count;
       for (let i = 0; i < count; i++) {
@@ -125,8 +132,10 @@ const SaunaModel = (() => {
       }
     }
     for (const [i, [cx, cy]] of [[x,y], [x+w,y], [x,y+d], [x+w,y+d]].entries()) {
+      category = cy === y ? 'N' : 'S';
       box(`corner_${i}`, cx - 0.035, cy - 0.035, 0.02, 0.07, 0.07, 2.6, 'timber_z');
     }
+    category = 'S';
     for (const o of openings) {
       const a = x + o.from, b = x + o.to, front = y + d;
       for (const [i, xx] of [a, b - 0.05].entries()) {
@@ -147,6 +156,7 @@ const SaunaModel = (() => {
       }
     }
 
+    category = 'roof';
     box('sauna_ceiling', x + 0.16, y + 0.16, 2.5, w - 0.32, d - 0.32, 0.1, 'interior_y');
     slab('sauna_roof', x - 0.16, y - 0.16, w + 0.32, d + 0.32, 2.77, 2.61, 0.07, 'trim');
     for (let i = 0; i <= Math.floor((w + 0.2) / 0.43); i++) {
@@ -160,13 +170,16 @@ const SaunaModel = (() => {
     box('gutter_bottom', x - 0.17, y + d + 0.18, 2.48, w + 0.34, 0.12, 0.018, 'trim');
     box('gutter_front', x - 0.17, y + d + 0.28, 2.48, w + 0.34, 0.02, 0.1, 'trim');
     for (const xx of [x - 0.17, x + w + 0.15]) box(`gutter_end_${xx}`, xx, y + d + 0.18, 2.48, 0.02, 0.12, 0.1, 'trim');
+    category = 'E';
     cylinder('downpipe', [x + w + 0.12, y + d + 0.235, 1.27], 0.036, 2.43, 'trim');
     for (const z of [0.55, 1.9]) box(`pipe_bracket_${z}`, x + w + 0.055, y + d + 0.19, z, 0.1, 0.09, 0.035, 'steel');
 
+    category = 'N';
     for (let row = 0; row < 17; row++) {
       box(`interior_rear_board_${row}`, x + 0.17, y + 0.16, 0.05 + row * 0.14,
         w - 0.34, 0.018, 0.133, 'interior_x');
     }
+    category = 'furniture';
     for (const [tier, depth, height] of [[0, 1.06, 0.43], [1, 0.6, 0.86]]) {
       const back = y + 0.2, count = Math.floor(depth / 0.095);
       for (let i = 0; i < count; i++) box(`bench_${tier}_slat_${i}`, x + 0.23, back + i * depth / count,
@@ -179,10 +192,12 @@ const SaunaModel = (() => {
     for (let i = 0; i < 3; i++) box(`bench_backrest_${i}`, x + 0.23, y + 0.23, 1.02 + i * 0.14,
       w - 0.46, 0.035, 0.085, 'interior_x', 0.008);
     box('bench_light', x + 0.3, y + 0.78, 0.795, w - 0.6, 0.025, 0.025, 'light');
-    lights.push({ name: 'bench_glow', position: [x + w / 2, y + 0.95, 0.66], color: '#ffc47c', power: 28 });
-    lights.push({ name: 'sauna_ceiling_light', position: [x + w / 2, y + d / 2, 2.32], color: '#ffd6a0', power: 45 });
+    lights.push({ name: 'bench_glow', position: [x + w / 2, y + 0.95, 0.66], color: '#ffc47c', power: 28, category: 'furniture' });
+    lights.push({ name: 'sauna_ceiling_light', position: [x + w / 2, y + d / 2, 2.32], color: '#ffd6a0', power: 45, category: 'light' });
+    category = 'roof';
     box('ceiling_light_housing', x + w / 2 - 0.25, y + d / 2 - 0.09, 2.43, 0.5, 0.18, 0.07, 'timber_x');
     box('ceiling_light_diffuser', x + w / 2 - 0.22, y + d / 2 - 0.065, 2.419, 0.44, 0.13, 0.012, 'light');
+    category = 'furniture';
     const hx = x + 0.35, hy = y + d - 0.72;
     box('heater_hearth', hx - 0.11, hy - 0.11, 0.005, 0.63, 0.63, 0.025, 'stone');
     box('heater_body', hx, hy, 0.13, 0.4, 0.4, 0.57, 'trim', 0.025);
@@ -193,7 +208,7 @@ const SaunaModel = (() => {
       box(`heater_fin_${i}`, hx + 0.025 + i * 0.04, hy - 0.012, 0.21, 0.009, 0.016, 0.4, 'steel', 0.002);
     }
     for (let i = 0; i < 12; i++) {
-      parts.push({ name: `heater_stone_${i}`, type: 'sphere', material: 'stone',
+      parts.push({ name: `heater_stone_${i}`, type: 'sphere', material: 'stone', category,
         position: [hx + 0.065 + (i % 3) * 0.13, hy + 0.065 + Math.floor(i / 3) * 0.085, 0.73 + (i % 2) * 0.025],
         size: [0.13, 0.115, 0.105] });
     }
@@ -201,12 +216,14 @@ const SaunaModel = (() => {
       box(`heater_guard_post_${i}`, px, hy - 0.19, 0, 0.045, 0.045, 0.82, 'interior_z');
     }
     for (const z of [0.45, 0.76]) box(`heater_guard_rail_${z}`, hx - 0.14, hy - 0.19, z, 0.715, 0.045, 0.045, 'interior_x');
+    category = 'E';
     for (const [i, z] of [0.2, 2.1].entries()) {
       box(`vent_recess_${i}`, x + w + 0.03, y + 0.5, z, 0.012, 0.28, 0.16, 'shadow');
       for (let j = 0; j < 4; j++) box(`vent_${i}_${j}`, x + w + 0.043, y + 0.49, z + j * 0.042,
         0.018, 0.3, 0.015, 'trim');
     }
 
+    category = 'outdoor';
     const sx = shelter.x, sy = shelter.y, sw = shelter.w, sd = shelter.d;
     for (const [i, [px, py]] of [[sx+0.13,sy+0.13], [sx+sw-0.13,sy+0.13],
       [sx+0.13,sy+sd-0.13], [sx+sw-0.13,sy+sd-0.13]].entries()) {
@@ -223,7 +240,7 @@ const SaunaModel = (() => {
     slab('shelter_roof', sx - 0.13, sy - 0.13, sw + 0.16, sd + 0.26, 2.52, 2.42, 0.055, 'trim');
     box('shelter_front_roof_trim', sx - 0.13, sy + sd + 0.11, 2.38, sw + 0.16, 0.04, 0.1, 'trim');
     box('shelter_wall_flashing', x - 0.06, sy - 0.13, 2.43, 0.05, sd + 0.26, 0.19, 'trim');
-    lights.push({ name: 'shelter_light', position: [sx + sw - 0.35, sy + sd / 2, 2.17], color: '#ffd6a0', power: 24 });
+    lights.push({ name: 'shelter_light', position: [sx + sw - 0.35, sy + sd / 2, 2.17], color: '#ffd6a0', power: 24, category });
     box('shelter_sconce', x - 0.085, sy + sd / 2 - 0.065, 1.92, 0.055, 0.13, 0.22, 'trim');
     box('shelter_sconce_lens', x - 0.09, sy + sd / 2 - 0.05, 1.95, 0.01, 0.1, 0.16, 'light');
 
@@ -238,7 +255,7 @@ const SaunaModel = (() => {
       [r-0.004,0.722], [r-0.015,0.73], [r-0.025,0.721], [r-0.02,0.704]], 'tubInner');
     cylinder('tub_water', [tub.cx,tub.cy,0.62], r - 0.19, 0.009, 'water');
     for (const [i, a] of [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2].entries()) {
-      parts.push({ name: `tub_jet_${i}`, type: 'sphere', material: 'steel',
+      parts.push({ name: `tub_jet_${i}`, type: 'sphere', material: 'steel', category,
         position: [tub.cx + Math.cos(a) * (r - 0.21), tub.cy + Math.sin(a) * (r - 0.21), 0.43],
         size: [0.045, 0.045, 0.045] });
     }
