@@ -38,6 +38,9 @@ jobs:
       - name: Raised-bed geometry (shells, soil, planting and grading)
         run: node verify-raised-beds.mjs
 
+      - name: Firepit geometry (cavity, seating, slope and access)
+        run: node verify-firepit.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js
