@@ -10,6 +10,7 @@ const { PergolaModel } = require("./pergola-model.js");
 const { GarageModel } = require("./garage-model.js");
 const { FurnitureModel } = require("./furniture-model.js");
 const { FIXTURE_SAMPLES } = require("./fixture-samples.js");
+const { GreenhouseModel } = require("./greenhouse-model.js");
 
 const out = path.join(__dirname, "blender", "garden.json");
 fs.writeFileSync(out, JSON.stringify({
@@ -18,6 +19,7 @@ fs.writeFileSync(out, JSON.stringify({
   pergolaModel: PergolaModel.build(GARDEN),
   garageModel: GarageModel.build(GARDEN, TERRAIN.houseFFLInternal - 0.5),
   fixtureModels: Object.fromEntries(FIXTURE_SAMPLES.map(sample => [sample.id, FurnitureModel.build(sample.furniture)])),
+  greenhouseModel: GreenhouseModel.build(GARDEN, TERRAIN.plane),
   terrain: { ...TERRAIN.plane, houseFFLInternal: TERRAIN.houseFFLInternal, bpvDatum: TERRAIN.bpvDatum },
 }, null, 1));
 console.log("wrote " + out);

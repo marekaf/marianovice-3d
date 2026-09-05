@@ -67,7 +67,7 @@ def ground_h(x, y):
             sx = min(smoothstep01((x - bx0 + 0.6) / 0.6), smoothstep01((bx1 + 0.6 - x) / 0.6))
             sy = min(smoothstep01((y - by0 + 0.6) / 0.6), smoothstep01((by1 + 0.6 - y) / 0.6))
             z -= max(0.0, z - DRIP_Z) * min(sx, sy)
-    for model in (GARDEN["pergolaModel"], GARDEN["garageModel"]):
+    for model in (GARDEN["pergolaModel"], GARDEN["garageModel"], GARDEN["greenhouseModel"]):
         patch = model["groundPatch"]
         dx = max(patch["x"] - x, 0, x - patch["x"] - patch["w"])
         dy = max(patch["y"] - y, 0, y - patch["y"] - patch["d"])
@@ -727,7 +727,7 @@ dpoly = next(p for p in els["driveway"]["parts"] if p["kind"] == "polygon")["poi
 # ---------------- grass exclusion mask ----------------
 EXCL_RECTS = []
 for eid in ["westTerrace", "eastTerrace", "saunaPath", "parking", "carport", "garage",
-            "sauna", "saunaShelter", "pergola", "raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
+            "sauna", "saunaShelter", "pergola", "greenhouse", "raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
     for prt in els[eid]["parts"]:
         if prt["kind"] == "rect":
             m = 0.15
@@ -1408,6 +1408,10 @@ pg = first_rect(els["pergola"])
 pgcx, pgcy = rect_center(pg)
 pgz = GARDEN["pergolaModel"]["floorHeight"]
 build_model(GARDEN["pergolaModel"])
+greenhouse_collection = build_model(GARDEN["greenhouseModel"])
+bpy.context.view_layer.update()
+greenhouse_top = max((ob.matrix_world @ Vector(corner)).z for ob in greenhouse_collection.objects
+                     if ob.type == "MESH" for corner in ob.bound_box)
 
 # ---------------- zasivarna: hidden bench in the shade bed (garage north) ----------------
 if "zasivarna" in els:
@@ -1545,7 +1549,7 @@ print("PLANT LIB daisies %d roses %d logs %d tomato %d" %
 
 MODEL_PLANT_CLEARANCES = [
     (p["x"], p["y"], p["x"] + p["w"], p["y"] + p["d"])
-    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"])
+    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"], GARDEN["greenhouseModel"])
     for p in model["plantingClearances"]
 ]
 
@@ -1610,6 +1614,12 @@ def place_tree(species, name, cx, cy, hmin, hmax, tilt=0.05):
     """Linked-duplicate a species template so instances share mesh data. Scale to a
     target crown height (hmin..hmax metres, normalised by the species' native height),
     Z-spin, and a slight tilt so the row does not read as clones."""
+    greenhouse_clearances = GARDEN["greenhouseModel"]["plantingClearances"]
+    for rect in greenhouse_clearances:
+        dx = max(rect["x"] - cx, 0, cx - rect["x"] - rect["w"])
+        dy = max(rect["y"] - cy, 0, cy - rect["y"] - rect["d"])
+        if math.hypot(dx, dy) <= 0.35:
+            return None
     tmpl = random.choice(TREE_LIB[species])
     ob = tmpl.copy()
     bpy.context.collection.objects.link(ob)
@@ -1623,6 +1633,18 @@ def place_tree(species, name, cx, cy, hmin, hmax, tilt=0.05):
                          random.random() * 6.283)
     ob.location = (cx, -cy, terrain_z(cx, cy) - 0.05)
     ob.name = name
+    bounds = [ob.matrix_basis @ Vector(corner) for corner in ob.bound_box]
+    for rect in greenhouse_clearances:
+        x0, y0, x1, y1 = rect["x"], rect["y"], rect["x"] + rect["w"], rect["y"] + rect["d"]
+        if (max(p.x for p in bounds) < x0 or min(p.x for p in bounds) > x1
+                or max(-p.y for p in bounds) < y0 or min(-p.y for p in bounds) > y1):
+            continue
+        for vertex in ob.data.vertices:
+            point = ob.matrix_basis @ vertex.co
+            if (x0 <= point.x <= x1 and y0 <= -point.y <= y1
+                    and GARDEN["greenhouseModel"]["floorHeight"] <= point.z <= greenhouse_top):
+                bpy.data.objects.remove(ob, do_unlink=True)
+                return None
     return ob
 
 
