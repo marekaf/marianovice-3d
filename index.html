@@ -46,6 +46,7 @@
   <button onclick="setPreset('garage')">Garage interior</button>
   <button onclick="setPreset('sauna')">Sauna and spa</button>
   <button onclick="setPreset('pergola')">Pergola dining</button>
+  <button onclick="setPreset('greenhouse')">Greenhouse</button>
   <button onclick="startTour()" style="background:#e07b3b">▶ Garden walk</button>
 </div>
 
@@ -101,6 +102,7 @@
 <script src="pergola-model.js?v=20260905"></script>
 <script src="garage-model.js?v=20260905"></script>
 <script src="furniture-model.js?v=20260905"></script>
+<script src="greenhouse-model.js?v=20260905"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -112,7 +114,9 @@ const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
 const pergolaModel = PergolaModel.build(GARDEN);
-const plantingClearances = [...SaunaModel.plantingClearances(GARDEN), ...pergolaModel.plantingClearances];
+const greenhouseModel = GreenhouseModel.build(GARDEN, TERRAIN.plane);
+const plantingClearances = [...SaunaModel.plantingClearances(GARDEN), ...pergolaModel.plantingClearances,
+  ...greenhouseModel.plantingClearances];
 function overlapsStructureAccess(x, y, radius) {
   return plantingClearances.some(r => {
     const dx = Math.max(r.x - x, 0, x - r.x - r.w);
@@ -344,10 +348,8 @@ const levelPads = [
     z1: garageGround.y + garageGround.d, level: garageGround.level, blend: garageGround.blend },
   { x0: 3.5, z0: 2.17, x1: 10.5, z1: 5.17, level: 2.45, blend: 1.2 },      // sauna + hot-tub platform, on grade
   { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 3.15, blend: 1.2 },         // flat pad containing all 4 raised beds (SW high ground)
-  { x0: pergolaModel.groundPatch.x, z0: pergolaModel.groundPatch.y,
-    x1: pergolaModel.groundPatch.x + pergolaModel.groundPatch.w,
-    z1: pergolaModel.groundPatch.y + pergolaModel.groundPatch.d,
-    level: pergolaModel.groundPatch.level, blend: pergolaModel.groundPatch.blend },
+  ...[pergolaModel.groundPatch, greenhouseModel.groundPatch].map(({ x, y, w, d, level, blend }) =>
+    ({ x0: x, z0: y, x1: x + w, z1: y + d, level, blend })),
 ];
 // Pond basin — smooth bowl carved to the pond's downhill edge level
 const PBOWL = (() => {
@@ -507,103 +509,6 @@ function addOpenStructure(plotX, plotY, w, d, h, roofColor, postColor = 0x5a3e25
   return group;
 }
 
-
-// Glass greenhouse — dwarf-wall plinth, aluminium frame, transparent glazing, gable roof
-// (ridge along the long axis). Floor levels to the highest footprint corner; the plinth fills
-// the fall to grade on the downhill side. Glass panes cast NO shadow: the shadow map is
-// opacity-blind, so a glazed box would otherwise drop a solid black footprint.
-function addGreenhouse(plotX, plotY, w, d, wallH = 1.5, roofRise = 0.75, dwarfH = 0.4) {
-  const g = new THREE.Group();
-  const cx = plotX + w / 2, cz = plotY + d / 2;
-  const terr = [[0, 0], [w, 0], [0, d], [w, d]].map(([ox, oz]) => terrainHeight(plotX + ox, plotY + oz));
-  const minY = Math.min(...terr), maxY = Math.max(...terr);
-  const floorY = maxY + 0.04;
-  const sillY = floorY + dwarfH;       // glazing starts on top of the dwarf wall
-  const eaveY = sillY + wallH;
-  const ridgeY = eaveY + roofRise;
-  const wallMidY = (sillY + eaveY) / 2;
-
-  const glass = new THREE.MeshStandardMaterial({ color: 0xbfe6ee, transparent: true, opacity: 0.22, roughness: 0.08, side: THREE.DoubleSide });
-  const frameMat = new THREE.MeshStandardMaterial({ color: 0xeceff1, roughness: 0.5, metalness: 0.1 });
-  const plinthMat = new THREE.MeshStandardMaterial({ color: 0x8d8a84, roughness: 0.95 });
-  const t = 0.03;                      // pane thickness
-
-  // Dwarf wall / plinth — top at sillY, base sunk to the lowest corner so no gap on the slope
-  const plinthH = sillY - minY;
-  const plinth = new THREE.Mesh(new THREE.BoxGeometry(w + 0.06, plinthH, d + 0.06), plinthMat);
-  plinth.position.set(cx, sillY - plinthH / 2, cz);
-  plinth.castShadow = true; plinth.receiveShadow = true;
-  g.add(plinth);
-
-  const pane = (sx, sy, sz, px, py, pz, rz = 0) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), glass);
-    m.position.set(px, py, pz); m.rotation.z = rz;
-    g.add(m);
-  };
-  const bar = (sx, sy, sz, px, py, pz, rz = 0) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), frameMat);
-    m.position.set(px, py, pz); m.rotation.z = rz; m.castShadow = true;
-    g.add(m);
-  };
-
-  // Wall glazing (sill → eave)
-  pane(t, wallH, d, plotX, wallMidY, cz);          // west
-  pane(t, wallH, d, plotX + w, wallMidY, cz);      // east
-  pane(w, wallH, t, cx, wallMidY, plotY);          // north gable (rectangular part)
-  pane(w, wallH, t, cx, wallMidY, plotY + d);      // south gable (rectangular part)
-
-  // Corner posts, eave beams, mid-wall mullions
-  for (const [ox, oz] of [[0, 0], [w, 0], [0, d], [w, d]]) bar(0.06, wallH, 0.06, plotX + ox, wallMidY, plotY + oz);
-  bar(0.05, 0.05, d, plotX, eaveY, cz); bar(0.05, 0.05, d, plotX + w, eaveY, cz);
-  bar(w, 0.05, 0.05, cx, eaveY, plotY); bar(w, 0.05, 0.05, cx, eaveY, plotY + d);
-  bar(0.05, wallH, 0.05, plotX, wallMidY, cz); bar(0.05, wallH, 0.05, plotX + w, wallMidY, cz);
-
-  // Gable triangles (glass) above the eave at each end
-  const gable = (zPos) => {
-    const s = new THREE.Shape();
-    s.moveTo(plotX, eaveY); s.lineTo(plotX + w, eaveY); s.lineTo(cx, ridgeY); s.closePath();
-    const m = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: t, bevelEnabled: false }), glass);
-    m.position.set(0, 0, zPos);
-    g.add(m);
-  };
-  gable(plotY - t / 2); gable(plotY + d - t / 2);
-
-  // Roof — ridge beam + two glazed slopes + gable-end rafters
-  const theta = Math.atan2(roofRise, w / 2), L = Math.hypot(w / 2, roofRise), roofMidY = (eaveY + ridgeY) / 2;
-  bar(0.06, 0.08, d, cx, ridgeY, cz);
-  pane(L, t, d, (plotX + cx) / 2, roofMidY, cz, theta);            // west slope
-  pane(L, t, d, (plotX + w + cx) / 2, roofMidY, cz, -theta);       // east slope
-  for (const z of [plotY + 0.03, plotY + d - 0.03]) {
-    bar(L, 0.05, 0.05, (plotX + cx) / 2, roofMidY, z, theta);
-    bar(L, 0.05, 0.05, (plotX + w + cx) / 2, roofMidY, z, -theta);
-  }
-
-  // Glazed door on the north gable (faces the garden) — floor to lintel + a threshold step
-  const doorW = 0.9, doorTop = floorY + 2.0;
-  for (const dx of [-doorW / 2, doorW / 2]) bar(0.06, doorTop - floorY, 0.06, cx + dx, (floorY + doorTop) / 2, plotY - 0.01);
-  bar(doorW + 0.06, 0.06, 0.06, cx, doorTop, plotY - 0.01);
-  const step = new THREE.Mesh(new THREE.BoxGeometry(doorW + 0.3, 0.08, 0.45), plinthMat);
-  step.position.set(cx, floorY + 0.02, plotY - 0.28); step.receiveShadow = true; g.add(step);
-
-  scene.add(g);
-
-  // Interior potting bench + seed trays (toggle with the furniture layer)
-  const benchMat = new THREE.MeshStandardMaterial({ color: 0x9a7b52, roughness: 0.8 });
-  const benchTopY = floorY + 0.8, benchW = 0.55, benchD = d - 0.9, bx = plotX + w - 0.4;
-  const benchTop = new THREE.Mesh(new THREE.BoxGeometry(benchW, 0.05, benchD), benchMat);
-  benchTop.position.set(bx, benchTopY, cz); benchTop.castShadow = true; furnitureGroup.add(benchTop);
-  for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, benchTopY - floorY, 0.05), benchMat);
-    leg.position.set(bx + lx * (benchW / 2 - 0.05), (floorY + benchTopY) / 2, cz + lz * (benchD / 2 - 0.05));
-    furnitureGroup.add(leg);
-  }
-  const trayMat = new THREE.MeshStandardMaterial({ color: 0x4e7d35, roughness: 0.9, flatShading: true });
-  for (let i = 0; i < 3; i++) {
-    const tray = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.09, 0.5), trayMat);
-    tray.position.set(bx, benchTopY + 0.07, plotY + 0.95 + i * (benchD / 3));
-    tray.castShadow = true; furnitureGroup.add(tray);
-  }
-}
 
 // Plastic garden storage box (bin store / tool store) — body + slightly domed overhanging lid,
 // sitting flat on terrain (base sunk to the lowest footprint corner).
@@ -1466,11 +1371,11 @@ GARDEN.elements.filter(e => e.meta && e.meta.screen).forEach(e => {
 
 // ───────────────────────── ORCHARD + GREENHOUSE ─────────────────────────
 const GH = rectOf('greenhouse');
-addGreenhouse(GH.x, GH.y, GH.w, GH.d);
-// Skip orchard trees whose trunk falls under the greenhouse footprint (+0.35 m clearance)
-const ghM = 0.35;
+const greenhouseGroup = buildModel(THREE, greenhouseModel);
+scene.add(greenhouseGroup);
+// Keep orchard trunks 0.35 m clear of structures and their entrances.
 circlesOf('orchard').forEach(c => {
-  if (c.cx > GH.x - ghM && c.cx < GH.x + GH.w + ghM && c.cy > GH.y - ghM && c.cy < GH.y + GH.d + ghM) return;
+  if (overlapsStructureAccess(c.cx, c.cy, 0.35)) return;
   addTree(c.cx, c.cy, 4 + Math.random());
 });
 { const c = rectOf('compost'); addCompostBin(c.x, c.y, c.w, c.d, 1.0); }
@@ -2175,7 +2080,8 @@ window.setPreset = function(name) {
     ground: [22, 1.7, 17],
     garage: [28.0, garageFloorY + 1.6, 26.0],
     sauna: [SH.x - 3.2, saunaFloorY + 3.0, SA.y + SA.d + 7.2],
-    pergola: [PG.x + PG.w + 5, pergolaModel.floorHeight + 3.4, PG.y + PG.d + 6.5]
+    pergola: [PG.x + PG.w + 5, pergolaModel.floorHeight + 3.4, PG.y + PG.d + 6.5],
+    greenhouse: [GH.x - 1.1, greenhouseModel.floorHeight + 3.56, GH.y - 1.5]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -2186,7 +2092,8 @@ window.setPreset = function(name) {
     ground: [22, 1.7, 30],
     garage: [33.2, garageFloorY + 0.7, 20.0],
     sauna: [SA.x + 0.5, saunaFloorY + 1.35, SA.y + SA.d / 2],
-    pergola: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.1, PG.y + PG.d / 2]
+    pergola: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.1, PG.y + PG.d / 2],
+    greenhouse: [GH.x + GH.w / 2, greenhouseModel.floorHeight + 1.1, GH.y + GH.d / 2]
   };
   const p = positions[name];
   const t = targets[name];
@@ -2224,6 +2131,7 @@ document.getElementById('toggleTrees').addEventListener('change', e => treesGrou
 document.getElementById('toggleRoof').addEventListener('change', e => {
   roofGroup.visible = e.target.checked;
   pergolaGroup.userData.categories.roof.visible = e.target.checked;
+  greenhouseGroup.userData.categories.roof.visible = e.target.checked;
 });
 document.getElementById('toggleGate').addEventListener('change', e => {
   garageGateOpen.visible = e.target.checked;
@@ -2232,6 +2140,7 @@ document.getElementById('toggleGate').addEventListener('change', e => {
 document.getElementById('toggleFurniture').addEventListener('change', e => {
   furnitureGroup.visible = e.target.checked;
   pergolaGroup.userData.categories.furniture.visible = e.target.checked;
+  greenhouseGroup.userData.categories.furniture.visible = e.target.checked;
 });
 document.getElementById('toggleVehicles').addEventListener('change', e => vehiclesGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);

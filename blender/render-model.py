@@ -2,7 +2,7 @@
 
 Generate input: node generate-blender-json.js
 Render: /Applications/Blender.app/Contents/MacOS/Blender -b -P blender/render-model.py -- blender/garden.json --model=pergola
-Select --model=sauna (default), --model=pergola, or --model=garage. Append --no-render to save the
+Select --model=sauna (default), --model=pergola, --model=garage, or --model=greenhouse. Append --no-render to save the
 scene only, --quick for a 960px preview, or --only=day to render a single view.
 Use --model=fixtures --sample=bath for a public fixture sample on a neutral floor.
 """
@@ -58,11 +58,19 @@ def ground(x, y):
 
 
 center_x, center_y = (fixture_center.x, -fixture_center.y) if model_name == "fixtures" else {
-    "sauna": (7, 4.3), "pergola": (28.78, 3.61), "garage": (30.88, 22.905)}[model_name]
+    "sauna": (7, 4.3), "pergola": (28.78, 3.61), "garage": (30.88, 22.905), "greenhouse": (2.8, 25.8)}[model_name]
 grid = 2 if model_name == "fixtures" else 120
 spacing = max(fixture_radius, 1) * 20 if model_name == "fixtures" else 0.4
-vertices = [(center_x + (i - grid / 2) * spacing, -(center_y + (j - grid / 2) * spacing),
-             ground(center_x + (i - grid / 2) * spacing, center_y + (j - grid / 2) * spacing))
+
+
+def grid_coordinate(index, center):
+    if model_name == "greenhouse" and index in (0, grid):
+        return center + (-1000 if index == 0 else 1000)
+    return center + (index - grid / 2) * spacing
+
+
+vertices = [(grid_coordinate(i, center_x), -grid_coordinate(j, center_y),
+             ground(grid_coordinate(i, center_x), grid_coordinate(j, center_y)))
             for j in range(grid + 1) for i in range(grid + 1)]
 faces = [(j * (grid + 1) + i, (j + 1) * (grid + 1) + i,
           (j + 1) * (grid + 1) + i + 1, j * (grid + 1) + i + 1)
@@ -125,6 +133,11 @@ elif model_name == "garage":
     views = [
         ("day", (38, -33, floor + 4), (30.88, -23, floor + 1.25), 46, 38, 0.5, -2),
         ("interior", (33, -25, floor + 1.65), (30.5, -20, floor + 1.25), 25, 38, 0.5, -0.5),
+    ]
+elif model_name == "greenhouse":
+    views = [
+        ("day", (8, -18.7, floor + 3.6), (2.8, -25.8, floor + 1.15), 48, 38, 0.5, -2),
+        ("interior", (3.1, -27.1, floor + 1.55), (2.65, -24.5, floor + 0.9), 24, 38, 0.5, -1.5),
     ]
 elif model_name == "fixtures":
     lens = 48
