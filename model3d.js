@@ -44,9 +44,15 @@ function timberUVs(geometry, grain, seed) {
   }
 }
 
-export function buildSauna(THREE, model, baseHeight) {
+export function buildModel(THREE, model) {
   const group = new THREE.Group();
-  group.name = 'Sauna, shelter and hot tub';
+  group.name = model.name;
+  const categories = Object.fromEntries(['structure', 'roof', 'furniture'].map(name => {
+    const category = new THREE.Group();
+    category.name = name;
+    group.add(category);
+    return [name, category];
+  }));
   const wood = timberTexture(THREE);
   const materials = new Map(Object.entries(model.materials).map(([name, spec]) => {
     const material = new THREE.MeshPhysicalMaterial({
@@ -73,6 +79,19 @@ export function buildSauna(THREE, model, baseHeight) {
         ? new RoundedBoxGeometry(w, h, d, 1, radius)
         : new THREE.BoxGeometry(w, h, d);
       if (model.materials[part.material].grain) timberUVs(geometry, model.materials[part.material].grain, index);
+    } else if (part.type === 'beam') {
+      const start = new THREE.Vector3(part.start[0], part.start[2], part.start[1]);
+      const end = new THREE.Vector3(part.end[0], part.end[2], part.end[1]);
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+      const radius = Math.min(part.bevel || 0, part.width / 4, part.depth / 4, length / 4);
+      geometry = radius > 0
+        ? new RoundedBoxGeometry(part.width, length, part.depth, 1, radius)
+        : new THREE.BoxGeometry(part.width, length, part.depth);
+      if (model.materials[part.material].grain) timberUVs(geometry, model.materials[part.material].grain, index);
+      geometry.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize()));
+      const center = start.add(end).multiplyScalar(0.5);
+      geometry.translate(center.x, center.y, center.z);
     } else if (part.type === 'cylinder') {
       geometry = new THREE.CylinderGeometry(part.radiusTop, part.radiusBottom, part.height, part.segments || 32);
       if (model.materials[part.material].grain) {
@@ -106,7 +125,7 @@ export function buildSauna(THREE, model, baseHeight) {
       geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geometry.attributes.position.count * 2), 2));
       if (model.materials[part.material].grain) timberUVs(geometry, model.materials[part.material].grain, index);
     } else {
-      throw new Error(`Unsupported sauna geometry: ${part.type}`);
+      throw new Error(`Unsupported model geometry: ${part.type}`);
     }
     const material = materials.get(part.material);
     const mesh = new THREE.Mesh(geometry, material);
@@ -114,21 +133,23 @@ export function buildSauna(THREE, model, baseHeight) {
     if (part.position) mesh.position.set(part.position[0], part.position[2], part.position[1]);
     mesh.castShadow = !material.transmission;
     mesh.receiveShadow = !material.transmission;
+    const category = part.category || 'structure';
     if (material.transmission) {
-      group.add(mesh);
+      categories[category].add(mesh);
     } else {
       const baked = geometry.index ? geometry.toNonIndexed() : geometry.clone();
       baked.translate(mesh.position.x, mesh.position.y, mesh.position.z);
-      if (!batches.has(part.material)) batches.set(part.material, []);
-      batches.get(part.material).push(baked);
+      const key = `${category}/${part.material}`;
+      if (!batches.has(key)) batches.set(key, { category, material: part.material, geometries: [] });
+      batches.get(key).geometries.push(baked);
       geometry.dispose();
     }
   }
-  for (const [material, geometries] of batches) {
+  for (const { material, category, geometries } of batches.values()) {
     const mesh = new THREE.Mesh(mergeGeometries(geometries), materials.get(material));
-    mesh.name = `sauna_${material}`;
+    mesh.name = `${model.name}_${category}_${material}`;
     mesh.castShadow = mesh.receiveShadow = true;
-    group.add(mesh);
+    categories[category].add(mesh);
     geometries.forEach(geometry => geometry.dispose());
   }
   const lights = model.lights.map(spec => {
@@ -136,10 +157,11 @@ export function buildSauna(THREE, model, baseHeight) {
     light.name = spec.name;
     light.position.set(spec.position[0], spec.position[2], spec.position[1]);
     light.userData.night = Math.min(10, spec.power / 12);
-    group.add(light);
+    categories[spec.category || 'structure'].add(light);
     return light;
   });
-  group.position.y = baseHeight;
+  group.position.y = model.floorHeight;
   group.userData.lights = lights;
+  group.userData.categories = categories;
   return group;
 }

@@ -272,7 +272,7 @@ const SaunaModel = (() => {
       for (let j = 0; j < 2; j++) box(`entry_tread_${i}_${j}`, stepX - 0.02, stepY + j * 0.14,
         -0.42 + height, stepWidth + 0.04, 0.135, 0.035, 'timber_x', 0.007);
     }
-    return { materials, parts, lights, openings, floorHeight, plantingClearances: plantingClearances(garden) };
+    return { name: 'Sauna, shelter and hot tub', materials, parts, lights, openings, floorHeight, plantingClearances: plantingClearances(garden) };
   }
   return { build, plantingClearances };
 })();

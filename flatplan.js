@@ -22,7 +22,7 @@ const CAT = {
 // The flat areas, in schedule order. `level` (internal height) pins an explicit finished level;
 // otherwise the pad is cut to its lowest natural corner. `ids` groups several footprints as one row.
 const ZONES = [
-  { id: "pergola",      label: "Pergola + grill",   cat: "pad",  level: 1.05 },
+  { id: "pergola",      label: "Pergola + grill",   cat: "pad" },
   { id: "sauna",        label: "Sauna",             cat: "pad", level: 2.45 }, // sauna + hot-tub share
   { id: "saunaShelter", label: "Hot-tub shelter",   cat: "pad", level: 2.45 }, // one flat platform, on grade
   { id: "greenhouse",   label: "Greenhouse",        cat: "pad" },
@@ -169,6 +169,7 @@ function renderFlatPlanSVG(garden) {
 
   // Flat zones — coloured footprints + number tags.
   const computed = ZONES.map((z, i) => {
+    if (z.id === 'pergola') z = { ...z, level: garden.elements.find(e => e.id === 'pergola').meta.grading.level };
     const parts = zoneParts(garden, z);
     return { z, i, parts, info: levelInfo(z, parts), anchor: zoneAnchor(parts) };
   });
