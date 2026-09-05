@@ -5,6 +5,7 @@ Render: /Applications/Blender.app/Contents/MacOS/Blender -b -P blender/render-mo
 Select --model=sauna (default), --model=pergola, --model=garage, or --model=greenhouse. Append --no-render to save the
 scene only, --quick for a 960px preview, or --only=day to render a single view.
 Use --model=raisedBeds for overview and crop-detail views of the kitchen garden.
+Use --model=firepit for day, evening and seating-detail views.
 Use --model=fixtures --sample=bath for a public fixture sample on a neutral floor.
 """
 import json
@@ -35,6 +36,8 @@ if model_name == "garage":
     model = dict(model, categoryVisibility={"gateClosed": False, "gateOpen": True})
 floor = model["floorHeight"]
 collection = build_model(model)
+fire_objects = [collection.objects[part["name"]] for part in model["parts"] + model["lights"]
+                if part.get("category") == "fire"]
 bpy.context.view_layer.update()
 if model_name == "fixtures":
     corners = [ob.matrix_world @ Vector(corner) for ob in collection.objects if ob.type == "MESH"
@@ -60,13 +63,13 @@ def ground(x, y):
 
 center_x, center_y = (fixture_center.x, -fixture_center.y) if model_name == "fixtures" else {
     "sauna": (7, 4.3), "pergola": (28.78, 3.61), "garage": (30.88, 22.905),
-    "greenhouse": (2.8, 25.8), "raisedBeds": (2.25, 12.5)}[model_name]
+    "greenhouse": (2.8, 25.8), "raisedBeds": (2.25, 12.5), "firepit": (37.5, 6.6)}[model_name]
 grid = 2 if model_name == "fixtures" else 120
 spacing = max(fixture_radius, 1) * 20 if model_name == "fixtures" else 0.4
 
 
 def grid_coordinate(index, center):
-    if model_name in ("greenhouse", "raisedBeds") and index in (0, grid):
+    if model_name in ("greenhouse", "raisedBeds", "firepit") and index in (0, grid):
         return center + (-1000 if index == 0 else 1000)
     return center + (index - grid / 2) * spacing
 
@@ -146,6 +149,12 @@ elif model_name == "raisedBeds":
         ("day", (9.2, -19.4, floor + 6.1), (2.25, -12.5, floor + 0.45), 48, 38, 0.5, -2),
         ("detail", (5.2, -11.8, floor + 2.25), (2.15, -10.95, floor + 0.5), 46, 38, 0.5, -2),
     ]
+elif model_name == "firepit":
+    views = [
+        ("day", (42.2, -11.6, floor + 4.3), (37.5, -6.6, floor + 0.2), 48, 38, 0.5, -2),
+        ("evening", (42.2, -11.6, floor + 3.1), (37.5, -6.6, floor + 0.25), 48, -4, 0.3, 1.5),
+        ("detail", (39.8, -8.9, floor + 1.75), (37.5, -6.6, floor + 0.2), 48, 38, 0.5, -2),
+    ]
 elif model_name == "fixtures":
     lens = 48
     aspect = scene.render.resolution_x / scene.render.resolution_y
@@ -157,6 +166,8 @@ only = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--only=")),
 for name, position, target, lens, elevation, strength, exposure in views:
     if only and name != only:
         continue
+    for ob in fire_objects:
+        ob.hide_render = ob.hide_viewport = elevation >= 0
     camera.location = position
     camera.rotation_euler = (Vector(target) - camera.location).to_track_quat("-Z", "Y").to_euler()
     camera_data.lens = lens

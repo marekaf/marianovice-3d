@@ -48,6 +48,7 @@
   <button onclick="setPreset('pergola')">Pergola dining</button>
   <button onclick="setPreset('greenhouse')">Greenhouse</button>
   <button onclick="setPreset('raisedBeds')">Kitchen garden</button>
+  <button onclick="setPreset('firepit')">Firepit seating</button>
   <button onclick="startTour()" style="background:#e07b3b">▶ Garden walk</button>
 </div>
 
@@ -105,6 +106,7 @@
 <script src="furniture-model.js?v=20260905"></script>
 <script src="greenhouse-model.js?v=20260905"></script>
 <script src="raised-beds-model.js?v=20260905"></script>
+<script src="firepit-model.js?v=20260905"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -118,8 +120,9 @@ const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r
 const pergolaModel = PergolaModel.build(GARDEN);
 const greenhouseModel = GreenhouseModel.build(GARDEN, TERRAIN.plane);
 const raisedBedsModel = RaisedBedsModel.build(GARDEN);
+const firepitModel = FirepitModel.build(GARDEN, TERRAIN.plane);
 const plantingClearances = [...SaunaModel.plantingClearances(GARDEN), ...pergolaModel.plantingClearances,
-  ...greenhouseModel.plantingClearances, ...raisedBedsModel.plantingClearances];
+  ...greenhouseModel.plantingClearances, ...raisedBedsModel.plantingClearances, ...firepitModel.plantingClearances];
 function overlapsStructureAccess(x, y, radius) {
   return plantingClearances.some(r => {
     const dx = Math.max(r.x - x, 0, x - r.x - r.w);
@@ -236,6 +239,7 @@ scene.add(sun);
 const lampsGroup = new THREE.Group();
 scene.add(lampsGroup);
 const lampLights = [];
+const nightGroups = [];
 const bulbMat = new THREE.MeshStandardMaterial({ color: 0x332a12, emissive: 0xffd27a, emissiveIntensity: 0 });
 
 // Solar position formula (lat 50°N, day-of-year + hour)
@@ -313,6 +317,7 @@ function updateSun() {
     0.7 * skyMat.uniforms.bottomColor.value.g + 0.3,
     0.7 * skyMat.uniforms.bottomColor.value.b + 0.3
   );
+  for (const group of nightGroups) group.visible = regime === 'night';
   updateEnv(regime);
 }
 function setSunFromTime(hour) {
@@ -1413,55 +1418,10 @@ for (let i = 0; i < 35; i++) {
 }
 
 // ───────────────────────── FIREPIT IN NE CORNER + BENCHES ─────────────────────────
-{
-  const FP = circlesOf('firePit')[0];
-  const ox = FP.cx, oz = FP.cy;
-  const baseY = terrainHeight(ox, oz);
-  // Fire pit stone ring — 1 m diameter
-  const ring = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.45, 0.5, 0.35, 16),
-    new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.95 })
-  );
-  ring.position.set(ox, baseY + 0.125, oz);
-  ring.castShadow = true;
-  ring.receiveShadow = true;
-  scene.add(ring);
-  // Inside (darker, like ashes)
-  const inside = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.38, 0.38, 0.05, 16),
-    new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 1 })
-  );
-  inside.position.set(ox, baseY + 0.31, oz);
-  scene.add(inside);
-  // "Flame" — emissive sphere
-  const flame = new THREE.Mesh(
-    new THREE.SphereGeometry(0.22, 8, 6),
-    new THREE.MeshStandardMaterial({
-      color: 0xff7733,
-      emissive: 0xff5511,
-      emissiveIntensity: 0.7
-    })
-  );
-  flame.position.set(ox, baseY + 0.42, oz);
-  scene.add(flame);
-  // Seating — log benches evenly around a ~3.3 m circle, each tangent to the ring so it
-  // faces the fire; the SW arc is left open as the approach. rotation.y = -θ - π/2 turns the
-  // bench's long axis to the tangent.
-  const seatR = 1.65;
-  for (const deg of [0, 60, 180, 240, 300]) {   // gap at 120° (SW, the approach side)
-    const th = deg * Math.PI / 180;
-    const bx = ox + Math.cos(th) * seatR, bz = oz + Math.sin(th) * seatR;
-    const bench = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 0.32, 0.36),
-      new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.85 })
-    );
-    bench.position.set(bx, terrainHeight(bx, bz) + 0.16, bz);
-    bench.rotation.y = -th - Math.PI / 2;
-    bench.castShadow = true;
-    bench.receiveShadow = true;
-    scene.add(bench);
-  }
-}
+const firepitGroup = buildModel(THREE, firepitModel);
+scene.add(firepitGroup);
+lampLights.push(...firepitGroup.userData.lights);
+nightGroups.push(firepitGroup.userData.categories.fire);
 
 // ───────────────────────── POND — ellipse, bigger, closer to garage ─────────────────────────
 // Water color map (radial gradient, deep center) + animated RGB-noise normal map
@@ -1945,17 +1905,29 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
   }
 }
 
-// ───────────────────────── SMOKE FROM FIREPIT (animated spheres) ─────────────────────────
 const smokeParticles = [];
 {
-  for (let i = 0; i < 6; i++) {
-    const p = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2, 8, 6),
-      new THREE.MeshStandardMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.4 })
-    );
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  const fade = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  fade.addColorStop(0, 'rgba(255,255,255,0.5)');
+  fade.addColorStop(0.45, 'rgba(255,255,255,0.2)');
+  fade.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, 0, 64, 64);
+  const texture = new THREE.CanvasTexture(canvas);
+  const smokeGroup = new THREE.Group();
+  smokeGroup.name = 'firepitSmoke';
+  smokeGroup.visible = false;
+  scene.add(smokeGroup);
+  nightGroups.push(smokeGroup);
+  for (let i = 0; i < 10; i++) {
+    const p = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, color: 0xb4b0a8,
+      transparent: true, opacity: 0, depthWrite: false }));
     p.position.set(FPC.cx, terrainHeight(FPC.cx, FPC.cy) + 1, FPC.cy);
-    p.userData = { phase: i / 6 };
-    scene.add(p);
+    p.userData = { phase: i / 10 };
+    smokeGroup.add(p);
     smokeParticles.push(p);
   }
 }
@@ -2081,7 +2053,8 @@ window.setPreset = function(name) {
     sauna: [SH.x - 3.2, saunaFloorY + 3.0, SA.y + SA.d + 7.2],
     pergola: [PG.x + PG.w + 5, pergolaModel.floorHeight + 3.4, PG.y + PG.d + 6.5],
     greenhouse: [GH.x - 1.1, greenhouseModel.floorHeight + 3.56, GH.y - 1.5],
-    raisedBeds: [7, raisedBedsModel.floorHeight + 4, 16]
+    raisedBeds: [7, raisedBedsModel.floorHeight + 4, 16],
+    firepit: [FPC.cx - 4, firepitModel.floorHeight + 3.3, FPC.cy + 4]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -2094,7 +2067,8 @@ window.setPreset = function(name) {
     sauna: [SA.x + 0.5, saunaFloorY + 1.35, SA.y + SA.d / 2],
     pergola: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.1, PG.y + PG.d / 2],
     greenhouse: [GH.x + GH.w / 2, greenhouseModel.floorHeight + 1.1, GH.y + GH.d / 2],
-    raisedBeds: [2.25, raisedBedsModel.floorHeight + 0.5, 12.5]
+    raisedBeds: [2.25, raisedBedsModel.floorHeight + 0.5, 12.5],
+    firepit: [FPC.cx, firepitModel.floorHeight + 0.3, FPC.cy]
   };
   const p = positions[name];
   const t = targets[name];
@@ -2143,6 +2117,7 @@ document.getElementById('toggleFurniture').addEventListener('change', e => {
   pergolaGroup.userData.categories.furniture.visible = e.target.checked;
   greenhouseGroup.userData.categories.furniture.visible = e.target.checked;
   raisedBedsGroup.userData.categories.furniture.visible = e.target.checked;
+  firepitGroup.userData.categories.furniture.visible = e.target.checked;
 });
 document.getElementById('toggleVehicles').addEventListener('change', e => vehiclesGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);
@@ -2424,12 +2399,12 @@ function animate() {
   // Smoke particles rising and fading
   const smokeBaseY = terrainHeight(FPC.cx, FPC.cy);
   for (const p of smokeParticles) {
-    const phase = (t * 0.4 + p.userData.phase) % 1;
-    p.position.y = smokeBaseY + 0.6 + phase * 4;
-    p.position.x = FPC.cx + Math.sin(t + p.userData.phase * 6) * 0.4;
-    p.position.z = FPC.cy + Math.cos(t * 0.5 + p.userData.phase * 6) * 0.3;
-    p.material.opacity = 0.5 * (1 - phase);
-    p.scale.setScalar(1 + phase * 1.5);
+    const phase = (t * 0.16 + p.userData.phase) % 1;
+    p.position.y = smokeBaseY + 0.3 + phase * 2.8;
+    p.position.x = FPC.cx + phase * 0.45 + Math.sin(t * 0.4 + p.userData.phase * 6) * phase * 0.12;
+    p.position.z = FPC.cy + Math.cos(t * 0.3 + p.userData.phase * 6) * phase * 0.15;
+    p.material.opacity = Math.sin(phase * Math.PI) * 0.16;
+    p.scale.set(0.18 + phase * 0.8, 0.3 + phase * 1.1, 1);
   }
   // Pond water ripple drift
   waterNormal.offset.x = t * 0.008;

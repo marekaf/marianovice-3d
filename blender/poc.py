@@ -378,8 +378,6 @@ MAT = {
     "gravel": mat_pbr("gravel", "gravel_floor_02", scale=0.8, tint=hexc("#b8b0a2"), tint_fac=0.4),
     "rock": mat_pbr("rock", "dark_rock", scale=1.3, tint=hexc("#90897f"), tint_fac=0.5, tint_mode="MIX"),
     "bark": mat_pbr("bark", "bark_brown_02", scale=1.4),
-    "ash": mat_simple("ash", hexc("#55504a"), rough=1.0),
-    "char": mat_wood("char", hexc("#241c15"), hexc("#0e0b08"), rough=0.9, stretch=(2.0, 2.0, 0.6)),
     "water": mat_simple("water", hexc("#2b4550"), rough=0.14),
     "glass": mat_simple("glass", hexc("#d5dde2"), rough=0.03, transmission=1.0, ior=1.45),
     "frame": mat_simple("frame", hexc("#2b2d30"), rough=0.45, metal=0.4),
@@ -389,7 +387,6 @@ MAT = {
     "basin": mat_simple("basin", hexc("#4a4438"), rough=0.9),
     "rim": mat_simple("rim", hexc("#8f8a80"), rough=0.8),
     "stone": mat_simple("stone", hexc("#5c564e"), rough=0.9),
-    "fire": mat_simple("fire", hexc("#ff7733"), emit=hexc("#ff6622"), emit_str=8.0),
     "trunk": mat_wood("trunk", hexc("#5a4630"), hexc("#453522"), stretch=(2.0, 2.0, 0.5)),
     "fence": mat_wood("fence", hexc("#6b5844"), hexc("#54432f")),
     "manhole": mat_simple("manhole", hexc("#666666"), rough=0.5, metal=0.4),
@@ -437,52 +434,6 @@ MAT["seed"] = mat_simple("seed", hexc("#c9b06a"), rough=0.8)
 MAT["bollard"] = mat_simple("bollard", hexc("#1c1c1e"), rough=0.4, metal=0.8)
 MAT["bulb"] = mat_simple("bulb", hexc("#2a2419"), rough=0.5, emit=hexc("#ffbe78"), emit_str=6.0)
 MAT["spot_disc"] = mat_simple("spot_disc", hexc("#2a2419"), rough=0.5, emit=hexc("#ffb060"), emit_str=4.0)
-
-FLAME_STR = []
-
-
-def mat_flame(name):
-    """Stylized flame: emission gradient over height, fading to transparent at the tip."""
-    m = bpy.data.materials.new(name)
-    m.use_nodes = True
-    nt = m.node_tree
-    for nd in list(nt.nodes):
-        nt.nodes.remove(nd)
-    out = nt.nodes.new("ShaderNodeOutputMaterial")
-    em = nt.nodes.new("ShaderNodeEmission")
-    tr = nt.nodes.new("ShaderNodeBsdfTransparent")
-    mix = nt.nodes.new("ShaderNodeMixShader")
-    tc = nt.nodes.new("ShaderNodeTexCoord")
-    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
-    ramp_c = nt.nodes.new("ShaderNodeValToRGB")
-    ramp_c.color_ramp.elements[0].color = (1.0, 0.22, 0.02, 1.0)
-    ec = ramp_c.color_ramp.elements[1]
-    ec.position = 0.5
-    ec.color = (1.0, 0.55, 0.08, 1.0)
-    ec2 = ramp_c.color_ramp.elements.new(1.0)
-    ec2.color = (1.0, 0.85, 0.35, 1.0)
-    ramp_a = nt.nodes.new("ShaderNodeValToRGB")
-    ramp_a.color_ramp.elements[0].color = (1.0, 1.0, 1.0, 1.0)
-    ea = ramp_a.color_ramp.elements[1]
-    ea.position = 0.65
-    ea.color = (0.35, 0.35, 0.35, 1.0)
-    ea2 = ramp_a.color_ramp.elements.new(1.0)
-    ea2.color = (0.0, 0.0, 0.0, 1.0)
-    em.inputs["Strength"].default_value = 6.0
-    FLAME_STR.append(em.inputs["Strength"])
-    nt.links.new(tc.outputs["Generated"], sep.inputs["Vector"])
-    nt.links.new(sep.outputs["Z"], ramp_c.inputs["Fac"])
-    nt.links.new(sep.outputs["Z"], ramp_a.inputs["Fac"])
-    nt.links.new(ramp_c.outputs["Color"], em.inputs["Color"])
-    nt.links.new(ramp_a.outputs["Color"], mix.inputs["Fac"])
-    nt.links.new(tr.outputs["BSDF"], mix.inputs[1])
-    nt.links.new(em.outputs["Emission"], mix.inputs[2])
-    nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
-    return m
-
-
-MAT["flame"] = mat_flame("flame")
-
 
 # ---------------- geometry helpers ----------------
 def link_obj(name, mesh, mat):
@@ -1359,44 +1310,11 @@ for i in range(26):  # outer scatter on the bank crest
 
 # ---------------- fire pit + stones + benches ----------------
 fc = next(x for x in els["firePit"]["parts"] if x["kind"] == "circle")
-fz = ground_h(fc["cx"], fc["cy"])
-draped_poly("firepit_apron", circle_pts(fc["cx"], fc["cy"], 1.1, 24), 0.035, MAT["gravel"], subdiv=3)
-draped_poly("firepit_ash", circle_pts(fc["cx"], fc["cy"], 0.44, 16), 0.065, MAT["ash"], subdiv=2)
-for i in range(12):
-    a = i * math.pi / 6.0 + random.uniform(-0.12, 0.12)
-    sx = fc["cx"] + 0.64 * math.cos(a)
-    sy = fc["cy"] + 0.64 * math.sin(a)
-    place_rock("firepit_stone%d" % i, sx, sy, terrain_z(sx, sy) + 0.06,
-               0.15 + random.random() * 0.07, squash=0.8)
-for i, ang in enumerate((25, 100, 175, 255)):
-    ar = math.radians(ang)
-    ux, uy = math.cos(ar), math.sin(ar)
-    add_cyl("firepit_log%d" % i, fc["cx"] - 0.13 * ux, fc["cy"] - 0.13 * uy, fz + 0.17,
-            0.05, 0.72, MAT["char"], verts=10, rot=(0, math.radians(63), -ar))
-add_sphere("firepit_ember", fc["cx"], fc["cy"], fz + 0.10, 0.17, MAT["fire"],
-           scale=(1.0, 1.0, 0.4), subdiv=1)
-FLAME_OBJS = []
-for i, (fr, fh, ox, oy) in enumerate([(0.13, 0.42, 0.0, 0.0), (0.09, 0.28, 0.09, -0.06)]):
-    bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=fr, radius2=0.0, depth=fh,
-                                    location=(fc["cx"] + ox, -fc["cy"] + oy, fz + 0.24 + fh / 2))
-    fob = bpy.context.active_object
-    fob.name = "firepit_flame%d" % i
-    fob.rotation_euler = (random.uniform(-0.08, 0.08), random.uniform(-0.08, 0.08), 0)
-    fob.data.materials.append(MAT["flame"])
-    for p in fob.data.polygons:
-        p.use_smooth = True
-    FLAME_OBJS.append(fob)
-for i, a_deg in enumerate((140, 260, 20)):
-    ar = math.radians(a_deg)
-    bx = fc["cx"] + 1.85 * math.cos(ar)
-    by = fc["cy"] + 1.85 * math.sin(ar)
-    bz = ground_h(bx, by)
-    bpy.ops.mesh.primitive_cube_add(size=1, location=(bx, -by, bz + 0.175))
-    ob = bpy.context.active_object
-    ob.name = "bench%d" % i
-    ob.scale = (1.4, 0.3, 0.35)
-    ob.rotation_euler = (0, 0, math.radians(-(a_deg + 90)))
-    ob.data.materials.append(MAT["wood"])
+fz = GARDEN["firepitModel"]["floorHeight"]
+firepit_collection = build_model(GARDEN["firepitModel"])
+FIRE_OBJECTS = [firepit_collection.objects[part["name"]]
+                for part in GARDEN["firepitModel"]["parts"] + GARDEN["firepitModel"]["lights"]
+                if part.get("category") == "fire"]
 
 # ---------------- rain tank, sauna, shelter, softub ----------------
 rt = first_rect(els["rainTank"])
@@ -1545,7 +1463,7 @@ print("PLANT LIB daisies %d roses %d logs %d" %
 
 MODEL_PLANT_CLEARANCES = [
     (p["x"], p["y"], p["x"] + p["w"], p["y"] + p["d"])
-    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"], GARDEN["greenhouseModel"], GARDEN["raisedBedsModel"])
+    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"], GARDEN["greenhouseModel"], GARDEN["raisedBedsModel"], GARDEN["firepitModel"])
     for p in model["plantingClearances"]
 ]
 
@@ -1814,10 +1732,6 @@ if ROSE_LIB:
 
 # firewood pile beside the sauna
 place_plant(LOG_LIB, "logs0", 11.9, 3.4, 1.5)
-
-# firewood by the fire pit (37.5, 6.6) so there is wood to actually burn there
-for i, (px, py) in enumerate([(38.7, 6.5), (36.4, 5.6)]):
-    place_plant(LOG_LIB, "firepitlogs%d" % i, px, py, 1.2)
 
 # ---------------- planting-zone vegetation ----------------
 COUNTS = {"perennial": 0, "tuft": 0, "shrub": 0, "flower": 0, "pot": 0, "molinia": 0, "stalks": 0}
@@ -2096,14 +2010,6 @@ for i, (lx, ly) in enumerate(garden_spots):
     lo.location = (lx, -ly, z + 0.06)
     lo.rotation_euler = (math.pi, 0, 0)  # aim up
 
-fire_ld = bpy.data.lights.new("fireL", type="POINT")
-fire_ld.energy = 0.0
-fire_ld.color = (1.0, 0.45, 0.15)
-fire_ld.shadow_soft_size = 0.2
-fire_lo = bpy.data.objects.new("fireL", fire_ld)
-bpy.context.collection.objects.link(fire_lo)
-fire_lo.location = (fc["cx"], -fc["cy"], fz + 0.4)
-
 # ---------------- sun + sky ----------------
 lat = math.radians(50.0)
 decl = math.radians(23.45 * math.sin(2 * math.pi * (284 + 172) / 365.0))
@@ -2155,11 +2061,10 @@ def aim_sun(elev_r, az_r):
     sun.rotation_euler = d.to_track_quat("Z", "Y").to_euler()
 
 
-ember = MAT["fire"].node_tree.nodes["Principled BSDF"]
-
-
 def set_lighting(mode):
     """day: computed 14:00 June sun; golden: ~19:45 WNW low warm; night: dark blue + fixtures."""
+    for ob in FIRE_OBJECTS:
+        ob.hide_render = ob.hide_viewport = mode != "night"
     for nd in list(wnt.nodes):
         wnt.nodes.remove(nd)
     out_n = wnt.nodes.new("ShaderNodeOutputWorld")
@@ -2179,12 +2084,6 @@ def set_lighting(mode):
         sun_data.energy = 0.4
         sun_data.color = (0.6, 0.72, 1.0)
         aim_sun(math.radians(50), math.radians(120))
-        ember.inputs["Emission Strength"].default_value = 30.0
-        fire_ld.energy = 40.0
-        for s in FLAME_STR:
-            s.default_value = 6.0
-        for ob in FLAME_OBJS:
-            ob.hide_render = False
         return
     if mode == "day":
         img, rot = hdri_env()
@@ -2202,10 +2101,6 @@ def set_lighting(mode):
         sun_data.energy = 2.4
         sun_data.color = (1.0, 0.98, 0.94)
         aim_sun(elev, az)
-        ember.inputs["Emission Strength"].default_value = 6.0
-        fire_ld.energy = 0.0
-        for ob in FLAME_OBJS:
-            ob.hide_render = True
         return
     sky2 = wnt.nodes.new("ShaderNodeTexSky")
     try:
@@ -2217,11 +2112,6 @@ def set_lighting(mode):
     sun_data.color = (1.0, 0.45, 0.22)
     cam_strength = 0.4
     amb_strength = 0.15
-    ember_str, fire_e = 15.0, 10.0
-    for s in FLAME_STR:
-        s.default_value = 3.0
-    for ob in FLAME_OBJS:
-        ob.hide_render = False
     if hasattr(sky2, "sun_elevation"):
         sky2.sun_elevation = e_r
     if hasattr(sky2, "sun_rotation"):
@@ -2242,8 +2132,6 @@ def set_lighting(mode):
     bg_l.inputs["Strength"].default_value = amb_strength
     bg_c.inputs["Strength"].default_value = cam_strength
     aim_sun(e_r, a_r)
-    ember.inputs["Emission Strength"].default_value = ember_str
-    fire_ld.energy = fire_e
 
 
 # ---------------- cameras ----------------
