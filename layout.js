@@ -234,10 +234,11 @@ const GARDEN = {
     {
       id: "pergola",
       name: "Pergola + grill 6 × 4 m",
+      meta: { grading: { level: 1.05, blend: 1.2 } },
       parts: [
         { kind: "rect", x: 25.78, y: 1.61, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
-        { kind: "rect", x: 25.98, y: 1.81, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9 },
-        { kind: "rect", x: 27.4, y: 3.11, w: 2.8, d: 1, fill: "#8a6a4a" },
+        { kind: "rect", role: "paving", x: 25.98, y: 1.81, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9 },
+        { kind: "rect", role: "table", x: 27.4, y: 3.11, w: 2.8, d: 1, fill: "#8a6a4a" },
         { kind: "text", x: 28.78, y: 3.47, text: "pergola + grill", cls: "lbl" },
         { kind: "text", x: 28.78, y: 4.21, text: "6 × 4 m", cls: "dim" },
         { kind: "text", x: 28.78, y: 5.11, text: "2 m off N fence", cls: "lbl-sm", fill: "#5a4828" }

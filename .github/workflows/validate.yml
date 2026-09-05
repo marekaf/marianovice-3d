@@ -23,6 +23,9 @@ jobs:
       - name: Sauna geometry (openings, access, footing and clearances)
         run: node verify-sauna.mjs
 
+      - name: Pergola geometry (frame, furniture and lighting)
+        run: node verify-pergola.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js

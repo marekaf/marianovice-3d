@@ -16,7 +16,7 @@ import time
 from mathutils import Quaternion, Vector, noise
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sauna import build_sauna
+from model_parts import build_model
 
 argv = sys.argv
 extra = argv[argv.index("--") + 1:]
@@ -67,7 +67,11 @@ def ground_h(x, y):
             sx = min(smoothstep01((x - bx0 + 0.6) / 0.6), smoothstep01((bx1 + 0.6 - x) / 0.6))
             sy = min(smoothstep01((y - by0 + 0.6) / 0.6), smoothstep01((by1 + 0.6 - y) / 0.6))
             z -= max(0.0, z - DRIP_Z) * min(sx, sy)
-    return z
+    patch = GARDEN["pergolaModel"]["groundPatch"]
+    dx = max(patch["x"] - x, 0, x - patch["x"] - patch["w"])
+    dy = max(patch["y"] - y, 0, y - patch["y"] - patch["d"])
+    blend = smoothstep01(1 - math.hypot(dx, dy) / patch["blend"])
+    return z + (patch["level"] - z) * blend
 
 
 _pond = next(p for e in GARDEN["elements"] if e["id"] == "pond"
@@ -1370,40 +1374,13 @@ rcx, rcy = rect_center(rt)
 add_cyl("rainTank_manhole", rcx, rcy, ground_h(rcx, rcy) + 0.02, 0.4, 0.06, MAT["manhole"])
 
 sauna_floor = GARDEN["saunaModel"]["floorHeight"]
-build_sauna(GARDEN["saunaModel"], sauna_floor)
+build_model(GARDEN["saunaModel"])
 
 # ---------------- pergola ----------------
 pg = first_rect(els["pergola"])
 pgcx, pgcy = rect_center(pg)
-pgz = ground_h(pgcx, pgcy)
-for i, (px, py) in enumerate([(pg["x"] + 0.2, pg["y"] + 0.2), (pg["x"] + pg["w"] - 0.2, pg["y"] + 0.2),
-                              (pg["x"] + 0.2, pg["y"] + pg["d"] - 0.2),
-                              (pg["x"] + pg["w"] - 0.2, pg["y"] + pg["d"] - 0.2)]):
-    post("pergola_post%d" % i, px, py, ground_h(px, py) - 0.2, pgz + 2.5, MAT["wood"], half=0.07)
-for i in range(15):
-    bx = pg["x"] + 0.25 + i * (pg["w"] - 0.5) / 14.0
-    box_p("pergola_board%d" % i, bx - 0.05, pg["y"], bx + 0.05, pg["y"] + pg["d"],
-          pgz + 2.5, pgz + 2.58, MAT["wood"])
-# paved tile floor + dining table for 8-10 under the pergola
-pg_rects = [p for p in els["pergola"]["parts"] if p["kind"] == "rect"]
-floor_r = next((p for p in pg_rects if p.get("fill") == "#d8d2c8"), None)
-table_r = next((p for p in pg_rects if p.get("fill") == "#8a6a4a"), None)
-if floor_r:
-    MAT["tile"] = mat_concrete("tile", hexc("#d8d2c8"), hexc("#c6c0b4"), rough_lo=0.5, rough_hi=0.75)
-    fx0, fy0 = floor_r["x"], floor_r["y"]
-    fx1, fy1 = fx0 + floor_r["w"], fy0 + floor_r["d"]
-    draped_poly("pergola_floor", [(fx0, fy0), (fx1, fy0), (fx1, fy1), (fx0, fy1)], 0.05,
-                MAT["tile"], subdiv=3)
-if table_r:
-    tx0, ty0 = table_r["x"], table_r["y"]
-    tx1, ty1 = tx0 + table_r["w"], ty0 + table_r["d"]
-    ttz = ground_h((tx0 + tx1) / 2.0, (ty0 + ty1) / 2.0) + 0.05
-    box_p("pergola_table_top", tx0, ty0, tx1, ty1, ttz + 0.72, ttz + 0.78, MAT["wood"])
-    for li, (lx, ly) in enumerate([(tx0 + 0.18, ty0 + 0.18), (tx1 - 0.18, ty0 + 0.18),
-                                   (tx0 + 0.18, ty1 - 0.18), (tx1 - 0.18, ty1 - 0.18)]):
-        post("pergola_table_leg%d" % li, lx, ly, ttz, ttz + 0.72, MAT["wood"], half=0.045)
-    for bi, (by0, by1) in enumerate([(ty0 - 0.55, ty0 - 0.2), (ty1 + 0.2, ty1 + 0.55)]):
-        box_p("pergola_bench%d" % bi, tx0 + 0.1, by0, tx1 - 0.1, by1, ttz + 0.3, ttz + 0.45, MAT["wood"])
+pgz = GARDEN["pergolaModel"]["floorHeight"]
+build_model(GARDEN["pergolaModel"])
 
 # ---------------- zasivarna: hidden bench in the shade bed (garage north) ----------------
 if "zasivarna" in els:
@@ -1539,14 +1516,15 @@ print("PLANT LIB daisies %d roses %d logs %d tomato %d" %
       (len(DAISY_LIB), len(ROSE_LIB), len(LOG_LIB), len(TOMATO_LIB)))
 
 
-SAUNA_PLANT_CLEARANCES = [
+MODEL_PLANT_CLEARANCES = [
     (p["x"], p["y"], p["x"] + p["w"], p["y"] + p["d"])
-    for p in GARDEN["saunaModel"]["plantingClearances"]
+    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"])
+    for p in model["plantingClearances"]
 ]
 
 
-def clears_sauna_planting(px, py, radius):
-    for x0, y0, x1, y1 in SAUNA_PLANT_CLEARANCES:
+def clears_model_planting(px, py, radius):
+    for x0, y0, x1, y1 in MODEL_PLANT_CLEARANCES:
         dx = max(x0 - px, 0, px - x1)
         dy = max(y0 - py, 0, py - y1)
         if dx * dx + dy * dy <= (radius + 0.08) ** 2:
@@ -1562,7 +1540,7 @@ def place_asset(src, name, px, py, footprint=None, z=None):
     sv = s * (0.85 + random.random() * 0.3)
     rotation = random.random() * 6.283
     radius = max(math.hypot(c[0], c[1]) for c in src.bound_box) * sv
-    if not clears_sauna_planting(px, py, radius):
+    if not clears_model_planting(px, py, radius):
         return None
     ob = src.copy()
     bpy.context.collection.objects.link(ob)
@@ -1687,13 +1665,17 @@ def place_plant(lib, name, px, py, footprint, zoff=0.0):
     the terrain via the local bounding box so nothing floats or sinks, random Z-spin."""
     if not lib:
         return
-    ob = random.choice(lib).copy()
+    src = random.choice(lib)
+    d = max(src.dimensions.x, src.dimensions.y, 0.01)
+    sv = footprint / d
+    rotation = random.random() * 6.283
+    if not clears_model_planting(px, py, max(math.hypot(c[0], c[1]) for c in src.bound_box) * sv):
+        return
+    ob = src.copy()
     bpy.context.collection.objects.link(ob)
     ob.hide_render = False
-    d = max(ob.dimensions.x, ob.dimensions.y, 0.01)
-    sv = footprint / d
     ob.scale = (sv, sv, sv)
-    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    ob.rotation_euler = (0, 0, rotation)
     base = min(c[2] for c in ob.bound_box) * sv
     ob.location = (px, -py, terrain_z(px, py) - base + zoff)
     ob.name = name
@@ -1702,12 +1684,16 @@ def place_plant(lib, name, px, py, footprint, zoff=0.0):
 # daisy bushes (white/pink/red) planted the Flera way: single-colour DRIFTS in the beds, a
 # dedicated cutting bed beside the raised beds, and naturalised through the orchard meadow.
 def place_daisy(ci, name, px, py, foot):
-    ob = DAISY_LIB[ci % len(DAISY_LIB)].copy()
+    src = DAISY_LIB[ci % len(DAISY_LIB)]
+    s = foot / max(src.dimensions.x, src.dimensions.y, 0.01)
+    rotation = random.random() * 6.283
+    if not clears_model_planting(px, py, max(math.hypot(c[0], c[1]) for c in src.bound_box) * s):
+        return
+    ob = src.copy()
     bpy.context.collection.objects.link(ob)
     ob.hide_render = False
-    s = foot / max(ob.dimensions.x, ob.dimensions.y, 0.01)
     ob.scale = (s, s, s)
-    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    ob.rotation_euler = (0, 0, rotation)
     base = min(c[2] for c in ob.bound_box) * s
     ob.location = (px, -py, terrain_z(px, py) - base - 0.03)
     ob.name = name
@@ -1762,14 +1748,14 @@ def put_rose(name, px, py, z, smin, smax):
 if ROSE_LIB:
     pg = first_rect(els["pergola"])
     px0, py0, pw, pdp = pg["x"], pg["y"], pg["w"], pg["d"]
-    pgz = ground_h(px0 + pw / 2, py0 + pdp / 2)
-    top = pgz + 2.5
+    pgz = GARDEN["pergolaModel"]["floorHeight"]
+    top = pgz + 2.35
     ri = 0
-    for qx, qy in [(px0 + 0.2, py0 + 0.2), (px0 + pw - 0.2, py0 + 0.2),
-                   (px0 + 0.2, py0 + pdp - 0.2), (px0 + pw - 0.2, py0 + pdp - 0.2)]:
+    for qx, qy in [(px0 + 0.16, py0 + 0.16), (px0 + pw - 0.16, py0 + 0.16),
+                   (px0 + 0.16, py0 + pdp - 0.16), (px0 + pw - 0.16, py0 + pdp - 0.16)]:
         ox = 0.12 if qx < px0 + pw / 2 else -0.12
         oy = 0.12 if qy < py0 + pdp / 2 else -0.12
-        for h in (0.7, 1.25, 1.8, 2.4):
+        for h in (0.7, 1.25, 1.8, 2.25):
             put_rose("pergrose%d" % ri, qx + ox + (random.random() - 0.5) * 0.1,
                      qy + oy + (random.random() - 0.5) * 0.1, pgz + h, 0.5, 0.85)
             ri += 1
@@ -1954,7 +1940,7 @@ def place_clump(mesh, name, px, py, s, kind):
     if mesh.name not in CLUMP_RADII:
         CLUMP_RADII[mesh.name] = max(math.hypot(v.co.x, v.co.y) for v in mesh.vertices)
     radius = CLUMP_RADII[mesh.name] * s
-    if not clears_sauna_planting(px, py, radius):
+    if not clears_model_planting(px, py, radius):
         return None
     ob = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(ob)
@@ -2281,6 +2267,8 @@ walk_loc = (fcx2 - 4.1, -(fcy2 + 3.8), ground_h(fcx2 - 4.1, fcy2 + 3.8) + 1.65)
 walk_tgt = (fcx2, -fcy2, ground_h(fcx2, fcy2) + 0.5)
 deck_e_top = DECK_TOP
 CAMS = {
+    "pergola": add_cam("pergola", (37, -13, pgz + 4.6), (28.78, -3.61, pgz + 1), 46),
+    "pergola-evening": add_cam("pergola-evening", (20, -12, pgz + 3.5), (28.78, -3.61, pgz + 1), 44),
     "sauna": add_cam("sauna", (15, -13, sauna_floor + 4.2), (7, -4.3, sauna_floor + 1.0), 42),
     "sauna-evening": add_cam("sauna-evening", (-1, -12.3, sauna_floor + 3.2),
                             (7, -4.3, sauna_floor + 1.0), 38),
@@ -2333,6 +2321,8 @@ except Exception as ex:
 print("RENDER DEVICE:", device_used)
 
 JOBS = [
+    ("pergola", "render-pergola-day.png", "day", 128, 0.0),
+    ("pergola-evening", "render-pergola-evening.png", "golden", 192, 0.2),
     ("sauna", "render-sauna-day.png", "day", 128, 0.0),
     ("sauna-evening", "render-sauna-evening.png", "golden", 192, 0.2),
     ("iso", "render-iso.png", "day", 96, 0.0),

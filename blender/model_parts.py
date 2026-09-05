@@ -1,7 +1,8 @@
-"""Render the shared, metre-scale sauna scene using Blender materials and meshes."""
+"""Render shared, metre-scale model parts using Blender materials and meshes."""
 import math
 
 import bpy
+from mathutils import Vector
 
 
 def linear_color(value):
@@ -10,7 +11,7 @@ def linear_color(value):
 
 
 def material(name, spec):
-    mat = bpy.data.materials.new("sauna_" + name)
+    mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     nodes, links = mat.node_tree.nodes, mat.node_tree.links
     shader = nodes.get("Principled BSDF")
@@ -19,7 +20,7 @@ def material(name, spec):
     shader.inputs["Roughness"].default_value = spec.get("roughness", 0.6)
     shader.inputs["Metallic"].default_value = spec.get("metalness", 0)
     shader.inputs["Transmission Weight"].default_value = spec.get("transmission", 0)
-    shader.inputs["IOR"].default_value = 1.333 if name == "water" else 1.46
+    shader.inputs["IOR"].default_value = 1.333 if spec.get("transmission") and "water" in name else 1.46
     if spec.get("emissive"):
         shader.inputs["Emission Color"].default_value = (*linear_color(spec["emissive"]), 1)
         shader.inputs["Emission Strength"].default_value = spec.get("emissiveIntensity", 1)
@@ -51,9 +52,11 @@ def material(name, spec):
     return mat
 
 
-def build_sauna(model, base_height):
-    materials = {name: material(name, spec) for name, spec in model["materials"].items()}
-    collection = bpy.data.collections.new("Sauna retreat")
+def build_model(model):
+    base_height = model["floorHeight"]
+    model_name = model.get("name", "Garden model")
+    materials = {name: material(model_name + "_" + name, spec) for name, spec in model["materials"].items()}
+    collection = bpy.data.collections.new(model_name)
     bpy.context.scene.collection.children.link(collection)
 
     def mesh_object(part, vertices, faces, absolute=False):
@@ -71,12 +74,22 @@ def build_sauna(model, base_height):
 
     for part in model["parts"]:
         kind = part["type"]
-        if kind == "box":
-            x, y, z = (s / 2 for s in part["size"])
+        if kind in ("box", "beam"):
+            if kind == "beam":
+                start, end = Vector(part["start"]), Vector(part["end"])
+                midpoint = (start + end) / 2
+                part = dict(part, position=list(midpoint))
+                x, y, z = part["width"] / 2, part["depth"] / 2, (end - start).length / 2
+            else:
+                x, y, z = (s / 2 for s in part["size"])
             vertices = [(-x, -y, -z), (x, -y, -z), (x, y, -z), (-x, y, -z),
                         (-x, -y, z), (x, -y, z), (x, y, z), (-x, y, z)]
             faces = [(3, 2, 1, 0), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
             ob = mesh_object(part, vertices, faces)
+            if kind == "beam":
+                direction = end - start
+                direction.y = -direction.y
+                ob.rotation_euler = direction.to_track_quat("Z", "Y").to_euler()
         elif kind in ("cylinder", "lathe", "sphere"):
             segments = part.get("segments", 48)
             if kind == "lathe":
@@ -109,8 +122,8 @@ def build_sauna(model, base_height):
         elif kind == "mesh":
             ob = mesh_object(part, part["vertices"], part["faces"], absolute=True)
         else:
-            raise ValueError("Unknown sauna primitive: " + kind)
-        bevel = part.get("bevel", 0.003 if kind == "box" else 0)
+            raise ValueError("Unknown model primitive: " + kind)
+        bevel = part.get("bevel", 0.003 if kind in ("box", "beam") else 0)
         if bevel:
             modifier = ob.modifiers.new("Rounded construction edges", "BEVEL")
             modifier.width = bevel

@@ -45,6 +45,7 @@
   <button onclick="setPreset('ground')">Eye level (1.7 m)</button>
   <button onclick="setPreset('garage')">Garage interior</button>
   <button onclick="setPreset('sauna')">Sauna and spa</button>
+  <button onclick="setPreset('pergola')">Pergola dining</button>
   <button onclick="startTour()" style="background:#e07b3b">▶ Garden walk</button>
 </div>
 
@@ -97,19 +98,21 @@
 <script src="layout.js?v=20260828g"></script>
 <script src="interiors3d.js?v=20260828g"></script>
 <script src="sauna-model.js?v=20260905"></script>
+<script src="pergola-model.js?v=20260905"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildSauna } from './sauna3d.js?v=20260905';
+import { buildModel } from './model3d.js?v=20260905';
 
 // Layout (footprints in meters) comes from layout.js — x → east, y → south (z here)
 const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
 const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
-const saunaPlantingClearances = SaunaModel.plantingClearances(GARDEN);
-function overlapsSaunaAccess(x, y, radius) {
-  return saunaPlantingClearances.some(r => {
+const pergolaModel = PergolaModel.build(GARDEN);
+const plantingClearances = [...SaunaModel.plantingClearances(GARDEN), ...pergolaModel.plantingClearances];
+function overlapsStructureAccess(x, y, radius) {
+  return plantingClearances.some(r => {
     const dx = Math.max(r.x - x, 0, x - r.x - r.w);
     const dy = Math.max(r.y - y, 0, y - r.y - r.d);
     return dx * dx + dy * dy <= radius * radius;
@@ -337,7 +340,10 @@ const levelPads = [
   { x0: 21.28, z0: 19.38, x1: 34.13, z1: 26.43, level: 1.925, blend: 2.0 },  // carport + garage on one flat subgrade; garage floor slab lands at 1.965 = 396.50 (−0.50 m), no seam
   { x0: 3.5, z0: 2.17, x1: 10.5, z1: 5.17, level: 2.45, blend: 1.2 },      // sauna + hot-tub platform, on grade
   { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 3.15, blend: 1.2 },         // flat pad containing all 4 raised beds (SW high ground)
-  { x0: 25.78, z0: 1.61, x1: 31.78, z1: 5.61, level: 1.05, blend: 1.2 },    // flat pad under the pergola (toward the low NE)
+  { x0: pergolaModel.groundPatch.x, z0: pergolaModel.groundPatch.y,
+    x1: pergolaModel.groundPatch.x + pergolaModel.groundPatch.w,
+    z1: pergolaModel.groundPatch.y + pergolaModel.groundPatch.d,
+    level: pergolaModel.groundPatch.level, blend: pergolaModel.groundPatch.blend },
 ];
 // Pond basin — smooth bowl carved to the pond's downhill edge level
 const PBOWL = (() => {
@@ -497,56 +503,6 @@ function addOpenStructure(plotX, plotY, w, d, h, roofColor, postColor = 0x5a3e25
   return group;
 }
 
-// Lamellar pergola — open slat structure (wood beams with gaps, allows light through)
-function addLamellarPergola(plotX, plotY, w, d, h, slatColor = 0x6e4f31, postColor = 0x5a3e25) {
-  const cx = plotX + w/2;
-  const cz = plotY + d/2;
-  // Slat plane at highest footprint corner + h; posts stretched from local terrain to that plane
-  const topY = Math.max(...[[0,0],[w,0],[0,d],[w,d]].map(([ox, oz]) => terrainHeight(plotX + ox, plotY + oz))) + h;
-  const slatMat = new THREE.MeshStandardMaterial({ color: slatColor, roughness: 0.85 });
-  // 4 corner posts
-  for (const [ox, oz] of [[0,0],[w,0],[0,d],[w,d]]) {
-    const pY = terrainHeight(plotX + ox, plotY + oz);
-    const ph = topY - pY;
-    const post = new THREE.Mesh(
-      new THREE.BoxGeometry(0.15, ph, 0.15),
-      new THREE.MeshStandardMaterial({ color: postColor, roughness: 0.7 })
-    );
-    post.position.set(plotX + ox, pY + ph/2, plotY + oz);
-    post.castShadow = true;
-    scene.add(post);
-  }
-  // Top beams along long axis (W-E if d > w, else N-S)
-  const longAxis = d >= w ? 'z' : 'x';
-  const slatSpacing = 0.32;
-  if (longAxis === 'z') {
-    // Slats run W-E, spaced along Z
-    const numSlats = Math.max(2, Math.floor(d / slatSpacing));
-    for (let i = 0; i < numSlats; i++) {
-      const z = plotY + (i + 0.5) * (d / numSlats);
-      const slat = new THREE.Mesh(
-        new THREE.BoxGeometry(w + 0.05, 0.08, 0.1),
-        slatMat
-      );
-      slat.position.set(cx, topY - 0.04, z);
-      slat.castShadow = true;
-      scene.add(slat);
-    }
-  } else {
-    // Slats run N-S, spaced along X
-    const numSlats = Math.max(2, Math.floor(w / slatSpacing));
-    for (let i = 0; i < numSlats; i++) {
-      const x = plotX + (i + 0.5) * (w / numSlats);
-      const slat = new THREE.Mesh(
-        new THREE.BoxGeometry(0.1, 0.08, d + 0.05),
-        slatMat
-      );
-      slat.position.set(x, topY - 0.04, cz);
-      slat.castShadow = true;
-      scene.add(slat);
-    }
-  }
-}
 
 // Glass greenhouse — dwarf-wall plinth, aluminium frame, transparent glazing, gable roof
 // (ridge along the long axis). Floor levels to the highest footprint corner; the plinth fills
@@ -739,7 +695,7 @@ function leafyMass(cx, cy, cz, radius, count, flatten) {
     const px = cx + Math.cos(a) * rr, pz = cz + Math.sin(a) * rr;
     const py = cy + (up - 0.35) * radius * 1.6 * flatten;
     const s = radius * (0.5 + Math.random() * 0.42);
-    if (overlapsSaunaAccess(px, pz, s)) continue;
+    if (overlapsStructureAccess(px, pz, s)) continue;
     const gi = Math.min(LEAF_GREENS.length - 1, Math.floor(up * LEAF_GREENS.length));
     const blob = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[gi]));
     blob.position.set(px, py, pz);
@@ -1229,40 +1185,15 @@ const SA = rectOf('sauna');
 const SH = rectOf('saunaShelter');
 const saunaModel = SaunaModel.build(GARDEN, TERRAIN.plane);
 const saunaFloorY = saunaModel.floorHeight;
-const saunaGroup = buildSauna(THREE, saunaModel, saunaFloorY);
+const saunaGroup = buildModel(THREE, saunaModel);
 scene.add(saunaGroup);
 lampLights.push(...saunaGroup.userData.lights);
 
 // ───────────────────────── PERGOLA ─────────────────────────
 const PG = rectOf('pergola');
-addLamellarPergola(PG.x, PG.y, PG.w, PG.d, 2.5, 0x8a6840);
-
-// Pergola: paved floor + table for 8-10 (derived from PG so they track the pergola footprint)
-addTerrainPlatform([[PG.x + 0.2, PG.y + 0.2], [PG.x + PG.w - 0.2, PG.y + 0.2], [PG.x + PG.w - 0.2, PG.y + PG.d - 0.2], [PG.x + 0.2, PG.y + PG.d - 0.2]], 0.08, 0xffffff, { map: paverTex });
-{
-  const tx = PG.x + PG.w / 2, tz = PG.y + PG.d / 2, baseY = terrainHeight(tx, tz) + 0.08;
-  const wood = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.5 });
-  const top = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.07, 1.0), wood);
-  top.position.set(tx, baseY + 0.75, tz);
-  top.castShadow = true;
-  furnitureGroup.add(top);
-  for (const [dx, dz] of [[-1.25, -0.4], [1.25, -0.4], [-1.25, 0.4], [1.25, 0.4]]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.75, 0.07), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-    leg.position.set(tx + dx, baseY + 0.375, tz + dz);
-    furnitureGroup.add(leg);
-  }
-  for (const dz of [-0.85, 0.85]) {
-    const bench = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.06, 0.35), wood);
-    bench.position.set(tx, baseY + 0.46, tz + dz);
-    bench.castShadow = true;
-    furnitureGroup.add(bench);
-    for (const dx of [-1.1, 1.1]) {
-      const bl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.44, 0.3), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-      bl.position.set(tx + dx, baseY + 0.22, tz + dz);
-      furnitureGroup.add(bl);
-    }
-  }
-}
+const pergolaGroup = buildModel(THREE, pergolaModel);
+scene.add(pergolaGroup);
+lampLights.push(...pergolaGroup.userData.lights);
 
 // ───────────────────────── TERRACES (sledují terén) ─────────────────────────
 // Terasa V — level deck at house floor, aligned with the HS sliding-door sills
@@ -1582,7 +1513,7 @@ for (let i = 0; i < 35; i++) {
   if (x >= 25.78 && x <= 31.78 && z >= 1 && z <= 5) continue;
   const baseY = terrainHeight(x, z);
   const sz = 0.4 + Math.random() * 0.3;
-  if (overlapsSaunaAccess(x, z, Math.max(sz * 0.72, 0.26))) continue;
+  if (overlapsStructureAccess(x, z, Math.max(sz * 0.72, 0.26))) continue;
   const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
   q.position.set(x, baseY + sz * 0.38, z);
   q.scale.setScalar(sz * 0.72);
@@ -2108,7 +2039,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
       if (!pt || !inPlot(pt[0], pt[1])) continue;
       const baseY = terrainHeight(pt[0], pt[1]);
       const sz = capAtGarage(pt[0], pt[1], (kind === 'meadow' ? 0.28 : 0.48) + Math.random() * (kind === 'meadow' ? 0.18 : 0.32));
-      if (overlapsSaunaAccess(pt[0], pt[1], Math.max(sz * 0.72, 0.26))) continue;
+      if (overlapsStructureAccess(pt[0], pt[1], Math.max(sz * 0.72, 0.26))) continue;
       const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
       q.position.set(pt[0], baseY + sz * 0.38, pt[1]);
       q.scale.setScalar(sz * 0.72);
@@ -2261,7 +2192,8 @@ window.setPreset = function(name) {
     south:  [22, 8, 60],
     ground: [22, 1.7, 17],
     garage: [28.0, garageFloorY + 1.6, 26.0],
-    sauna: [SH.x - 3.2, saunaFloorY + 3.0, SA.y + SA.d + 7.2]
+    sauna: [SH.x - 3.2, saunaFloorY + 3.0, SA.y + SA.d + 7.2],
+    pergola: [PG.x + PG.w + 5, pergolaModel.floorHeight + 3.4, PG.y + PG.d + 6.5]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -2271,7 +2203,8 @@ window.setPreset = function(name) {
     south:  [22, 5, 22],
     ground: [22, 1.7, 30],
     garage: [33.2, garageFloorY + 0.7, 20.0],
-    sauna: [SA.x + 0.5, saunaFloorY + 1.35, SA.y + SA.d / 2]
+    sauna: [SA.x + 0.5, saunaFloorY + 1.35, SA.y + SA.d / 2],
+    pergola: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.1, PG.y + PG.d / 2]
   };
   const p = positions[name];
   const t = targets[name];
@@ -2306,12 +2239,18 @@ window.addEventListener('hashchange', applyHashView);
 // ───────────────────────── TOGGLES ─────────────────────────
 document.getElementById('togglePlot').addEventListener('change', e => fenceGroup.visible = e.target.checked);
 document.getElementById('toggleTrees').addEventListener('change', e => treesGroup.visible = e.target.checked);
-document.getElementById('toggleRoof').addEventListener('change', e => roofGroup.visible = e.target.checked);
+document.getElementById('toggleRoof').addEventListener('change', e => {
+  roofGroup.visible = e.target.checked;
+  pergolaGroup.userData.categories.roof.visible = e.target.checked;
+});
 document.getElementById('toggleGate').addEventListener('change', e => {
   garageGateOpen.visible = e.target.checked;
   garageGateClosed.visible = !e.target.checked;
 });
-document.getElementById('toggleFurniture').addEventListener('change', e => furnitureGroup.visible = e.target.checked);
+document.getElementById('toggleFurniture').addEventListener('change', e => {
+  furnitureGroup.visible = e.target.checked;
+  pergolaGroup.userData.categories.furniture.visible = e.target.checked;
+});
 document.getElementById('toggleVehicles').addEventListener('change', e => vehiclesGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);
 for (const id of ['togglePlot', 'toggleTrees', 'toggleRoof', 'toggleGate', 'toggleFurniture', 'toggleVehicles', 'toggleAxes']) {
