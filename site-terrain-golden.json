@@ -1,0 +1,20 @@
+{
+  "source": "a1ba048:index.html",
+  "count": 9527,
+  "pointsDigest": "98299512d0c3e28c854f19930374b5b231a0152b18f933433c5a548c767d0e9a",
+  "heightsDigest": "2c0b7f7608b55a8ec9488f5dd856ebcff8e9725c4ad2c8bade1efdfdc4574063",
+  "anchors": {
+    "house": 2.459800333333334,
+    "atrium": 2.46,
+    "eastFill": 2.44,
+    "eastFillBank": 2.1621206248775597,
+    "southBand": 1.9,
+    "driveway": 1.925,
+    "pondCenter": 0.7407927151606268,
+    "hiddenBench": 1.7679696668768756,
+    "westDeck": 2.46,
+    "southGarden": 3.5267100000000005
+  },
+  "houseBaseY": 2.459800333333334,
+  "deckTop": 2.5098003333333336
+}

@@ -24,6 +24,7 @@ Interactive 3D model of a residential garden.
 - [`raised-beds-model.js`](raised-beds-model.js) — four timber beds with recessed soil, irrigation and crops on their shared gravel pad
 - [`firepit-model.js`](firepit-model.js) — hollow stone firepit, logs and supported benches following the existing slope
 - [`hidden-bench-model.js`](hidden-bench-model.js) — painted garden bench with slats, metal framing and feet fitted to the garage-side grading
+- [`site-terrain.js`](site-terrain.js) — shared grading definition and house/deck rendering levels; Blender evaluates the exported definition through [`blender/site_terrain.py`](blender/site_terrain.py)
 - [`editor.html`](editor.html) — interactive 2D editor (drag-drop on a grid, mouse or touch); exports an updated `layout.js` or SVG
 - [`plan.js`](plan.js) — renders the 2D SVG plan from `layout.js`
 - [`zahrada-plan.svg`](zahrada-plan.svg) — static 2D plan, generated: `node generate-svg.js`
@@ -58,6 +59,7 @@ Run `node verify-greenhouse.mjs` to check the doorway, roof vent and interior su
 Run `node verify-raised-beds.mjs` to check the bed shells, soil, crop supports and grading. The browser's Kitchen garden view is at `#raisedBeds`; the Furniture control hides the crops for inspection. Use `--model=raisedBeds` for standalone Blender previews.
 Run `node verify-firepit.mjs` to check the cavity, seating footprint, supports and approach. The browser preview is at `#firepit`; the Furniture control hides the benches, and flames appear after sunset. Use `--model=firepit` for standalone Blender previews.
 Run `node verify-hidden-bench.mjs` to check the bench footprint, connected framing and graded foot contacts. The browser preview is at `#hiddenBench`; use `--model=hiddenBench` for standalone Blender previews.
+Run `node verify-site-terrain.mjs` to compare grading with the saved browser baseline and the Python sampler. Rendering levels follow the placed house geometry; `TERRAIN.houseFFLInternal` remains the nominal survey reference.
 
 ## License
 

@@ -17,6 +17,7 @@ from mathutils import Quaternion, Vector, noise
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model_parts import build_model
+from site_terrain import height as site_height
 
 argv = sys.argv
 extra = argv[argv.index("--") + 1:]
@@ -27,11 +28,9 @@ ASSETS = os.path.join(out_dir, "assets")
 with open(json_path) as f:
     GARDEN = json.load(f)
 
-# The grading plane comes from the JSON, not a second copy of the coefficients here — a local copy
-# silently stops matching terrain.js and the render no longer shows the site the web viewer shows.
-TERRAIN = GARDEN.get("terrain")
-if TERRAIN is None:
-    raise SystemExit("garden.json has no terrain block — regenerate it: node generate-blender-json.js")
+SITE_TERRAIN = GARDEN.get("siteTerrain")
+if SITE_TERRAIN is None:
+    raise SystemExit("garden.json has no siteTerrain block — regenerate it: node generate-blender-json.js")
 
 random.seed(42)
 scene = bpy.context.scene
@@ -40,59 +39,21 @@ for ob in list(bpy.data.objects):
     bpy.data.objects.remove(ob, do_unlink=True)
 
 
-def smoothstep01(t):
-    t = max(0.0, min(1.0, t))
-    return t * t * (3.0 - 2.0 * t)
-
-
-CUT_Z = 2.46  # graded cut for the level west decks
-APRON_Z = (TERRAIN["a"] * 15.88 + TERRAIN["b"] * 16.805 + TERRAIN["c"]) - 0.5  # garage floor level
-DRIP_Z = 2.345  # drip-strip dig level along the facade
 DRIP_BANDS = [(10.48, 21.28, 6.68, 7.18), (10.48, 21.28, 26.43, 26.93), (21.28, 21.78, 7.18, 11.58)]
 
 
 def ground_h(x, y):
-    """Terrain height in plan coords (x east, y south), incl. grading cuts."""
-    z = max(0.0, TERRAIN["a"] * x + TERRAIN["b"] * y + TERRAIN["c"])
-    in_a = 6.5 <= x <= 10.6 and 6.7 <= y <= 28.8
-    in_b = 10.48 <= x <= 14.78 and 15.93 <= y <= 19.18
-    if in_a or in_b:
-        s = 1.0 if in_b else smoothstep01((x - 6.5) / 1.8) * smoothstep01((28.8 - y) / 1.8)
-        z -= max(0.0, z - CUT_Z) * s
-    if 24.13 <= x <= 34.81 and 26.45 <= y <= 30.75:  # level apron at the garage door
-        s = smoothstep01((x - 24.13) / 3.5) * smoothstep01((30.75 - y) / 3.5)
-        z -= max(0.0, z - APRON_Z) * s
-    for bx0, bx1, by0, by1 in DRIP_BANDS:
-        if bx0 - 0.6 <= x <= bx1 + 0.6 and by0 - 0.6 <= y <= by1 + 0.6:
-            sx = min(smoothstep01((x - bx0 + 0.6) / 0.6), smoothstep01((bx1 + 0.6 - x) / 0.6))
-            sy = min(smoothstep01((y - by0 + 0.6) / 0.6), smoothstep01((by1 + 0.6 - y) / 0.6))
-            z -= max(0.0, z - DRIP_Z) * min(sx, sy)
-    for model in (GARDEN["pergolaModel"], GARDEN["garageModel"], GARDEN["greenhouseModel"], GARDEN["raisedBedsModel"]):
-        patch = model["groundPatch"]
-        dx = max(patch["x"] - x, 0, x - patch["x"] - patch["w"])
-        dy = max(patch["y"] - y, 0, y - patch["y"] - patch["d"])
-        blend = smoothstep01(1 - math.hypot(dx, dy) / patch["blend"])
-        z += (patch["level"] - z) * blend
-    return z
+    return site_height(SITE_TERRAIN, x, y)
 
 
-_pond = next(p for e in GARDEN["elements"] if e["id"] == "pond"
-             for p in e["parts"] if p["kind"] == "ellipse")
-POND = (_pond["cx"], _pond["cy"], _pond["rx"], _pond["ry"])
-POND_EDGE_MIN = min(ground_h(POND[0] + POND[2] * math.cos(a), POND[1] + POND[3] * math.sin(a))
-                    for a in [i * math.pi / 8.0 for i in range(16)])
+_pond = SITE_TERRAIN["pond"]
+POND = (_pond["cx"], _pond["cz"], _pond["rx"], _pond["rz"])
+POND_EDGE_MIN = _pond["edge"]
 POND_WATER_Z = POND_EDGE_MIN - 0.10
 
 
 def terrain_z(x, y):
-    z = ground_h(x, y)
-    cx, cy, rx, ry = POND
-    d2 = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2
-    if d2 < 1.0:
-        rr = math.sqrt(d2)
-        bowl = POND_EDGE_MIN - 0.55 * (0.5 + 0.5 * math.cos(math.pi * rr))
-        z += (min(bowl, z) - z) * smoothstep01((1.0 - rr) / 0.3)
-    return z
+    return ground_h(x, y)
 
 
 def hexc(h):
@@ -940,8 +901,8 @@ build_grass(build_blade())
 
 # ---------------- house ----------------
 bb = house["meta"]["bbox"]
-ft = ground_h((bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2)  # floor level
-DECK_TOP = ft + 0.05
+ft = SITE_TERRAIN["houseBaseY"]
+DECK_TOP = SITE_TERRAIN["deckTop"]
 h_base = min(ground_h(x, y) for x, y in hpoly) - 0.2
 GEN_WALL_H = 3.07  # general wall top / west lean-to eave (DPS řez A) — west rooms sit lower
 KNEE = 0.28        # gable pozednice knee above the general walls → ridge +7.15

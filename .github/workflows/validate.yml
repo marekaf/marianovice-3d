@@ -44,6 +44,9 @@ jobs:
       - name: Hidden bench geometry (supports, grading and footprint)
         run: node verify-hidden-bench.mjs
 
+      - name: Browser and Blender grading parity
+        run: node verify-site-terrain.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js
