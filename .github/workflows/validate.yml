@@ -26,6 +26,9 @@ jobs:
       - name: Pergola geometry (frame, furniture and lighting)
         run: node verify-pergola.mjs
 
+      - name: Garage geometry (openings, gate states and parking clearances)
+        run: node verify-garage.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js

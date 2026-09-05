@@ -124,6 +124,7 @@ def build_model(model):
         else:
             raise ValueError("Unknown model primitive: " + kind)
         bevel = part.get("bevel", 0.003 if kind in ("box", "beam") else 0)
+        ob.hide_render = ob.hide_viewport = model.get("categoryVisibility", {}).get(part.get("category", "structure"), True) is False
         if bevel:
             modifier = ob.modifiers.new("Rounded construction edges", "BEVEL")
             modifier.width = bevel
@@ -136,6 +137,7 @@ def build_model(model):
         data.shadow_soft_size = 0.16
         ob = bpy.data.objects.new(light["name"], data)
         collection.objects.link(ob)
+        ob.hide_render = ob.hide_viewport = model.get("categoryVisibility", {}).get(light.get("category", "structure"), True) is False
         x, y, z = light["position"]
         ob.location = (x, -y, base_height + z)
     return collection

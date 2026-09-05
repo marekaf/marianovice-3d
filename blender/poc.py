@@ -67,11 +67,13 @@ def ground_h(x, y):
             sx = min(smoothstep01((x - bx0 + 0.6) / 0.6), smoothstep01((bx1 + 0.6 - x) / 0.6))
             sy = min(smoothstep01((y - by0 + 0.6) / 0.6), smoothstep01((by1 + 0.6 - y) / 0.6))
             z -= max(0.0, z - DRIP_Z) * min(sx, sy)
-    patch = GARDEN["pergolaModel"]["groundPatch"]
-    dx = max(patch["x"] - x, 0, x - patch["x"] - patch["w"])
-    dy = max(patch["y"] - y, 0, y - patch["y"] - patch["d"])
-    blend = smoothstep01(1 - math.hypot(dx, dy) / patch["blend"])
-    return z + (patch["level"] - z) * blend
+    for model in (GARDEN["pergolaModel"], GARDEN["garageModel"]):
+        patch = model["groundPatch"]
+        dx = max(patch["x"] - x, 0, x - patch["x"] - patch["w"])
+        dy = max(patch["y"] - y, 0, y - patch["y"] - patch["d"])
+        blend = smoothstep01(1 - math.hypot(dx, dy) / patch["blend"])
+        z += (patch["level"] - z) * blend
+    return z
 
 
 _pond = next(p for e in GARDEN["elements"] if e["id"] == "pond"
@@ -1152,55 +1154,80 @@ box_p("hs_handle", 20.66, 16.38, 20.70, 16.42, ft + 0.89, ft + 1.21, MAT["frame"
 # ---------------- garage (pult roof, floor -0.5 vs house) + door + cars ----------------
 g = first_rect(els["garage"])
 gx0, gy0, gx1, gy1 = g["x"], g["y"], g["x"] + g["w"], g["y"] + g["d"]
-GF = ft - 0.5  # garage floor abs
-g_wall_top = GF + 2.3  # low east eave
-g_roof_high = g_wall_top + 1.2  # high west edge at the carport junction
-g_min = min(ground_h(x, y) for x, y in [(gx0, gy0), (gx1, gy0), (gx0, gy1), (gx1, gy1)])
-rect_box("garage", g, g_min - 0.25, g_wall_top, MAT["garage_walls"])
-wedge_we("garage_fill", gx0, gx1, gy0, gy1, g_wall_top, g_roof_high, MAT["garage_walls"])
-g_pitch = 1.2 / g["w"]
+GF = GARDEN["garageModel"]["floorHeight"]
+g_wall_top = GARDEN["garageModel"]["dims"]["wallTop"]
+g_roof_high = GARDEN["garageModel"]["dims"]["roofHigh"]
+g_pitch = GARDEN["garageModel"]["dims"]["pitch"]
+build_model(GARDEN["garageModel"])
 sloped_slab("garage_roof", gx0 - 0.3, gx1 + 0.3, g_roof_high + 0.3 * g_pitch,
             g_wall_top - 0.3 * g_pitch, gy0, gy1, 0.12, MAT["roof"])
 roof_seams("gar", gx1 + 0.3, g_wall_top - 0.3 * g_pitch + 0.12,
            gx0 - 0.3, g_roof_high + 0.3 * g_pitch + 0.12, gy0, gy1, MAT["roof"])
 
-gd_y = gy1  # south wall
-door_r = next(p for p in els["garage"]["parts"] if p["kind"] == "rect" and p["d"] < 1.0)
-dx0, dx1 = door_r["x"], door_r["x"] + door_r["w"]
-box_p("garage_door", dx0, gd_y + 0.01, dx1, gd_y + 0.06, GF, GF + 2.05, MAT["door_metal"])
-for k in range(4):
-    zz = GF + 0.41 * (k + 1)
-    box_p("garage_groove%d" % k, dx0 + 0.05, gd_y + 0.02, dx1 - 0.05, gd_y + 0.09, zz - 0.02, zz + 0.02, MAT["groove"])
-
-
-def car(name, cx, cy, paint, along="y", z=None, cabin_bias=1):
+def car(name, cx, cy, paint, along="y", z=None, cabin_bias=1, dimensions=None):
     if z is None:
         z = ground_h(cx, cy)
-    L, W = 2.0, 0.86  # half length / half width
+    L, W = (dimensions[0] / 2, dimensions[1] / 2) if dimensions else (2.0, 0.86)  # half length / half width
+    length_scale, width_scale = L / 2.0, W / 0.86
+    axle = 1.25 * length_scale
+    track = W - 0.1 if dimensions else W
+    inset = 0.1 * width_scale
     if along == "y":
         box_p(name + "_body", cx - W, cy - L, cx + W, cy + L, z + 0.32, z + 0.92, paint)
-        box_p(name + "_cabin", cx - W + 0.1, cy - 1.0 + 0.1 * cabin_bias, cx + W - 0.1,
-              cy + 1.0 + 0.1 * cabin_bias, z + 0.92, z + 1.42, MAT["cabin"])
-        wheels = [(cx - W, cy - 1.25), (cx + W, cy - 1.25), (cx - W, cy + 1.25), (cx + W, cy + 1.25)]
+        box_p(name + "_cabin", cx - W + inset, cy + (-1.0 + 0.1 * cabin_bias) * length_scale, cx + W - inset,
+              cy + (1.0 + 0.1 * cabin_bias) * length_scale, z + 0.92, z + 1.42, MAT["cabin"])
+        wheels = [(cx - track, cy - axle), (cx + track, cy - axle), (cx - track, cy + axle), (cx + track, cy + axle)]
         rot = (0, math.pi / 2, 0)
     else:
         box_p(name + "_body", cx - L, cy - W, cx + L, cy + W, z + 0.32, z + 0.92, paint)
-        box_p(name + "_cabin", cx - 0.9, cy - W + 0.1, cx + 1.1, cy + W - 0.1, z + 0.92, z + 1.42, MAT["cabin"])
-        wheels = [(cx - 1.25, cy - W), (cx - 1.25, cy + W), (cx + 1.25, cy - W), (cx + 1.25, cy + W)]
+        box_p(name + "_cabin", cx + (-1.0 + 0.1 * cabin_bias) * length_scale, cy - W + inset,
+              cx + (1.0 + 0.1 * cabin_bias) * length_scale, cy + W - inset, z + 0.92, z + 1.42, MAT["cabin"])
+        wheels = [(cx - axle, cy - track), (cx - axle, cy + track), (cx + axle, cy - track), (cx + axle, cy + track)]
         rot = (math.pi / 2, 0, 0)
     for i, (wx, wy) in enumerate(wheels):
         add_cyl(name + "_wheel%d" % i, wx, wy, z + 0.33, 0.33, 0.2, MAT["tire"], verts=16, rot=rot)
 
 
-car("car1", 29.0, 22.0, MAT["car_blue"], along="y", z=GF)
-car("car2", 32.5, 22.0, MAT["car_red"], along="y", z=GF)
+def motorcycle(name, cx, cy, length, width, paint, z):
+    wheel_radius = min(0.34, length * 0.15)
+    axle = length / 2 - wheel_radius
+    for i, py in enumerate((cy - axle, cy + axle)):
+        add_cyl(name + "_tire%d" % i, cx, py, z + wheel_radius, wheel_radius, 0.11,
+                MAT["tire"], rot=(0, math.pi / 2, 0))
+        add_cyl(name + "_rim%d" % i, cx, py, z + wheel_radius, wheel_radius * 0.65, 0.12,
+                MAT["frame"], rot=(0, math.pi / 2, 0))
+
+    def tube(label, start, end, radius):
+        midpoint = (Vector(start) + Vector(end)) / 2
+        direction = Vector((end[0] - start[0], start[1] - end[1], end[2] - start[2]))
+        ob = add_cyl(name + label, midpoint.x, midpoint.y, midpoint.z, radius, direction.length, MAT["frame"])
+        ob.rotation_euler = direction.to_track_quat("Z", "Y").to_euler()
+
+    for side in (-1, 1):
+        px = cx + side * 0.085
+        tube("_fork%d" % side, (px, cy - axle, z + wheel_radius), (px, cy - axle * 0.63, z + 1.04), 0.025)
+        tube("_swingarm%d" % side, (px, cy + axle, z + wheel_radius), (px, cy + 0.1, z + 0.48), 0.027)
+        tube("_frame%d" % side, (px, cy - axle * 0.63, z + 0.95), (px, cy + axle * 0.62, z + 0.73), 0.022)
+    box_p(name + "_engine", cx - 0.15, cy - length * 0.13, cx + 0.15, cy + length * 0.13,
+          z + 0.34, z + 0.7, MAT["frame"])
+    box_p(name + "_tank", cx - width * 0.2, cy - length * 0.25, cx + width * 0.2, cy + length * 0.01,
+          z + 0.7, z + 0.98, paint)
+    box_p(name + "_seat", cx - width * 0.15, cy, cx + width * 0.15, cy + length * 0.31,
+          z + 0.79, z + 0.88, MAT["tire"])
+    add_cyl(name + "_handlebar", cx, cy - axle * 0.63, z + 1.08, 0.018, width, MAT["frame"], rot=(0, math.pi / 2, 0))
+
+
+for i, vehicle in enumerate(v for v in GARDEN["vehicles"] if v["bay"] == "garage"):
+    paint = mat_simple("garage_vehicle_paint%d" % i, hexc(vehicle["col"]), rough=0.3, metal=0.35)
+    cy = vehicle["noseZ"] + vehicle["l"] / 2
+    if vehicle.get("moto"):
+        motorcycle("garage_motorcycle%d" % i, vehicle["cx"], cy, vehicle["l"], vehicle["w"], paint, GF)
+    else:
+        car("garage_car%d" % i, vehicle["cx"], cy, paint, along="y", z=GF,
+            cabin_bias=-1 if vehicle.get("reversed") else 1, dimensions=(vehicle["l"], vehicle["w"]))
 # parked parallel to the garage east wall on the long pad, facing south to the driveway
 car("car3", 36.4, 22.9, MAT["car_grey"], along="y",
     z=ground_h(36.41, 22.925) + 0.05, cabin_bias=-1)
-
-# garage west personnel door 900x2150, dark, base at garage floor
-box_p("garage_pdoor", gx0 - 0.05, 20.2, gx0 + 0.01, 21.1, GF, GF + 2.15, MAT["door_metal"])
-
 
 # ---------------- facade climbers ----------------
 def climbers(prefix, axis, wall, out_sign, a0, a1, z_base, height):

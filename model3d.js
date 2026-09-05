@@ -47,9 +47,13 @@ function timberUVs(geometry, grain, seed) {
 export function buildModel(THREE, model) {
   const group = new THREE.Group();
   group.name = model.name;
-  const categories = Object.fromEntries(['structure', 'roof', 'furniture'].map(name => {
+  const categoryNames = new Set(['structure', 'roof', 'furniture',
+    ...model.parts.map(part => part.category || 'structure'),
+    ...model.lights.map(light => light.category || 'structure')]);
+  const categories = Object.fromEntries([...categoryNames].map(name => {
     const category = new THREE.Group();
     category.name = name;
+    category.visible = model.categoryVisibility?.[name] !== false;
     group.add(category);
     return [name, category];
   }));

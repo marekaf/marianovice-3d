@@ -96,13 +96,14 @@
 
 <script src="terrain.js?v=20260827"></script>
 <script src="layout.js?v=20260828g"></script>
-<script src="interiors3d.js?v=20260828g"></script>
+<script src="interiors3d.js?v=20260905b"></script>
 <script src="sauna-model.js?v=20260905"></script>
 <script src="pergola-model.js?v=20260905"></script>
+<script src="garage-model.js?v=20260905"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=20260905';
+import { buildModel } from './model3d.js?v=20260905b';
 
 // Layout (footprints in meters) comes from layout.js — x → east, y → south (z here)
 const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
@@ -336,8 +337,10 @@ const cutRects = [
 // Level pads — force the footprint flat to `level` (cut where the grade is higher, fill where it is
 // lower), smoothstep bank to grade at the edges. The real NW→SE fall drops the SE hardscape below its
 // slab level (cut alone can't lift it) and lifts the NW garden pads above theirs (cut alone pits them).
+const garageGround = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
 const levelPads = [
-  { x0: 21.28, z0: 19.38, x1: 34.13, z1: 26.43, level: 1.925, blend: 2.0 },  // carport + garage on one flat subgrade; garage floor slab lands at 1.965 = 396.50 (−0.50 m), no seam
+  { x0: garageGround.x, z0: garageGround.y, x1: garageGround.x + garageGround.w,
+    z1: garageGround.y + garageGround.d, level: garageGround.level, blend: garageGround.blend },
   { x0: 3.5, z0: 2.17, x1: 10.5, z1: 5.17, level: 2.45, blend: 1.2 },      // sauna + hot-tub platform, on grade
   { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 3.15, blend: 1.2 },         // flat pad containing all 4 raised beds (SW high ground)
   { x0: pergolaModel.groundPatch.x, z0: pergolaModel.groundPatch.y,
@@ -1081,13 +1084,13 @@ for (const [wz0, wz1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
 const GA = rectOf('garage');
 const CP = rectOf('carport');
 // Garage floor 0.5 m below house floor (397.00 vs 396.50); walls plinth down to lowest corner grade
-const garageFloorY = houseBaseY - 0.5;
+const garageFloorY = TERRAIN.houseFFLInternal - 0.5;
 const garageMinY = Math.min(...[[GA.x, GA.y], [GA.x + GA.w, GA.y], [GA.x, GA.y + GA.d], [GA.x + GA.w, GA.y + GA.d]]
   .map(([x, z]) => terrainHeight(x, z)));
 
 // Garage interior (floor/walls/ceiling/gate/bench) — built by the shared interiors3d.js
 // so index.html and interior.html render the identical garage
-const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: garageFloorY, plinthTo: garageMinY });
+const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: garageFloorY, plinthTo: garageMinY, buildModel });
 const { wallT: GAT, wallTop: garageWallTop, roofHigh: garageRoofHigh, pitch: garagePitch } = gar.dims;
 for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.gateClosed, gar.gateOpen, gar.light]) scene.add(grp);
 furnitureGroup.add(gar.furniture);
@@ -1107,28 +1110,6 @@ const walkSurfaces = [
   m.castShadow = true;
   roofGroup.add(m);
 }
-// Fill garage walls up to the roof plane: N/S triangles + west band under the high edge
-const garageFillMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.7, side: THREE.DoubleSide });
-for (const z of [GA.y, GA.y + GA.d]) {
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute([
-    GA.x, garageWallTop, z,
-    GA.x + GA.w, garageWallTop, z,
-    GA.x, garageRoofHigh, z,
-  ], 3));
-  g.setIndex([0, 1, 2]);
-  g.computeVertexNormals();
-  const m = new THREE.Mesh(g, garageFillMat);
-  m.castShadow = true;
-  scene.add(m);
-}
-{
-  const westFill = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, GA.d), garageFillMat);
-  westFill.position.set(GA.x + 0.05, garageWallTop + 0.6, GA.y + GA.d / 2);
-  westFill.castShadow = true;
-  scene.add(westFill);
-}
-
 // Carport plate — thin, high at the garage junction, shallow fall west; west edge clears entry door top
 const carportEastY = garageRoofHigh;
 const carportWestY = garageWallTop + 0.5;

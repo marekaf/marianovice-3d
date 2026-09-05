@@ -68,11 +68,13 @@
 <div id="scalebar"><div id="scaleline"></div><span id="scaletext"></span></div>
 
 <script src="layout.js?v=20260830a"></script>
-<script src="interiors3d.js?v=20260830a"></script>
+<script src="garage-model.js?v=20260905"></script>
+<script src="interiors3d.js?v=20260905b"></script>
 <script src="house-interior.js?v=20260830a"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { buildModel } from './model3d.js?v=20260905b';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf3f2ef);
@@ -84,7 +86,7 @@ sun.position.set(-6, 14, 9);
 scene.add(sun);
 
 // Garage at its real level (−0.5 m below the house floor at 0)
-const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: -0.5 });
+const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: -0.5, buildModel });
 const garRoot = new THREE.Group();
 for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.furniture, gar.gateClosed, gar.gateOpen, gar.ceiling, gar.light]) garRoot.add(grp);
 const vehicles = INTERIORS3D.garageVehicles(THREE, GARDEN, -0.5);
@@ -128,10 +130,13 @@ function mkViews(cx, cz, midY, w, d, wallH, label) {
     cut3d: { label: `${label} — CUTAWAY 3D`, pos: [cx + Math.max(w, d), Math.max(w, d) * 0.9, cz + Math.max(w, d)], up: [0, 1, 0], target: [cx, 0.8, cz], lookThrough: [], cut: true, ceil: false, fitW: w + d * 0.6, fitH: (w + d) * 0.42, rotate: true },
   };
 }
+const garageViews = mkViews(GA.x + GA.w / 2, GA.y + GA.d / 2, -0.5 + 1.6, GA.w, GA.d, 4.4, 'GARAGE');
+garageViews.cut3d.fitH += 1;
+garageViews.cut3d.target[1] = 1.1;
 const BUILDINGS = {
   garage: {
     root: garRoot, walls: gar.walls, ceiling: gar.ceiling,
-    views: mkViews(GA.x + GA.w / 2, GA.y + GA.d / 2, -0.5 + 1.6, GA.w, GA.d, 4.4, 'GARAGE'),
+    views: garageViews,
     dims: `garage · ${GA.w.toFixed(2)} × ${GA.d.toFixed(2)} m outside · floor −0.50 m`,
   },
 };
