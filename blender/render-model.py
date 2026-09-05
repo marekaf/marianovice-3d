@@ -6,6 +6,7 @@ Select --model=sauna (default), --model=pergola, --model=garage, or --model=gree
 scene only, --quick for a 960px preview, or --only=day to render a single view.
 Use --model=raisedBeds for overview and crop-detail views of the kitchen garden.
 Use --model=firepit for day, evening and seating-detail views.
+Use --model=hiddenBench for the shaded bench overview and joinery detail.
 Use --model=fixtures --sample=bath for a public fixture sample on a neutral floor.
 """
 import json
@@ -52,8 +53,8 @@ def ground(x, y):
     if model_name == "fixtures":
         return floor
     z = max(0, terrain["a"] * x + terrain["b"] * y + terrain["c"])
-    patch = model.get("groundPatch")
-    if patch:
+    patches = model.get("groundPatches", [model["groundPatch"]] if model.get("groundPatch") else [])
+    for patch in patches:
         dx = max(patch["x"] - x, 0, x - patch["x"] - patch["w"])
         dy = max(patch["y"] - y, 0, y - patch["y"] - patch["d"])
         t = max(0, min(1, 1 - math.hypot(dx, dy) / patch["blend"]))
@@ -63,23 +64,29 @@ def ground(x, y):
 
 center_x, center_y = (fixture_center.x, -fixture_center.y) if model_name == "fixtures" else {
     "sauna": (7, 4.3), "pergola": (28.78, 3.61), "garage": (30.88, 22.905),
-    "greenhouse": (2.8, 25.8), "raisedBeds": (2.25, 12.5), "firepit": (37.5, 6.6)}[model_name]
+    "greenhouse": (2.8, 25.8), "raisedBeds": (2.25, 12.5), "firepit": (37.5, 6.6),
+    "hiddenBench": (32.3, 18.55)}[model_name]
 grid = 2 if model_name == "fixtures" else 120
 spacing = max(fixture_radius, 1) * 20 if model_name == "fixtures" else 0.4
 
 
 def grid_coordinate(index, center):
-    if model_name in ("greenhouse", "raisedBeds", "firepit") and index in (0, grid):
+    if model_name in ("greenhouse", "raisedBeds", "firepit", "hiddenBench") and index in (0, grid):
         return center + (-1000 if index == 0 else 1000)
     return center + (index - grid / 2) * spacing
 
 
-vertices = [(grid_coordinate(i, center_x), -grid_coordinate(j, center_y),
-             ground(grid_coordinate(i, center_x), grid_coordinate(j, center_y)))
-            for j in range(grid + 1) for i in range(grid + 1)]
-faces = [(j * (grid + 1) + i, (j + 1) * (grid + 1) + i,
-          (j + 1) * (grid + 1) + i + 1, j * (grid + 1) + i + 1)
-         for j in range(grid) for i in range(grid)]
+grid_x = [grid_coordinate(i, center_x) for i in range(grid + 1)]
+grid_y = [grid_coordinate(i, center_y) for i in range(grid + 1)]
+if model_name == "hiddenBench":
+    contacts = [corner for foot in model["feet"] for corner in foot["bottomCorners"]]
+    grid_x = sorted({round(x, 9) for x in grid_x + [p[0] for p in contacts]})
+    grid_y = sorted({round(y, 9) for y in grid_y + [p[1] for p in contacts]})
+vertices = [(x, -y, ground(x, y)) for y in grid_y for x in grid_x]
+stride = len(grid_x)
+faces = [(j * stride + i, (j + 1) * stride + i,
+          (j + 1) * stride + i + 1, j * stride + i + 1)
+         for j in range(len(grid_y) - 1) for i in range(stride - 1)]
 mesh = bpy.data.meshes.new("Ground")
 mesh.from_pydata(vertices, [], faces)
 mesh.update()
@@ -154,6 +161,11 @@ elif model_name == "firepit":
         ("day", (42.2, -11.6, floor + 4.3), (37.5, -6.6, floor + 0.2), 48, 38, 0.5, -2),
         ("evening", (42.2, -11.6, floor + 3.1), (37.5, -6.6, floor + 0.25), 48, -4, 0.3, 1.5),
         ("detail", (39.8, -8.9, floor + 1.75), (37.5, -6.6, floor + 0.2), 48, 38, 0.5, -2),
+    ]
+elif model_name == "hiddenBench":
+    views = [
+        ("day", (35.2, -14.8, floor + 1.9), (32.3, -18.55, floor + 0.42), 54, 38, 0.5, -2),
+        ("detail", (33.4, -16.9, floor + 0.9), (32.6, -18.55, floor + 0.48), 58, 38, 0.5, -2),
     ]
 elif model_name == "fixtures":
     lens = 48

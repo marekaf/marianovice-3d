@@ -1336,27 +1336,7 @@ greenhouse_top = max((ob.matrix_world @ Vector(corner)).z for ob in greenhouse_c
 
 # ---------------- zasivarna: hidden bench in the shade bed (garage north) ----------------
 if "zasivarna" in els:
-    MAT["bench_blue"] = mat_simple("bench_blue", hexc("#3a6ab8"), rough=0.35, metal=0.6)
-    MAT["bench_red"] = mat_simple("bench_red", hexc("#c0392b"), rough=0.35, metal=0.6)
-    MAT["bench_leg"] = mat_simple("bench_leg", hexc("#1c1c1e"), rough=0.45, metal=0.7)
-    zs_rects = [p for p in els["zasivarna"]["parts"] if p["kind"] == "rect"]
-    zx0 = min(p["x"] for p in zs_rects)
-    zx1 = max(p["x"] + p["w"] for p in zs_rects)
-    zy0 = min(p["y"] for p in zs_rects)
-    zy1 = max(p["y"] + p["d"] for p in zs_rects)
-    bz = ground_h((zx0 + zx1) / 2.0, (zy0 + zy1) / 2.0)
-    for ri, p in enumerate(zs_rects):
-        mat_i = MAT["bench_blue"] if p["fill"] == "#3a6ab8" else MAT["bench_red"]
-        for si in range(3):
-            yy0 = p["y"] + 0.02 + si * (p["d"] - 0.04) / 3.0
-            box_p("bench_slat%d_%d" % (ri, si), p["x"] + 0.02, yy0, p["x"] + p["w"] - 0.02,
-                  yy0 + (p["d"] - 0.04) / 3.0 - 0.03, bz + 0.42, bz + 0.46, mat_i)
-    # backrest on the south (garage) side, sitting faces north into the garden
-    box_p("bench_back", zx0 + 0.02, zy1 - 0.06, zx1 - 0.02, zy1 - 0.01, bz + 0.46, bz + 0.88,
-          MAT["bench_red"])
-    for li, (lx, ly) in enumerate([(zx0 + 0.1, zy0 + 0.1), (zx1 - 0.1, zy0 + 0.1),
-                                   (zx0 + 0.1, zy1 - 0.1), (zx1 - 0.1, zy1 - 0.1)]):
-        post("bench_leg%d" % li, lx, ly, ground_h(lx, ly) - 0.05, bz + 0.42, MAT["bench_leg"], half=0.025)
+    build_model(GARDEN["hiddenBenchModel"])
 
 # ---------------- raised beds ----------------
 build_model(GARDEN["raisedBedsModel"])
@@ -1463,7 +1443,7 @@ print("PLANT LIB daisies %d roses %d logs %d" %
 
 MODEL_PLANT_CLEARANCES = [
     (p["x"], p["y"], p["x"] + p["w"], p["y"] + p["d"])
-    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"], GARDEN["greenhouseModel"], GARDEN["raisedBedsModel"], GARDEN["firepitModel"])
+    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"], GARDEN["greenhouseModel"], GARDEN["raisedBedsModel"], GARDEN["firepitModel"], GARDEN["hiddenBenchModel"])
     for p in model["plantingClearances"]
 ]
 

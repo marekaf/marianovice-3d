@@ -41,6 +41,9 @@ jobs:
       - name: Firepit geometry (cavity, seating, slope and access)
         run: node verify-firepit.mjs
 
+      - name: Hidden bench geometry (supports, grading and footprint)
+        run: node verify-hidden-bench.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js
