@@ -21,6 +21,7 @@ Interactive 3D model of a residential garden.
 - [`garage-model.js`](garage-model.js) — shared hollow garage, wall finishes, sectional-door mechanisms and workshop furniture; preserves wall and gate cutaways in the interiors viewer
 - [`furniture-model.js`](furniture-model.js) — data-driven cabinetry, sanitary fixtures and bedding; generic examples are available at [`fixtures.html`](fixtures.html), separate from the private house floor plan
 - [`greenhouse-model.js`](greenhouse-model.js) — shared hollow greenhouse, framed glazing, roof vent, drainage and potting furniture
+- [`raised-beds-model.js`](raised-beds-model.js) — four timber beds with recessed soil, irrigation and crops on their shared gravel pad
 - [`editor.html`](editor.html) — interactive 2D editor (drag-drop on a grid, mouse or touch); exports an updated `layout.js` or SVG
 - [`plan.js`](plan.js) — renders the 2D SVG plan from `layout.js`
 - [`zahrada-plan.svg`](zahrada-plan.svg) — static 2D plan, generated: `node generate-svg.js`
@@ -52,6 +53,7 @@ Run `node verify-pergola.mjs` to check frame connections, furniture supports, pa
 Run `node verify-garage.mjs` to check garage openings, gate states, floor datum and parking clearances. Use `--model=garage` in the standalone Blender command for exterior and interior previews. The browser interior views are available at `interior.html#garage-cut3d` and `interior.html#garage-north`.
 Run `node verify-fixtures.mjs` to check fixture footprints, heights and floor offsets. Use `--model=fixtures --sample=bath` or `--sample=bed` for standalone fixture renders. Beds default to a north-facing headboard; optional `head: 'N'|'S'|'E'|'W'` rotates the bedding within the supplied footprint.
 Run `node verify-greenhouse.mjs` to check the doorway, roof vent and interior supports. The browser preview is at `#greenhouse`; Roof and Furniture controls expose its interior. Use `--model=greenhouse` for standalone exterior and interior Blender previews.
+Run `node verify-raised-beds.mjs` to check the bed shells, soil, crop supports and grading. The browser's Kitchen garden view is at `#raisedBeds`; the Furniture control hides the crops for inspection. Use `--model=raisedBeds` for standalone Blender previews.
 
 ## License
 

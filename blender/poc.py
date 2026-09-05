@@ -67,7 +67,7 @@ def ground_h(x, y):
             sx = min(smoothstep01((x - bx0 + 0.6) / 0.6), smoothstep01((bx1 + 0.6 - x) / 0.6))
             sy = min(smoothstep01((y - by0 + 0.6) / 0.6), smoothstep01((by1 + 0.6 - y) / 0.6))
             z -= max(0.0, z - DRIP_Z) * min(sx, sy)
-    for model in (GARDEN["pergolaModel"], GARDEN["garageModel"], GARDEN["greenhouseModel"]):
+    for model in (GARDEN["pergolaModel"], GARDEN["garageModel"], GARDEN["greenhouseModel"], GARDEN["raisedBedsModel"]):
         patch = model["groundPatch"]
         dx = max(patch["x"] - x, 0, x - patch["x"] - patch["w"])
         dy = max(patch["y"] - y, 0, y - patch["y"] - patch["d"])
@@ -734,6 +734,9 @@ for eid in ["westTerrace", "eastTerrace", "saunaPath", "parking", "carport", "ga
             EXCL_RECTS.append((prt["x"] - m, prt["y"] - m, prt["x"] + prt["w"] + m, prt["y"] + prt["d"] + m))
 for bx0, bx1, by0, by1 in DRIP_BANDS:
     EXCL_RECTS.append((bx0 - 0.1, by0 - 0.1, bx1 + 0.1, by1 + 0.1))
+raised_bed_pad = GARDEN["raisedBedsModel"]["groundPatch"]
+EXCL_RECTS.append((raised_bed_pad["x"], raised_bed_pad["y"],
+                   raised_bed_pad["x"] + raised_bed_pad["w"], raised_bed_pad["y"] + raised_bed_pad["d"]))
 EXCL_POLYS = [hpoly, dpoly]
 _fire = next(p for p in els["firePit"]["parts"] if p["kind"] == "circle")
 EXCL_ELLIPSES = [(POND[0], POND[1], POND[2] + 0.35, POND[3] + 0.3), (5.0, 2.5, 1.15, 1.15),
@@ -1438,11 +1441,7 @@ if "zasivarna" in els:
         post("bench_leg%d" % li, lx, ly, ground_h(lx, ly) - 0.05, bz + 0.42, MAT["bench_leg"], half=0.025)
 
 # ---------------- raised beds ----------------
-for eid in ["raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
-    r = first_rect(els[eid])
-    bcx, bcy = rect_center(r)
-    z = ground_h(bcx, bcy)
-    rect_box(eid, r, z - 0.1, z + 0.6, MAT["wood"])
+build_model(GARDEN["raisedBedsModel"])
 
 
 # ---------------- privacy screens (paravány): 2 m louvre panels blocking neighbour sightlines ----------------
@@ -1540,16 +1539,13 @@ DAISY_LIB = (append_ext("plants/daisy_white.blend", ["daisy_white"]) +
              append_ext("plants/daisy_red.blend", ["daisy_red"]))
 ROSE_LIB = append_ext("plants/roses.blend", ["roses"])
 LOG_LIB = append_ext("plants/wood_logs.blend", ["wooden logs"])
-# stylized tomato in three growth stages for the raised-bed kitchen garden
-TOMATO_LIB = append_ext("plants/tomato.blend",
-                        ["SM_Tomato_Lv1", "SM_Tomato_Lv2", "SM_Tomato_Lv3"])
-print("PLANT LIB daisies %d roses %d logs %d tomato %d" %
-      (len(DAISY_LIB), len(ROSE_LIB), len(LOG_LIB), len(TOMATO_LIB)))
+print("PLANT LIB daisies %d roses %d logs %d" %
+      (len(DAISY_LIB), len(ROSE_LIB), len(LOG_LIB)))
 
 
 MODEL_PLANT_CLEARANCES = [
     (p["x"], p["y"], p["x"] + p["w"], p["y"] + p["d"])
-    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"], GARDEN["greenhouseModel"])
+    for model in (GARDEN["saunaModel"], GARDEN["pergolaModel"], GARDEN["greenhouseModel"], GARDEN["raisedBedsModel"])
     for p in model["plantingClearances"]
 ]
 
@@ -1822,51 +1818,6 @@ place_plant(LOG_LIB, "logs0", 11.9, 3.4, 1.5)
 # firewood by the fire pit (37.5, 6.6) so there is wood to actually burn there
 for i, (px, py) in enumerate([(38.7, 6.5), (36.4, 5.6)]):
     place_plant(LOG_LIB, "firepitlogs%d" % i, px, py, 1.2)
-
-# ---------------- edible kitchen garden (four western raised beds) ----------------
-def place_edible(lib, name, px, py, soil, footprint):
-    """Seat a plant with its base on the raised-bed soil surface (not the terrain)."""
-    ob = random.choice(lib).copy()
-    bpy.context.collection.objects.link(ob)
-    ob.hide_render = False
-    d = max(ob.dimensions.x, ob.dimensions.y, 0.01)
-    sv = footprint / d
-    ob.scale = (sv, sv, sv)
-    ob.rotation_euler = (0, 0, random.random() * 6.283)
-    base = min(c[2] for c in ob.bound_box) * sv
-    ob.location = (px, -py, soil - base)
-    ob.name = name
-
-
-# tomatoes (mostly the two larger growth stages) alternating with leafy greens in two
-# rows per bed, seated on the soil top (bed box = ground + 0.4). GROUND_PLANTS = sorrel +
-# fern, which read as veg-row foliage.
-edible_i = 0
-for eid in ["raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
-    r = first_rect(els[eid])
-    x0, y0, w, dep = r["x"], r["y"], r["w"], r.get("d", r.get("h"))
-    soil = ground_h(x0 + w / 2, y0 + dep / 2) + 0.6
-    n_rows = 6
-    for row in range(n_rows):
-        py = y0 + 0.45 + (dep - 0.9) * row / (n_rows - 1)
-        for col, cx in enumerate([x0 + w * 0.33, x0 + w * 0.67]):
-            px = cx + (random.random() - 0.5) * 0.12
-            if TOMATO_LIB and (row + col) % 2 == 0:
-                tmpl = random.choice(TOMATO_LIB[1:] or TOMATO_LIB)
-                ob = tmpl.copy()
-                bpy.context.collection.objects.link(ob)
-                ob.hide_render = False
-                sv = (0.45 + random.random() * 0.12) / max(ob.dimensions.x, ob.dimensions.y, 0.01)
-                ob.scale = (sv, sv, sv)
-                ob.rotation_euler = (0, 0, random.random() * 6.283)
-                ob.location = (px, -py, soil - min(c[2] for c in ob.bound_box) * sv)
-                ob.name = "tomato%d" % edible_i
-            elif GROUND_PLANTS:
-                place_edible(GROUND_PLANTS, "green%d" % edible_i, px, py, soil,
-                             0.26 + random.random() * 0.12)
-            edible_i += 1
-print("EDIBLE placed:", edible_i)
-
 
 # ---------------- planting-zone vegetation ----------------
 COUNTS = {"perennial": 0, "tuft": 0, "shrub": 0, "flower": 0, "pot": 0, "molinia": 0, "stalks": 0}

@@ -47,6 +47,7 @@
   <button onclick="setPreset('sauna')">Sauna and spa</button>
   <button onclick="setPreset('pergola')">Pergola dining</button>
   <button onclick="setPreset('greenhouse')">Greenhouse</button>
+  <button onclick="setPreset('raisedBeds')">Kitchen garden</button>
   <button onclick="startTour()" style="background:#e07b3b">▶ Garden walk</button>
 </div>
 
@@ -103,6 +104,7 @@
 <script src="garage-model.js?v=20260905"></script>
 <script src="furniture-model.js?v=20260905"></script>
 <script src="greenhouse-model.js?v=20260905"></script>
+<script src="raised-beds-model.js?v=20260905"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -115,8 +117,9 @@ const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
 const pergolaModel = PergolaModel.build(GARDEN);
 const greenhouseModel = GreenhouseModel.build(GARDEN, TERRAIN.plane);
+const raisedBedsModel = RaisedBedsModel.build(GARDEN);
 const plantingClearances = [...SaunaModel.plantingClearances(GARDEN), ...pergolaModel.plantingClearances,
-  ...greenhouseModel.plantingClearances];
+  ...greenhouseModel.plantingClearances, ...raisedBedsModel.plantingClearances];
 function overlapsStructureAccess(x, y, radius) {
   return plantingClearances.some(r => {
     const dx = Math.max(r.x - x, 0, x - r.x - r.w);
@@ -347,8 +350,7 @@ const levelPads = [
   { x0: garageGround.x, z0: garageGround.y, x1: garageGround.x + garageGround.w,
     z1: garageGround.y + garageGround.d, level: garageGround.level, blend: garageGround.blend },
   { x0: 3.5, z0: 2.17, x1: 10.5, z1: 5.17, level: 2.45, blend: 1.2 },      // sauna + hot-tub platform, on grade
-  { x0: 0.7, z0: 9.7, x1: 3.8, z1: 15.3, level: 3.15, blend: 1.2 },         // flat pad containing all 4 raised beds (SW high ground)
-  ...[pergolaModel.groundPatch, greenhouseModel.groundPatch].map(({ x, y, w, d, level, blend }) =>
+  ...[pergolaModel.groundPatch, greenhouseModel.groundPatch, raisedBedsModel.groundPatch].map(({ x, y, w, d, level, blend }) =>
     ({ x0: x, z0: y, x1: x + w, z1: y + d, level, blend })),
 ];
 // Pond basin — smooth bowl carved to the pond's downhill edge level
@@ -1338,11 +1340,8 @@ scene.add(driveway);
 
 // ───────────────────────── RAISED BEDS (4 pcs on one flat pad) ─────────────────────────
 // Flat gravel pad (terrain cut to level under it) containing all four beds
-{ const p = rectOf('raisedBedsPad'); addTerrainPlatform(rectVerts(p), 0.06, 0xb9b3a2); }
-['raisedBed1', 'raisedBed2', 'raisedBed3', 'raisedBed4'].forEach(id => {
-  const b = rectOf(id);
-  addBox(b.x, b.y, b.w, b.d, 0.6, 0x7a5a3a, { sinkToMin: true });
-});
+const raisedBedsGroup = buildModel(THREE, raisedBedsModel);
+scene.add(raisedBedsGroup);
 
 // ───────────────────────── PRIVACY SCREENS (paravány) — 2 m louvre panels ─────────────────────────
 function addScreen(r, h = 2.0) {
@@ -2081,7 +2080,8 @@ window.setPreset = function(name) {
     garage: [28.0, garageFloorY + 1.6, 26.0],
     sauna: [SH.x - 3.2, saunaFloorY + 3.0, SA.y + SA.d + 7.2],
     pergola: [PG.x + PG.w + 5, pergolaModel.floorHeight + 3.4, PG.y + PG.d + 6.5],
-    greenhouse: [GH.x - 1.1, greenhouseModel.floorHeight + 3.56, GH.y - 1.5]
+    greenhouse: [GH.x - 1.1, greenhouseModel.floorHeight + 3.56, GH.y - 1.5],
+    raisedBeds: [7, raisedBedsModel.floorHeight + 4, 16]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -2093,7 +2093,8 @@ window.setPreset = function(name) {
     garage: [33.2, garageFloorY + 0.7, 20.0],
     sauna: [SA.x + 0.5, saunaFloorY + 1.35, SA.y + SA.d / 2],
     pergola: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.1, PG.y + PG.d / 2],
-    greenhouse: [GH.x + GH.w / 2, greenhouseModel.floorHeight + 1.1, GH.y + GH.d / 2]
+    greenhouse: [GH.x + GH.w / 2, greenhouseModel.floorHeight + 1.1, GH.y + GH.d / 2],
+    raisedBeds: [2.25, raisedBedsModel.floorHeight + 0.5, 12.5]
   };
   const p = positions[name];
   const t = targets[name];
@@ -2141,6 +2142,7 @@ document.getElementById('toggleFurniture').addEventListener('change', e => {
   furnitureGroup.visible = e.target.checked;
   pergolaGroup.userData.categories.furniture.visible = e.target.checked;
   greenhouseGroup.userData.categories.furniture.visible = e.target.checked;
+  raisedBedsGroup.userData.categories.furniture.visible = e.target.checked;
 });
 document.getElementById('toggleVehicles').addEventListener('change', e => vehiclesGroup.visible = e.target.checked);
 document.getElementById('toggleAxes').addEventListener('change', e => axes.visible = e.target.checked);
