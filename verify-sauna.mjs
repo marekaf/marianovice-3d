@@ -16,7 +16,13 @@ const overlaps = (a, b) => a.min.every((v, i) => Math.min(a.max[i], b.max[i]) - 
 
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
 assert.deepEqual(model, SaunaModel.build(GARDEN, TERRAIN.plane), 'Geometry must be repeatable');
+for (const [name, category] of Object.entries({ wall_north: 'N', wall_west: 'W', wall_east: 'E',
+  window_glass: 'S', door_glass: 'S', sauna_floor: 'floor', sauna_roof: 'roof', sauna_ceiling: 'roof',
+  heater_body: 'furniture', bench_1_slat_0: 'furniture', tub_shell: 'outdoor', shelter_roof: 'outdoor' })) {
+  assert.equal(parts.get(name).category, category, `${name}: incorrect cutaway owner`);
+}
 for (const part of model.parts) {
+  assert.ok(['N', 'S', 'E', 'W', 'floor', 'roof', 'furniture', 'outdoor'].includes(part.category), `${part.name}: missing cutaway owner`);
   assert.ok(model.materials[part.material], `${part.name}: missing material`);
   for (const value of [...part.position || [], ...part.size || [], ...part.vertices?.flat() || [], ...part.profile?.flat() || []]) {
     assert.ok(Number.isFinite(value), `${part.name}: non-finite geometry`);

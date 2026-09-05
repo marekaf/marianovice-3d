@@ -33,6 +33,8 @@ Interactive 3D model of a residential garden.
 
 The browser's **Sauna and spa** view is also available at `#sauna`. The model includes timber cladding, framed openings, benches, heater, standing-seam roof, shelter framing, a hollow tub and a raised entrance landing. Door placement and architectural details are a design proposal, not construction drawings.
 
+The interiors page includes a sauna floor plan, four wall elevations and a cutaway at `interior.html#sauna-cut3d`. It uses the same geometry as the garden view; the outdoor shelter and tub are hidden to keep the interior inspection focused.
+
 The **Pergola dining** view at `#pergola` shows connected beams, braces, roof slats, detailed dining furniture and lighting. The Roof and Furniture toggles control those parts separately. Both renderers use the pergola's grading level from `layout.js`.
 
 Generate Blender input with `node generate-blender-json.js`. A standalone preview needs no downloaded plant or texture assets:
