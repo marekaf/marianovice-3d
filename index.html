@@ -96,14 +96,15 @@
 
 <script src="terrain.js?v=20260827"></script>
 <script src="layout.js?v=20260828g"></script>
-<script src="interiors3d.js?v=20260905b"></script>
+<script src="interiors3d.js?v=20260905d"></script>
 <script src="sauna-model.js?v=20260905"></script>
 <script src="pergola-model.js?v=20260905"></script>
 <script src="garage-model.js?v=20260905"></script>
+<script src="furniture-model.js?v=20260905"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=20260905b';
+import { buildModel } from './model3d.js?v=20260905d';
 
 // Layout (footprints in meters) comes from layout.js — x → east, y → south (z here)
 const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));

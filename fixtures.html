@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fixture samples</title>
+  <style>
+    body { margin: 0; font: 14px system-ui, sans-serif; background: #ece9e2; color: #242827; overflow: hidden; }
+    canvas { display: block; }
+    header { position: absolute; z-index: 1; top: 16px; left: 16px; max-width: 330px; padding: 16px; background: #fffffff0; border-radius: 8px; }
+    h1 { margin: 0 0 8px; font-size: 20px; }
+    p { margin: 8px 0; line-height: 1.4; }
+    a { color: #236377; }
+    select { width: 100%; padding: 8px; font: inherit; }
+    #dimensions { font-variant-numeric: tabular-nums; color: #555; }
+    @media (max-width: 600px) { header { top: 8px; left: 8px; right: 8px; max-width: none; padding: 12px; } h1 { font-size: 17px; } }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Fixture samples</h1>
+    <p>Generic examples, not the house floor plan.</p>
+    <label for="sample">Model</label>
+    <select id="sample"></select>
+    <p id="dimensions"></p>
+    <p>Drag to rotate. Scroll to zoom.</p>
+    <a href="interior.html">Back to interiors</a>
+  </header>
+  <script src="furniture-model.js"></script>
+  <script src="fixture-samples.js"></script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { buildModel } from './model3d.js?v=20260905d';
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#ece9e2');
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xa8a394, 2));
+    const key = new THREE.DirectionalLight(0xfff6e9, 3);
+    key.position.set(3, 6, 4);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.normalBias = 0.015;
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0xe5efff, 1.2);
+    fill.position.set(-4, 3, -2);
+    scene.add(fill);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: '#dedbd3', roughness: 0.88 }));
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.005;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    document.body.appendChild(renderer.domElement);
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.02, 300);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.minDistance = 0.2;
+    controls.maxDistance = 15;
+    const select = document.getElementById('sample');
+    const models = new Map(FIXTURE_SAMPLES.map(sample => {
+      select.add(new Option(sample.label, sample.id));
+      const model = FurnitureModel.build(sample.furniture);
+      const group = buildModel(THREE, model);
+      group.visible = false;
+      scene.add(group);
+      return [sample.id, { sample, model, group }];
+    }));
+    function showSample() {
+      const entry = models.get(location.hash.slice(1)) || models.values().next().value;
+      select.value = entry.sample.id;
+      for (const item of models.values()) item.group.visible = item === entry;
+      const bounds = new THREE.Box3().setFromObject(entry.group);
+      const center = bounds.getCenter(new THREE.Vector3());
+      const size = bounds.getSize(new THREE.Vector3());
+      const distance = Math.max(size.x, size.y, size.z, 0.5) * (innerWidth < 600 ? 3.1 : 2.3);
+      controls.target.copy(center);
+      camera.position.copy(center).add(new THREE.Vector3(0.9, 0.75, 1.25).normalize().multiplyScalar(distance));
+      controls.update();
+      document.getElementById('dimensions').textContent = `${size.x.toFixed(2)} × ${size.z.toFixed(2)} × ${size.y.toFixed(2)} m`;
+      window.DEBUG = { scene, camera, renderer, model: entry.model, group: entry.group, sampleId: entry.sample.id, THREE };
+    }
+    select.addEventListener('change', () => { location.hash = select.value; });
+    window.addEventListener('hashchange', showSample);
+    function resize() { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+    window.addEventListener('resize', resize);
+    resize();
+    showSample();
+    renderer.setAnimationLoop(() => renderer.render(scene, camera));
+  </script>
+</body>
+</html>

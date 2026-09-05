@@ -124,7 +124,7 @@ export function buildModel(THREE, model) {
         for (let i = 1; i < face.length - 1; i++) indices.push(face[0], face[i + 1], face[i]);
       }
       geometry.setIndex(indices);
-      geometry = geometry.toNonIndexed();
+      if (!part.smooth) geometry = geometry.toNonIndexed();
       geometry.computeVertexNormals();
       geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geometry.attributes.position.count * 2), 2));
       if (model.materials[part.material].grain) timberUVs(geometry, model.materials[part.material].grain, index);

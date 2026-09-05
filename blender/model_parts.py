@@ -121,6 +121,8 @@ def build_model(model):
                 polygon.use_smooth = True
         elif kind == "mesh":
             ob = mesh_object(part, part["vertices"], part["faces"], absolute=True)
+            for polygon in ob.data.polygons:
+                polygon.use_smooth = part.get("smooth", False)
         else:
             raise ValueError("Unknown model primitive: " + kind)
         bevel = part.get("bevel", 0.003 if kind in ("box", "beam") else 0)

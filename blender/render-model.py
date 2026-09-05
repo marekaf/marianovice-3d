@@ -4,6 +4,7 @@ Generate input: node generate-blender-json.js
 Render: /Applications/Blender.app/Contents/MacOS/Blender -b -P blender/render-model.py -- blender/garden.json --model=pergola
 Select --model=sauna (default), --model=pergola, or --model=garage. Append --no-render to save the
 scene only, --quick for a 960px preview, or --only=day to render a single view.
+Use --model=fixtures --sample=bath for a public fixture sample on a neutral floor.
 """
 import json
 import math
@@ -26,14 +27,26 @@ bpy.ops.object.delete(use_global=False)
 scene = bpy.context.scene
 terrain = garden["terrain"]
 model_name = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--model=")), "sauna")
-model = garden[model_name + "Model"]
+sample = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--sample=")), "bath")
+model = garden["fixtureModels"][sample] if model_name == "fixtures" else garden[model_name + "Model"]
+output_name = "fixture-" + sample if model_name == "fixtures" else model_name
 if model_name == "garage":
     model = dict(model, categoryVisibility={"gateClosed": False, "gateOpen": True})
 floor = model["floorHeight"]
-build_model(model)
+collection = build_model(model)
+bpy.context.view_layer.update()
+if model_name == "fixtures":
+    corners = [ob.matrix_world @ Vector(corner) for ob in collection.objects if ob.type == "MESH"
+               and not ob.hide_render for corner in ob.bound_box]
+    minimum = Vector(tuple(min(c[i] for c in corners) for i in range(3)))
+    maximum = Vector(tuple(max(c[i] for c in corners) for i in range(3)))
+    fixture_center = (minimum + maximum) / 2
+    fixture_radius = (maximum - minimum).length / 2
 
 
 def ground(x, y):
+    if model_name == "fixtures":
+        return floor
     z = max(0, terrain["a"] * x + terrain["b"] * y + terrain["c"])
     patch = model.get("groundPatch")
     if patch:
@@ -44,9 +57,10 @@ def ground(x, y):
     return z
 
 
-center_x, center_y = {"sauna": (7, 4.3), "pergola": (28.78, 3.61), "garage": (30.88, 22.905)}[model_name]
-grid = 120
-spacing = 0.4
+center_x, center_y = (fixture_center.x, -fixture_center.y) if model_name == "fixtures" else {
+    "sauna": (7, 4.3), "pergola": (28.78, 3.61), "garage": (30.88, 22.905)}[model_name]
+grid = 2 if model_name == "fixtures" else 120
+spacing = max(fixture_radius, 1) * 20 if model_name == "fixtures" else 0.4
 vertices = [(center_x + (i - grid / 2) * spacing, -(center_y + (j - grid / 2) * spacing),
              ground(center_x + (i - grid / 2) * spacing, center_y + (j - grid / 2) * spacing))
             for j in range(grid + 1) for i in range(grid + 1)]
@@ -60,7 +74,8 @@ for polygon in mesh.polygons:
     polygon.use_smooth = True
 ground_ob = bpy.data.objects.new("Ground", mesh)
 scene.collection.objects.link(ground_ob)
-ground_ob.data.materials.append(material("preview ground", {"color": "#777d61", "roughness": 0.94}))
+ground_color = "#bbb9b2" if model_name == "fixtures" else "#777d61"
+ground_ob.data.materials.append(material("preview ground", {"color": ground_color, "roughness": 0.94}))
 
 world = bpy.data.worlds.new("Model sky")
 world.use_nodes = True
@@ -71,6 +86,15 @@ sky.sky_type = "MULTIPLE_SCATTERING" if "MULTIPLE_SCATTERING" in sky_types else 
 sky.sun_elevation = math.radians(38)
 sky.sun_rotation = math.radians(140)
 world.node_tree.links.new(sky.outputs["Color"], world.node_tree.nodes["Background"].inputs["Color"])
+if model_name == "fixtures":
+    key_data = bpy.data.lights.new("Fixture daylight", "AREA")
+    key_data.energy = 600 * fixture_radius ** 2
+    key_data.shape = "DISK"
+    key_data.size = fixture_radius * 1.5
+    key = bpy.data.objects.new("Fixture daylight", key_data)
+    scene.collection.objects.link(key)
+    key.location = fixture_center + Vector((-2, -3, 4)) * fixture_radius
+    key.rotation_euler = (fixture_center - key.location).to_track_quat("-Z", "Y").to_euler()
 camera_data = bpy.data.cameras.new("Model camera")
 camera = bpy.data.objects.new("Model camera", camera_data)
 scene.collection.objects.link(camera)
@@ -102,6 +126,13 @@ elif model_name == "garage":
         ("day", (38, -33, floor + 4), (30.88, -23, floor + 1.25), 46, 38, 0.5, -2),
         ("interior", (33, -25, floor + 1.65), (30.5, -20, floor + 1.25), 25, 38, 0.5, -0.5),
     ]
+elif model_name == "fixtures":
+    lens = 48
+    aspect = scene.render.resolution_x / scene.render.resolution_y
+    half_angle = math.atan(camera_data.sensor_width / (2 * lens * aspect))
+    distance = fixture_radius * 1.12 / math.sin(half_angle)
+    position = fixture_center + Vector((1, -1.2, 0.95)).normalized() * distance
+    views = [("day", position, fixture_center, lens, 38, 0.08, -1)]
 only = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--only=")), None)
 for name, position, target, lens, elevation, strength, exposure in views:
     if only and name != only:
@@ -111,9 +142,10 @@ for name, position, target, lens, elevation, strength, exposure in views:
     camera_data.lens = lens
     sky.sun_elevation = math.radians(elevation)
     world.node_tree.nodes["Background"].inputs["Strength"].default_value = strength
-    scene.render.filepath = os.path.join(output, model_name + "-preview-" + name + ".png")
+    image_name = output_name if model_name == "fixtures" else model_name + "-preview-" + name
+    scene.render.filepath = os.path.join(output, image_name + ".png")
     scene.view_settings.exposure = exposure
     if name == "day":
-        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(output, model_name + ".blend"))
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(output, output_name + ".blend"))
     if "--no-render" not in args:
         bpy.ops.render.render(write_still=True)
