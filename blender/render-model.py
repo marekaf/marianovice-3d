@@ -2,7 +2,7 @@
 
 Generate input: node generate-blender-json.js
 Render: /Applications/Blender.app/Contents/MacOS/Blender -b -P blender/render-model.py -- blender/garden.json --model=pergola
-Select --model=sauna (default) or --model=pergola. Append --no-render to save the
+Select --model=sauna (default), --model=pergola, or --model=garage. Append --no-render to save the
 scene only, --quick for a 960px preview, or --only=day to render a single view.
 """
 import json
@@ -27,6 +27,8 @@ scene = bpy.context.scene
 terrain = garden["terrain"]
 model_name = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--model=")), "sauna")
 model = garden[model_name + "Model"]
+if model_name == "garage":
+    model = dict(model, categoryVisibility={"gateClosed": False, "gateOpen": True})
 floor = model["floorHeight"]
 build_model(model)
 
@@ -42,7 +44,7 @@ def ground(x, y):
     return z
 
 
-center_x, center_y = (28.78, 3.61) if model_name == "pergola" else (7, 4.3)
+center_x, center_y = {"sauna": (7, 4.3), "pergola": (28.78, 3.61), "garage": (30.88, 22.905)}[model_name]
 grid = 120
 spacing = 0.4
 vertices = [(center_x + (i - grid / 2) * spacing, -(center_y + (j - grid / 2) * spacing),
@@ -94,6 +96,11 @@ if model_name == "pergola":
         ("day", (37, -13, floor + 4.6), (28.78, -3.61, floor + 1), 46, 38, 0.5, -2),
         ("evening", (20, -12, floor + 3.5), (28.78, -3.61, floor + 1), 44, -4, 0.3, 1.5),
         ("dining", (32, -7, floor + 2.0), (28.78, -3.61, floor + 0.85), 38, 38, 0.5, -2),
+    ]
+elif model_name == "garage":
+    views = [
+        ("day", (38, -33, floor + 4), (30.88, -23, floor + 1.25), 46, 38, 0.5, -2),
+        ("interior", (33, -25, floor + 1.65), (30.5, -20, floor + 1.25), 25, 38, 0.5, -0.5),
     ]
 only = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--only=")), None)
 for name, position, target, lens, elevation, strength, exposure in views:
