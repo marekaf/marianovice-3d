@@ -35,6 +35,9 @@ jobs:
       - name: Greenhouse geometry (openings, vent and interior supports)
         run: node verify-greenhouse.mjs
 
+      - name: Raised-bed geometry (shells, soil, planting and grading)
+        run: node verify-raised-beds.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js
