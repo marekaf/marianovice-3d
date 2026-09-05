@@ -19,6 +19,7 @@ from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model_parts import build_model, material
+from site_terrain import height as site_height
 
 args = sys.argv[sys.argv.index("--") + 1:]
 source = os.path.abspath(args[0])
@@ -28,7 +29,6 @@ output = os.path.dirname(source)
 bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
 scene = bpy.context.scene
-terrain = garden["terrain"]
 model_name = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--model=")), "sauna")
 sample = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--sample=")), "bath")
 model = garden["fixtureModels"][sample] if model_name == "fixtures" else garden[model_name + "Model"]
@@ -52,14 +52,7 @@ if model_name == "fixtures":
 def ground(x, y):
     if model_name == "fixtures":
         return floor
-    z = max(0, terrain["a"] * x + terrain["b"] * y + terrain["c"])
-    patches = model.get("groundPatches", [model["groundPatch"]] if model.get("groundPatch") else [])
-    for patch in patches:
-        dx = max(patch["x"] - x, 0, x - patch["x"] - patch["w"])
-        dy = max(patch["y"] - y, 0, y - patch["y"] - patch["d"])
-        t = max(0, min(1, 1 - math.hypot(dx, dy) / patch["blend"]))
-        z += (patch["level"] - z) * t * t * (3 - 2 * t)
-    return z
+    return site_height(garden["siteTerrain"], x, y)
 
 
 center_x, center_y = (fixture_center.x, -fixture_center.y) if model_name == "fixtures" else {
