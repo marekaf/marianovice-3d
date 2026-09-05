@@ -15,6 +15,9 @@ import sys
 import time
 from mathutils import Quaternion, Vector, noise
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from sauna import build_sauna
+
 argv = sys.argv
 extra = argv[argv.index("--") + 1:]
 json_path = os.path.abspath(extra[0])
@@ -1279,7 +1282,7 @@ for ci, (cdx, cdz) in enumerate([(-0.6, -0.9), (0.6, -0.9), (-0.6, 0.9), (0.6, 0
     back_z = sz0 + (0.2 if cdz > 0 else -0.2)  # backrest on the outside -> chair faces the table
     box_p("et_back%d" % ci, sx0 - 0.2, back_z - 0.025, sx0 + 0.2, back_z + 0.025,
           DECK_TOP + 0.45, DECK_TOP + 0.95, MAT["wood"])
-for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect"):
+for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect" and x.get("role") != "saunaLanding"):
     px, py = rect_center(prt)
     z = ground_h(px, py)
     rect_box("saunaPath_%d" % i, prt, z - 0.05, z + 0.1, MAT["path"])
@@ -1366,24 +1369,8 @@ rt = first_rect(els["rainTank"])
 rcx, rcy = rect_center(rt)
 add_cyl("rainTank_manhole", rcx, rcy, ground_h(rcx, rcy) + 0.02, 0.4, 0.06, MAT["manhole"])
 
-s = first_rect(els["sauna"])
-scx, scy = rect_center(s)
-sz = ground_h(scx, scy)
-rect_box("sauna", s, sz - 0.3, sz + 3.0, MAT["wood"])
-
-sh = first_rect(els["saunaShelter"])
-shcx, shcy = rect_center(sh)
-shz = ground_h(shcx, shcy)
-for i, (px, py) in enumerate([(sh["x"] + 0.15, sh["y"] + 0.15), (sh["x"] + sh["w"] - 0.15, sh["y"] + 0.15),
-                              (sh["x"] + 0.15, sh["y"] + sh["d"] - 0.15),
-                              (sh["x"] + sh["w"] - 0.15, sh["y"] + sh["d"] - 0.15)]):
-    post("shelter_post%d" % i, px, py, ground_h(px, py) - 0.2, shz + 2.5, MAT["wood"], half=0.06)
-rect_box("shelter_roof", sh, shz + 2.5, shz + 2.6, MAT["roof"])
-
-st = next(x for x in els["softub"]["parts"] if x["kind"] == "circle")
-stz = ground_h(st["cx"], st["cy"])
-add_cyl("softub", st["cx"], st["cy"], stz + 0.4, st["r"], 0.8, MAT["wood"])
-add_cyl("softub_water", st["cx"], st["cy"], stz + 0.78, st["r"] * 0.9, 0.05, MAT["water"])
+sauna_floor = GARDEN["saunaModel"]["floorHeight"]
+build_sauna(GARDEN["saunaModel"], sauna_floor)
 
 # ---------------- pergola ----------------
 pg = first_rect(els["pergola"])
@@ -1552,17 +1539,36 @@ print("PLANT LIB daisies %d roses %d logs %d tomato %d" %
       (len(DAISY_LIB), len(ROSE_LIB), len(LOG_LIB), len(TOMATO_LIB)))
 
 
+SAUNA_PLANT_CLEARANCES = [
+    (p["x"], p["y"], p["x"] + p["w"], p["y"] + p["d"])
+    for p in GARDEN["saunaModel"]["plantingClearances"]
+]
+
+
+def clears_sauna_planting(px, py, radius):
+    for x0, y0, x1, y1 in SAUNA_PLANT_CLEARANCES:
+        dx = max(x0 - px, 0, px - x1)
+        dy = max(y0 - py, 0, py - y1)
+        if dx * dx + dy * dy <= (radius + 0.08) ** 2:
+            return False
+    return True
+
+
 def place_asset(src, name, px, py, footprint=None, z=None):
-    ob = src.copy()
-    bpy.context.collection.objects.link(ob)
-    ob.hide_render = False
     s = 1.0
     if footprint:
         d = max(src.dimensions.x, src.dimensions.y, 0.01)
         s = footprint / d
     sv = s * (0.85 + random.random() * 0.3)
+    rotation = random.random() * 6.283
+    radius = max(math.hypot(c[0], c[1]) for c in src.bound_box) * sv
+    if not clears_sauna_planting(px, py, radius):
+        return None
+    ob = src.copy()
+    bpy.context.collection.objects.link(ob)
+    ob.hide_render = False
     ob.scale = (sv, sv, sv)
-    ob.rotation_euler = (0, 0, random.random() * 6.283)
+    ob.rotation_euler = (0, 0, rotation)
     ob.location = (px, -py, (terrain_z(px, py) - 0.02) if z is None else z)
     ob.name = name
     return ob
@@ -1776,41 +1782,11 @@ if ROSE_LIB:
     print("PERGOLA ROSES:", ri)
 
 # firewood pile beside the sauna
-place_plant(LOG_LIB, "logs0", 10.9, 3.4, 1.5)
+place_plant(LOG_LIB, "logs0", 11.9, 3.4, 1.5)
 
 # firewood by the fire pit (37.5, 6.6) so there is wood to actually burn there
 for i, (px, py) in enumerate([(38.7, 6.5), (36.4, 5.6)]):
     place_plant(LOG_LIB, "firepitlogs%d" % i, px, py, 1.2)
-
-# stacked log store: split-log rounds cross-stacked into a wall (cut ends facing the garden),
-# tucked under the sauna shelter. Brick-offset rows so the ends don't line up into a grid.
-MAT["logwood"] = mat_simple("logwood", hexc("#c2a878"), rough=0.85)
-
-
-def build_log_store(name, x0, x1, y_front, depth, height, mat):
-    r = 0.07
-    step = 2 * r + 0.004
-    cols = int((x1 - x0) / step)
-    rows = int(height / (2 * r * 0.9))
-    cy = y_front - depth / 2.0
-    zb = ground_h((x0 + x1) / 2.0, y_front)
-    n = 0
-    for rw in range(rows):
-        off = r if rw % 2 else 0.0
-        for cl in range(cols):
-            cx = x0 + r + off + cl * step
-            if cx > x1 - r:
-                continue
-            cz = zb + r + rw * (2 * r * 0.9)
-            add_cyl("%s_%d" % (name, n), cx + (random.random() - 0.5) * 0.006, cy, cz,
-                    r * (0.9 + random.random() * 0.18), depth * (0.9 + random.random() * 0.2),
-                    mat, verts=12, rot=(math.radians(90), 0, (random.random() - 0.5) * 0.08))
-            n += 1
-    print("LOG STORE logs:", n)
-
-
-build_log_store("logstore", 3.6, 6.0, 4.0, 0.5, 0.85, MAT["logwood"])
-
 
 # ---------------- edible kitchen garden (four western raised beds) ----------------
 def place_edible(lib, name, px, py, soil, footprint):
@@ -1971,7 +1947,15 @@ STALKS_MESH = build_molinia_mesh("stalksOnly", 5, 8, blade_len=0.35)
 MOLINIA_ZONES = {"pondFringe", "prairieIsland", "arrivalStrip"}
 
 
+CLUMP_RADII = {}
+
+
 def place_clump(mesh, name, px, py, s, kind):
+    if mesh.name not in CLUMP_RADII:
+        CLUMP_RADII[mesh.name] = max(math.hypot(v.co.x, v.co.y) for v in mesh.vertices)
+    radius = CLUMP_RADII[mesh.name] * s
+    if not clears_sauna_planting(px, py, radius):
+        return None
     ob = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(ob)
     ob.location = (px, -py, terrain_z(px, py) - 0.01)
@@ -2297,6 +2281,9 @@ walk_loc = (fcx2 - 4.1, -(fcy2 + 3.8), ground_h(fcx2 - 4.1, fcy2 + 3.8) + 1.65)
 walk_tgt = (fcx2, -fcy2, ground_h(fcx2, fcy2) + 0.5)
 deck_e_top = DECK_TOP
 CAMS = {
+    "sauna": add_cam("sauna", (15, -13, sauna_floor + 4.2), (7, -4.3, sauna_floor + 1.0), 42),
+    "sauna-evening": add_cam("sauna-evening", (-1, -12.3, sauna_floor + 3.2),
+                            (7, -4.3, sauna_floor + 1.0), 38),
     "iso": add_cam("iso", (60, -55, 35), (22, -17, 2), 40),
     "walk": add_cam("walk", walk_loc, walk_tgt, 30, fstop=2.8),
     "living": add_cam("living", (20.80, -17.5, ft + 1.5),
@@ -2346,6 +2333,8 @@ except Exception as ex:
 print("RENDER DEVICE:", device_used)
 
 JOBS = [
+    ("sauna", "render-sauna-day.png", "day", 128, 0.0),
+    ("sauna-evening", "render-sauna-evening.png", "golden", 192, 0.2),
     ("iso", "render-iso.png", "day", 96, 0.0),
     ("walk", "render-walk.png", "day", 96, 0.0),
     ("living", "render-living.png", "day", 96, 0.0),

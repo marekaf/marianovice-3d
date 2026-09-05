@@ -38,7 +38,8 @@
       <rect x="170.64" y="129.24" width="18" height="346.5" />
       <rect x="188.64" y="286.74" width="80.1" height="58.5" />
       <rect x="370.44" y="208.44" width="54" height="140.76" />
-      <rect x="171" y="93.06" width="18" height="36.18" />
+      <rect x="63" y="93.06" width="126" height="14.4" />
+      <rect x="171" y="107.46" width="18" height="21.78" />
       <rect x="383.04" y="349.2" width="114.3" height="126.9" />
       <rect x="497.34" y="348.84" width="117" height="126.9" />
       <rect x="510.84" y="472.68" width="90" height="5.94" />
@@ -93,7 +94,7 @@
       <rect x="442.8" y="208.8" width="43.2" height="140.4" />
       <rect x="513" y="129.6" width="81" height="64.8" />
       <rect x="10.8" y="35.46" width="46.8" height="57.6" />
-      <rect x="36" y="96.66" width="108" height="28.8" />
+      <rect x="36" y="111.06" width="108" height="28.8" />
       <rect x="417.6" y="28.98" width="36" height="72" />
       <rect x="583.2" y="28.98" width="36" height="72" />
       <polygon points="383.4,539.1 763.2,579.6 752.4,604.8 383.4,583.2" />
@@ -163,7 +164,7 @@
       <circle cx="522" cy="558" r="3.24" />
       <circle cx="630" cy="570.6" r="3.24" />
       <circle cx="738" cy="583.2" r="3.24" />
-      <circle cx="163.8" cy="81" r="3.24" />
+      <circle cx="156.6" cy="111.6" r="3.24" />
       <circle cx="163.8" cy="117" r="3.24" />
       <circle cx="435.6" cy="394.2" r="3.24" />
       <circle cx="745.2" cy="604.8" r="3.96" />
