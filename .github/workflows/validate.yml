@@ -29,6 +29,9 @@ jobs:
       - name: Garage geometry (openings, gate states and parking clearances)
         run: node verify-garage.mjs
 
+      - name: Interior fixture geometry (footprints, heights and floor offsets)
+        run: node verify-fixtures.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js

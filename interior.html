@@ -40,6 +40,7 @@
   <small id="dims"></small><br>
   <small>Drag: pan · Scroll: zoom · Cutaway 3D also rotates<br>
   <a href="index.html">← back to the garden model</a></small>
+  <br><small><a href="fixtures.html">Fixture samples</a></small>
 </div>
 <div id="viewlabel"></div>
 <div id="views">
@@ -71,13 +72,14 @@
 <script src="terrain.js?v=20260827"></script>
 <script src="layout.js?v=20260830a"></script>
 <script src="garage-model.js?v=20260905"></script>
+<script src="furniture-model.js?v=20260905"></script>
 <script src="sauna-model.js?v=20260905c"></script>
-<script src="interiors3d.js?v=20260905b"></script>
+<script src="interiors3d.js?v=20260905d"></script>
 <script src="house-interior.js?v=20260830a"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=20260905b';
+import { buildModel } from './model3d.js?v=20260905d';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf3f2ef);
@@ -108,14 +110,14 @@ const SA = GARDEN.elements.find(e => e.id === 'sauna').parts.find(p => p.kind ==
 const hasHouse = typeof HOUSE_INTERIOR !== 'undefined';
 let hou = null;
 if (hasHouse) {
-  hou = INTERIORS3D.buildHouse(THREE, HOUSE_INTERIOR, { floorY: 0 });
+  hou = INTERIORS3D.buildHouse(THREE, HOUSE_INTERIOR, { floorY: 0, buildModel });
   scene.add(hou.root);
   document.getElementById('houseBtn').style.display = '';
 }
 const hasLoft = typeof HOUSE_LOFT !== 'undefined';
 let loft = null;
 if (hasLoft) {
-  loft = INTERIORS3D.buildHouse(THREE, HOUSE_LOFT, { floorY: 2.72 });
+  loft = INTERIORS3D.buildHouse(THREE, HOUSE_LOFT, { floorY: 2.72, buildModel });
   scene.add(loft.root);
   document.getElementById('loftBtn').style.display = '';
 }
