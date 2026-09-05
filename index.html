@@ -44,6 +44,7 @@
   <button onclick="setPreset('south')">From south (orchard)</button>
   <button onclick="setPreset('ground')">Eye level (1.7 m)</button>
   <button onclick="setPreset('garage')">Garage interior</button>
+  <button onclick="setPreset('sauna')">Sauna and spa</button>
   <button onclick="startTour()" style="background:#e07b3b">▶ Garden walk</button>
 </div>
 
@@ -95,15 +96,25 @@
 <script src="terrain.js?v=20260827"></script>
 <script src="layout.js?v=20260828g"></script>
 <script src="interiors3d.js?v=20260828g"></script>
+<script src="sauna-model.js?v=20260905"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { buildSauna } from './sauna3d.js?v=20260905';
 
 // Layout (footprints in meters) comes from layout.js — x → east, y → south (z here)
 const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
 const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
+const saunaPlantingClearances = SaunaModel.plantingClearances(GARDEN);
+function overlapsSaunaAccess(x, y, radius) {
+  return saunaPlantingClearances.some(r => {
+    const dx = Math.max(r.x - x, 0, x - r.x - r.w);
+    const dy = Math.max(r.y - y, 0, y - r.y - r.d);
+    return dx * dx + dy * dy <= radius * radius;
+  });
+}
 const FPC = GARDEN.elements.find(e => e.id === 'firePit').parts.find(pt => pt.kind === 'circle');
 const inPlot = (x, z) => { let inside = false; const pts = GARDEN.plot.vertices; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, zi] = pts[i], [xj, zj] = pts[j]; if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside; } return inside; };
 
@@ -728,6 +739,7 @@ function leafyMass(cx, cy, cz, radius, count, flatten) {
     const px = cx + Math.cos(a) * rr, pz = cz + Math.sin(a) * rr;
     const py = cy + (up - 0.35) * radius * 1.6 * flatten;
     const s = radius * (0.5 + Math.random() * 0.42);
+    if (overlapsSaunaAccess(px, pz, s)) continue;
     const gi = Math.min(LEAF_GREENS.length - 1, Math.floor(up * LEAF_GREENS.length));
     const blob = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[gi]));
     blob.position.set(px, py, pz);
@@ -1214,26 +1226,12 @@ const carportWestY = garageWallTop + 0.5;
 
 // ───────────────────────── SAUNA + HOT TUB + SHELTER ─────────────────────────
 const SA = rectOf('sauna');
-addBox(SA.x, SA.y, SA.w, SA.d, 3, 0x8b6f47, { sinkToMin: true });
-
-// Přístřešek westně sauny
 const SH = rectOf('saunaShelter');
-addOpenStructure(SH.x, SH.y, SH.w, SH.d, 2.5, 0xcdc1ad);
-
-// Hot tub under shelter (ø 1.8 m) — on terrain
-const ST = circlesOf('softub')[0];
-// Base at lowest terrain around the tub edge so it never floats above grade
-const hotTubBaseY = Math.min(...Array.from({ length: 8 }, (_, i) => {
-  const a = i / 8 * Math.PI * 2;
-  return terrainHeight(ST.cx + Math.cos(a) * ST.r, ST.cy + Math.sin(a) * ST.r);
-}));
-const softub = new THREE.Mesh(
-  new THREE.CylinderGeometry(ST.r, ST.r, 0.8, 32),
-  new THREE.MeshStandardMaterial({ color: 0x5dade2, roughness: 0.4 })
-);
-softub.position.set(ST.cx, hotTubBaseY + 0.4, ST.cy);
-softub.castShadow = true;
-scene.add(softub);
+const saunaModel = SaunaModel.build(GARDEN, TERRAIN.plane);
+const saunaFloorY = saunaModel.floorHeight;
+const saunaGroup = buildSauna(THREE, saunaModel, saunaFloorY);
+scene.add(saunaGroup);
+lampLights.push(...saunaGroup.userData.lights);
 
 // ───────────────────────── PERGOLA ─────────────────────────
 const PG = rectOf('pergola');
@@ -1331,7 +1329,9 @@ addLevelDeck(wtAtrium);
 }
 
 // Chodníček sauna → terasa Z
-addTerrainPlatform(rectVerts(rectOf('saunaPath')), 0.1, 0xcdc1ad, { map: woodTex });
+for (const path of EL.saunaPath.parts.filter(p => p.kind === 'rect' && p.role !== 'saunaLanding')) {
+  addTerrainPlatform(rectVerts(path), 0.1, 0xcdc1ad, { map: woodTex });
+}
 
 // ───────────────────────── DRIVEWAY ─────────────────────────
 const drivewayPts = EL.driveway.parts.find(p => p.kind === 'polygon').points;
@@ -1582,6 +1582,7 @@ for (let i = 0; i < 35; i++) {
   if (x >= 25.78 && x <= 31.78 && z >= 1 && z <= 5) continue;
   const baseY = terrainHeight(x, z);
   const sz = 0.4 + Math.random() * 0.3;
+  if (overlapsSaunaAccess(x, z, Math.max(sz * 0.72, 0.26))) continue;
   const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
   q.position.set(x, baseY + sz * 0.38, z);
   q.scale.setScalar(sz * 0.72);
@@ -2006,18 +2007,6 @@ addWallClimber(34.13, 19.7, 34.13, 26.2, 1, 0);         // garage east wall, fol
 addWallClimber(10.8, 15.93, 14.6, 15.93, 0, 1, 2.4);    // atrium north wall, foliage into atrium
 addWallClimber(10.8, 19.18, 14.6, 19.18, 0, -1, 2.4);   // atrium south wall, foliage into atrium
 
-// Lounger by hot tub
-{
-  const lx = 7.5, lz = 5.5, baseY = terrainHeight(lx, lz);
-  const lounger = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6, 0.1, 1.8),
-    new THREE.MeshStandardMaterial({ color: 0xddccaa, roughness: 0.5 })
-  );
-  lounger.position.set(lx, baseY + 0.05, lz);
-  lounger.castShadow = true;
-  furnitureGroup.add(lounger);
-}
-
 // Vehicle fleet from layout.js (shared with drivewaycheck.js) — bodies built by interiors3d.js,
 // nose north unless reversed
 const vehiclesGroup = new THREE.Group();
@@ -2119,6 +2108,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
       if (!pt || !inPlot(pt[0], pt[1])) continue;
       const baseY = terrainHeight(pt[0], pt[1]);
       const sz = capAtGarage(pt[0], pt[1], (kind === 'meadow' ? 0.28 : 0.48) + Math.random() * (kind === 'meadow' ? 0.18 : 0.32));
+      if (overlapsSaunaAccess(pt[0], pt[1], Math.max(sz * 0.72, 0.26))) continue;
       const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
       q.position.set(pt[0], baseY + sz * 0.38, pt[1]);
       q.scale.setScalar(sz * 0.72);
@@ -2270,7 +2260,8 @@ window.setPreset = function(name) {
     north:  [22, 8, -25],
     south:  [22, 8, 60],
     ground: [22, 1.7, 17],
-    garage: [28.0, garageFloorY + 1.6, 26.0]
+    garage: [28.0, garageFloorY + 1.6, 26.0],
+    sauna: [SH.x - 3.2, saunaFloorY + 3.0, SA.y + SA.d + 7.2]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -2279,7 +2270,8 @@ window.setPreset = function(name) {
     north:  [22, 5, 17],
     south:  [22, 5, 22],
     ground: [22, 1.7, 30],
-    garage: [33.2, garageFloorY + 0.7, 20.0]
+    garage: [33.2, garageFloorY + 0.7, 20.0],
+    sauna: [SA.x + 0.5, saunaFloorY + 1.35, SA.y + SA.d / 2]
   };
   const p = positions[name];
   const t = targets[name];

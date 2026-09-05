@@ -20,6 +20,9 @@ jobs:
       - name: Site geometry (structures in plot, no overlaps, vehicles fit their bays)
         run: node verify-exterior.mjs
 
+      - name: Sauna geometry (openings, access, footing and clearances)
+        run: node verify-sauna.mjs
+
       - name: 2D drawings match layout.js
         run: |
           node generate-svg.js

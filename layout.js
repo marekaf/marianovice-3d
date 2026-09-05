@@ -72,7 +72,8 @@ const GARDEN = {
       name: "Path sauna → west terrace",
       short: "Sauna path",
       parts: [
-        { kind: "rect", x: 9.5, y: 5.17, w: 1, d: 2.01, fill: "#cdc1ad", opacity: 0.7 }
+        { kind: "rect", role: "saunaLanding", x: 3.5, y: 5.17, w: 7, d: 0.8, fill: "#cdc1ad", opacity: 0.7 },
+        { kind: "rect", x: 9.5, y: 5.97, w: 1, d: 1.21, fill: "#cdc1ad", opacity: 0.7 }
       ]
     },
     {
@@ -381,7 +382,7 @@ const GARDEN = {
       meta: { plant: "mixed" },
       parts: [
         { kind: "rect", x: 0.6, y: 1.97, w: 2.6, d: 3.2, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "rect", x: 2, y: 5.37, w: 6, d: 1.6, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 2, y: 6.17, w: 6, d: 1.6, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
         { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 1.9, y: 3.67, text: "sauna bed Z4", rotate: -90 }
       ]
     },
@@ -553,7 +554,7 @@ const GARDEN = {
         { kind: "circle", cx: 29, cy: 31, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 35, cy: 31.7, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 41, cy: 32.4, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 9.1, cy: 4.5, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 8.7, cy: 6.2, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 9.1, cy: 6.5, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 24.2, cy: 21.9, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "text", x: 26, y: 31.3, text: "path lights", cls: "lbl-sm", fill: "#8a6a1a" }
