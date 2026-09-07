@@ -1,23 +1,19 @@
 /* Coordinates are [east, south, height above the shared finished floor], in metres. */
 const SaunaModel = (() => {
+  const screens = typeof module !== 'undefined' ? require('./privacy-screen-model.js').PrivacyScreenModel : PrivacyScreenModel;
   function plantingClearances(garden) {
     const rects = garden.elements.filter(e => ['sauna', 'saunaShelter', 'saunaPath'].includes(e.id))
       .flatMap(e => e.parts.filter(p => p.kind === 'rect').map(p => ({ x: p.x, y: p.y, w: p.w, d: p.d })));
     const sauna = garden.elements.find(e => e.id === 'sauna').parts.find(p => p.kind === 'rect');
-    const landing = garden.elements.find(e => e.id === 'saunaPath').parts.find(p => p.role === 'saunaLanding');
     rects.push({ x: sauna.x + 0.18, y: sauna.y - 0.67, w: 1.58, d: 0.44 });
-    rects.push({ x: sauna.x + sauna.w - 1.22, y: landing.y + landing.d, w: 1.16, d: 0.56 });
     return rects;
   }
-  function build(garden, terrain) {
+  function build(garden, floorHeight) {
     const rect = id => garden.elements.find(e => e.id === id).parts.find(p => p.kind === 'rect');
     const sauna = rect('sauna'), shelter = rect('saunaShelter');
     const tub = garden.elements.find(e => e.id === 'softub').parts.find(p => p.kind === 'circle');
     const { x, y, w, d } = sauna;
     const landing = garden.elements.find(e => e.id === 'saunaPath').parts.find(p => p.role === 'saunaLanding');
-    const floorHeight = Math.max(...[sauna, shelter].flatMap(r =>
-      [r.x, r.x + r.w].flatMap(px => [r.y, r.y + r.d].map(py =>
-        Math.max(0, terrain.a * px + terrain.b * py + terrain.c))))) + 0.12;
     const materials = {
       trim: { color: '#303638', roughness: 0.4, metalness: 0.65 },
       steel: { color: '#8d9393', roughness: 0.28, metalness: 0.85 },
@@ -282,14 +278,17 @@ const SaunaModel = (() => {
       cylinder(`log_bark_${row}_${col}`, [px, rackY + rackD / 2, zz], radius, rackD - 0.05, 'bark', 'y');
       cylinder(`log_end_${row}_${col}`, [px, rackY + rackD - 0.023, zz], radius * 0.83, 0.008, 'log', 'y');
     }
-    const stepX = x + w - 1.2, stepWidth = 1.12;
-    for (const [i, height] of [0.14, 0.28].entries()) {
-      const stepY = landing.y + landing.d + (1 - i) * 0.28;
-      box(`entry_step_${i}`, stepX, stepY, -0.7, stepWidth, 0.29, height + 0.28, 'foundation', 0.01);
-      for (let j = 0; j < 2; j++) box(`entry_tread_${i}_${j}`, stepX - 0.02, stepY + j * 0.14,
-        -0.42 + height, stepWidth + 0.04, 0.135, 0.035, 'timber_x', 0.007);
+    const privacyScreens = [];
+    for (const [side, start, end] of [
+      ['north', [sx + 0.13, sy + 0.13], [sx + sw - 0.13, sy + 0.13]],
+      ['west', [sx + 0.13, sy + sd - 0.13], [sx + 0.13, sy + 0.13]],
+    ]) {
+      const panel = screens.build({ name: `shelter_privacy_${side}`, start, end, side, category: 'outdoor' });
+      parts.push(...panel.parts);
+      Object.assign(materials, panel.materials);
+      privacyScreens.push(panel.screen);
     }
-    return { name: 'Sauna, shelter and hot tub', materials, parts, lights, openings, floorHeight, plantingClearances: plantingClearances(garden) };
+    return { name: 'Sauna, shelter and hot tub', materials, parts, lights, openings, floorHeight, privacyScreens, plantingClearances: plantingClearances(garden) };
   }
   return { build, plantingClearances };
 })();

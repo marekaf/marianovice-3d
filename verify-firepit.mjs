@@ -4,22 +4,26 @@ const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
 const { TERRAIN } = require('./terrain.js');
 const { FirepitModel } = require('./firepit-model.js');
+const sampledModel=FirepitModel.build(GARDEN,(x,z)=>2+.002*x*x+.03*z);
+for(const part of sampledModel.parts)for(const vertex of part.vertices??[])
+  assert.ok(vertex.every(Number.isFinite),`${part.name} must support sampled ground`);
 const model = FirepitModel.build(GARDEN, TERRAIN.plane);
 const parts = new Map(model.parts.map(part => [part.name, part]));
 const circles = GARDEN.elements.find(element => element.id === 'firePit').parts.filter(part => part.kind === 'circle');
 const seating = circles[0], pit = circles[1];
 const near = (a, b, message) => assert.ok(Math.abs(a - b) < 0.001, message || `${a} != ${b}`);
-const localGround = (x, y) => TERRAIN.basePlaneHeight(x, y) - model.floorHeight;
+const surfaceOffset=GARDEN.elements.find(e=>e.id==='firePit').meta?.grading?.surfaceOffset??0;
+const localGround = (x, y) => TERRAIN.basePlaneHeight(x, y)+surfaceOffset - model.floorHeight;
 
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
 assert.deepEqual(model, FirepitModel.build(GARDEN, TERRAIN.plane), 'Geometry must be deterministic');
 near(model.firecenter[0], pit.cx);
 near(model.firecenter[1], pit.cy);
-near(model.floorHeight, TERRAIN.basePlaneHeight(pit.cx, pit.cy));
+near(model.floorHeight, TERRAIN.basePlaneHeight(pit.cx, pit.cy)+surfaceOffset);
 assert.equal(model.groundPatch, undefined, 'Fire pit must preserve natural ground slope');
 near(model.pit.outerRadius, pit.r);
 near(model.pit.outerRadius, 0.5);
-near(seating.r, 1.75);
+near(seating.r, 2);
 assert.equal(model.categoryVisibility.fire, false, 'Fire must be off initially');
 assert.ok(model.lights.length > 0 && model.lights.every(light => light.category === 'fire'),
   'Fire lighting must hide with the fire geometry');
@@ -27,9 +31,13 @@ const burningParts = model.parts.filter(part => /^(flame|coal)_/.test(part.name)
 assert.ok(burningParts.length > 0 && burningParts.every(part => part.category === 'fire'),
   'Flames and glowing coals must hide with the fire lighting');
 assert.equal(model.benches.length, 5, 'Preserve five seats around the fire pit');
-near(model.approach.angle, 120);
+const pergola=GARDEN.elements.find(e=>e.id==='pergola').parts.find(p=>p.kind==='rect');
+near(model.approach.angle,Math.atan2(pergola.y+pergola.d/2-pit.cy,pergola.x+pergola.w/2-pit.cx)*180/Math.PI);
 assert.ok(model.approach.width >= 50, 'Keep the southwest approach open');
-assert.ok(model.pit.ashHeight < model.pit.wallHeight, 'Ash must sit inside the stone ring');
+assert.ok(model.pit.ashHeight < model.pit.wallHeight, 'Ash must sit inside the steel ring');
+assert.equal(model.pit.finish, 'corten');
+near(model.pit.innerRadius, .496);
+assert.equal(model.materials.corten.finish, 'corten');
 for (const part of model.parts) {
   assert.ok(model.materials[part.material], `${part.name}: missing material`);
   assert.ok(['structure', 'furniture', 'fire'].includes(part.category), `${part.name}: invalid category`);
@@ -109,19 +117,17 @@ for (const bench of model.benches) {
   }
 }
 
-const stones = model.parts.filter(part => /^ring_course_\d+_stone_\d+$/.test(part.name));
-assert.ok(stones.length > 0, 'Stone ring must be modeled');
-for (const stone of stones) {
-  for (const vertex of stone.vertices) assert.ok(Math.hypot(vertex[0] - pit.cx, vertex[1] - pit.cy) <= pit.r + 0.001,
-    `${stone.name}: stone exceeds the half-metre pit radius`);
-  const footprintCenter = [0, 1].map(axis => stone.vertices.reduce((sum, vertex) => sum + vertex[axis], 0) / stone.vertices.length);
-  assert.ok(Math.hypot(footprintCenter[0] - pit.cx, footprintCenter[1] - pit.cy) > model.pit.innerRadius,
-    `${stone.name}: solid stone blocks the central cavity`);
-  const course = Number(stone.name.match(/^ring_course_(\d+)/)[1]);
-  if (course === 0) for (const vertex of stone.vertices.slice(0, 4)) {
-    const depth = vertex[2] - localGround(vertex[0], vertex[1]);
-    assert.ok(depth <= 0 && depth >= -0.02, `${stone.name}: stone base must be embedded in grade`);
-  }
+assert.ok(!model.parts.some(part => part.name.startsWith('ring_course_')));
+const shell = parts.get('corten_ring');
+assert.equal(shell.type, 'lathe');
+assert.equal(shell.material, 'corten');
+near(Math.max(...shell.profile.map(p => p[0])), .5);
+near(Math.min(...shell.profile.map(p => p[0])), .496);
+near(Math.max(...shell.profile.map(p => p[1])), .27);
+for (let i = 0; i < 128; i++) {
+  const a = i * Math.PI / 64;
+  assert.ok(Math.min(...shell.profile.map(p => p[1])) <= localGround(pit.cx + Math.cos(a) * .5, pit.cy + Math.sin(a) * .5),
+    'Rigid steel ring must meet the ground around its full circumference');
 }
 const ash = parts.get('ash');
 const ashHeights = ash.vertices.map(vertex => vertex[2] - localGround(vertex[0], vertex[1]));
@@ -133,7 +139,7 @@ for (const log of model.logs) {
   assert.ok(Math.min(...heights) <= model.pit.ashHeight && Math.max(...heights) > model.pit.ashHeight,
     `${log.name}: firewood must contact the ash bed`);
   for (const vertex of part.vertices) assert.ok(Math.hypot(vertex[0] - pit.cx, vertex[1] - pit.cy) < model.pit.innerRadius,
-    `${log.name}: firewood intersects the stone ring`);
+    `${log.name}: firewood intersects the steel ring`);
 }
 for (let i = 0; i < 24; i++) {
   const angle = i * Math.PI / 12;

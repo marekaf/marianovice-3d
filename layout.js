@@ -34,7 +34,24 @@ const GARDEN = {
     { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#0f5aa8", cx: 30.7,  noseZ: 20.95, reversed: true, hinge: 2.00, doorLen: 1.35 }, // reverse-parked (low coupe) squarely in the 5 m door
     { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#462482", cx: 33.1,  noseZ: 20.95, moto: true }
   ],
+  gardenRoutes: [
+    {id:"Wellness access",points:[[9.98,7.2],[9.98,5.7],[8,5.7]],width:1},
+    {id:"Productive access",points:[[9.98,22.5],[9.1,22.5],[4.2,22.5],[4.2,29.5]],width:1},
+    {id:"Bed access",points:[[4.2,26.5],[8.5,26.5]],width:1},
+    {id:"Greenhouse access",points:[[4.2,23.3],[2.3,23.3]],width:1.2},
+    {id:"Daily dining",points:[[23,12],[24.2,12],[24.2,11.4],[27,11.2]],width:1.2},
+    {id:"Quiet garden approach",points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
+    {id:"Gathering connection",points:[[31.5,8.7],[32.5,8.7]],width:1.4},
+    {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[31.7,9.3],[31.4,9.3]],width:1.2},
+    {id:"Service connection",points:[[38.7,17.8],[37,20],[37,26.3]],width:1.2}
+  ],
+  gardenReserves: [{"id":"Eastern utilities: verify extent","kind":"rect","x":38,"y":19,"w":5,"d":7,"type":"reserve"},{"id":"Low ground: drainage investigation","kind":"rect","x":37.8,"y":0.2,"w":4.1,"d":5.8,"type":"reserve"}],
   elements: [
+    {"id":"westBackbone","name":"West structural planting","meta":{"palette":"saunaBed","plant":"mixed"},"parts":[{"kind":"polygon","points":[[-0.9,1],[1.7,1],[1.7,6.6],[4,7.5],[3.1,12.5],[1.6,15.5],[1.5,21.7],[0.2,22],[-0.9,12]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"productiveBorder","name":"Productive court border","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[0.2,22],[2.8,21.8],[6,22],[8.6,21.5],[8.6,23],[0.5,23.2]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"quietGardenBorder","name":"Quiet garden enclosure","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[1.5,15.5],[3.3,15.3],[6.6,15.5],[8.1,16.8],[7.7,17.8],[6.2,16.7],[3.5,16.4],[2.3,18],[2.5,20.5],[5,21.3],[7,20.8],[8.2,21.5],[6,22],[1.5,21.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"eastGatheringBorder","name":"Gathering room and pond planting","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[36.8,0.3],[37.4,6.5],[41.6,6.5],[42.3,17.7],[37.7,18.5],[34.8,18.2],[31.7,18.7],[27.8,18.5],[26.8,17.2],[31,16.7],[31.6,14],[30.8,11.9],[32.4,10.8],[32.4,5.2],[28,5],[24,6],[22.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"terraceFrontage","name":"Low terrace foreground","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[25,11.8],[25.6,12.8],[25.6,15.8],[25,16.6],[24.6,16],[24.6,12.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {
       id: "house",
       name: "House 10.8 × 19.25 m",
@@ -69,11 +86,11 @@ const GARDEN = {
     },
     {
       id: "saunaPath",
-      name: "Path sauna → west terrace",
-      short: "Sauna path",
+      name: "Step-free wellness landing and west connection",
       parts: [
-        { kind: "rect", role: "saunaLanding", x: 3.5, y: 5.17, w: 7, d: 0.8, fill: "#cdc1ad", opacity: 0.7 },
-        { kind: "rect", x: 9.5, y: 5.97, w: 1, d: 1.21, fill: "#cdc1ad", opacity: 0.7 }
+        {kind: "rect", role: "saunaLanding", x: 2.3, y: 5, w: 7, d: 1.2, fill: "#cdc1ad", opacity: 0.7},
+        {kind: "rect", x: 9.3, y: 5.2, w: 1.18, d: 1, fill: "#cdc1ad", opacity: 0.7},
+        {kind: "rect", x: 9.48, y: 5.7, w: 1, d: 1.48, fill: "#cdc1ad", opacity: 0.7}
       ]
     },
     {
@@ -140,78 +157,63 @@ const GARDEN = {
         { kind: "text", x: 41.22, y: 24.06, text: "12 m³", cls: "dim", fill: "#fff" }
       ]
     },
-    {
-      id: "pondFringe",
-      name: "Pond fringe — Léto u vody (Z2)",
-      short: "Pond fringe",
-      meta: { plant: "perennials", exclude: "pond" },
-      parts: [
-        { kind: "ellipse", cx: 30.5, cy: 15.4, rx: 4.4, ry: 3.4, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 33.4, y: 12.9, text: "pond fringe Z2" }
-      ]
-    },
+
     {
       id: "pond",
       name: "Pond 5.6 × 4 m",
       parts: [
-        { kind: "ellipse", cx: 30, cy: 15, rx: 2.8, ry: 2, fill: "#3a7ab8", opacity: 0.65, stroke: "#5a4a30", sw: 1.5 },
-        { kind: "text", x: 30, y: 14.89, text: "pond", cls: "lbl-sm", fill: "#fff", weight: 700 },
-        { kind: "text", x: 30, y: 15.56, text: "5.6 × 4 m", cls: "dim", fill: "#fff" }
+        {kind: "ellipse", cx: 34.8, cy: 14, rx: 2.8, ry: 2, fill: "#3a7ab8", opacity: 0.65, stroke: "#5a4a30", sw: 1.5},
+        {kind: "text", x: 34.8, y: 13.89, text: "pond", cls: "lbl-sm", fill: "#fff", weight: 700},
+        {kind: "text", x: 34.8, y: 14.56, text: "5.6 × 4 m", cls: "dim", fill: "#fff"}
       ]
     },
     {
       id: "firePit",
-      name: "Fire pit + seating",
+      name: "Corten fire pit ø1 m + mlat seating area ø4 m",
+      meta: {grading: {surfaceOffset: 0.092}},
       parts: [
-        { kind: "circle", cx: 37.5, cy: 6.6, r: 1.75, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5,4" },
-        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.5, fill: "#5a4030", opacity: 0.85, stroke: "#3a2818", sw: 1 },
-        { kind: "circle", cx: 37.5, cy: 6.6, r: 0.32, fill: "#ff7733", opacity: 0.7 },
-        { kind: "text", x: 37.5, y: 9.0, text: "fire pit + seating ø3.5 m", cls: "lbl-sm", fill: "#5a4828" }
+        {kind: "circle", cx: 34.5, cy: 8.5, r: 2, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5, 4"},
+        {kind: "circle", cx: 34.5, cy: 8.5, r: 0.5, fill: "#a75e36", opacity: 0.85, stroke: "#693e28", sw: 1},
+        {kind: "circle", cx: 34.5, cy: 8.5, r: 0.496, fill: "#514d45", opacity: 0.9},
+        {kind: "text", x: 34.5, y: 10.9, text: "corten fire pit ø1 m · mlat ø4 m", cls: "lbl-sm", fill: "#5a4828"}
       ]
     },
     {
       id: "northTrees",
-      name: "Trees along north fence",
-      short: "North trees",
+      name: "Gathering room canopy groups",
       parts: [
-        { kind: "circle", cx: 13, cy: 1.2, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 17, cy: 1.5, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 21, cy: 1, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 34, cy: 1.3, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 38, cy: 1.6, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 41, cy: 1.2, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 40.5, cy: 1.8, r: 0.5, fill: "#4d7a4d" }
+        {kind: "circle", cx: 24.7, cy: 3.6, r: 0.5, canopyRadius: 2, fill: "#4d7a4d"},
+        {kind: "circle", cx: 34.8, cy: 3.1, r: 0.5, canopyRadius: 2, fill: "#4d7a4d"},
+        {kind: "circle", cx: 29.8, cy: 2.5, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"},
+        {kind: "circle", cx: 0.25, cy: 4.4, r: 0.5, canopyRadius: 1.2, form: "evergreen", fill: "#4d7a4d"},
+        {kind: "circle", cx: 2.8, cy: 16, r: 0.5, canopyRadius: 1.3, fill: "#4d7a4d"}
       ]
     },
     {
       id: "eastTrees",
-      name: "Trees along east fence (privacy)",
-      short: "East trees",
+      name: "Pond privacy canopy",
       parts: [
-        { kind: "circle", cx: 41.8, cy: 8, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 42, cy: 12, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 42.5, cy: 16, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 42.5, cy: 20, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 42, cy: 33, r: 0.5, fill: "#4d7a4d" },
-        { kind: "circle", cx: 41, cy: 33.5, r: 0.5, fill: "#4d7a4d" }
+        {kind: "circle", cx: 40.2, cy: 14, r: 0.5, canopyRadius: 1.8, fill: "#4d7a4d"},
+        {kind: "circle", cx: 39.5, cy: 8, r: 0.5, canopyRadius: 1.5, form: "evergreen", fill: "#4d7a4d"},
+        {kind: "circle", cx: 41, cy: 10.6, r: 0.5, canopyRadius: 1.3, fill: "#4d7a4d"}
       ]
     },
     {
       id: "sauna",
       name: "Sauna 4 × 3 m",
       parts: [
-        { kind: "rect", x: 6.5, y: 2.17, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2 },
-        { kind: "text", x: 8.5, y: 3.5, text: "SAUNA", cls: "lbl-w" },
-        { kind: "text", x: 8.5, y: 4.39, text: "4 × 3 m", cls: "dim", fill: "#fff" }
+        {kind: "rect", x: 5.3, y: 2, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2},
+        {kind: "text", x: 7.3, y: 3.33, text: "SAUNA", cls: "lbl-w"},
+        {kind: "text", x: 7.3, y: 4.22, text: "4 × 3 m", cls: "dim", fill: "#fff"}
       ]
     },
     {
       id: "saunaShelter",
       name: "Sauna shelter 3 × 3 m (covers hot tub)",
       parts: [
-        { kind: "rect", x: 3.5, y: 2.17, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4,3" },
-        { kind: "text", x: 5, y: 5.84, text: "shelter", cls: "lbl-sm", fill: "#5a4828" },
-        { kind: "text", x: 5, y: 6.57, text: "3 × 3 m", cls: "dim" }
+        {kind: "rect", x: 2.3, y: 2, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4, 3"},
+        {kind: "text", x: 3.8, y: 5.67, text: "shelter", cls: "lbl-sm", fill: "#5a4828"},
+        {kind: "text", x: 3.8, y: 6.4, text: "3 × 3 m", cls: "dim"}
       ]
     },
     {
@@ -227,115 +229,102 @@ const GARDEN = {
       id: "softub",
       name: "Softub hot tub ø 1.8 m",
       parts: [
-        { kind: "circle", cx: 5, cy: 3.67, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5 },
-        { kind: "text", x: 5, y: 3.89, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f" }
+        {kind: "circle", cx: 3.8, cy: 3.5, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5},
+        {kind: "text", x: 3.8, y: 3.72, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f"}
       ]
     },
     {
       id: "pergola",
       name: "Pergola + grill 6 × 4 m",
-      meta: { grading: { level: 1.05, blend: 1.2 } },
+      meta: {grading: {level: 2.1, blend: 1.2}},
       parts: [
-        { kind: "rect", x: 25.78, y: 1.61, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6,3" },
-        { kind: "rect", role: "paving", x: 25.98, y: 1.81, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9 },
-        { kind: "rect", role: "table", x: 27.4, y: 3.11, w: 2.8, d: 1, fill: "#8a6a4a" },
-        { kind: "text", x: 28.78, y: 3.47, text: "pergola + grill", cls: "lbl" },
-        { kind: "text", x: 28.78, y: 4.21, text: "6 × 4 m", cls: "dim" },
-        { kind: "text", x: 28.78, y: 5.11, text: "2 m off N fence", cls: "lbl-sm", fill: "#5a4828" }
+        {kind: "rect", x: 25, y: 6.8, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6, 3"},
+        {kind: "rect", role: "paving", x: 25.2, y: 7, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9},
+        {kind: "rect", role: "table", x: 26.82, y: 8.25, w: 2.4, d: 1.1, fill: "#d9d3c7"},
+        {kind: "text", x: 28, y: 8.66, text: "pergola + grill", cls: "lbl"},
+        {kind: "text", x: 28, y: 9.4, text: "6 × 4 m", cls: "dim"},
+        {kind: "text", x: 28, y: 10.3, text: "shared gathering room", cls: "lbl-sm", fill: "#5a4828"}
       ]
     },
     {
       id: "raisedBedsPad",
-      name: "Raised-beds pad (flat) 3.1 × 5.6 m",
-      short: "Raised-beds pad",
+      name: "Productive court raised-beds pad 4.2 × 6.2 m",
+      meta: {grading: {level: 3.5294, blend: 1}},
       parts: [
-        { kind: "rect", x: 0.7, y: 9.7, w: 3.1, d: 5.6, clipToPlot: true, fill: "#c8c2b0", opacity: 0.55, stroke: "#9a9074", sw: 1 },
-        { kind: "text", x: 3.9, y: 12.5, text: "beds pad — flat", cls: "lbl-sm", fill: "#5a5030", anchor: "start" }
+        {kind: "rect", x: 4.4, y: 23.4, w: 4.2, d: 6.2, fill: "#c8c2b0", opacity: 0.55, stroke: "#9a9074", sw: 1}
       ]
     },
     {
       id: "raisedBed1",
       name: "Raised bed 1 (1.0 × 2.0 m)",
       parts: [
-        { kind: "rect", x: 1, y: 10, w: 1.0, d: 2.0, fill: "#7a5a3a", opacity: 0.78 },
-        { kind: "text", x: 1.6, y: 11.0, text: "raised bed 1", cls: "lbl-sm-w", rotate: -90 }
+        {kind: "rect", x: 5, y: 24, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
+        {kind: "text", x: 5.6, y: 25, text: "raised bed 1", cls: "lbl-sm-w", rotate: -90}
       ]
     },
     {
       id: "raisedBed2",
       name: "Raised bed 2 (1.0 × 2.0 m)",
       parts: [
-        { kind: "rect", x: 1, y: 13.0, w: 1.0, d: 2.0, fill: "#7a5a3a", opacity: 0.78 },
-        { kind: "text", x: 1.6, y: 14.0, text: "raised bed 2", cls: "lbl-sm-w", rotate: -90 }
+        {kind: "rect", x: 7, y: 24, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
+        {kind: "text", x: 7.6, y: 25, text: "raised bed 2", cls: "lbl-sm-w", rotate: -90}
       ]
     },
     {
       id: "raisedBed3",
       name: "Raised bed 3 (1.0 × 2.0 m)",
       parts: [
-        { kind: "rect", x: 2.5, y: 10, w: 1.0, d: 2.0, fill: "#7a5a3a", opacity: 0.78 },
-        { kind: "text", x: 3.1, y: 11.0, text: "raised bed 3", cls: "lbl-sm-w", rotate: -90 }
+        {kind: "rect", x: 5, y: 27, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
+        {kind: "text", x: 5.6, y: 28, text: "raised bed 3", cls: "lbl-sm-w", rotate: -90}
       ]
     },
     {
       id: "raisedBed4",
       name: "Raised bed 4 (1.0 × 2.0 m)",
       parts: [
-        { kind: "rect", x: 2.5, y: 13.0, w: 1.0, d: 2.0, fill: "#7a5a3a", opacity: 0.78 },
-        { kind: "text", x: 3.1, y: 14.0, text: "raised bed 4", cls: "lbl-sm-w", rotate: -90 },
-        { kind: "text", x: 4.2, y: 12.5, text: "each 1.0 × 2.0 m, 0.6 m tall", cls: "dim", anchor: "start" }
+        {kind: "rect", x: 7, y: 27, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
+        {kind: "text", x: 7.6, y: 28, text: "raised bed 4", cls: "lbl-sm-w", rotate: -90},
+        {kind: "text", x: 8.7, y: 26.5, text: "each 1.0 × 2.0 m,  0.6 m tall", cls: "dim", anchor: "start"}
       ]
     },
     {
       id: "screenNorth",
-      name: "Privacy screen — north neighbour (2.4 × 2 m louvre)",
-      meta: { screen: { h: 2.0 } },
+      name: "Gathering room north privacy",
+      meta: {screen: {h: 2}},
       parts: [
-        { kind: "rect", x: 13.83, y: 0.2, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
-        { kind: "text", x: 15.03, y: 0.95, text: "paraván N", cls: "lbl-sm", fill: "#3a3a3e" }
+        {kind: "rect", x: 32.4, y: 5.63, w: 4.4, d: 0.14, fill: "#4a4a4e"}
       ]
     },
     {
       id: "screenWest",
-      name: "Privacy screen — west neighbour (2.4 × 2 m louvre)",
-      meta: { screen: { h: 2.0 } },
+      name: "Wellness west privacy",
+      meta: {screen: {h: 2}},
       parts: [
-        { kind: "rect", x: 0.86, y: 16.36, w: 0.14, d: 2.4, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
-        { kind: "text", x: 1.35, y: 17.56, text: "paraván Z", cls: "lbl-sm", fill: "#3a3a3e", rotate: -90 }
+        {kind: "rect", x: 2.08, y: 2, w: 0.14, d: 3, fill: "#4a4a4e"}
       ]
     },
     {
       id: "screenSouth",
-      name: "Privacy screen — south neighbour (2.4 × 2 m louvre)",
-      meta: { screen: { h: 2.0 } },
+      name: "Wellness north privacy",
+      meta: {screen: {h: 2}},
       parts: [
-        { kind: "rect", x: 14.0, y: 31.4, w: 2.4, d: 0.14, fill: "#4a4a4e", opacity: 0.92, stroke: "#26262a", sw: 1 },
-        { kind: "text", x: 15.2, y: 31.1, text: "paraván J", cls: "lbl-sm", fill: "#3a3a3e" }
+        {kind: "rect", x: 2.3, y: 1.78, w: 7, d: 0.14, fill: "#4a4a4e"}
       ]
     },
     {
       id: "orchardMeadow",
-      name: "Orchard meadow understory (Z12)",
-      short: "Orchard meadow",
-      meta: { plant: "meadow" },
+      name: "Orchard meadow",
+      meta: {plant: "meadow"},
       parts: [
-        { kind: "rect", x: 0.5, y: 21.3, w: 5.2, d: 8.8, clipToPlot: true, fill: "#b5c98a", opacity: 0.35, stroke: "#8aa85a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 4.8, y: 24.6, text: "meadow Z12", rotate: -90 }
+        {kind: "polygon", points: [[2, 8], [7.8, 8], [8.3, 13.7], [4, 14.9], [2.2, 13]], fill: "#b5c98a", opacity: 0.35}
       ]
     },
     {
       id: "orchard",
-      name: "Orchard 5.56 × 9 m",
+      name: "Orchard meadow canopy",
       parts: [
-        { kind: "rect", x: 0.4, y: 21.11, w: 5.56, d: 9.0, fill: "#7fa66f", opacity: 0.4, clipToPlot: true },
-        { kind: "circle", cx: 1.2, cy: 22, r: 0.5, fill: "#5a8a5a" },
-        { kind: "circle", cx: 4, cy: 23.5, r: 0.5, fill: "#5a8a5a" },
-        { kind: "circle", cx: 1.2, cy: 26, r: 0.5, fill: "#5a8a5a" },
-        { kind: "circle", cx: 4, cy: 27.5, r: 0.5, fill: "#5a8a5a" },
-        { kind: "circle", cx: 1.2, cy: 30, r: 0.5, fill: "#5a8a5a" },
-        { kind: "circle", cx: 4, cy: 29, r: 0.5, fill: "#5a8a5a" },
-        { kind: "text", x: 2.78, y: 27.22, text: "orchard", cls: "lbl", rotate: -90 },
-        { kind: "text", x: 6.39, y: 27.22, text: "5.56 × 9 m", cls: "dim", anchor: "start" }
+        {kind: "circle", cx: 2.8, cy: 9, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"},
+        {kind: "circle", cx: 6.8, cy: 12.6, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"}
       ]
     },
     {
@@ -343,81 +332,25 @@ const GARDEN = {
       name: "Greenhouse 2.6 × 3.6 m",
       short: "Greenhouse",
       parts: [
-        { kind: "rect", x: 1.5, y: 24.0, w: 2.6, d: 3.6, clipToPlot: true, fill: "#cfe8ef", opacity: 0.8, stroke: "#5f93a8", sw: 1.2 },
-        { kind: "text", x: 2.8, y: 25.8, text: "greenhouse", cls: "lbl-sm", fill: "#245a6a", rotate: -90 }
+        {kind: "rect", x: 1, y: 24, w: 2.6, d: 3.6, clipToPlot: true, fill: "#cfe8ef", opacity: 0.8, stroke: "#5f93a8", sw: 1.2},
+        {kind: "text", x: 2.3, y: 25.8, text: "greenhouse", cls: "lbl-sm", fill: "#245a6a", rotate: -90}
       ]
     },
     {
       id: "compost",
-      name: "Compost bin 2.0 × 1.0 m (open, slatted)",
+      name: "Compost bin 2.0 × 1.0 m (open,  slatted)",
       short: "Compost",
       parts: [
-        { kind: "rect", x: 1.6, y: 28.3, w: 2.0, d: 1.0, clipToPlot: true, fill: "#6a4a2a", opacity: 0.6, stroke: "#4a3218", sw: 1 },
-        { kind: "text", x: 2.6, y: 28.95, text: "compost", cls: "lbl-sm", fill: "#fff" }
+        {kind: "rect", x: 1, y: 28.5, w: 2, d: 1, clipToPlot: true, fill: "#6a4a2a", opacity: 0.6, stroke: "#4a3218", sw: 1},
+        {kind: "text", x: 2, y: 29.15, text: "compost", cls: "lbl-sm", fill: "#fff"}
       ]
     },
-    {
-      id: "bedTerrace",
-      name: "Terrace bed — Citrónový sorbet (Z1)",
-      short: "Terrace bed",
-      meta: { plant: "perennials" },
-      parts: [
-        { kind: "rect", x: 24.6, y: 11.6, w: 2.4, d: 7.8, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 25.9, y: 15.5, text: "terrace bed Z1", rotate: -90 }
-      ]
-    },
-    {
-      id: "prairieIsland",
-      name: "Prairie island — Oudolf mix (Z3)",
-      short: "Prairie island",
-      meta: { plant: "perennials" },
-      parts: [
-        { kind: "rect", x: 28.5, y: 7.2, w: 4.5, d: 3.6, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 30.75, y: 9.15, text: "prairie island Z3" }
-      ]
-    },
-    {
-      id: "saunaBed",
-      name: "Sauna surround — shrubs + aromatics (Z4)",
-      short: "Sauna bed",
-      meta: { plant: "mixed" },
-      parts: [
-        { kind: "rect", x: 0.6, y: 1.97, w: 2.6, d: 3.2, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "rect", x: 2, y: 6.17, w: 6, d: 1.6, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 1.9, y: 3.67, text: "sauna bed Z4", rotate: -90 }
-      ]
-    },
-    {
-      id: "pergolaBeds",
-      name: "Pergola climbers + underplanting (Z5)",
-      short: "Pergola beds",
-      meta: { plant: "mixed" },
-      parts: [
-        { kind: "rect", x: 23.2, y: 1.61, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "rect", x: 32.4, y: 1.61, w: 2, d: 4, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 24.2, y: 5.31, text: "climbers Z5" }
-      ]
-    },
-    {
-      id: "arrivalStrip",
-      name: "Arrival strip — Citrónový sorbet (Z6)",
-      short: "Arrival strip",
-      meta: { plant: "perennials" },
-      parts: [
-        { kind: "polygon", points: [[21.3, 29.95], [42.4, 32.2], [41.8, 33.6], [21.3, 32.4]], fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 30, y: 31.9, text: "arrival strip Z6" }
-      ]
-    },
-    {
-      id: "eastUnderstory",
-      name: "East privacy understory — Růžové mámení (Z7)",
-      short: "East understory",
-      meta: { plant: "shrubs" },
-      parts: [
-        { kind: "rect", x: 40, y: 4.5, w: 2.2, d: 16.5, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 41.9, y: 12.6, text: "east understory Z7", rotate: -90 }
-      ]
-    },
+
+
+
+
+
+
     {
       id: "atriumPots",
       name: "Atrium planters — Amelanchier + shade pots (Z8)",
@@ -430,35 +363,18 @@ const GARDEN = {
       ]
     },
     {
-      id: "northFoundation",
-      name: "North foundation bed — Kvetoucí stín (Z9a)",
-      short: "North bed",
-      meta: { plant: "perennials" },
+      id: "northPassage",
+      name: "North to west pedestrian passage",
+      short: "North passage",
+      meta: { circulation: true },
       parts: [
-        { kind: "rect", x: 10.7, y: 5.6, w: 10.6, d: 1.5, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 16, y: 6.55, text: "north bed Z9a" }
+        { kind: "rect", x: 9.48, y: 5.53, w: 12.3, d: 1.2, fill: "#b4c69e", opacity: 0.15, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
+        { kind: "rect", x: 9.48, y: 5.53, w: 1.02, d: 1.65, fill: "#b4c69e", opacity: 0.15 },
+        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 16, y: 6.3, text: "pedestrian passage — keep clear" }
       ]
     },
-    {
-      id: "southFoundation",
-      name: "South foundation bed — peonies, roses, lilac (Z9b)",
-      short: "Peony bed",
-      meta: { plant: "mixed" },
-      parts: [
-        { kind: "rect", x: 10.5, y: 26.6, w: 10.8, d: 1.8, fill: "#6a8e5a", opacity: 0.4, stroke: "#4a6e3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 16, y: 27.75, text: "peony bed Z9b" }
-      ]
-    },
-    {
-      id: "garageFaceBed",
-      name: "Garage north-face bed — Růžové mámení (Z10)",
-      short: "Garage bed",
-      meta: { plant: "perennials" },
-      parts: [
-        { kind: "rect", x: 24.7, y: 17.8, w: 10, d: 1.5, fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 27.4, y: 18.8, text: "shade bed Z10" }
-      ]
-    },
+
+
     {
       id: "facadeClimbers",
       name: "Facade climbers — garage E wall + atrium walls",
@@ -474,91 +390,23 @@ const GARDEN = {
       name: "Zašívárna — hidden bench (blue/red)",
       short: "Zašívárna",
       parts: [
-        { kind: "rect", x: 31.4, y: 18.3, w: 1.8, d: 0.5, fill: "#c0392b", stroke: "#8a2a1e", sw: 0.8 },
-        { kind: "text", x: 32.3, y: 17.95, text: "zašívárna", cls: "lbl-sm", fill: "#8a2a1e" }
+        {kind: "rect", x: 35.8, y: 16.5, w: 1.8, d: 0.5, fill: "#c0392b", stroke: "#8a2a1e", sw: 0.8},
+        {kind: "text", x: 36.7, y: 16.15, text: "zašívárna", cls: "lbl-sm", fill: "#8a2a1e"}
       ]
     },
-    {
-      id: "rainGarden",
-      name: "NE rain garden — Léto u vody swale (Z11)",
-      short: "Rain garden",
-      meta: { plant: "perennials" },
-      parts: [
-        { kind: "rect", x: 38.2, y: 2.2, w: 3.7, d: 3.8, fill: "#7aa88a", opacity: 0.45, stroke: "#4a7a6a", sw: 1, dash: "5,3" },
-        { kind: "text", cls: "lbl-sm", fill: "#3a5a28", x: 40.2, y: 4.35, text: "rain garden Z11" }
-      ]
-    },
-    {
-      id: "steppingPaths",
-      name: "Stepping-stone paths (šlapáky)",
-      short: "Paths",
-      parts: [
-        { kind: "circle", cx: 9.9, cy: 25.43, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 9.27, cy: 25, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 9.02, cy: 24.28, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 8.39, cy: 23.86, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 8.14, cy: 23.14, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 7.51, cy: 22.72, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 7.34, cy: 21.97, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 6.77, cy: 21.46, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 6.63, cy: 20.72, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 6.06, cy: 20.21, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 5.92, cy: 19.47, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 5.47, cy: 18.88, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 5.47, cy: 18.12, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 5.01, cy: 17.52, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 5.01, cy: 16.76, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 25.02, cy: 14.53, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 24.98, cy: 13.77, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 25.4, cy: 13.15, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 25.37, cy: 12.39, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 25.81, cy: 11.77, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 25.82, cy: 11.01, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 26.28, cy: 10.41, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 26.29, cy: 9.65, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 26.79, cy: 9.07, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 26.84, cy: 8.31, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 27.33, cy: 7.74, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 27.5, cy: 7.01, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 28.11, cy: 6.57, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 32.47, cy: 4.92, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 33.23, cy: 4.88, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 33.86, cy: 5.3, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 34.62, cy: 5.28, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 35.21, cy: 5.75, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 35.97, cy: 5.76, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 37.49, cy: 8.45, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 37.42, cy: 9.21, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 36.92, cy: 9.77, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 36.85, cy: 10.53, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 36.31, cy: 11.06, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 36.15, cy: 11.8, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 35.57, cy: 12.3, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 35.42, cy: 13.04, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 34.84, cy: 13.54, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 34.68, cy: 14.28, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 34.11, cy: 14.78, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 34, cy: 15.52, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 33.52, cy: 16.11, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 33.49, cy: 16.87, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 33, cy: 17.44, r: 0.24, fill: "#9a958c", opacity: 0.95 },
-        { kind: "circle", cx: 32.92, cy: 18.2, r: 0.24, fill: "#9a958c", opacity: 0.95 }
-      ]
-    },
+
     {
       id: "pathLights",
       name: "Path lights — bollards",
       short: "Path lights",
       meta: { light: "bollard" },
       parts: [
-        { kind: "circle", cx: 23, cy: 30.3, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 29, cy: 31, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 35, cy: 31.7, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 41, cy: 32.4, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 8.7, cy: 6.2, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 9.1, cy: 6.5, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 24.2, cy: 21.9, r: 0.18, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "text", x: 26, y: 31.3, text: "path lights", cls: "lbl-sm", fill: "#8a6a1a" }
+        { kind: "circle", cx: 8, cy: 6.8, r: 0.18, route: "Wellness access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 8.9, cy: 21.3, r: 0.18, route: "Productive access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 7.7, cy: 20.1, r: 0.18, route: "Quiet garden approach", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 23.1, cy: 10.5, r: 0.18, route: "Daily dining", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 28, cy: 16.6, r: 0.18, route: "Pond walk", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 35.9, cy: 23, r: 0.18, route: "Service connection", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 }
       ]
     },
     {
@@ -567,12 +415,10 @@ const GARDEN = {
       short: "Garden spots",
       meta: { light: "spot" },
       parts: [
-        { kind: "circle", cx: 41.4, cy: 33.6, r: 0.22, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 41.4, cy: 33.6, r: 0.07, fill: "#8a6a1a" },
-        { kind: "circle", cx: 33.8, cy: 13.6, r: 0.22, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 33.8, cy: 13.6, r: 0.07, fill: "#8a6a1a" },
-        { kind: "circle", cx: 25, cy: 6.3, r: 0.22, fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 25, cy: 6.3, r: 0.07, fill: "#8a6a1a" }
+        { kind: "circle", cx: 7.4, cy: 14.8, r: 0.22, target: [6.8, 12.6], fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 7.4, cy: 14.8, r: 0.07, fill: "#8a6a1a" },
+        { kind: "circle", cx: 30.4, cy: 14, r: 0.22, target: [34.8, 14], fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 30.4, cy: 14, r: 0.07, fill: "#8a6a1a" }
       ]
     }
   ]

@@ -9,13 +9,7 @@ const patch = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
 const model = HiddenBenchModel.build(GARDEN, TERRAIN.plane, patch);
 const rect = GARDEN.elements.find(element => element.id === 'zasivarna').parts.find(part => part.kind === 'rect');
 const near = (a, b, message) => assert.ok(Math.abs(a - b) < 0.00001, message || `${a} != ${b}`);
-const ground = (x, y) => {
-  const base = TERRAIN.basePlaneHeight(x, y);
-  const distance = Math.hypot(Math.max(patch.x - x, 0, x - patch.x - patch.w),
-    Math.max(patch.y - y, 0, y - patch.y - patch.d));
-  const t = Math.min(1, distance / patch.blend);
-  return patch.level + (base - patch.level) * t * t * (3 - 2 * t);
-};
+const ground = (x, y) => TERRAIN.basePlaneHeight(x, y);
 const vertices = part => {
   if (part.vertices) return part.vertices;
   if (part.type === 'beam') {
@@ -41,10 +35,9 @@ const bounds = part => {
 assert.deepEqual(model, HiddenBenchModel.build(GARDEN, TERRAIN.plane, patch), 'Geometry must be deterministic');
 assert.equal(new Set(model.parts.map(part => part.name)).size, model.parts.length, 'Part names must be unique');
 assert.equal(model.groundPatch, undefined, 'Bench must not create a new terrain pad');
-assert.deepEqual(model.groundPatches, [patch], 'Standalone preview must use the existing garage cut');
-near(model.floorHeight, 1.7679696668768756);
+assert.deepEqual(model.groundPatches, [], 'Bench must follow its own sampled terrain');
 near(model.floorHeight, ground(rect.x + rect.w / 2, rect.y + rect.d / 2));
-near(rect.x, 31.4); near(rect.y, 18.3); near(rect.w, 1.8); near(rect.d, 0.5);
+near(rect.w, 1.8); near(rect.d, 0.5);
 for (const part of model.parts) {
   assert.equal(part.category, 'furniture', `${part.name}: furniture toggle must hide the whole bench`);
   assert.ok(model.materials[part.material], `${part.name}: unknown material`);

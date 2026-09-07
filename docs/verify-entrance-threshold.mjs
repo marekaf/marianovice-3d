@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {houseFlooringModel} from './house-flooring.js';
+const {HOUSE_INTERIOR:data}=createRequire(import.meta.url)('../house-interior.js');
+const parts=houseFlooringModel(data).parts;
+const covers=(x,z)=>parts.some(p=>Math.abs(p.position[0]-x)<p.size[0]/2&&Math.abs(p.position[1]-z)<p.size[1]/2);
+assert(covers(9.70,14.72),'Interior entrance reveal retains vinyl');
+assert(!covers(9.97,14.72),'Vinyl must not extend outside the entrance door');
+for(const p of parts)if(p.position[1]+p.size[1]/2>13.97+1e-8&&p.position[1]-p.size[1]/2<15.35-1e-8)assert(p.position[0]+p.size[0]/2<=9.825+1e-8);
+console.log('Entrance threshold checks passed: vinyl ends at inside edge of frame, not exterior wall footprint.');

@@ -1,7 +1,8 @@
 const RaisedBedsModel = (() => {
   function build(garden) {
     const rectOf = id => garden.elements.find(e=>e.id===id).parts.find(p=>p.kind==='rect');
-    const pad=rectOf('raisedBedsPad'),floorHeight=3.21,soilHeight=0.53,height=0.6;
+    const pad=rectOf('raisedBedsPad'),grading=garden.elements.find(e=>e.id==='raisedBedsPad').meta.grading;
+    const floorHeight=grading.level+.06,soilHeight=0.53,height=0.6;
     const materials={
       gravel:{color:'#b9b0a0',roughness:0.98},
       gravelLight:{color:'#c9c0ae',roughness:0.98},
@@ -167,7 +168,7 @@ const RaisedBedsModel = (() => {
       }
     }
     return {name:'Raised beds',materials,parts,lights:[],floorHeight,beds,plants,
-      groundPatch:{x:pad.x,y:pad.y,w:pad.w,d:pad.d,level:3.15,blend:1.2},plantingClearances:[{x:pad.x,y:pad.y,w:pad.w,d:pad.d}]};
+      groundPatch:{x:pad.x,y:pad.y,w:pad.w,d:pad.d,...grading},plantingClearances:[{x:pad.x,y:pad.y,w:pad.w,d:pad.d}]};
   }
   return {build};
 })();

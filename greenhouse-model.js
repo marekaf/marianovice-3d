@@ -2,8 +2,8 @@ const GreenhouseModel = (() => {
   function build(garden, terrainPlane) {
     const rect = garden.elements.find(e => e.id === 'greenhouse').parts.find(p => p.kind === 'rect');
     const { x, y, w, d } = rect, cx = x + w / 2;
-    const floorHeight = Math.max(...[x,x+w].flatMap(px => [y,y+d].map(py =>
-      Math.max(0,terrainPlane.a*px+terrainPlane.b*py+terrainPlane.c)))) + 0.04;
+    const sample = typeof terrainPlane === 'function' ? terrainPlane : (px,py) => Math.max(0,terrainPlane.a*px+terrainPlane.b*py+terrainPlane.c);
+    const floorHeight = Math.max(...[x,x+w].flatMap(px => [y,y+d].map(py => sample(px,py)))) + 0.04;
     const dwarfH = 0.4, eave = 1.9, ridge = 2.65, frame = 0.035, wallT = 0.12;
     const roofAt = px => eave + (1 - Math.abs(px-cx)/(w/2))*0.75;
     const doorX = cx - 0.45, doorW = 0.9, doorH = 2;

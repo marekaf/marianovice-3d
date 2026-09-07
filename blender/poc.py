@@ -15,9 +15,11 @@ import sys
 import time
 from mathutils import Quaternion, Vector, noise
 
+sys.stdout.reconfigure(line_buffering=True)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model_parts import build_model
 from site_terrain import height as site_height
+from procedural_plants import plant_template
 
 argv = sys.argv
 extra = argv[argv.index("--") + 1:]
@@ -115,6 +117,12 @@ def find_map(slug, kind):
 def mat_pbr(name, slug, scale=1.0, tint=None, tint_fac=0.85, tint_mode="MULTIPLY",
             rough_fallback=0.8, metal=0.0, nrm=1.0, spec=None):
     """PBR from downloaded texture set, box-projected in object space (no UVs needed)."""
+    if find_map(slug, "_diff_") is None:
+        print("PROCEDURAL MATERIAL", name)
+        color = tint if tint is not None else hexc("#69533a" if "bark" in slug else "#8b8b80")
+        fallback = mat_plaster(name, color, rough_fallback)
+        fallback.node_tree.nodes["Principled BSDF"].inputs["Metallic"].default_value = metal
+        return fallback
     m, nt, b = new_mat(name)
     b.inputs["Metallic"].default_value = metal
     if spec is not None:
@@ -638,7 +646,7 @@ dpoly = next(p for p in els["driveway"]["parts"] if p["kind"] == "polygon")["poi
 
 # ---------------- grass exclusion mask ----------------
 EXCL_RECTS = []
-for eid in ["westTerrace", "eastTerrace", "saunaPath", "parking", "carport", "garage",
+for eid in ["westTerrace", "eastTerrace", "saunaPath", "carport", "garage",
             "sauna", "saunaShelter", "pergola", "greenhouse", "raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
     for prt in els[eid]["parts"]:
         if prt["kind"] == "rect":
@@ -1132,17 +1140,19 @@ def motorcycle(name, cx, cy, length, width, paint, z):
     add_cyl(name + "_handlebar", cx, cy - axle * 0.63, z + 1.08, 0.018, width, MAT["frame"], rot=(0, math.pi / 2, 0))
 
 
-for i, vehicle in enumerate(v for v in GARDEN["vehicles"] if v["bay"] == "garage"):
-    paint = mat_simple("garage_vehicle_paint%d" % i, hexc(vehicle["col"]), rough=0.3, metal=0.35)
+if len(GARDEN.get("vehicleModels", [])) != len(GARDEN["vehicles"]):
+    raise SystemExit("Regenerate garden.json to include the shared vehicle models")
+for i, (vehicle, model) in enumerate(zip(GARDEN["vehicles"], GARDEN["vehicleModels"])):
+    collection = build_model(model)
     cy = vehicle["noseZ"] + vehicle["l"] / 2
-    if vehicle.get("moto"):
-        motorcycle("garage_motorcycle%d" % i, vehicle["cx"], cy, vehicle["l"], vehicle["w"], paint, GF)
-    else:
-        car("garage_car%d" % i, vehicle["cx"], cy, paint, along="y", z=GF,
-            cabin_bias=-1 if vehicle.get("reversed") else 1, dimensions=(vehicle["l"], vehicle["w"]))
-# parked parallel to the garage east wall on the long pad, facing south to the driveway
-car("car3", 36.4, 22.9, MAT["car_grey"], along="y",
-    z=ground_h(36.41, 22.925) + 0.05, cabin_bias=-1)
+    root = bpy.data.objects.new("parked_vehicle_%d" % i, None)
+    collection.objects.link(root)
+    for ob in list(collection.objects):
+        if ob != root:
+            ob.parent = root
+    root.location = (vehicle["cx"], -cy, GF if vehicle["bay"] == "garage" else ground_h(vehicle["cx"], cy) + 0.05)
+    root.rotation_euler.z = math.pi if vehicle.get("reversed") else 0
+build_model(GARDEN["exteriorFurnitureModel"])
 
 # ---------------- facade climbers ----------------
 def climbers(prefix, axis, wall, out_sign, a0, a1, z_base, height):
@@ -1196,45 +1206,73 @@ sloped_slab("carport_roof", c["x"], c["x"] + c["w"], cp_west, cp_east,
 roof_seams("cp", c["x"], cp_west + 0.08, c["x"] + c["w"], cp_east + 0.08,
            c["y"], c["y"] + c["d"], MAT["roof"])
 
-# ---------------- terraces (level decks at house floor plane), path ----------------
-def level_deck(name, r, post_edge):
-    """Level deck slab with support posts to terrain on the downhill edge."""
-    rect_box(name, r, DECK_TOP - 0.08, DECK_TOP, MAT["deck"])
-    px = r["x"] + 0.15 if post_edge == "w" else r["x"] + r["w"] - 0.15
-    for k, py in enumerate([r["y"] + 0.2, r["y"] + r["d"] / 2, r["y"] + r["d"] - 0.2]):
-        pz = ground_h(px, py)
-        if DECK_TOP - 0.08 - pz < 0.05:
-            continue
-        post("%s_post%d" % (name, k), px, py, pz - 0.1, DECK_TOP - 0.08, MAT["wood"], half=0.06)
+stone_materials = [mat_concrete("garden_slab_%d" % i, hexc(color), hexc("#b4ab98"))
+                   for i, color in enumerate(("#c1baaa", "#bcb5a6", "#c8c1b2", "#b6af9f"))]
+
+
+def level_paving(name, r):
+    narrow = r["w"] <= 1.1
+    nx = 1 if narrow else math.ceil(r["w"] / 0.95)
+    ny = math.ceil(r["d"] / 0.72)
+    for ix in range(nx):
+        for iy in range(ny):
+            w, d = r["w"] / nx, r["d"] / ny
+            x, y = r["x"] + (ix + 0.5) * w, r["y"] + (iy + 0.5) * d
+            bottom = min(DECK_TOP - 0.1, min(ground_h(px, py) for px in (x - w / 2, x + w / 2)
+                                                    for py in (y - d / 2, y + d / 2)) - 0.04)
+            box_p("%s_soil_%d_%d" % (name, ix, iy), x - w / 2, y - d / 2, x + w / 2, y + d / 2,
+                  bottom, DECK_TOP - 0.018, MAT["soil_pot"])
+            box_p("%s_turf_%d_%d" % (name, ix, iy), x - w / 2, y - d / 2, x + w / 2, y + d / 2,
+                  DECK_TOP - 0.019, DECK_TOP - 0.017, MAT["soil"])
+            variation = (ix * 13 + iy * 7) % 11
+            gap = 0.09 if narrow else 0.045
+            sw = w - (0.16 if narrow else gap) - variation * 0.002
+            sd = d - gap - (variation % 3) * 0.008
+            corner = 0.025 + (variation % 4) * 0.008
+            outline = [(-sw / 2 + corner, -sd / 2), (sw / 2 - corner * 0.7, -sd / 2 + 0.006),
+                       (sw / 2, -sd / 2 + corner), (sw / 2 - 0.007, sd / 2 - corner * 1.2),
+                       (sw / 2 - corner, sd / 2), (-sw / 2 + corner * 0.8, sd / 2 - 0.004),
+                       (-sw / 2, sd / 2 - corner), (-sw / 2 + 0.006, -sd / 2 + corner)]
+            x += (variation - 5) * 0.003
+            y += (variation % 3 - 1) * 0.007
+            vertices = [(x + dx, -(y + dy), z) for z in (DECK_TOP - 0.065, DECK_TOP) for dx, dy in outline]
+            faces = [tuple(range(8)), tuple(reversed(range(8, 16)))]
+            faces += [(j, j + 8, (j + 1) % 8 + 8, (j + 1) % 8) for j in range(8)]
+            mesh = bpy.data.meshes.new("garden_stepping_slab")
+            mesh.from_pydata(vertices, [], faces)
+            mesh.update()
+            ob = bpy.data.objects.new("%s_slab_%d_%d" % (name, ix, iy), mesh)
+            bpy.context.collection.objects.link(ob)
+            mesh.materials.append(stone_materials[variation % len(stone_materials)])
 
 
 for i, prt in enumerate(x for x in els["westTerrace"]["parts"] if x["kind"] == "rect"):
-    level_deck("westTerrace_%d" % i, prt, "w")
-for i, prt in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
-    level_deck("eastTerrace_%d" % i, prt, "e")
-
-# east-terrace dining: table + 4 chairs, seats facing the table (backrests outside)
-et_tx, et_tz = 21.8, 16.0
-box_p("et_table", et_tx - 0.8, et_tz - 0.45, et_tx + 0.8, et_tz + 0.45,
-      DECK_TOP + 0.72, DECK_TOP + 0.78, MAT["wood"])
-for li, (ldx, ldz) in enumerate([(-0.7, -0.4), (0.7, -0.4), (-0.7, 0.4), (0.7, 0.4)]):
-    post("et_tableleg%d" % li, et_tx + ldx, et_tz + ldz, DECK_TOP, DECK_TOP + 0.75, MAT["frame"], half=0.03)
-for ci, (cdx, cdz) in enumerate([(-0.6, -0.9), (0.6, -0.9), (-0.6, 0.9), (0.6, 0.9)]):
-    sx0, sz0 = et_tx + cdx, et_tz + cdz
-    box_p("et_seat%d" % ci, sx0 - 0.2, sz0 - 0.2, sx0 + 0.2, sz0 + 0.2,
-          DECK_TOP + 0.42, DECK_TOP + 0.47, MAT["wood"])
-    for oi, (ox, oz) in enumerate([(-0.16, -0.16), (0.16, -0.16), (-0.16, 0.16), (0.16, 0.16)]):
-        post("et_chairleg%d_%d" % (ci, oi), sx0 + ox, sz0 + oz, DECK_TOP, DECK_TOP + 0.425, MAT["trunk"], half=0.02)
-    back_z = sz0 + (0.2 if cdz > 0 else -0.2)  # backrest on the outside -> chair faces the table
-    box_p("et_back%d" % ci, sx0 - 0.2, back_z - 0.025, sx0 + 0.2, back_z + 0.025,
-          DECK_TOP + 0.45, DECK_TOP + 0.95, MAT["wood"])
+    level_paving("westTerrace_%d" % i, prt)
 for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect" and x.get("role") != "saunaLanding"):
-    px, py = rect_center(prt)
-    z = ground_h(px, py)
-    rect_box("saunaPath_%d" % i, prt, z - 0.05, z + 0.1, MAT["path"])
+    level_paving("saunaPath_%d" % i, prt)
+for i, r in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
+    for j in range(math.ceil(r["d"] / 0.142)):
+        depth = min(0.137, r["d"] - j * 0.142)
+        if depth >= 0.005:
+            box_p("east_deck_board_%d_%d" % (i, j), r["x"], r["y"] + j * 0.142,
+                  r["x"] + r["w"], r["y"] + j * 0.142 + depth, DECK_TOP - 0.022, DECK_TOP, MAT["wood"])
+    joists = math.ceil((r["w"] - 0.12) / 0.4)
+    supports = math.ceil((r["d"] - 0.24) / 1.2)
+    for j in range(joists + 1):
+        x = r["x"] + 0.06 + (r["w"] - 0.12) * j / joists
+        box_p("east_deck_joist_%d_%d" % (i, j), x - 0.0225, r["y"] + 0.04, x + 0.0225, r["y"] + r["d"] - 0.04,
+              DECK_TOP - 0.067, DECK_TOP - 0.022, MAT["wood"])
+        for k in range(supports + 1):
+            y = r["y"] + 0.12 + (r["d"] - 0.24) * k / supports
+            ground = [ground_h(x + dx, y + dy) for dx in (-0.09, 0, 0.09) for dy in (-0.09, 0, 0.09)]
+            bottom, top = min(ground) - 0.08, max(ground) + 0.025
+            if top < DECK_TOP - 0.067:
+                box_p("east_deck_pad_%d_%d_%d" % (i, j, k), x - 0.09, y - 0.09, x + 0.09, y + 0.09, bottom, top, MAT["gravel"])
+                add_cyl("east_deck_pedestal_%d_%d_%d" % (i, j, k), x, y, (top + DECK_TOP - 0.067) / 2,
+                        0.04, DECK_TOP - 0.067 - top, MAT["frame"], verts=12)
 
 # driveway + carport + parking bay: one continuous DITON large-format paver surface
-draped_poly("driveway", dpoly, 0.04, MAT["pavers"], subdiv=6)
+draped_poly("driveway", dpoly, 0.05, MAT["pavers"], subdiv=6)
 
 # stepping-stone paths: flat stone discs draped on the terrain
 MAT["step_stone"] = mat_concrete("step_stone", hexc("#9a958c"), hexc("#7f7a72"),
@@ -1385,6 +1423,10 @@ GRASS_CLUMPS = append_from("grass_medium_01",
                            ["grass_medium_01_large_a_LOD1", "grass_medium_01_large_b_LOD1",
                             "grass_medium_01_mid_a_LOD1", "grass_medium_01_mid_b_LOD1",
                             "grass_medium_01_tall_a_LOD1", "grass_medium_01_small_a_LOD1"], res="1k")
+SHRUBS = SHRUBS or [plant_template("procedural_shrub_%d" % i, "shrub", i) for i in range(3)]
+GROUND_PLANTS = GROUND_PLANTS or [plant_template("procedural_ground_%d" % i, "shrub", i + 3) for i in range(2)]
+FLOWER_OBJS = FLOWER_OBJS or [plant_template("procedural_flower", "flower")]
+GRASS_CLUMPS = GRASS_CLUMPS or [plant_template("procedural_grass", "grass")]
 # real-geometry perennial mix (ferns, sorrel, yellow flowers, ornamental grass tufts);
 # grass weighted up so beds read as planted, not spotted. Replaces the old pastel blobs.
 PERENNIAL_POOL = GROUND_PLANTS + FLOWER_OBJS + GRASS_CLUMPS + GRASS_CLUMPS
@@ -1398,6 +1440,8 @@ DAISY_LIB = (append_ext("plants/daisy_white.blend", ["daisy_white"]) +
              append_ext("plants/daisy_red.blend", ["daisy_red"]))
 ROSE_LIB = append_ext("plants/roses.blend", ["roses"])
 LOG_LIB = append_ext("plants/wood_logs.blend", ["wooden logs"])
+DAISY_LIB = DAISY_LIB or [plant_template("procedural_daisy_%d" % i, "flower", i) for i in range(3)]
+ROSE_LIB = ROSE_LIB or [plant_template("procedural_rose", "flower", 1)]
 print("PLANT LIB daisies %d roses %d logs %d" %
       (len(DAISY_LIB), len(ROSE_LIB), len(LOG_LIB)))
 
@@ -1457,6 +1501,9 @@ _maples = append_ext("maple_freeman/maple_freeman.blend",
 _maples.sort(key=lambda o: o.dimensions.z)
 for _sp, _ob in zip(("maple_s", "maple_m", "maple_l"), _maples):
     TREE_LIB[_sp] = [_ob]
+for i, species in enumerate(("island1", "island3", "broad", "maple_s", "maple_m", "maple_l")):
+    if not TREE_LIB.get(species):
+        TREE_LIB[species] = [plant_template("procedural_tree_" + species, "tree", i)]
 # native crown height per species (from the realized mesh) so target heights in metres
 # convert to a uniform scale regardless of how big each source model ships
 TREE_NATIVE_H = {k: (max(min(o.dimensions.z for o in v), 0.5) if v else 4.0)
@@ -2026,7 +2073,9 @@ def set_lighting(mode):
         sun_data.color = (0.6, 0.72, 1.0)
         aim_sun(math.radians(50), math.radians(120))
         return
-    if mode == "day":
+    hdri_dir = os.path.join(ASSETS, "hdri")
+    has_hdri = os.path.isdir(hdri_dir) and any(fn.endswith((".hdr", ".exr")) for fn in os.listdir(hdri_dir))
+    if mode == "day" and has_hdri:
         img, rot = hdri_env()
         env = wnt.nodes.new("ShaderNodeTexEnvironment")
         env.image = img
@@ -2053,6 +2102,11 @@ def set_lighting(mode):
     sun_data.color = (1.0, 0.45, 0.22)
     cam_strength = 0.4
     amb_strength = 0.15
+    if mode == "day":
+        e_r, a_r = elev, az
+        sun_data.energy = 2.4
+        sun_data.color = (1.0, 0.98, 0.94)
+        cam_strength, amb_strength = 0.4, 0.25
     if hasattr(sky2, "sun_elevation"):
         sky2.sun_elevation = e_r
     if hasattr(sky2, "sun_rotation"):

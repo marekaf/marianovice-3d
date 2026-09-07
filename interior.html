@@ -6,18 +6,19 @@
 <title>Interiors — orthographic views</title>
 <style>
   body { margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f3f2ef; }
+  [hidden] { display: none !important; }
   #info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); color: white; padding: 10px 14px; z-index: 100; border-radius: 6px; max-width: 300px; }
   #info h3 { margin: 0 0 4px 0; font-size: 15px; }
   #info small { opacity: 0.85; }
   #info a { color: #5dade2; }
-  #views { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 10px 12px; z-index: 100; border-radius: 6px; width: 178px; }
+  #views { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 10px 12px; z-index: 100; border-radius: 6px; width: 178px; max-height:calc(100dvh - 40px); overflow-y:auto; }
   #views h4 { color: #fff; margin: 8px 0 6px 0; font-size: 12px; opacity: 0.85; }
   #views h4:first-child { margin-top: 0; }
   #views button { display: block; width: 100%; margin: 4px 0; padding: 6px 12px; cursor: pointer; background: #5dade2; color: white; border: none; border-radius: 4px; font-size: 13px; text-align: left; }
   #views button:hover { background: #3a8fc9; }
   #views button.active { background: #2c6f9e; }
-  #views .bswitch { display: flex; gap: 4px; }
-  #views .bswitch button { text-align: center; font-weight: 700; }
+  #views .bswitch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  #views .bswitch button { text-align: center; font-weight: 700; padding: 6px 4px; }
   #views button.export { background: #2f9e5f; margin-top: 10px; }
   #views button.export:hover { background: #23804a; }
   #views label { display: block; color: #fff; font-size: 12px; margin: 5px 0; cursor: pointer; }
@@ -41,6 +42,9 @@
   <small>Drag: pan · Scroll: zoom · Cutaway 3D also rotates<br>
   <a href="index.html">← back to the garden model</a></small>
   <br><small><a href="fixtures.html">Fixture samples</a></small>
+  <br><small id="officeLinks" hidden><a href="docs/offices.html#1.05">Office 1.05 eye-level</a> · <a href="docs/offices.html#1.08">Office 1.08 eye-level</a></small>
+  <small id="fitoutStatus"></small>
+  <p id="fitoutProposal" hidden style="font-size:11px;line-height:1.4"></p>
 </div>
 <div id="viewlabel"></div>
 <div id="views">
@@ -58,6 +62,29 @@
   <button data-view="east">East wall</button>
   <button data-view="west">West wall</button>
   <button data-view="cut3d">Cutaway 3D</button>
+  <button data-view="living" data-house-focus hidden>Living room seated</button>
+  <button data-view="overview" data-house-focus hidden>Living room overview</button>
+  <button data-view="cathedral" data-house-focus hidden>Cathedral ceiling</button>
+  <button data-view="kitchen" data-house-focus hidden>Kitchen eye-level</button>
+  <button data-view="garden" data-house-focus hidden>Toward east portal</button>
+  <button data-view="dining" data-house-focus hidden>Dining set proposal</button>
+  <button data-view="bathroom" data-house-focus hidden>Main bathroom</button>
+  <button data-view="mirror" data-house-focus hidden>Bathroom mirror</button>
+  <button data-view="bedroom" data-house-focus hidden>Bedroom</button>
+  <button data-view="windowSeat" data-house-focus hidden>Bedroom window seat</button>
+  <button data-view="guest" data-house-focus hidden>Guest wardrobe</button>
+  <button data-view="entrance" data-house-focus hidden>Entrance hallway</button>
+  <button data-view="entranceSeat" data-house-focus hidden>Entrance shoe seat</button>
+  <button data-view="entranceCoats" data-house-focus hidden>Hallway shelf and hooks</button>
+  <button data-view="entranceControls" data-house-focus hidden>Entrance keys and intercom</button>
+  <button data-view="utilityLaundry" data-house-focus hidden>Utility sink and laundry</button>
+  <button data-view="stairs" data-house-focus hidden>Stair underside</button>
+  <button data-view="utility" data-house-focus hidden>Utility equipment</button>
+  <button data-view="room" data-loft-focus hidden>Loft room</button>
+  <button data-view="sim" data-loft-focus hidden>Sim rig proposal</button>
+  <button data-view="trainer" data-loft-focus hidden>Bike trainer proposal</button>
+  <button data-view="landing" data-loft-focus hidden>Loft landing</button>
+  <button data-view="attic" data-loft-focus hidden>Attic storage</button>
   <label id="rowGate"><input type="checkbox" id="toggleGate"> Gate open</label>
   <label id="rowVehicles"><input type="checkbox" id="toggleVehicles" checked> Vehicles</label>
   <label><input type="checkbox" id="toggleCut"> Cut open S + E walls</label>
@@ -73,32 +100,45 @@
 <script src="layout.js?v=20260830a"></script>
 <script src="garage-model.js?v=20260905"></script>
 <script src="furniture-model.js?v=20260905"></script>
+<script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=20260905c"></script>
 <script src="interiors3d.js?v=20260905d"></script>
+<script src="vehicle-model.js"></script>
 <script src="house-interior.js?v=20260830a"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { attachEyeLevelWalkthrough } from './docs/eye-level-walkthrough.js';
+import { ELECTRICAL_POINTS } from './docs/electrical-points.js';
+import { attachElectricalView } from './docs/electrical-view.js';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildModel } from './model3d.js?v=20260905d';
 
+RectAreaLightUniformsLib.init();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf3f2ef);
 
 // Flat, even light — elevations should read like drawings, not renders (no shadow map)
-scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d5d0, 1.05));
+const ambientLight = new THREE.HemisphereLight(0xffffff, 0xd8d5d0, 1.05);
+scene.add(ambientLight);
 const sun = new THREE.DirectionalLight(0xffffff, 0.9);
 sun.position.set(-6, 14, 9);
 scene.add(sun);
+scene.add(sun.target);
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15, near: .5, far: 60 });
+sun.shadow.normalBias = .01;
 
 // Garage at its real level (−0.5 m below the house floor at 0)
 const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: -0.5, buildModel });
 const garRoot = new THREE.Group();
 for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.furniture, gar.gateClosed, gar.gateOpen, gar.ceiling, gar.light]) garRoot.add(grp);
-const vehicles = INTERIORS3D.garageVehicles(THREE, GARDEN, -0.5);
+const vehicles = INTERIORS3D.garageVehicles(THREE, GARDEN, -0.5, buildModel);
 garRoot.add(vehicles);
 scene.add(garRoot);
 
-const saunaModel = SaunaModel.build(GARDEN, TERRAIN.plane);
+const saunaModel = SaunaModel.build(GARDEN, 0);
 const saunaRoot = buildModel(THREE, { ...saunaModel, floorHeight: 0 });
 const saunaCategories = saunaRoot.userData.categories;
 saunaCategories.outdoor.visible = false;
@@ -106,29 +146,105 @@ for (const light of saunaRoot.userData.lights) light.intensity = Math.min(0.35, 
 scene.add(saunaRoot);
 const SA = GARDEN.elements.find(e => e.id === 'sauna').parts.find(p => p.kind === 'rect');
 
-// House — only when the LOCAL (gitignored) house-interior.js is present
 const hasHouse = typeof HOUSE_INTERIOR !== 'undefined';
-let hou = null;
+let officeIntegration = null;
+let officeFloorTexture = null;
+let livingIntegration = null;
+let bathroomFinishes = null;
+let utilityIntegration = null;
+let loftIntegration = null;
+let stairIntegration = null;
+let ledIntegration = null;
+let entranceIntegration = null;
+let kitchenWindowIntegration = null;
+let cathedralIntegration = null;
 if (hasHouse) {
-  hou = INTERIORS3D.buildHouse(THREE, HOUSE_INTERIOR, { floorY: 0, buildModel });
+  try {
+    const module = await import('./docs/office-integration.js');
+    officeIntegration = await module.loadOfficeIntegration();
+    officeFloorTexture = module.applyChampagneFloor;
+  } catch (error) {
+    document.getElementById('fitoutStatus').textContent = `Office fit-out unavailable: ${error.message}`;
+  }
+  try {
+    livingIntegration = await import('./docs/living-interior.js');
+    const {createBathroomFinishes}=await import('./docs/bathroom-finishes.js');
+    bathroomFinishes=createBathroomFinishes(THREE,HOUSE_INTERIOR);
+    utilityIntegration=await import('./docs/utility-equipment.js');
+    loftIntegration=await import('./docs/loft-interior.js');
+    stairIntegration=await import('./docs/stair-finishes.js');
+    ledIntegration=await import('./docs/interior-led.js');
+    entranceIntegration=await import('./docs/entrance-interior.js');
+    kitchenWindowIntegration=await import('./docs/kitchen-window-worktop.js');
+    cathedralIntegration=await import('./docs/cathedral-interior.js');
+  } catch (error) {
+    document.getElementById('fitoutStatus').textContent += ` Living fit-out unavailable: ${error.message}`;
+  }
+}
+let hou = null;
+let renderedHouseData = null;
+if (hasHouse) {
+  const finishedData = livingIntegration?.prepareLivingData(HOUSE_INTERIOR) ?? HOUSE_INTERIOR;
+  const livingData = kitchenWindowIntegration?.prepareKitchenWindowData(finishedData) ?? finishedData;
+  const houseData = entranceIntegration?.prepareEntranceData(livingData) ?? livingData;
+  renderedHouseData = houseData;
+  hou = INTERIORS3D.buildHouse(THREE, houseData, { floorY: 0, buildModel,
+    finishColors: livingIntegration?.finishColors,
+    decorateWallMesh: (mesh, wall) => {
+      officeIntegration?.decorateWallMesh(THREE, mesh, wall, HOUSE_INTERIOR);
+      bathroomFinishes?.decorateWallMesh(mesh,wall);
+    } });
   scene.add(hou.root);
   document.getElementById('houseBtn').style.display = '';
 }
 const hasLoft = typeof HOUSE_LOFT !== 'undefined';
 let loft = null;
 if (hasLoft) {
-  loft = INTERIORS3D.buildHouse(THREE, HOUSE_LOFT, { floorY: 2.72, buildModel });
+  loft = INTERIORS3D.buildHouse(THREE, {...HOUSE_LOFT,intWalls:HOUSE_LOFT.intWalls.filter(w=>w.id!=='P13')}, { floorY: 2.72, buildModel,finishColors:loftIntegration?.finishColors });
   scene.add(loft.root);
   document.getElementById('loftBtn').style.display = '';
 }
 
 const GA = gar.dims.rect;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+const reflectionRoom = new RoomEnvironment();
+const reflectionGenerator = new THREE.PMREMGenerator(renderer);
+const reflectionMap = reflectionGenerator.fromScene(reflectionRoom, .04);
+scene.environment = reflectionMap.texture;
+scene.environmentIntensity = .65;
+reflectionRoom.dispose();
+reflectionGenerator.dispose();
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
+if (officeIntegration) {
+  officeIntegration.attach(THREE, hou, HOUSE_INTERIOR, { buildModel, renderer });
+  document.getElementById('officeLinks').hidden = false;
+}
+const livingFitout = livingIntegration?.attachLivingInterior(THREE, hou, HOUSE_INTERIOR, { buildModel, renderer, applyChampagneFloor: officeFloorTexture });
+const ledFitout=ledIntegration?.attachInteriorLed(THREE,hou,renderedHouseData);
+const entranceFitout=entranceIntegration?.attachEntranceInterior(THREE,hou,renderedHouseData,{buildModel});
+const kitchenWindowFitout=kitchenWindowIntegration?.attachKitchenWindowWorktop(THREE,hou,renderedHouseData);
+const cathedralFitout=cathedralIntegration?.attachCathedralInterior(THREE,hou,renderedHouseData);
+if(cathedralFitout)Object.assign(livingFitout.presets,cathedralFitout.presets);
+if(entranceFitout)Object.assign(livingFitout.presets,entranceFitout.presets);
+bathroomFinishes?.attach(hou);
+const stairFitout=stairIntegration?.attachStairFinishes(THREE,hou,HOUSE_INTERIOR,{renderer});
+const utilityFitout=utilityIntegration?.attachUtilityEquipment(THREE,hou,HOUSE_INTERIOR,{buildModel});
+const loftFitout=loft&&loftIntegration?.attachLoftInterior(THREE,loft,HOUSE_LOFT,{buildModel,renderer,applyChampagneFloor:officeFloorTexture});
+if(utilityFitout)Object.assign(livingFitout.presets,utilityFitout.presets);
+if (livingFitout) document.getElementById('fitoutProposal').textContent = livingFitout.proposal;
+if(utilityFitout){
+  const details=document.createElement('details');details.id='utilityNotes';
+  const summary=document.createElement('summary');summary.textContent='Equipment placement notes';
+  const note=document.createElement('small');note.textContent=utilityFitout.notes.join(' ');
+  details.append(summary,note);document.getElementById('info').append(details);
+}
 
-const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 300);
+const drawingCamera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 300);
+const eyeCamera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, .025, 300);
+let camera = drawingCamera;
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = false;
 
@@ -140,7 +256,7 @@ function mkViews(cx, cz, midY, w, d, wallH, label) {
     south: { label: `${label} — SOUTH WALL`, pos: [cx, midY, cz - 60], up: [0, 1, 0], target: [cx, midY, cz], lookThrough: ['N'], cut: false, ceil: false, fitW: w + 1.2, fitH: wallH, rotate: false },
     east:  { label: `${label} — EAST WALL`, pos: [cx - 60, midY, cz], up: [0, 1, 0], target: [cx, midY, cz], lookThrough: ['W'], cut: false, ceil: false, fitW: d + 1.2, fitH: wallH, rotate: false },
     west:  { label: `${label} — WEST WALL`, pos: [cx + 60, midY, cz], up: [0, 1, 0], target: [cx, midY, cz], lookThrough: ['E'], cut: false, ceil: false, fitW: d + 1.2, fitH: wallH, rotate: false },
-    cut3d: { label: `${label} — CUTAWAY 3D`, pos: [cx + Math.max(w, d), Math.max(w, d) * 0.9, cz + Math.max(w, d)], up: [0, 1, 0], target: [cx, 0.8, cz], lookThrough: [], cut: true, ceil: false, fitW: w + d * 0.6, fitH: (w + d) * 0.42, rotate: true },
+    cut3d: { label: `${label} — CUTAWAY 3D`, pos: [cx + Math.max(w, d), Math.max(w, d) * 0.9, cz + Math.max(w, d)], up: [0, 1, 0], target: [cx, 0.8, cz], lookThrough: [], cut: false, ceil: false, fitW: w + d * 0.6, fitH: (w + d) * 0.42, rotate: true },
   };
 }
 const garageViews = mkViews(GA.x + GA.w / 2, GA.y + GA.d / 2, -0.5 + 1.6, GA.w, GA.d, 4.4, 'GARAGE');
@@ -171,6 +287,12 @@ if (hasHouse) {
     views: mkViews(o.x + hou.dims.w / 2, o.z + hou.dims.d / 2, 1.5, hou.dims.w, hou.dims.d, 3.6, 'HOUSE 1.NP'),
     dims: `house 1.NP · ${hou.dims.w.toFixed(2)} × ${hou.dims.d.toFixed(2)} m outside · clear height ${hou.dims.clearH.toFixed(2)} m`,
   };
+  if (livingFitout) for (const [name, preset] of Object.entries(livingFitout.presets)) {
+    const world = ([x, y, z]) => [x + o.x, y + hou.dims.floorY, z + o.z];
+    BUILDINGS.house.views[name] = { label: name === 'overview' ? 'HOUSE · LIVING ROOM OVERVIEW' : `HOUSE · ${name === 'garden' ? 'TOWARD EAST PORTAL' : name.toUpperCase()} · EYE LEVEL`,
+      pos: world(preset.position), target: world(preset.target), up: [0, 1, 0],
+      lookThrough: [], cut: false, ceil: true, rotate: true, perspective: true };
+  }
 }
 if (hasLoft) {
   const o = loft.dims.originPlot;
@@ -181,9 +303,16 @@ if (hasLoft) {
   };
 }
 
-let curB = 'garage', curV = 'plan';
+if(loftFitout)for(const[name,preset]of Object.entries(loftFitout.presets)){
+  const o=loft.dims.originPlot,world=([x,y,z])=>[x+o.x,y+loft.dims.floorY,z+o.z];
+  BUILDINGS.loft.views[name]={label:`LOFT · ${name.toUpperCase()}`,pos:world(preset.position),target:world(preset.target),up:[0,1,0],lookThrough:[],cut:false,ceil:true,rotate:true,perspective:true};
+}
+let curB = hasHouse ? 'house' : 'garage', curV = 'cut3d';
+let walkthrough = null;
+let electrical = null;
 
 function applyVisibility() {
+  walkthrough?.setVisible(curB === 'house');
   const B = BUILDINGS[curB];
   const hidden = new Set(B.views[curV].lookThrough);
   if (document.getElementById('toggleCut').checked) { hidden.add('S'); hidden.add('E'); }
@@ -196,19 +325,33 @@ function applyVisibility() {
     gar.gateOpen.visible = !hidden.has('S') && gateOpen;
     vehicles.visible = document.getElementById('toggleVehicles').checked;
   }
-  for (const b in BUILDINGS) if (BUILDINGS[b].labels) BUILDINGS[b].labels.visible = (b === curB) && document.getElementById('toggleLabels').checked;
+  for (const b in BUILDINGS) if (BUILDINGS[b].labels) BUILDINGS[b].labels.visible = (b === curB) && !camera.isPerspectiveCamera && document.getElementById('toggleLabels').checked;
   for (const b in BUILDINGS) if (BUILDINGS[b].wallIds) BUILDINGS[b].wallIds.visible = (b === curB) && document.getElementById('toggleWallIds').checked;
   for (const b in BUILDINGS) if (BUILDINGS[b].furniture) BUILDINGS[b].furniture.visible = (b === curB) && document.getElementById('toggleJoinery').checked;
   document.getElementById('rowJoinery').style.display = BUILDINGS[curB].furniture ? '' : 'none';
   document.getElementById('rowWallIds').style.display = BUILDINGS[curB].wallIds ? '' : 'none';
   document.getElementById('rowGate').style.display = curB === 'garage' ? '' : 'none';
   document.getElementById('rowVehicles').style.display = curB === 'garage' ? '' : 'none';
-  document.getElementById('rowLabels').style.display = BUILDINGS[curB].labels ? '' : 'none';
+  document.getElementById('rowLabels').style.display = BUILDINGS[curB].labels && !camera.isPerspectiveCamera ? '' : 'none';
+  for (const button of document.querySelectorAll('[data-house-focus]')) button.hidden = curB !== 'house' || !livingFitout;
+  for (const button of document.querySelectorAll('[data-loft-focus]')) button.hidden = curB !== 'loft' || !loftFitout;
+  if(document.getElementById('utilityNotes'))document.getElementById('utilityNotes').hidden=curB!=='house'||curV!=='utility';
+  const proposal = document.getElementById('fitoutProposal');
+  proposal.hidden = !((curB === 'house' && livingFitout) || (curB === 'loft' && loftFitout));
+  proposal.textContent = curB === 'loft' && loftFitout ? loftFitout.notes.slice(1, 5).join(' ') : livingFitout?.proposal || '';
+  if(curB==='house'&&['entrance','entranceSeat','entranceCoats','entranceControls'].includes(curV)&&entranceFitout)proposal.textContent=entranceFitout.notes.join(' ');
+  if(curB==='house'&&curV==='cathedral'&&cathedralFitout)proposal.textContent=cathedralFitout.notes;
+  electrical?.update(curB);
 }
 
 function fitFrustum() {
   const v = BUILDINGS[curB].views[curV];
   const aspect = innerWidth / innerHeight;
+  if (camera.isPerspectiveCamera) {
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+    return;
+  }
   let halfH = (v.fitH / 2) * 1.08;
   if ((v.fitW / 2) * 1.08 > halfH * aspect) halfH = (v.fitW / 2) * 1.08 / aspect;
   camera.left = -halfH * aspect; camera.right = halfH * aspect;
@@ -217,8 +360,19 @@ function fitFrustum() {
 }
 
 function setView(name) {
+  walkthrough?.stop();
   curV = name;
   const v = BUILDINGS[curB].views[name];
+  camera = v.perspective ? eyeCamera : drawingCamera;
+  controls.object = camera;
+  renderer.shadowMap.enabled = Boolean(v.perspective);
+  renderer.toneMapping = v.perspective ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+  renderer.toneMappingExposure = 1;
+  ambientLight.intensity = v.perspective ? 2 : 1.05;
+  sun.intensity = v.perspective ? 2.8 : .9;
+  sun.castShadow = Boolean(v.perspective);
+  if (v.perspective) { sun.position.set(35, 8, 18); sun.target.position.set(17, 1, 18); }
+  else { sun.position.set(-6, 14, 9); sun.target.position.set(0, 0, 0); }
   camera.up.set(...v.up);
   camera.position.set(...v.pos);
   camera.zoom = 1;
@@ -239,10 +393,12 @@ function setView(name) {
 function setBuilding(b) {
   if (!BUILDINGS[b]) return;
   curB = b;
-  setView(curV);
+  setView(BUILDINGS[b].views[curV] ? curV : 'plan');
 }
 
 function updateScalebar() {
+  document.getElementById('scalebar').hidden = camera.isPerspectiveCamera;
+  if (camera.isPerspectiveCamera) return;
   const mPerPx = (camera.right - camera.left) / (camera.zoom * innerWidth);
   document.getElementById('scaleline').style.width = (1 / mPerPx) + 'px';
   document.getElementById('scaletext').textContent = '1 m';
@@ -258,6 +414,7 @@ controls.addEventListener('change', updateScalebar);
 // The scale bar is a DOM overlay, so it is not in the WebGL buffer. A plan sheet without its scale
 // cannot be measured off, so redraw it into the exported bitmap rather than exporting the bare canvas.
 function paintScalebar(ctx, s) {
+  if (camera.isPerspectiveCamera) return;
   const mPerPx = (camera.right - camera.left) / (camera.zoom * innerWidth);
   const line = (1 / mPerPx) * s;
   const padX = 10 * s, padY = 6 * s, font = 11 * s;
@@ -309,20 +466,62 @@ window.addEventListener('resize', () => {
 // Deep-link via URL hash: #plan / #house-plan / #garage-cut3d / …
 function applyHash() {
   const h = location.hash.slice(1);
-  if (!h) return setView('plan');
+  if (!h) return setView('cut3d');
   const [a, b] = h.includes('-') ? h.split('-') : [null, h];
   if (a && BUILDINGS[a]) curB = a;
   setView(BUILDINGS[curB].views[b] ? b : 'plan');
 }
+if (hasHouse) walkthrough = attachEyeLevelWalkthrough(THREE, {
+  data: renderedHouseData, floorY: hou.dims.floorY, camera: eyeCamera, controls,
+  canvas: renderer.domElement, container: document.getElementById('views'),
+  activate(preset, height) {
+    const o = hou.dims.originPlot;
+    curB = 'house';
+    BUILDINGS.house.views.walk = {
+      label: `HOUSE · WALK · ${preset.label.toUpperCase()}`,
+      pos: [o.x+preset.position[0],hou.dims.floorY+height,o.z+preset.position[1]],
+      target: [o.x+preset.target[0],hou.dims.floorY+height,o.z+preset.target[1]],
+      up: [0,1,0], lookThrough: [], cut: false, ceil: true, rotate: true, perspective: true,
+    };
+    setView('walk');
+  },
+});
+const garageElectricalRoot = new THREE.Group();
+garageElectricalRoot.position.set(gar.dims.rect.x,0,gar.dims.rect.y);
+garRoot.add(garageElectricalRoot);
+try {
+electrical = attachElectricalView(THREE, {
+  ...(hasHouse?{house:{house:hou,data:HOUSE_INTERIOR,finishPanels:livingFitout?.parts.filter(p=>p.material==='whiteGlass')??[]}}:{}),
+  ...(hasLoft?{loft:{house:loft,data:HOUSE_LOFT}}:{}),
+  garage:{house:{root:garageElectricalRoot,dims:gar.dims,walls:gar.walls},data:{extWalls:Object.keys(gar.walls).map(face=>({id:face,face}))}},
+}, ELECTRICAL_POINTS, document.getElementById('views'), point => {
+  const building=point.building;
+  if(!BUILDINGS[building])return;
+  const house=building==='house'?hou:building==='loft'?loft:null;
+  const origin=house?.dims.originPlot??{x:gar.dims.rect.x,z:gar.dims.rect.y};
+  const floorY=house?.dims.floorY??gar.dims.floorY;
+  const target=[point.position[0]+origin.x,point.position[1]+floorY,point.position[2]+origin.z];
+  const pos=target.map((v,i)=>v+point.normal[i]*.8+(i===1?.15:0));
+  curB=building;
+  BUILDINGS[building].views.electricalPoint={label:`${point.id} · ${point.kind.toUpperCase()}`,pos,target,up:point.normal[1]?[0,0,-1]:[0,1,0],lookThrough:[],cut:false,ceil:true,rotate:true,perspective:true};
+  setView('electricalPoint');
+});
+} catch(error) {
+  const status=document.createElement('p');
+  status.id='electricalError';
+  status.textContent=`Electrical overlay unavailable: ${error.message}`;
+  document.getElementById('views').append(status);
+}
 applyHash();
 window.addEventListener('hashchange', applyHash);
 
-window.DEBUG = { scene, camera, gar,
+window.DEBUG = { scene, get camera() { return camera; }, walkthrough, electrical, gar, livingFitout,utilityFitout,loftFitout,stairFitout,ledFitout,entranceFitout,kitchenWindowFitout,cathedralFitout,
   sau: { root: saunaRoot, model: saunaModel, categories: saunaCategories, walls: BUILDINGS.sauna.walls,
     ceiling: saunaCategories.roof, furniture: saunaCategories.furniture, dims: { rect: SA, floorY: 0, clearH: 2.5 } },
   hou: hasHouse ? hou : null, loft: hasLoft ? loft : null };
-renderer.setAnimationLoop(() => {
-  controls.update();
+renderer.setAnimationLoop(time => {
+  walkthrough?.update(time);
+  if (!walkthrough?.active) controls.update();
   renderer.render(scene, camera);
 });
 </script>

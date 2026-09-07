@@ -55,17 +55,38 @@ for (const slat of model.parts.filter(p => p.name.startsWith('roof_slat_'))) {
   assert.ok(rafters.filter(r => overlapsXY(slat, r) && Math.abs(top(r) - bottom(slat)) < 0.001).length >= 2,
     `${slat.name} lacks support`);
 }
-for (const leg of model.parts.filter(p => /^(table|bench|chair).*_leg_/.test(p.name))) {
-  near(bottom(leg), 0, `${leg.name} floats above the pavement`);
-  assert.ok(leg.position[0] > paving.x && leg.position[0] < paving.x + paving.w);
-  assert.ok(leg.position[1] > paving.y && leg.position[1] < paving.y + paving.d);
+near(table.w, 2.4);
+near(table.d, 1.1);
+near(model.diningTable.center[0], table.x+table.w/2);
+near(model.diningTable.center[1], table.y+table.d/2);
+near(model.diningTable.height, .75);
+const tableTop = parts.get('table_ceramic_top');
+near(Math.max(...tableTop.vertices.map(p => p[2])), .75);
+near(Math.min(...tableTop.vertices.map(p => p[2])), .741);
+assert.equal(tableTop.material, 'table_ceramic');
+for (const [axis, span] of [[0,2.4],[1,1.1]]) near(Math.max(...tableTop.vertices.map(p=>p[axis]))-Math.min(...tableTop.vertices.map(p=>p[axis])),span);
+for (let i=0;i<4;i++) {
+  const foot=parts.get(`table_foot_${i}`),lower=parts.get(`table_lower_branch_${i}`),upper=parts.get(`table_upper_branch_${i}`);
+  near(bottom(foot),0);
+  near(Math.min(...lower.vertices.map(p=>p[2])),top(foot));
+  assert.ok(Math.max(...lower.vertices.map(p=>p[2]))>Math.min(...upper.vertices.map(p=>p[2])));
+  near(Math.max(...upper.vertices.map(p=>p[2])),.695);
+  assert.ok(foot.position[0]>paving.x && foot.position[0]<paving.x+paving.w);
+  assert.ok(foot.position[1]>paving.y && foot.position[1]<paving.y+paving.d);
 }
-near(top(parts.get('table_trestle_0')), bottom(parts.get('table_board_0')));
-assert.ok(top(parts.get('table_leg_0_0')) >= bottom(parts.get('table_trestle_0')),
-  'Table leg must reach trestle');
-for (const side of ['north', 'south']) {
-  near(top(parts.get(`bench_${side}_leg_0_0`)), bottom(parts.get(`bench_${side}_seat_0`)));
-  near(top(parts.get(`bench_${side}_apron_0`)), bottom(parts.get(`bench_${side}_seat_0`)));
+assert.equal(model.diningSeats.length, 8);
+assert.ok(!model.parts.some(p => p.name.startsWith('bench_')));
+for (const seat of model.diningSeats) {
+  near(top(parts.get(`${seat.name}_seat`)), .47);
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+    const glide = parts.get(`${seat.name}_glide_${i}_${j}`);
+    const leg = parts.get(`${seat.name}_leg_${i}_${j}`);
+    near(bottom(glide), 0, 'Chair glide must touch pavement');
+    near(leg.start[2], top(glide));
+    assert.ok(leg.end[2] >= bottom(parts.get(`${seat.name}_seat`)), 'Chair leg must reach seat');
+    assert.ok(glide.position[0] > paving.x && glide.position[0] < paving.x + paving.w);
+    assert.ok(glide.position[1] > paving.y && glide.position[1] < paving.y + paving.d);
+  }
 }
 for (const [width, depth] of [[paving.w, paving.d], [5.6, 3], [8.3, 4.5]]) {
   const garden = structuredClone(GARDEN);
@@ -83,7 +104,7 @@ for (const [width, depth] of [[paving.w, paving.d], [5.6, 3], [8.3, 4.5]]) {
   near(coveredArea, width * depth, 'Pavers and joints must cover the footprint');
 }
 for (const item of model.parts.filter(p => /^(plate_|glass_|serving_bowl)/.test(p.name))) {
-  near(item.position[2], top(parts.get('table_board_0')));
+  near(item.position[2], model.diningTable.height);
   assert.ok(item.position[0] > table.x && item.position[0] < table.x + table.w);
   assert.ok(item.position[1] > table.y && item.position[1] < table.y + table.d);
 }

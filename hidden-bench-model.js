@@ -1,12 +1,10 @@
 const HiddenBenchModel = (() => {
-  function build(garden,terrainPlane,garageGroundPatch) {
+  function build(garden,terrainPlane) {
     const footprint=garden.elements.find(e=>e.id==='zasivarna').parts.find(p=>p.kind==='rect');
     const {x,y,w,d}=footprint,cx=x+w/2,cy=y+d/2;
     const graded=(px,py)=>{
-      const base=Math.max(0,terrainPlane.a*px+terrainPlane.b*py+terrainPlane.c),p=garageGroundPatch;
-      const distance=Math.hypot(Math.max(p.x-px,0,px-p.x-p.w),Math.max(p.y-py,0,py-p.y-p.d));
-      const t=Math.min(1,distance/p.blend),blend=t*t*(3-2*t);
-      return p.level+(base-p.level)*blend;
+      if(typeof terrainPlane==='function')return terrainPlane(px,py);
+      return Math.max(0,terrainPlane.a*px+terrainPlane.b*py+terrainPlane.c);
     };
     const floorHeight=graded(cx,cy),ground=(px,py)=>graded(px,py)-floorHeight,parts=[],feet=[];
     const materials={
@@ -76,7 +74,7 @@ const HiddenBenchModel = (() => {
       for(const [j,py] of [front,backAt(armTop-0.04)].entries()) box(`arm_cap_${i}_${j}`,px-0.015,py-0.014,armTop-0.045,0.03,0.003,0.029,'cap',0.002);
     }
     return {name:'Hidden bench',materials,parts,lights:[],floorHeight,footprint,feet,seatHeight,backHeight:0.9,facing:'N',
-      groundPatches:[garageGroundPatch],plantingClearances:[{x:x-0.1,y:y-0.1,w:w+0.2,d:d+0.2},{x:x-0.1,y:y-0.7,w:w+0.2,d:0.7}]};
+      groundPatches:[],plantingClearances:[{x:x-0.1,y:y-0.1,w:w+0.2,d:d+0.2},{x:x-0.1,y:y-0.7,w:w+0.2,d:0.7}]};
   }
   return {build};
 })();
