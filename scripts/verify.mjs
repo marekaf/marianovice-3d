@@ -33,6 +33,7 @@ const checks=[
   'verify-terrain-banks.mjs',
   'verify-fence-model.mjs',
   'verify-gate-model.mjs',
+  'verify-boundary-memory.mjs',
   'verify-utility-pillar.mjs',
   'verify-viewer-loading.mjs',
   'verify-bathroom-fixtures.mjs',

@@ -18,20 +18,24 @@ const FenceModel=(()=>{
       const samples=Array.from({length:17},(_,i)=>ground(from+spacing*i/16)),bottom=Math.min(...samples,ha,hb)-.06;
       const a=point(from,-.025,bottom),b=point(to,-.025,bottom),c=point(to,.025,bottom),d=point(from,.025,bottom);
       parts.push({name:`concrete_gravel_board_${bay}`,type:'mesh',vertices:[a,b,c,d,point(from,-.025,ha+.2),point(to,-.025,hb+.2),point(to,.025,hb+.2),point(from,.025,ha+.2)],faces:[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]],material:'fenceConcrete',category:'structure'});
-      const vertices=[],faces=[],rows=Math.ceil(1.8/.035),rise=1.8/rows,radius=.0014;
+      const groups=new Map(),rows=Math.ceil(1.8/.035),rise=1.8/rows,radius=.0014;
       for(let col=-1;col*.035<spacing;col++){
-        const offset=vertices.length;
+        const vertices=[],faces=[];
         for(let row=0;row<=rows;row++){
           const t=from+Math.max(.004,Math.min(spacing-.004,col*.035+((row+col+2)%2)*.035));
           const height=base(t)+.2+row*rise,depth=(col%2?.0015:-.0015);
           for(let ring=0;ring<6;ring++){
             const angle=ring*Math.PI/3;
             vertices.push(point(t+Math.cos(angle)*radius,depth+Math.sin(angle)*radius,height));
-            if(row)faces.push([offset+(row-1)*6+ring,offset+(row-1)*6+(ring+1)%6,offset+row*6+(ring+1)%6,offset+row*6+ring]);
+            if(row)faces.push([(row-1)*6+ring,(row-1)*6+(ring+1)%6,row*6+(ring+1)%6,row*6+ring]);
           }
         }
+        const position=vertices[0],relative=vertices.map(vertex=>vertex.map((v,i)=>v-position[i]));
+        const key=relative.flat().map(v=>Math.round(v*1e8)).join(',');
+        if(!groups.has(key))groups.set(key,{vertices:relative,faces,positions:[]});
+        groups.get(key).positions.push(position);
       }
-      parts.push({name:`chain_link_mesh_${bay}`,type:'mesh',vertices,faces,smooth:true,material:'fenceWire',category:'structure'});
+      parts.push({name:`chain_link_mesh_${bay}`,type:'repeatedMesh',groups:[...groups.values()],smooth:true,material:'fenceWire',category:'structure'});
       for(const h of [.21,1.1,1.99])beam(`tension_wire_${bay}_${h}`,point(from,.003,ha+h),point(to,.003,hb+h),.003,'fenceWire');
       for(const t of [from,to])beam(`board_retainer_${bay}_${t}`,point(t,0,base(t)+.02),point(t,0,base(t)+.22),.018);
       bays.push({from,to,bottom,top:[ha+.2,hb+.2],samples,height:2});

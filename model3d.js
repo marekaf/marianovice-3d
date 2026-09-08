@@ -97,7 +97,40 @@ export function buildModel(THREE, model) {
     return [name, material];
   }));
   const batches = new Map();
+  function polygonGeometry(part) {
+    let geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(part.vertices.flatMap(([x, y, z]) => [x, z, y]), 3));
+    const indices = [];
+    for (const face of part.faces) {
+      for (let i = 1; i < face.length - 1; i++) indices.push(face[0], face[i + 1], face[i]);
+    }
+    geometry.setIndex(indices);
+    if (!part.smooth) {
+      const indexed = geometry;
+      geometry = indexed.toNonIndexed();
+      indexed.dispose();
+    }
+    geometry.computeVertexNormals();
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geometry.attributes.position.count * 2), 2));
+    return geometry;
+  }
   for (const [index, part] of model.parts.entries()) {
+    if (part.type === 'repeatedMesh') {
+      const material = materials.get(part.material);
+      for (const [variant, repeated] of part.groups.entries()) {
+        const geometry = polygonGeometry({ ...repeated, smooth: part.smooth });
+        const mesh = new THREE.InstancedMesh(geometry, material, repeated.positions.length);
+        mesh.name = `${part.name}_${variant}`;
+        const transform = new THREE.Matrix4();
+        repeated.positions.forEach(([x, y, z], instance) => {
+          mesh.setMatrixAt(instance, transform.makeTranslation(x, z, y));
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        mesh.castShadow = mesh.receiveShadow = !material.transmission;
+        categories[part.category || 'structure'].add(mesh);
+      }
+      continue;
+    }
     let geometry;
     if (part.type === 'box') {
       const [w, d, h] = part.size;
@@ -140,16 +173,7 @@ export function buildModel(THREE, model) {
     } else if (part.type === 'lathe') {
       geometry = new THREE.LatheGeometry(part.profile.map(([radius, height]) => new THREE.Vector2(radius, height)), part.segments || 64);
     } else if (part.type === 'mesh') {
-      geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(part.vertices.flatMap(([x, y, z]) => [x, z, y]), 3));
-      const indices = [];
-      for (const face of part.faces) {
-        for (let i = 1; i < face.length - 1; i++) indices.push(face[0], face[i + 1], face[i]);
-      }
-      geometry.setIndex(indices);
-      if (!part.smooth) geometry = geometry.toNonIndexed();
-      geometry.computeVertexNormals();
-      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geometry.attributes.position.count * 2), 2));
+      geometry = polygonGeometry(part);
       if (model.materials[part.material].grain) timberUVs(geometry, model.materials[part.material].grain, index);
     } else {
       throw new Error(`Unsupported model geometry: ${part.type}`);

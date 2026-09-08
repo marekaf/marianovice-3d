@@ -16,15 +16,18 @@ assert.deepEqual(model.dims.mesh.pitch,[.042,.012]);
 assert.equal(model.parts.filter(p=>p.name.endsWith('_expanded_metal')).length,3);
 assert.ok(!model.parts.some(p=>p.name.startsWith('wicket_connector')));
 const bounds=vertices=>vertices.reduce((b,p)=>({min:p.map((v,i)=>Math.min(v,b.min[i])),max:p.map((v,i)=>Math.max(v,b.max[i]))}),{min:[Infinity,Infinity,Infinity],max:[-Infinity,-Infinity,-Infinity]});
+const verticesOf=part=>part.groups
+  ? part.groups.flatMap(group=>group.positions.flatMap(position=>group.vertices.map(vertex=>vertex.map((v,i)=>v+position[i]))))
+  : part.vertices??[part.start,part.end];
 for(const part of model.parts){
   assert(model.materials[part.material],part.name);
-  assert((part.vertices??[part.start,part.end]).flat().every(Number.isFinite),part.name);
-  if(part.faces)for(const face of part.faces)assert(face.every(i=>Number.isInteger(i)&&i>=0&&i<part.vertices.length),part.name);
+  assert(verticesOf(part).flat().every(Number.isFinite),part.name);
+  for(const group of part.groups??[part])if(group.faces)for(const face of group.faces)assert(face.every(i=>Number.isInteger(i)&&i>=0&&i<group.vertices.length),part.name);
   if(part.name.endsWith('_expanded_metal')){
-    const b=bounds(part.vertices);
+    const b=bounds(verticesOf(part));
     assert(b.max[1]-b.min[1]>.004,'Expanded metal needs raised physical depth');
     assert(b.min[2]>=.095-1e-8&&b.max[2]<=1.44+1e-8,'Infill must stay behind the frame');
-    const p=part.vertices.slice(0,8),a=p[0],c=p[1],d=p[2],e=p[4];
+    const p=verticesOf(part).slice(0,8),a=p[0],c=p[1],d=p[2],e=p[4];
     const cross=[(c[1]-a[1])*(d[2]-a[2])-(c[2]-a[2])*(d[1]-a[1]),(c[2]-a[2])*(d[0]-a[0])-(c[0]-a[0])*(d[2]-a[2]),(c[0]-a[0])*(d[1]-a[1])-(c[1]-a[1])*(d[0]-a[0])];
     assert(cross.reduce((s,v,i)=>s+v*(e[i]-a[i]),0)<0,'Strand winding must account for its x/height plane');
   }
@@ -33,15 +36,15 @@ const runner=bounds(model.parts.find(p=>p.name==='cantilever_runner').vertices);
 assert(Math.abs(runner.max[0]-runner.min[0]-5.5)<1e-9);
 assert.equal(runner.min[2],.035);
 const opened=GateModel.build({open:1,wicketOpen:1});
-const openLeaf=bounds(opened.parts.find(p=>p.name==='sliding_gate_expanded_metal').vertices);
+const openLeaf=bounds(verticesOf(opened.parts.find(p=>p.name==='sliding_gate_expanded_metal')));
 assert(openLeaf.max[0]<0,'Fully open leaf must leave vehicle opening clear');
-const openWicket=bounds(opened.parts.find(p=>p.name==='wicket_expanded_metal').vertices);
+const openWicket=bounds(verticesOf(opened.parts.find(p=>p.name==='wicket_expanded_metal')));
 assert(openWicket.min[0]>5.06,'Open wicket must clear its independent hinge post');
 assert(openWicket.max[0]<5.14);
 for(let step=0;step<=12;step++){
   const state=GateModel.build({open:0,wicketOpen:step/12});
   for(const part of state.parts.filter(p=>p.category==='wicket')){
-    const vertices=part.vertices??[part.start,part.end];
+    const vertices=verticesOf(part);
     assert(vertices.every(p=>p[0]>4.02),'Entire wicket swing must stay south of the vehicle area');
   }
 }
@@ -71,7 +74,7 @@ if(process.env.GATE_BROWSER==='1'){
       let finite=true;group.traverse(o=>{if(o.isMesh)finite&&=[...o.geometry.attributes.position.array].every(Number.isFinite);});
       return {finite,triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls};
     });
-    assert(result.finite);assert(result.triangles>500000);assert(result.drawCalls<30);
+    assert(result.finite);assert(result.triangles>500000);assert(result.drawCalls<120);
     if(process.env.GATE_SCREENSHOT)await page.screenshot({path:process.env.GATE_SCREENSHOT});
     assert.deepEqual(errors,[]);
     console.log(`Browser: ${result.triangles} triangles in ${result.drawCalls} draw calls, finite rendered geometry.`);
