@@ -7,60 +7,15 @@ const INTERIORS3D = (() => {
 
   // Vehicle group in local coordinates: origin at the ground point under the vehicle centre,
   // nose toward −z (= north when unrotated). Caller positions/rotates it.
-  function buildVehicle(THREE, v) {
-    const g = new THREE.Group();
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
-    const col = parseInt(v.col.slice(1), 16);
-    if (v.moto) {
-      const paint = new THREE.MeshStandardMaterial({ color: col, metalness: 0.6, roughness: 0.4 });
-      for (const wz of [-(v.l / 2 - 0.35), v.l / 2 - 0.35]) {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.12, 12), wheelMat);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(0, 0.32, wz);
-        g.add(wheel);
-      }
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, v.l * 0.55), paint);
-      body.position.y = 0.75;
-      g.add(body);
-      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.7), wheelMat);
-      seat.position.set(0, 0.98, 0.35);
-      g.add(seat);
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(v.w, 0.05, 0.05), wheelMat);
-      bar.position.set(0, 1.05, -(v.l / 2 - 0.55));
-      g.add(bar);
-    } else {
-      const glassMat = new THREE.MeshStandardMaterial({ color: 0x101820, metalness: 0.9, roughness: 0.06 });
-      const paint = new THREE.MeshStandardMaterial({ color: col, metalness: 0.8, roughness: 0.3 });
-      const body = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.55, 4.3), paint);
-      body.position.y = 0.62;
-      g.add(body);
-      const hood = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.1, 1.2), paint);
-      hood.position.set(0, 0.94, -1.4);
-      g.add(hood);
-      const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.14, 0.9), paint);
-      trunk.position.set(0, 0.96, 1.6);
-      g.add(trunk);
-      const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.5, 2.0), glassMat);
-      cabin.position.set(0, 1.14, 0.2);
-      g.add(cabin);
-      for (const [wx, wz] of [[-0.8, -1.45], [0.8, -1.45], [-0.8, 1.45], [0.8, 1.45]]) {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.33, 0.24, 14), wheelMat);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(wx, 0.33, wz);
-        g.add(wheel);
-      }
-      // Body is drawn at 4.3 × 1.82 m; scale to the vehicle's real footprint
-      g.scale.set(v.w / 1.82, 1, v.l / 4.3);
-    }
-    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
-    return g;
+  function buildVehicle(THREE, v, buildModel) {
+    return buildModel(THREE, VehicleModel.build(v));
   }
 
   // The garage-bay vehicles only, positioned on the garage floor (for the interiors page).
-  function garageVehicles(THREE, GARDEN, floorY) {
+  function garageVehicles(THREE, GARDEN, floorY, buildModel) {
     const group = new THREE.Group();
     for (const v of GARDEN.vehicles.filter(v => v.bay === 'garage')) {
-      const g = buildVehicle(THREE, v);
+      const g = buildVehicle(THREE, v, buildModel);
       g.position.set(v.cx, floorY, v.noseZ + v.l / 2);
       if (v.reversed) g.rotation.y = Math.PI;
       group.add(g);
@@ -115,8 +70,6 @@ const INTERIORS3D = (() => {
     };
   }
 
-  // Generic room-data house builder for the interiors page. `data` comes from a LOCAL,
-  // gitignored file (house-interior.js) — this code carries no dimensions of its own.
   // Data contract: outline (polygon, local meters), rooms[{x0,z0,x1,z1,name,id,area,ceil?}],
   // extWalls[{face:'N|S|E|W', a:[x,z], b:[x,z], openings}], intWalls[same minus face],
   // openings[{at (m from wall min-corner along its axis), w, h, sill?}], stairs, clearH.
@@ -124,9 +77,9 @@ const INTERIORS3D = (() => {
   function buildHouse(THREE, data, opts = {}) {
     const floorY = opts.floorY ?? 0;
     const H = (data.clearH ?? 2.52) + 0.2;
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0xe8e5df, roughness: 0.9 });
+    const wallMat = new THREE.MeshStandardMaterial({ color: opts.finishColors?.wall ?? 0xe8e5df, roughness: 0.9 });
     const floorMat = new THREE.MeshStandardMaterial({ color: 0xd7c9a8, roughness: 0.6 });
-    const ceilMat = new THREE.MeshStandardMaterial({ color: 0xf4f2ee, roughness: 0.9, side: THREE.DoubleSide });
+    const ceilMat = new THREE.MeshStandardMaterial({ color: opts.finishColors?.ceiling ?? 0xf4f2ee, roughness: 0.9, side: THREE.DoubleSide });
 
     // Walls stop at the clear height — the lid (strop plate) rests ON them. They run 1 cm
     // INTO the plate so no wall-top face is coplanar with the lid underside (z-fighting).
@@ -171,6 +124,10 @@ const INTERIORS3D = (() => {
         for (const [px, py] of w.profile) shape.lineTo(px, py);
         shape.lineTo(w.profile[w.profile.length - 1][0], 0);
         shape.closePath();
+        for(const g of w.glazing||[]){
+          const hole=new THREE.Path();hole.moveTo(g.x0,g.sill);hole.lineTo(g.x0,g.sill+g.h);
+          hole.lineTo(g.x1,g.sill+g.h);hole.lineTo(g.x1,g.sill);hole.closePath();shape.holes.push(hole);
+        }
         const geom = new THREE.ExtrudeGeometry(shape, { depth: bz - az, bevelEnabled: false });
         geom.translate(0, floorY, az);
         const m = new THREE.Mesh(geom, wallMat);
@@ -178,6 +135,8 @@ const INTERIORS3D = (() => {
         m.receiveShadow = true;
         target.add(m);
         for (const g of w.glazing || []) {
+          const openingModel=opts.buildModel&&data.buildOpening?.(w,g,(w.glazing||[]).indexOf(g));
+          if(openingModel){target.add(opts.buildModel(THREE,{...openingModel,floorHeight:floorY}));continue;}
           const gl = new THREE.Mesh(new THREE.BoxGeometry(g.x1 - g.x0, g.h, 0.05),
             new THREE.MeshStandardMaterial({ color: 0x2a3540, roughness: 0.15, metalness: 0.6 }));
           gl.position.set((g.x0 + g.x1) / 2, floorY + g.sill + g.h / 2, bz + 0.01);
@@ -188,15 +147,37 @@ const INTERIORS3D = (() => {
       const alongX = (bx - ax) >= (bz - az);
       const L = alongX ? bx - ax : bz - az;
       const wh = w.h ?? wallH;   // knee walls / railings carry their own height
-      const seg = (s0, s1, y0, y1) => alongX
-        ? mkB(target, ax + s0, y0, az, ax + s1, y1, bz, wallMat)
-        : mkB(target, ax, y0, az + s0, bx, y1, az + s1, wallMat);
+      const seg = (s0, s1, y0, y1) => {
+        const cross0 = alongX ? az : ax, cross1 = alongX ? bz : bx;
+        const reveals = (w.openings || []).filter(o => o.reveal && y0 < floorY + (o.sill || 0) + o.h && y1 > floorY + (o.sill || 0));
+        const starts = [s0, s1], depths = [cross0, cross1], heights = [y0, y1];
+        for (const o of reveals) {
+          const center = o.at + o.w / 2;
+          starts.push(...[center - o.reveal.width / 2, center + o.reveal.width / 2].filter(s => s > s0 && s < s1));
+          depths.push(...[o.reveal.depth0, o.reveal.depth1].filter(d => d > cross0 && d < cross1));
+          heights.push(...[floorY + (o.sill || 0), floorY + (o.sill || 0) + o.h].filter(y => y > y0 && y < y1));
+        }
+        starts.sort((a, b) => a - b); depths.sort((a, b) => a - b); heights.sort((a, b) => a - b);
+        for (let i = 0; i < starts.length - 1; i++) for (let j = 0; j < depths.length - 1; j++) for (let k = 0; k < heights.length - 1; k++) {
+          const a = starts[i], b = starts[i + 1], c = depths[j], d = depths[j + 1];
+          const bottom = heights[k], top = heights[k + 1];
+          if (b - a < 1e-8 || d - c < 1e-8 || top - bottom < 1e-8) continue;
+          if (reveals.some(o => Math.abs((a + b) / 2 - o.at - o.w / 2) < o.reveal.width / 2 &&
+            (c + d) / 2 > o.reveal.depth0 && (c + d) / 2 < o.reveal.depth1 &&
+            (bottom + top) / 2 > floorY + (o.sill || 0) && (bottom + top) / 2 < floorY + (o.sill || 0) + o.h)) continue;
+          if (alongX) mkB(target, ax + a, bottom, c, ax + b, top, d, wallMat);
+          else mkB(target, c, bottom, az + a, d, top, az + b, wallMat);
+          opts.decorateWallMesh?.(target.children[target.children.length - 1], w);
+        }
+      };
       let cur = 0;
       for (const o of [...(w.openings || [])].sort((p, q) => p.at - q.at)) {
         if (o.at > cur) seg(cur, o.at, floorY, floorY + wh);
         const sill = o.sill || 0;
         if (sill > 0) seg(o.at, o.at + o.w, floorY, floorY + sill);
         if (sill + o.h < wh) seg(o.at, o.at + o.w, floorY + sill + o.h, floorY + wh);
+        const openingModel = opts.buildModel && data.buildOpening?.(w, o, w.openings.indexOf(o));
+        if (openingModel) target.add(opts.buildModel(THREE, { ...openingModel, floorHeight: floorY }));
         cur = o.at + o.w;
       }
       if (cur < L) seg(cur, L, floorY, floorY + wh);
@@ -290,7 +271,10 @@ const INTERIORS3D = (() => {
     }
     // Fireplace — Hoxter insert in a masonry casing with the chimney continuing up through
     // the cathedral; firebox glass on the north face toward the living room
-    if (data.fireplace) {
+    if (data.fireplace && data.buildFireplace && opts.buildModel) {
+      const fireplace = data.buildFireplace();
+      intGroup.add(opts.buildModel(THREE, {...fireplace, floorHeight:floorY}));
+    } else if (data.fireplace) {
       const f = data.fireplace;
       const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdedad2, roughness: 0.85 });
       const body = new THREE.Mesh(new THREE.BoxGeometry(f.x1 - f.x0, 4.6, f.z1 - f.z0), bodyMat);
@@ -333,7 +317,9 @@ const INTERIORS3D = (() => {
       labels.add(label);
     }
 
-    if (data.stairs) {
+    if (data.stairs && data.buildStairs && opts.buildModel) {
+      intGroup.add(opts.buildModel(THREE,{...data.buildStairs(),floorHeight:floorY}));
+    } else if (data.stairs) {
       const s = data.stairs;
       const stepMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });
       const runAxis = (s.x1 - s.x0) >= (s.z1 - s.z0) ? 'x' : 'z';

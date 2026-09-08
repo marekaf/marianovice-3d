@@ -8,7 +8,7 @@
   #info { position: absolute; top: 0; left: 0; padding: 12px 16px; background: rgba(0,0,0,0.65); color: white; z-index: 100; line-height: 1.5; max-width: 320px; border-bottom-right-radius: 8px; font-size: 13px; }
   #info b { font-size: 14px; }
   #info small { opacity: 0.75; }
-  #presets { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.65); padding: 10px 12px; z-index: 100; border-radius: 6px; }
+  #presets { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.65); padding: 10px 12px; z-index: 100; border-radius: 6px; max-height: calc(100vh - 260px); overflow-y: auto; }
   #presets h4 { color: #fff; margin: 0 0 8px 0; font-size: 12px; opacity: 0.85; }
   #presets button { display: block; width: 100%; margin: 4px 0; padding: 6px 12px; cursor: pointer; background: #5dade2; color: white; border: none; border-radius: 4px; font-size: 13px; text-align: left; }
   #presets button:hover { background: #3a8fc9; }
@@ -17,7 +17,7 @@
   #toggles input { margin-right: 6px; }
   #legend { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.65); color: white; padding: 10px 12px; font-size: 11px; z-index: 100; border-radius: 6px; max-width: 220px; }
   #legend .swatch { display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 6px; border: 1px solid rgba(255,255,255,0.3); }
-  #timeBar { position: absolute; top: 100px; left: 12px; background: rgba(0,0,0,0.65); padding: 8px 12px; z-index: 100; color: white; border-radius: 6px; font-size: 12px; max-width: 340px; }
+  #timeBar { position: absolute; top: 100px; left: 12px; background: rgba(0,0,0,0.65); padding: 8px 12px; z-index: 100; color: white; border-radius: 6px; font-size: 12px; max-width: 340px; max-height: calc(100vh - 250px); overflow-y: auto; }
   #timeBar input[type="range"] { width: 200px; vertical-align: middle; }
   #timeBar .lbl-mono { display: inline-block; min-width: 56px; font-family: monospace; }
   #timeBar .seasons { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
@@ -32,7 +32,7 @@
 <div id="info">
   <b>Garden — 3D visualization</b><br>
   <small>Left mouse: rotate · Right mouse: pan · Scroll: zoom</small><br>
-  <small style="opacity:0.85">Other: <a href="editor.html" style="color:#5dade2">2D editor</a> · <a href="zahrada-plan.svg" style="color:#5dade2">2D plan</a> · <a href="zahrada-flat-plan.svg" style="color:#5dade2">grading plan</a> · <a href="zahrada-driveway-check.svg" style="color:#5dade2">driveway check</a> · <a href="interior.html" style="color:#5dade2">interiors</a></small>
+  <small style="opacity:0.85">Other: <a href="editor.html" style="color:#5dade2">2D editor</a> · <a href="zahrada-plan.svg" style="color:#5dade2">2D plan</a> · <a href="zahrada-flat-plan.svg" style="color:#5dade2" title="Older layout and levels; not the current grading proposal">legacy grading plan</a> · <a href="zahrada-driveway-check.svg" style="color:#5dade2">driveway check</a> · <a href="interior.html" style="color:#5dade2">interiors</a></small>
 </div>
 
 <div id="presets">
@@ -45,7 +45,13 @@
   <button onclick="setPreset('ground')">Eye level (1.7 m)</button>
   <button onclick="setPreset('garage')">Garage interior</button>
   <button onclick="setPreset('sauna')">Sauna and spa</button>
+  <button onclick="setPreset('tubSeat')">From the hot tub</button>
   <button onclick="setPreset('pergola')">Pergola dining</button>
+  <button onclick="setPreset('pergolaSeat')">From a pergola seat</button>
+  <button onclick="setPreset('westPath')">House to sauna path</button>
+  <button onclick="setPreset('eastLounge')">East terrace lounge</button>
+  <button onclick="setPreset('atriumLounge')">Atrium lounge</button>
+  <button onclick="setPreset('cars')">Parked cars</button>
   <button onclick="setPreset('greenhouse')">Greenhouse</button>
   <button onclick="setPreset('raisedBeds')">Kitchen garden</button>
   <button onclick="setPreset('firepit')">Firepit seating</button>
@@ -55,7 +61,7 @@
 
 <div id="toggles">
   <label><input type="checkbox" id="togglePlot" checked> Fence</label>
-  <label><input type="checkbox" id="toggleTrees" checked> Trees</label>
+  <label><input type="checkbox" id="toggleTrees" checked> Planting</label>
   <label><input type="checkbox" id="toggleRoof" checked> Roof</label>
   <label><input type="checkbox" id="toggleGate"> Garage gate open</label>
   <label><input type="checkbox" id="toggleVehicles" checked> Vehicles parked</label>
@@ -100,7 +106,19 @@
 
 <script src="terrain.js?v=20260827"></script>
 <script src="layout.js?v=20260828g"></script>
+<script src="garden-route-model.js"></script>
 <script src="interiors3d.js?v=20260905d"></script>
+<script src="vehicle-model.js"></script>
+<script src="exterior-furniture-model.js"></script>
+<script src="portal-drain-model.js"></script>
+<script src="planting-preview.js"></script>
+<script src="tree-model.js"></script>
+<script src="planting-profiles.js"></script>
+<script src="planting-guide.js"></script>
+<script src="perennial-model.js"></script>
+<script src="seasonal-planting.js"></script>
+<script src="privacy-preview.js"></script>
+<script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=20260905"></script>
 <script src="pergola-model.js?v=20260905"></script>
 <script src="garage-model.js?v=20260905"></script>
@@ -110,10 +128,37 @@
 <script src="firepit-model.js?v=20260905"></script>
 <script src="hidden-bench-model.js?v=20260905"></script>
 <script src="site-terrain.js?v=20260905"></script>
+<script src="survey-surface.js"></script>
+<script src="terrain-preview.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=20260905d';
+import { GroundSurfaceModel } from './ground-surface-model.js';
+import { ShrubModel } from './shrub-model.js';
+
+await new Promise(resolve => {
+  const script = document.createElement('script');
+  script.src = './house-interior.js?v=20260906';
+  script.onload = script.onerror = resolve;
+  document.head.appendChild(script);
+});
+const localHouseData = typeof HOUSE_INTERIOR === 'undefined' ? null : HOUSE_INTERIOR;
+if(localHouseData)await new Promise(resolve=>{
+  const script=document.createElement('script');script.src='./docs/planting-palette.js';
+  script.onload=script.onerror=resolve;document.head.appendChild(script);
+});
+const localPalette=typeof PLANTING_PALETTE==='undefined'?null:PLANTING_PALETTE;
+if(localHouseData)await new Promise(resolve=>{
+  const script=document.createElement('script');script.src='./docs/survey-terrain.js';
+  script.onload=script.onerror=resolve;document.head.appendChild(script);
+});
+const surveySurface=typeof SURVEY_TERRAIN==='undefined'?null:SurveySurface.create(SURVEY_TERRAIN.points,TERRAIN.plane);
+const existingGround=surveySurface?.height??((x,z)=>TERRAIN.basePlaneHeight(x,z));
+if(localHouseData?.roofWindowModelUrl)await new Promise(resolve=>{
+  const script=document.createElement('script');script.src=localHouseData.roofWindowModelUrl;
+  script.onload=script.onerror=resolve;document.head.appendChild(script);
+});
 
 // Layout (footprints in meters) comes from layout.js — x → east, y → south (z here)
 const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
@@ -121,17 +166,26 @@ const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
 const pergolaModel = PergolaModel.build(GARDEN);
-const greenhouseModel = GreenhouseModel.build(GARDEN, TERRAIN.plane);
+const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround);
 const raisedBedsModel = RaisedBedsModel.build(GARDEN);
-const firepitModel = FirepitModel.build(GARDEN, TERRAIN.plane);
 const garageGround = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
-const hiddenBenchModel = HiddenBenchModel.build(GARDEN, TERRAIN.plane, garageGround);
 const siteTerrain = SiteTerrain.create(GARDEN, TERRAIN.plane, { garage: garageGround,
-  pergola: pergolaModel.groundPatch, greenhouse: greenhouseModel.groundPatch, raisedBeds: raisedBedsModel.groundPatch });
+  pergola: pergolaModel.groundPatch, greenhouse: greenhouseModel.groundPatch, raisedBeds: raisedBedsModel.groundPatch },
+  {surveySurface:surveySurface?.data,houseFFL:TERRAIN.houseFFLInternal});
+const firepitModel = FirepitModel.build(GARDEN, siteTerrain.height);
+const hiddenBenchModel = HiddenBenchModel.build(GARDEN, siteTerrain.height);
+const outdoorLoungeModel = ExteriorFurnitureModel.build(GARDEN, siteTerrain.spec.deckTop);
+const facadeGravelClearances = [{ x: 10.48, y: 6.73, w: 10.8, d: .45 }, { x: 10.48, y: 26.43, w: 10.8, d: 1.02 }];
 const plantingClearances = [...SaunaModel.plantingClearances(GARDEN), ...pergolaModel.plantingClearances,
   ...greenhouseModel.plantingClearances, ...raisedBedsModel.plantingClearances, ...firepitModel.plantingClearances,
-  ...hiddenBenchModel.plantingClearances];
+  ...hiddenBenchModel.plantingClearances, ...outdoorLoungeModel.circulation, ...facadeGravelClearances,
+  ...GARDEN.elements.filter(e => e.meta?.circulation).flatMap(e => e.parts.filter(p => p.kind === 'rect')),
+  ...outdoorLoungeModel.footprints.map(r => ({ x:r.x-.08,y:r.y-.08,w:r.w+.16,d:r.d+.16 }))];
 function overlapsStructureAccess(x, y, radius) {
+  if (GardenRouteModel.distance(GARDEN.gardenRoutes ?? [],x,y)<=radius) return true;
+  if ((GARDEN.gardenReserves ?? []).some(r=>Math.hypot(Math.max(r.x-x,0,x-r.x-r.w),Math.max(r.y-y,0,y-r.y-r.d))<=radius)) return true;
+  const pond=EL.pond.parts.find(p=>p.kind==='ellipse');
+  if (((x-pond.cx)/(pond.rx+radius+.25))**2+((y-pond.cy)/(pond.ry+radius+.25))**2<1) return true;
   return plantingClearances.some(r => {
     const dx = Math.max(r.x - x, 0, x - r.x - r.w);
     const dy = Math.max(r.y - y, 0, y - r.y - r.d);
@@ -340,9 +394,7 @@ axes.visible = false;
 scene.add(axes);
 
 // ───────────────────────── TERRAIN (slope SW→NE, ~3 m fall) ─────────────────────────
-// Fitted to the DPS koordinační situace (C.3): house ±0.000 = 397.00 Bpv, contours
-// 398 (SW corner) → 397 (house) → 395.5 (NE), ≈5.8% grade. Constant anchors the house
-// centroid (16.48, 17.14) at 2.465 so all cut/deck/garage levels keyed to it stay valid.
+// Finished floors use the house datum independently of surveyed ground and proposed grading.
 const terrainHeight = siteTerrain.height;
 const PBOWL = siteTerrain.spec.pond;
 
@@ -385,15 +437,11 @@ function addBox(plotX, plotY, w, d, h, color, opts = {}) {
   return mesh;
 }
 
-// Extruded polygon (house) — placed on terrain by centroid
-function addExtrudedPoly(verts2d, h, color) {
+// The finished floor stays fixed while the plinth follows the ground.
+function addExtrudedPoly(verts2d, h, color, baseY) {
   const shape = makePolyShape(verts2d);
-  let cx = 0, cz = 0;
-  for (const v of verts2d) { cx += v[0]; cz += v[1]; }
-  cx /= verts2d.length; cz /= verts2d.length;
-  const baseY = terrainHeight(cx, cz);
   // Extend down to lowest vertex terrain — top unchanged, gap filled like a plinth
-  const yMin = Math.min(...verts2d.map(([x, z]) => terrainHeight(x, z)));
+  const yMin = Math.min(baseY,...verts2d.map(([x, z]) => terrainHeight(x, z)));
   const geom = new THREE.ExtrudeGeometry(shape, { depth: h + (baseY - yMin), bevelEnabled: false });
   geom.rotateX(-Math.PI / 2);
   geom.translate(0, yMin, 0);
@@ -519,50 +567,74 @@ function flowerMatFor(color) {
   if (!flowerMatCache.has(color)) flowerMatCache.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.6, flatShading: true }));
   return flowerMatCache.get(color);
 }
-// leafy mass: `count` flat-shaded blobs; higher blobs use lighter greens. flatten<1 → low mound.
-function leafyMass(cx, cy, cz, radius, count, flatten) {
-  for (let i = 0; i < count; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const rr = Math.pow(Math.random(), 0.5) * radius * 0.72;
+// Canopy instances share a rooted plant group so comparison scaling keeps branches and leaves together.
+function leafyMass(cx, cy, cz, radius, count, flatten, target, color = 0x5f8452) {
+  leafyMass.material ||= new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.96 });
+  const lobes = count * 7;
+  const foliage = new THREE.InstancedMesh(icoGeo, leafyMass.material, lobes);
+  foliage.userData.leafHabit = target.userData.leafHabit;
+  const transform = new THREE.Object3D();
+  const baseColor = new THREE.Color(color);
+  let written = 0;
+  for (let i = 0; i < lobes; i++) {
+    const a = i * 2.399963229728653 + Math.random() * 0.4;
+    const rr = Math.sqrt(Math.random()) * radius * 0.78;
     const up = Math.random();
     const px = cx + Math.cos(a) * rr, pz = cz + Math.sin(a) * rr;
-    const py = cy + (up - 0.35) * radius * 1.6 * flatten;
-    const s = radius * (0.5 + Math.random() * 0.42);
+    const py = cy + (up - 0.42) * radius * 1.55 * flatten * Math.sqrt(1 - (rr / radius) ** 2);
+    const s = radius * (0.17 + Math.random() * 0.14);
     if (overlapsStructureAccess(px, pz, s)) continue;
-    const gi = Math.min(LEAF_GREENS.length - 1, Math.floor(up * LEAF_GREENS.length));
-    const blob = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[gi]));
-    blob.position.set(px, py, pz);
-    blob.scale.setScalar(s);
-    blob.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-    blob.castShadow = true;
-    treesGroup.add(blob);
+    transform.position.set(px - target.position.x, py - target.position.y, pz - target.position.z);
+    transform.scale.set(s, s * (0.65 + Math.random() * 0.3), s);
+    transform.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    transform.updateMatrix();
+    foliage.setMatrixAt(written, transform.matrix);
+    foliage.setColorAt(written++, baseColor.clone().offsetHSL((Math.random() - 0.5) * 0.025, (Math.random() - 0.5) * 0.09, (up - 0.55) * 0.12));
   }
+  foliage.count = written;
+  foliage.castShadow = foliage.receiveShadow = true;
+  target.add(foliage);
 }
 
-// Tree — tapered trunk + layered flat-shaded canopy
-function addTree(plotX, plotY, height = 4, canopyColor) {
-  const baseY = terrainHeight(plotX, plotY);
-  const trunkH = height * 0.42;
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(height * 0.04, height * 0.09, trunkH, 6), trunkMat);
-  trunk.position.set(plotX, baseY + trunkH / 2, plotY);
-  trunk.castShadow = true;
-  treesGroup.add(trunk);
-  const crownR = height * 0.4;
-  leafyMass(plotX, baseY + trunkH + crownR * 0.7, plotY, crownR, 8 + (Math.random() * 4 | 0), 0.7);
+// Tree with a tapered trunk and branched canopy.
+function addTree(plotX, plotY, height = 4, canopyColor, leafHabit = 'deciduous', form) {
+  if(overlapsStructureAccess(plotX,plotY,.35))return;
+  const orchard = circlesOf('orchard').some(c => Math.hypot(c.cx - plotX, c.cy - plotY) < 0.01);
+  const tree = TreeModel.create(THREE, { x: plotX, z: plotY, groundY: terrainHeight(plotX, plotY),
+    height, color: canopyColor, leafHabit, form: orchard ? 'orchard' : form, overlapsStructureAccess });
+  const anchor=['orchard','northTrees','eastTrees'].flatMap(circlesOf).find(c=>c.cx===plotX&&c.cy===plotY);
+  if(anchor?.canopyRadius) {
+    const bounds=new THREE.Box3().setFromObject(tree);
+    const radius=Math.hypot(Math.max(Math.abs(bounds.min.x-plotX),Math.abs(bounds.max.x-plotX)),Math.max(Math.abs(bounds.min.z-plotY),Math.abs(bounds.max.z-plotY)));
+    const scale=Math.min(1,anchor.canopyRadius/radius);tree.scale.set(scale,1,scale);
+    tree.userData.canopyRadius=anchor.canopyRadius;
+  }
+  treesGroup.add(tree);
 }
 
 // Platform (terrace, sidewalk) following terrain — top surface only
 function addTerrainPlatform(verts2d, thickness, color, opts = {}) {
   const shape = makePolyShape(verts2d);
-  const geom = new THREE.ShapeGeometry(shape);
-  geom.rotateX(-Math.PI/2);
-  const pos = geom.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const z = pos.getZ(i);
-    pos.setY(i, terrainHeight(x, z) + thickness);
+  const outline = new THREE.ShapeGeometry(shape);
+  outline.rotateX(-Math.PI/2);
+  const source=outline.attributes.position,positions=[],uv=[];
+  function triangle(a,b,c) {
+    if(Math.max(Math.hypot(a[0]-b[0],a[1]-b[1]),Math.hypot(b[0]-c[0],b[1]-c[1]),Math.hypot(c[0]-a[0],c[1]-a[1]))>.4) {
+      const midpoint=(p,q)=>[(p[0]+q[0])/2,(p[1]+q[1])/2];
+      const ab=midpoint(a,b),bc=midpoint(b,c),ca=midpoint(c,a);
+      triangle(a,ab,ca);triangle(ab,b,bc);triangle(ca,bc,c);triangle(ab,bc,ca);
+      return;
+    }
+    for(const [x,z] of [a,b,c]){positions.push(x,terrainHeight(x,z)+thickness,z);uv.push(x,z);}
   }
-  pos.needsUpdate = true;
+  for(let i=0;i<outline.index.count;i+=3) {
+    const corners=[0,1,2].map(offset=>{const k=outline.index.getX(i+offset);return [source.getX(k),source.getZ(k)];});
+    triangle(...corners);
+  }
+  outline.dispose();
+  const geom=new THREE.BufferGeometry();
+  geom.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geom.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
   geom.computeVertexNormals();
   const mesh = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({
     color, roughness: opts.roughness ?? 0.7,
@@ -619,15 +691,11 @@ scene.add(fenceGroup);
 scene.add(roofGroup);
 scene.add(furnitureGroup);
 
-// (formerly a stacked-cone conifer) — now a leafy tree so no needle/spruce shapes remain
-function addConifer(plotX, plotY, height = 5) {
-  addTree(plotX, plotY, height * 0.95, 0x557f38);
-}
-
-// Bush — low flat-shaded mound
+// Rooted shrub canopy.
 function addBush(plotX, plotY, size = 1, color = 0x5f8452) {
-  const baseY = terrainHeight(plotX, plotY);
-  leafyMass(plotX, baseY + size * 0.3, plotY, size * 0.72, 4 + (Math.random() * 3 | 0), 0.55);
+  if (overlapsStructureAccess(plotX, plotY, size * .72)) return;
+  const bush = ShrubModel.create(THREE,{x:plotX,z:plotY,groundY:terrainHeight(plotX,plotY),size,color});
+  treesGroup.add(bush);
 }
 
 // Procedural speckle texture (grass/asphalt) — hsl-jittered rects over a base color
@@ -728,10 +796,19 @@ const groundGeom = (() => {
   const xs = plotVerts.map(p => p[0]), zs = plotVerts.map(p => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const contactPoints = hiddenBenchModel.feet.flatMap(foot => foot.bottomCorners);
+  const gradingRects = [...siteTerrain.spec.cutRects, ...siteTerrain.spec.fillPads, ...siteTerrain.spec.levelPads,
+    ...siteTerrain.spec.postCuts, ...siteTerrain.spec.finishPads ?? [], ...siteTerrain.spec.protectedPads ?? []];
   const samples = (start, end, axis) => {
     const count = Math.ceil((end - start) / 0.7);
+    const boundaries = gradingRects.flatMap(rect => {
+      const blend = rect.blend ?? rect.eastBlend ?? siteTerrain.spec.cutBlend;
+      const offsets = blend <= .35 ? Array.from({ length: Math.ceil(blend / .05) * 2 + 1 }, (_, i) =>
+        -blend + i * blend / Math.ceil(blend / .05)) : [-blend, -blend + .1, -.1, 0, .1, blend - .1, blend];
+      return [rect[axis === 0 ? 'x0' : 'z0'], rect[axis === 0 ? 'x1' : 'z1']].flatMap(value => offsets.map(offset => value + offset));
+    });
     return [...new Set([...Array.from({ length: count + 1 }, (_, i) => start + (end - start) * i / count),
-      ...contactPoints.map(point => point[axis]).filter(value => value > start && value < end)])].sort((a, b) => a - b);
+      ...contactPoints.map(point => point[axis]), ...boundaries]
+      .filter(value => value >= start && value <= end).map(value => Number(value.toFixed(8))))].sort((a, b) => a - b);
   };
   const xSamples = samples(x0, x1, 0), zSamples = samples(z0, z1, 1);
   const nx = xSamples.length - 1, nz = zSamples.length - 1;
@@ -770,12 +847,11 @@ const groundGeom = (() => {
   return g;
 })();
 
-const ground = new THREE.Mesh(
-  groundGeom,
-  new THREE.MeshStandardMaterial({ color: 0xdfe6d8, map: grassTex, roughness: 0.95 })
-);
+const groundSurface = GroundSurfaceModel.create(THREE, { garden: GARDEN, clearances: plantingClearances, grassTexture: grassTex });
+const ground = new THREE.Mesh(groundGeom, groundSurface.material);
 ground.receiveShadow = true;
 scene.add(ground);
+const terrainPreview=TerrainPreview.create({THREE,scene,ground,existingHeight:existingGround,proposedHeight:terrainHeight,surveyed:!!surveySurface});
 
 // ───────────────────────── HOUSE ─────────────────────────
 const houseVerts = EL.house.parts.find(p => p.kind === 'polygon').points;
@@ -787,7 +863,7 @@ const roofRise = 3.8; // half the 7.6 m gable span → 45° main pitch (DPS)
 const GABLE = [13.68, 21.28]; // 45° gable x-range; west of it is a 5° lean-to
 // Facade: Weber mineral render HN3E, HBW 61.9 (light warm greige) — user's chosen colour
 const HOUSE_RENDER = 0xcfc8ba;
-const { baseY: houseBaseY } = addExtrudedPoly(houseVerts, wallH, HOUSE_RENDER);
+const { mesh: houseMesh, baseY: houseBaseY } = addExtrudedPoly(houseVerts, wallH, HOUSE_RENDER, siteTerrain.spec.houseBaseY);
 
 // Sedlová střecha (sedlový štít na S a J — ridge running E-W is wrong; per studie štít na south, takže ridge S-N or E-W?)
 // Studie: "Dominantní sedlový štít" v jižním pohledu = gable at south face. Ridge runs perpendicular to gable face, tj. ridge S-N.
@@ -869,6 +945,7 @@ for (const [wz0, wz1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
 }
 
 // Wing roof fills — close the triangular gaps under the shed roofs (like the garage)
+const gableFillMeshes=[];
 {
   const wallTopY = houseTerrainY + wallH;
   // Gable ends (štít) + wing infill = white render matching the facade (per user)
@@ -880,6 +957,7 @@ for (const [wz0, wz1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
     const m = new THREE.Mesh(g, mat);
     m.castShadow = true;
     scene.add(m);
+    gableFillMeshes.push(m);
   };
   const springY = wallTopY + KNEE;  // gable pozednice, 0.28 above the general walls
   const gmidX = (GABLE[0] + GABLE[1]) / 2;
@@ -936,7 +1014,26 @@ const garageGateClosed = gar.gateClosed, garageGateOpen = gar.gateOpen;
 // Interior floors override terrain in first-person mode (indoors = flat slab, not graded terrain)
 const walkSurfaces = [
   { x0: GA.x, z0: GA.y, x1: GA.x + GA.w, z1: GA.y + GA.d, y: garageFloorY },
+  ...['eastTerrace','westTerrace'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.deckTop}))),
+  ...['sauna','saunaShelter','saunaPath'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.deckTop}))),
+  ...EL.pergola.parts.filter(p=>p.role==='paving').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:pergolaModel.floorHeight})),
+  ...EL.greenhouse.parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:greenhouseModel.floorHeight})),
 ];
+function insidePolygon(points,x,z){
+  let inside=false;
+  for(let i=0,j=points.length-1;i<points.length;j=i++){
+    const [ax,az]=points[j],[bx,bz]=points[i];
+    if((az>z)!==(bz>z)&&x<(bx-ax)*(z-az)/(bz-az)+ax)inside=!inside;
+  }
+  return inside;
+}
+function walkingHeight(x,z){
+  if(GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<=0)return siteTerrain.routeHeight(x,z);
+  const surface=walkSurfaces.find(s=>x>=s.x0&&x<=s.x1&&z>=s.z0&&z<=s.z1);
+  if(surface)return surface.y;
+  if(insidePolygon(houseVerts,x,z))return houseBaseY;
+  return terrainHeight(x,z)+(insidePolygon(EL.driveway.parts.find(p=>p.kind==='polygon').points,x,z)?.05:0);
+}
 
 // Garage pult roof — high at the carport junction (west), low at the east eave; no N/S overhang
 {
@@ -1001,7 +1098,7 @@ const carportWestY = garageWallTop + 0.5;
 // ───────────────────────── SAUNA + HOT TUB + SHELTER ─────────────────────────
 const SA = rectOf('sauna');
 const SH = rectOf('saunaShelter');
-const saunaModel = SaunaModel.build(GARDEN, TERRAIN.plane);
+const saunaModel = SaunaModel.build(GARDEN, siteTerrain.spec.deckTop);
 const saunaFloorY = saunaModel.floorHeight;
 const saunaGroup = buildModel(THREE, saunaModel);
 scene.add(saunaGroup);
@@ -1012,79 +1109,159 @@ const PG = rectOf('pergola');
 const pergolaGroup = buildModel(THREE, pergolaModel);
 scene.add(pergolaGroup);
 lampLights.push(...pergolaGroup.userData.lights);
+const privacyPreview = PrivacyPreview.create({ THREE, scene, terrainHeight, saunaModel, pergolaModel, saunaGroup, pergolaGroup });
 
 // ───────────────────────── TERRACES (sledují terén) ─────────────────────────
 // Terasa V — level deck at house floor, aligned with the HS sliding-door sills
 const deckTop = siteTerrain.spec.deckTop;
+const portalDrainModel = PortalDrainModel.build(GARDEN, deckTop, localHouseData?.exteriorOpenings?.() ?? []);
+const portalDrainGroup = buildModel(THREE, portalDrainModel);
+scene.add(portalDrainGroup);
+const drainageNote = document.createElement('p');
+drainageNote.style.cssText = 'max-width:290px;font-size:11px;line-height:1.4;margin:6px 0';
+drainageNote.textContent = 'East portal: flush 100 mm drainage strip and 12 mm facade gap shown as a proposal. Channel size, outlet, falls and waterproofing are not approved construction details.';
+terrainPreview.panel.append(drainageNote);
 {
   const etRects = EL.eastTerrace.parts.filter(pt => pt.kind === 'rect');
   const ET = etRects[0];
   for (const R of etRects) {
-    const deckTex = woodTex.clone();
-    deckTex.repeat.set(R.w / 2, R.d / 2);
-    const deck = new THREE.Mesh(
-      new THREE.BoxGeometry(R.w, 0.08, R.d),
-      new THREE.MeshStandardMaterial({ color: 0xa87d4a, map: deckTex, roughness: 0.7 })
-    );
-    deck.position.set(R.x + R.w / 2, deckTop - 0.04, R.y + R.d / 2);
-    deck.castShadow = true;
-    deck.receiveShadow = true;
+    const materials = {
+      joist: { color: '#574638', roughness: .85, grain: 'y' },
+      pedestal: { color: '#343735', roughness: .8 },
+      pad: { color: '#97958d', roughness: .95 },
+    };
+    for (let i = 0; i < 4; i++) materials[`cedar_${i}`] = {
+      color: ['#a87d4a','#ac814e','#a37a48','#ad8352'][i], roughness: 0.78, grain: 'x',
+    };
+    const parts = [];
+    const joistCount=Math.ceil((R.w-.12)/.4);
+    for(let j=0;j<=joistCount;j++) {
+      const x=R.x+.16+(R.w-.22)*j/joistCount;
+      parts.push({name:`joist_${j}`,type:'box',position:[x,R.y+R.d/2,-.0445],size:[.045,R.d-.08,.045],material:'joist',category:'deck'});
+      const supports=Math.ceil((R.d-.24)/1.2);
+      for(let k=0;k<=supports;k++) {
+        const z=R.y+.12+(R.d-.24)*k/supports;
+        const bearingGround=[-.09,0,.09].flatMap(dx=>[-.09,0,.09].map(dz=>terrainHeight(x+dx,z+dz)-deckTop));
+        const bottom=Math.min(...bearingGround)-.08;
+        const padTop=Math.max(...bearingGround)+.025,stemHeight=-.067-padTop;
+        if(stemHeight<=0)continue;
+        parts.push({name:`support_pad_${j}_${k}`,type:'box',position:[x,z,(bottom+padTop)/2],size:[.18,.18,padTop-bottom],material:'pad',category:'deck',bevel:.002});
+        parts.push({name:`pedestal_${j}_${k}`,type:'cylinder',position:[x,z,padTop+stemHeight/2],radiusTop:.035,radiusBottom:.045,height:stemHeight,segments:12,axis:'z',material:'pedestal',category:'deck'});
+      }
+    }
+    // Profile follows the selected 137 × 22 mm board; joint spacing and direction remain a layout preview.
+    for (let i = 0; i * 0.142 < R.d; i++) {
+      const depth = Math.min(0.137, R.d - i * 0.142);
+      if (depth < 0.005) continue;
+      const board = { x: R.x, y: R.y + i * .142, w: R.w, d: depth };
+      for (const [piece, p] of PortalDrainModel.boardPieces(board, portalDrainModel).entries()) {
+        parts.push({ name: `cedar_board_${i}_${piece}`, type: 'box', position: [p.x + p.w / 2, p.y + p.d / 2, -.011],
+          size: [p.w, p.d, .022], material: `cedar_${i % 4}`, category: 'deck', bevel: Math.min(.002, p.d / 4) });
+      }
+    }
+    const deck = buildModel(THREE, { name: 'East Cedar deck', floorHeight: deckTop, materials, parts, lights: [] });
+    deck.name = 'east-cedar-deck';
     scene.add(deck);
-  }
-  // Support posts on the downhill (east) edge down to terrain
-  const deckPostMat = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.85 });
-  for (const pz of [ET.y + 0.2, ET.y + ET.d / 2, ET.y + ET.d - 0.2]) {
-    const px = ET.x + ET.w - 0.15;
-    const pY = terrainHeight(px, pz);
-    const ph = deckTop - 0.08 - pY;
-    if (ph < 0.05) continue;
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, ph, 0.12), deckPostMat);
-    post.position.set(px, pY + ph / 2, pz);
-    post.castShadow = true;
-    scene.add(post);
   }
 }
 
 // Terasa Z — sidewalk podél westní strany domu + atrium uvnitř westního zubu
-// Level decks on the same plane as the east deck
+// Paving shares the house threshold datum; the eastern terrace retains its timber finish.
 const [wtSidewalk, wtAtrium] = EL.westTerrace.parts.filter(p => p.kind === 'rect');
-function addLevelDeck(r) {
-  const tex = woodTex.clone();
-  tex.repeat.set(r.w / 2, r.d / 2);
-  const deck = new THREE.Mesh(
-    new THREE.BoxGeometry(r.w, 0.08, r.d),
-    new THREE.MeshStandardMaterial({ color: 0xa87d4a, map: tex, roughness: 0.7 })
-  );
-  deck.position.set(r.x + r.w / 2, deckTop - 0.04, r.y + r.d / 2);
-  deck.castShadow = true;
-  deck.receiveShadow = true;
-  scene.add(deck);
-}
-addLevelDeck(wtSidewalk);
-addLevelDeck(wtAtrium);
-// Support posts on the outer (west) edge where terrain falls away — north end is the low side
-{
-  const deckPostMat = new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.85 });
-  const px = wtSidewalk.x + 0.15;
-  for (const pz of [wtSidewalk.y + 0.2, wtSidewalk.y + 1.6, wtSidewalk.y + 3]) {
-    const pY = terrainHeight(px, pz);
-    const ph = deckTop - 0.08 - pY;
-    if (ph < 0.05) continue;
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, ph, 0.12), deckPostMat);
-    post.position.set(px, pY + ph / 2, pz);
-    post.castShadow = true;
-    scene.add(post);
+const gardenStoneTex = speckleTexture('#c1baaa', [32, 48], [8, 18], [42, 72], 18000);
+const gardenStoneMaterials = [0xffffff, 0xf5f2e9, 0xece8dc, 0xf7f5ef].map(color =>
+  new THREE.MeshStandardMaterial({ color, map: gardenStoneTex, bumpMap: gardenStoneTex, bumpScale: 0.003, roughness: 0.96 }));
+const gardenJointMaterial = new THREE.MeshStandardMaterial({ color: 0xdfe6d8, map: grassTex, roughness: 1 });
+const gardenSoilMaterial = new THREE.MeshStandardMaterial({ color: 0x645747, roughness: 1 });
+function addLevelPaving(r) {
+  const group = new THREE.Group();
+  group.name = 'west-paving';
+  const adjoining = [...EL.westTerrace.parts, ...EL.saunaPath.parts].filter(p => p.kind === 'rect');
+  const covered = (px, pz) => adjoining.some(p => px >= p.x && px <= p.x + p.w && pz >= p.y && pz <= p.y + p.d);
+  const narrow = r.w <= 1.1;
+  const nx = narrow ? 1 : Math.ceil(r.w / 0.95), nz = Math.ceil(r.d / 0.72);
+  for (let ix = 0; ix < nx; ix++) for (let iz = 0; iz < nz; iz++) {
+    const w = r.w / nx, d = r.d / nz;
+    const x = r.x + (ix + 0.5) * w, z = r.y + (iz + 0.5) * d;
+    const groundY = Math.min(...[x - w / 2, x + w / 2].flatMap(px =>
+      [z - d / 2, z + d / 2].map(pz => terrainHeight(px, pz))));
+    const baseBottom = Math.min(groundY - 0.04, deckTop - 0.1);
+    const variation = (ix * 13 + iz * 7) % 11;
+    const gap = narrow ? 0.09 : 0.045;
+    const sw = w - (narrow ? 0.16 : gap) - variation * 0.002;
+    const sd = d - gap - (variation % 3) * 0.008;
+    const corner = 0.025 + (variation % 4) * 0.008;
+    const outline = new THREE.Shape();
+    outline.moveTo(-sw / 2 + corner, -sd / 2);
+    outline.lineTo(sw / 2 - corner * 0.7, -sd / 2 + 0.006);
+    outline.lineTo(sw / 2, -sd / 2 + corner);
+    outline.lineTo(sw / 2 - 0.007, sd / 2 - corner * 1.2);
+    outline.lineTo(sw / 2 - corner, sd / 2);
+    outline.lineTo(-sw / 2 + corner * 0.8, sd / 2 - 0.004);
+    outline.lineTo(-sw / 2, sd / 2 - corner);
+    outline.lineTo(-sw / 2 + 0.006, -sd / 2 + corner);
+    outline.closePath();
+    const slab = new THREE.Mesh(new THREE.ExtrudeGeometry(outline, { depth: 0.065, bevelEnabled: false, steps: 1 }),
+      gardenStoneMaterials[variation % gardenStoneMaterials.length]);
+    slab.name = 'garden-stepping-slab';
+    slab.rotation.x = Math.PI / 2;
+    slab.position.set(x + (variation - 5) * 0.003, deckTop, z + (variation % 3 - 1) * 0.007);
+    const bounds = { x0: x-w/2, x1: x+w/2, z0: z-d/2, z1: z+d/2 };
+    const support = { x0: slab.position.x-sw/2, x1: slab.position.x+sw/2,
+      z0: slab.position.z-sd/2, z1: slab.position.z+sd/2 };
+    const height = (px, pz) => {
+      let t = 1;
+      for (const [distance, width, outsideX, outsideZ] of [
+        [px-bounds.x0, narrow?.06:.007, bounds.x0-.0001, pz],
+        [bounds.x1-px, narrow?.06:.007, bounds.x1+.0001, pz],
+        [pz-bounds.z0, .014, px, bounds.z0-.0001],
+        [bounds.z1-pz, .014, px, bounds.z1+.0001],
+      ]) if (!covered(outsideX, outsideZ)) t = Math.min(t, Math.max(0, distance / Math.max(.001, width)));
+      const ground = Math.min(deckTop-.017, terrainHeight(px,pz));
+      return ground+(deckTop-.017-ground)*Math.min(1,t);
+    };
+    const axisSamples = (lo, hi, innerLo, innerHi, axis) => [...new Set([lo,hi,innerLo,innerHi,
+      ...adjoining.flatMap(p => axis === 'x' ? [p.x,p.x+p.w] : [p.y,p.y+p.d]),
+      ...Array.from({length:Math.ceil((hi-lo)/.1)+1},(_,i)=>lo+(hi-lo)*i/Math.ceil((hi-lo)/.1))]
+      .filter(v=>v>=lo&&v<=hi))].sort((a,b)=>a-b);
+    const xs = axisSamples(bounds.x0,bounds.x1,bounds.x0+(narrow?.06:.007),bounds.x1-(narrow?.06:.007),'x');
+    const zs = axisSamples(bounds.z0,bounds.z1,bounds.z0+.014,bounds.z1-.014,'z');
+    const positions=[],uvs=[],indices=[],sides=[];
+    for(const pz of zs) for(const px of xs){positions.push(px,height(px,pz),pz);uvs.push(px,pz);}
+    for(let j=0;j<zs.length-1;j++) for(let i=0;i<xs.length-1;i++){
+      const a=j*xs.length+i,b=a+1,c=a+xs.length,d=c+1;indices.push(a,c,b,b,c,d);
+    }
+    const perimeter=[...xs.map(px=>[px,bounds.z0]),...zs.slice(1).map(pz=>[bounds.x1,pz]),
+      ...xs.slice(0,-1).reverse().map(px=>[px,bounds.z1]),...zs.slice(1,-1).reverse().map(pz=>[bounds.x0,pz])];
+    for(let i=0;i<perimeter.length;i++){
+      const [ax,az]=perimeter[i],[bx,bz]=perimeter[(i+1)%perimeter.length];
+      const ay=height(ax,az),by=height(bx,bz);
+      sides.push(ax,ay,az,bx,by,bz,ax,baseBottom,az,bx,by,bz,bx,baseBottom,bz,ax,baseBottom,az);
+    }
+    const surfaceGeometry=new THREE.BufferGeometry();
+    surfaceGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    surfaceGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+    surfaceGeometry.setIndex(indices);surfaceGeometry.computeVertexNormals();
+    const sideGeometry=new THREE.BufferGeometry();
+    sideGeometry.setAttribute('position',new THREE.Float32BufferAttribute(sides,3));sideGeometry.computeVertexNormals();
+    const base=new THREE.Mesh(sideGeometry,gardenSoilMaterial),turf=new THREE.Mesh(surfaceGeometry,gardenJointMaterial);
+    turf.name='paving-joint-shoulder';turf.userData={bounds,support};
+    slab.castShadow = slab.receiveShadow = base.receiveShadow = turf.receiveShadow = true;
+    group.add(base, turf, slab);
   }
+  scene.add(group);
 }
+addLevelPaving(wtSidewalk);
+addLevelPaving(wtAtrium);
 
 // Chodníček sauna → terasa Z
 for (const path of EL.saunaPath.parts.filter(p => p.kind === 'rect' && p.role !== 'saunaLanding')) {
-  addTerrainPlatform(rectVerts(path), 0.1, 0xcdc1ad, { map: woodTex });
+  addLevelPaving(path);
 }
 
 // ───────────────────────── DRIVEWAY ─────────────────────────
 const drivewayPts = EL.driveway.parts.find(p => p.kind === 'polygon').points;
-// Dense 0.5 m grid clipped to the driveway polygon — must follow the graded apron relief
+// Clip a dense grid to the shared outline so paving follows both the apron and gate profile.
 const drivewayGeom = (() => {
   const inDw = (x, z) => {
     let inside = false;
@@ -1096,13 +1273,11 @@ const drivewayGeom = (() => {
   };
   const xs = drivewayPts.map(p => p[0]), zs = drivewayPts.map(p => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
-  const step = 0.5, nx = Math.ceil((x1 - x0) / step), nz = Math.ceil((z1 - z0) / step);
+  const step = 0.2, nx = Math.ceil((x1 - x0) / step), nz = Math.ceil((z1 - z0) / step);
   const verts = [], idx = [];
   // Concave outline: SH-clipping needs convex clips, so split into convex pieces
-  const dwParts = [
-    [[21.28, 19.4], [27.63, 19.4], [27.63, 26.44], [21.28, 26.44]],
-    [[21.28, 26.44], [34.11, 26.44], [43.83, 27.89], [43.44, 32.39], [21.28, 29.72]],
-  ];
+  const dwParts = THREE.ShapeUtils.triangulateShape(drivewayPts.map(([x,z])=>new THREE.Vector2(x,z)),[])
+    .map(triangle=>triangle.map(i=>drivewayPts[i]));
   const clipCell = (poly, clipPts) => {
     const dwArea = clipPts.reduce((a, [px, pz], i) => {
       const [qx, qz] = clipPts[(i + 1) % clipPts.length];
@@ -1152,16 +1327,43 @@ const driveway = new THREE.Mesh(
 );
 driveway.receiveShadow = true;
 scene.add(driveway);
+{
+  const positions=drivewayGeom.attributes.position,edgeVertices=[];
+  for(let edge=0;edge<drivewayPts.length;edge++){
+    const [ax,az]=drivewayPts[edge],[bx,bz]=drivewayPts[(edge+1)%drivewayPts.length];
+    const dx=bx-ax,dz=bz-az,lengthSquared=dx*dx+dz*dz,samples=[];
+    for(let i=0;i<positions.count;i++){
+      const x=positions.getX(i),z=positions.getZ(i),t=((x-ax)*dx+(z-az)*dz)/lengthSquared;
+      if(t>=-.00001&&t<=1.00001&&Math.abs((x-ax)*dz-(z-az)*dx)<.00002)
+        samples.push({t,x,z,y:positions.getY(i)});
+    }
+    samples.sort((a,b)=>a.t-b.t);
+    const unique=samples.filter((p,i)=>!i||p.t-samples[i-1].t>.000001);
+    for(let i=1;i<unique.length;i++){
+      const a=unique[i-1],b=unique[i],bottomA=terrainHeight(a.x,a.z)-.01,bottomB=terrainHeight(b.x,b.z)-.01;
+      edgeVertices.push(a.x,a.y,a.z,b.x,b.y,b.z,a.x,bottomA,a.z,
+        b.x,b.y,b.z,b.x,bottomB,b.z,a.x,bottomA,a.z);
+    }
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(edgeVertices,3));geometry.computeVertexNormals();
+  const edge=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0x96958f,roughness:.95,side:THREE.DoubleSide}));
+  edge.name='driveway-paving-edge';edge.castShadow=edge.receiveShadow=true;scene.add(edge);
+}
 
 // Gravel margin (kačírek) — grey level strips along the N and S facades only (the E and W sides
 // carry terraces). The north wall is downhill so a draped strip sits cleanly on the grade. The south
-// wall is a fixed-level slab set at the paved grade (396.50 = internal 1.965, level with the carport
-// drive) — a dead-level 1 m band the full wall length; grass can't overgrow it because the apron is cut
+// wall is a fixed-level slab at the garage finished floor, a level 1 m band the full wall length;
+// grass can't overgrow it because the apron is cut
 // below it.
 {
-  addTerrainPlatform([[10.48, 6.73], [21.28, 6.73], [21.28, 7.18], [10.48, 7.18]], 0.07, 0x9a9a97);  // N wall (draped)
+  const {GravelSurfaceModel}=await import('./gravel-surface-model.js');
+  const [northStrip, southStrip] = facadeGravelClearances;
+  const northGravel=addTerrainPlatform(rectVerts(northStrip), 0.07, 0x9a9a97);  // N wall (draped)
+  northGravel.name='north-facade-gravel';
+  scene.add(GravelSurfaceModel.create(THREE,{surface:northGravel,bounds:{x0:northStrip.x,x1:northStrip.x+northStrip.w,z0:northStrip.y,z1:northStrip.y+northStrip.d},seed:41}));
   {
-    const gx0 = 10.48, gx1 = 21.28, gz0 = 26.43, gz1 = 27.45, top = 1.965;
+    const gx0 = southStrip.x, gx1 = southStrip.x+southStrip.w, gz0 = southStrip.y, gz1 = southStrip.y+southStrip.d, top = garageFloorY;
     const slab = new THREE.Mesh(
       new THREE.BoxGeometry(gx1 - gx0, 0.14, gz1 - gz0),
       new THREE.MeshStandardMaterial({ color: 0x9a9a97, roughness: 0.9 })
@@ -1169,10 +1371,13 @@ scene.add(driveway);
     slab.position.set((gx0 + gx1) / 2, top - 0.07, (gz0 + gz1) / 2);
     slab.receiveShadow = true;
     scene.add(slab);
+    slab.name='south-facade-gravel';
+    scene.add(GravelSurfaceModel.create(THREE,{surface:slab,bounds:{x0:gx0,x1:gx1,z0:gz0,z1:gz1},
+      exclusions:[{x0:17.125,x1:18.275,z0:26.7,z1:27.3}],seed:79}));
   }
   // Heat pump (tepelné čerpadlo) outdoor unit on the 1 m gravel bed, S wall between bathroom & technical room
   {
-    const hx = 17.7, hz = 27.0, by = terrainHeight(hx, hz);
+    const hx = 17.7, hz = 27.0, by = garageFloorY;
     const pad = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.08, 0.6), new THREE.MeshStandardMaterial({ color: 0x8d8a84, roughness: 0.95 }));
     pad.position.set(hx, by + 0.04, hz); pad.receiveShadow = true; scene.add(pad);
     const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.75, 0.45), new THREE.MeshStandardMaterial({ color: 0xcdd0d3, roughness: 0.5, metalness: 0.3 }));
@@ -1258,7 +1463,11 @@ scene.add(driveway);
       const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), bulbMat);
       bulb.position.set(c.cx, baseY + (isBollard ? 0.65 : 0.1), c.cy);
       lampsGroup.add(bulb);
-      const light = new THREE.PointLight(0xffd27a, 0, isBollard ? 6 : 10, 2);
+      const light = c.target ? new THREE.SpotLight(0xffd27a,0,10,Math.PI/6,.6,2) : new THREE.PointLight(0xffd27a, 0, isBollard ? 6 : 10, 2);
+      if(c.target) {
+        const [x,z]=c.target,treeTarget=circlesOf('orchard').some(p=>p.cx===x&&p.cy===z);
+        light.target.position.set(x,treeTarget?terrainHeight(x,z)+2.5:PBOWL.edge-.04,z);lampsGroup.add(light.target);
+      }
       light.position.set(c.cx, baseY + (isBollard ? 0.65 : 0.15), c.cy);
       light.userData.night = isBollard ? 6 : 14;
       lampsGroup.add(light);
@@ -1292,7 +1501,7 @@ function addScreen(r, h = 2.0) {
     slat.position.set(cx, yy, cz); slat.castShadow = true; slat.receiveShadow = true; fenceGroup.add(slat);
   }
 }
-GARDEN.elements.filter(e => e.meta && e.meta.screen).forEach(e => {
+GARDEN.elements.filter(e => e.meta?.screen && !['screenWest','screenSouth'].includes(e.id)).forEach(e => {
   const r = e.parts.find(p => p.kind === 'rect');
   if (r) addScreen(r, e.meta.screen.h || 2.0);
 });
@@ -1304,7 +1513,7 @@ scene.add(greenhouseGroup);
 // Keep orchard trunks 0.35 m clear of structures and their entrances.
 circlesOf('orchard').forEach(c => {
   if (overlapsStructureAccess(c.cx, c.cy, 0.35)) return;
-  addTree(c.cx, c.cy, 4 + Math.random());
+  addTree(c.cx, c.cy, 4 + TreeModel.variation(c.cx, c.cy));
 });
 { const c = rectOf('compost'); addCompostBin(c.x, c.y, c.w, c.d, 1.0); }
 
@@ -1313,32 +1522,32 @@ circlesOf('orchard').forEach(c => {
 { const b = rectOf('toolStore'); addStorageBox(b.x, b.y, b.w, b.d, 1.325); }  // tools, N fence beside the sauna
 
 // ───────────────────────── TREES ALONG NORTH FENCE ─────────────────────────
-circlesOf('northTrees').forEach(c => addTree(c.cx, c.cy, 4.5 + Math.random() * 1.5, 0x4d7a4d));
+circlesOf('northTrees').forEach((c, i) => addTree(c.cx, c.cy, 4.5 + TreeModel.variation(c.cx, c.cy) * 1.5,
+  [0x68824c,0x487b45,0x5e854f][i%3], c.form==='evergreen'?'evergreen':'deciduous', c.form ?? ['slender','broad','multistem'][i%3]));
 
 // ───────────────────────── TREES ALONG EAST FENCE ─────────────────────────
-circlesOf('eastTrees').forEach(c => addTree(c.cx, c.cy, 4 + Math.random() * 1.5, 0x4d7a4d));
+circlesOf('eastTrees').forEach((c, i) => addTree(c.cx, c.cy, 4 + TreeModel.variation(c.cx, c.cy) * 1.5,
+  [0x547841,0x719054,0x487547][i%3], c.form==='evergreen'?'evergreen':'deciduous', c.form ?? ['broad','slender','multistem'][i%3]));
 
 // Perennial strip u northního plotu (různé barvy a velikosti, hustěji)
-const perennialColors = [0xa86a8c, 0x9b8ec4, 0xc4a25a, 0x8eb88e, 0xd87a7a, 0xa8c47a, 0xa3e0a3];
-for (let i = 0; i < 35; i++) {
-  const x = 5 + Math.random() * 38;
-  const z = 0.3 + Math.random() * 2.2;
-  // Skip sauna, shelter and pergola footprints
-  if (x >= 3.5 && x <= 10.5 && z >= 1 && z <= 4) continue;
-  if (x >= 25.78 && x <= 31.78 && z >= 1 && z <= 5) continue;
-  const baseY = terrainHeight(x, z);
-  const sz = 0.4 + Math.random() * 0.3;
-  if (overlapsStructureAccess(x, z, Math.max(sz * 0.72, 0.26))) continue;
-  const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
-  q.position.set(x, baseY + sz * 0.38, z);
-  q.scale.setScalar(sz * 0.72);
-  q.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-  treesGroup.add(q);
-  if (Math.random() < 0.5) {
-    const fl = new THREE.Mesh(flowerDotGeo, flowerMatFor(perennialColors[Math.floor(Math.random() * perennialColors.length)]));
-    fl.position.set(x + (Math.random() - 0.5) * 0.25, baseY + sz * 0.85, z + (Math.random() - 0.5) * 0.25);
-    treesGroup.add(fl);
-  }
+const perennialPlants = [];
+const perennialDensity = 2;
+function zoneRandom(id) {
+  let seed = 2166136261;
+  for (const c of id) seed = Math.imul(seed ^ c.charCodeAt(0), 16777619);
+  return () => { seed = Math.imul(seed, 1664525) + 1013904223 | 0; return (seed >>> 0) / 4294967296; };
+}
+function addPerennial(zoneId, x, z, kind) {
+  const zone=EL[zoneId]?.meta;
+  const spec = PlantingProfiles.sample(zone?.palette ?? zoneId, x, z, kind, localPalette ?? {});
+  if(zone?.maxHeight)spec.height=Math.min(spec.height,zone.maxHeight);
+  if (!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread)) return;
+  const root = PerennialModel.create(THREE, spec);
+  root.name = spec.name;
+  root.position.set(x, terrainHeight(x, z), z);
+  root.userData.zoneId = zoneId;
+  perennialPlants.push(root);
+  treesGroup.add(root);
 }
 
 // ───────────────────────── FIREPIT IN NE CORNER + BENCHES ─────────────────────────
@@ -1347,110 +1556,63 @@ scene.add(firepitGroup);
 lampLights.push(...firepitGroup.userData.lights);
 nightGroups.push(firepitGroup.userData.categories.fire);
 
-// ───────────────────────── POND — ellipse, bigger, closer to garage ─────────────────────────
-// Water color map (radial gradient, deep center) + animated RGB-noise normal map
-const waterMap = (() => {
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = 256;
-  const ctx = cv.getContext('2d');
-  const g = ctx.createRadialGradient(128, 128, 10, 128, 128, 128);
-  g.addColorStop(0, '#123049');
-  g.addColorStop(1, '#2f6a94');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 256, 256);
-  const tex = new THREE.CanvasTexture(cv);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-})();
-const waterNormal = (() => {
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = 128;
-  const ctx = cv.getContext('2d');
-  const img = ctx.createImageData(128, 128);
-  for (let i = 0; i < img.data.length; i += 4) {
-    img.data[i] = 118 + Math.random() * 20;
-    img.data[i + 1] = 118 + Math.random() * 20;
-    img.data[i + 2] = 255;
-    img.data[i + 3] = 255;
-  }
-  ctx.putImageData(img, 0, 0);
-  const tex = new THREE.CanvasTexture(cv);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(3, 3);
-  return tex;
-})();
-{
-  const PN = EL.pond.parts.find(p => p.kind === 'ellipse');
-  const cx = PN.cx, cz = PN.cy;
-  const rimRX = PN.rx, rimRZ = PN.ry;
-  const waterRX = rimRX - 0.25, waterRZ = rimRZ - 0.25;
-  // Base at lowest terrain around the ellipse boundary so the rim never floats downhill
-  const edgeMin = Math.min(...Array.from({ length: 12 }, (_, i) => {
-    const a = i / 12 * Math.PI * 2;
-    return terrainHeight(cx + Math.cos(a) * rimRX, cz + Math.sin(a) * rimRZ);
-  }));
-  // Water sunk into the carved bowl; irregular stone lip instead of a cylinder rim
-  const waterY = PBOWL.edge - 0.1;
-  const water = new THREE.Mesh(
-    new THREE.CylinderGeometry(1, 1, 0.04, 48),
-    new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      map: waterMap,
-      normalMap: waterNormal,
-      normalScale: new THREE.Vector2(0.12, 0.12),
-      roughness: 0.1,
-      metalness: 0.6,
-      transparent: true,
-      opacity: 0.88
-    })
-  );
-  water.scale.set(rimRX * 0.82, 1, rimRZ * 0.82);
-  water.position.set(cx, waterY, cz);
-  water.receiveShadow = true;
-  scene.add(water);
-  // Water lilies — few floating
-  for (let i = 0; i < 4; i++) {
-    const ang = Math.random() * Math.PI * 2;
-    const r = Math.random() * 0.6;
-    const lily = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.25, 0.25, 0.02, 12),
-      new THREE.MeshStandardMaterial({ color: 0x4a8a3a, roughness: 0.9 })
-    );
-    lily.position.set(cx + Math.cos(ang) * r * rimRX * 0.8, waterY + 0.03, cz + Math.sin(ang) * r * rimRZ * 0.8);
-    scene.add(lily);
-  }
-  // Irregular stone lip on the bank around the waterline
-  const stoneMat = new THREE.MeshStandardMaterial({ color: 0x7a7a76, roughness: 0.95 });
-  for (let i = 0; i < 19; i++) {
-    const ang = (i / 19) * Math.PI * 2 + Math.random() * 0.18;
-    const rr = 1.0 + Math.random() * 0.1;
-    const sx = cx + Math.cos(ang) * rimRX * rr;
-    const sz = cz + Math.sin(ang) * rimRZ * rr;
-    const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.16 + Math.random() * 0.14, 0), stoneMat);
-    stone.scale.set(1, 0.55 + Math.random() * 0.25, 1);
-    stone.rotation.set(Math.random(), Math.random() * 3, Math.random());
-    stone.position.set(sx, terrainHeight(sx, sz) + 0.06, sz);
-    stone.castShadow = true;
-    scene.add(stone);
-  }
-  // Small stones around elipsy
-  for (let i = 0; i < 14; i++) {
-    const ang = (i / 14) * Math.PI * 2 + 0.2;
-    const sx = cx + Math.cos(ang) * (rimRX + 0.3);
-    const sz = cz + Math.sin(ang) * (rimRZ + 0.3);
-    const sY = terrainHeight(sx, sz);
-    const stone = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18 + Math.random() * 0.12, 6, 4),
-      new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.95 })
-    );
-    stone.position.set(sx, sY + 0.1, sz);
-    scene.add(stone);
-  }
-}
+const { PondModel } = await import('./pond-model.js');
+const pondModel = PondModel.create(THREE, { basin: PBOWL, groundGeometry: groundGeom });
+const waterNormal = pondModel.waterNormal;
+scene.add(pondModel.group);
+treesGroup.add(pondModel.plantingGroup);
 
 // ───────────────────────── HOUSE WINDOWS / HS DOORS ─────────────────────────
+let applyOpeningCutouts;
 {
   const ty = houseTerrainY;
+  const exteriorOpenings = localHouseData?.exteriorOpenings?.() ?? [];
+  const hasOpeningOverride = (kind, axis, wall, center) => exteriorOpenings.some(({ match }) =>
+    match.kind === kind && match.axis === axis && Math.abs(match.wall - wall) < 0.001 && Math.abs(match.center - center) < 0.001);
+  if (exteriorOpenings.length) {
+    const origin = localHouseData.originPlot;
+    const toWorld = ([x, z, y]) => new THREE.Vector3(x + origin.x, y + ty, z + origin.z);
+    const cutouts = exteriorOpenings.map(({ cutout }) => ({ min: toWorld(cutout.min), max: toWorld(cutout.max) }));
+    const cutOpenings = (material, volumes = cutouts) => {
+      const previousCompile = material.onBeforeCompile;
+      const previousKey = material.customProgramCacheKey();
+      material.onBeforeCompile = shader => {
+        previousCompile.call(material, shader, renderer);
+        shader.uniforms.openingMin = { value: volumes.map(cutout => cutout.min) };
+        shader.uniforms.openingMax = { value: volumes.map(cutout => cutout.max) };
+        shader.vertexShader = 'varying vec3 openingWorldPosition;\n' + shader.vertexShader;
+        shader.vertexShader = shader.vertexShader.replace('#include <worldpos_vertex>',
+          '#include <worldpos_vertex>\nopeningWorldPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        shader.fragmentShader = `varying vec3 openingWorldPosition;\nuniform vec3 openingMin[${volumes.length}];\nuniform vec3 openingMax[${volumes.length}];\n` + shader.fragmentShader;
+        shader.fragmentShader = shader.fragmentShader.replace('#include <clipping_planes_fragment>',
+          `#include <clipping_planes_fragment>\nfor (int i = 0; i < ${volumes.length}; i++) { if (all(greaterThanEqual(openingWorldPosition, openingMin[i])) && all(lessThanEqual(openingWorldPosition, openingMax[i]))) discard; }`);
+      };
+      material.customProgramCacheKey = () => `${previousKey}:facade-openings-${volumes.length}`;
+      material.needsUpdate = true;
+    };
+    applyOpeningCutouts=cutOpenings;
+    cutOpenings(houseMesh.material);
+    houseMesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+    houseMesh.customDistanceMaterial = new THREE.MeshDistanceMaterial();
+    cutOpenings(houseMesh.customDepthMaterial);
+    cutOpenings(houseMesh.customDistanceMaterial);
+    for (const { model } of exteriorOpenings) {
+      const group = buildModel(THREE, { ...model, floorHeight: ty });
+      group.position.x = origin.x;
+      group.position.z = origin.z;
+      scene.add(group);
+    }
+    const interior = localHouseData.exteriorInterior?.();
+    if (interior) {
+      const group = buildModel(THREE, { ...interior, floorHeight: ty });
+      group.position.x = origin.x;
+      group.position.z = origin.z;
+      scene.add(group);
+      const terrainCutouts = interior.terrainCutouts.map(cutout => ({ min: toWorld(cutout.min), max: toWorld(cutout.max) }));
+      terrainCutouts.push(...cutouts.map(cutout => ({ min: new THREE.Vector3(cutout.min.x, ty - 1, cutout.min.z), max: cutout.max })));
+      if (terrainCutouts.length) cutOpenings(ground.material, terrainCutouts);
+    }
+  }
   const winMat = new THREE.MeshStandardMaterial({ color: 0x9fb8cc, roughness: 0.06, metalness: 0.9, transparent: true, opacity: 0.45, envMapIntensity: 1.3 });
   const frameMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6 });
   // HS sliding doors on east (in notch) — floor to near-ceiling 2.27 m, sill = 0
@@ -1475,6 +1637,7 @@ const waterNormal = (() => {
   };
   // East notch: kitchen window 2300×1350 north, HS portal 5160×2270 to the floor — both clear of the carport line z<19.4.
   // FFL = ty (±0.000): portal sill on the floor, kitchen sill raised so its head shares the portal lintel (ty+2.27).
+  if(!exteriorOpenings.length){
   winX(EN[0], 1, 12.9, 2.3, 1.35, ty + 0.92);
   winX(EN[0], 1, 16.78, 5.16, 2.27, ty);
   // HS2 portal split in the middle — only the northern half is the opening sash
@@ -1490,7 +1653,7 @@ const waterNormal = (() => {
   winZ((HB[0] + HB[2]) / 2, HB[1], -1, 0.9, 2.27, ty + 0.3);
   // West windows per OKNA: offices 1600×2270, guest+bathroom 1250×2270, all sill 0.3
   for (const { z, w } of [{ z: 10.5, w: 1.6 }, { z: 13.5, w: 1.6 }, { z: 22, w: 1.25 }, { z: 24.5, w: 1.25 }]) {
-    winX(HB[0], -1, z, w, 2.27, ty + 0.05);
+    if (!hasOpeningOverride('window', 'x', HB[0], z)) winX(HB[0], -1, z, w, 2.27, ty + 0.05);
   }
   // Living-room portal to the atrium — floor level (0 step onto the atrium courtyard)
   winX(HA[2], -1, 17.555, 3.25, 2.27, ty + 0.05);
@@ -1498,13 +1661,16 @@ const waterNormal = (() => {
   for (const x of [16.05, 19.3]) {
     winZ(x, HB[3], 1, 0.9, 1.25, ty + 0.9);
   }
+  }
   // Entrance door — in the east NOTCH (back wall x=EN[0]=20.58), into the entrance hall (zádveří),
   // at the south end of the notch, south of the living-room portal. NOT the south-part solid wall
   // (that is the technical room). Faces east; a landing + short flight drop to the notch/carport.
   const doorZ = 21.7;
-  const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 1.1), frameMat);
-  d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
-  scene.add(d2);
+  if (!exteriorOpenings.some(entry=>entry.model.opening.kind==='entrance')) {
+    const d2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.1, 1.1), frameMat);
+    d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
+    scene.add(d2);
+  }
   // Just a staircase from the door threshold (FFL) down to the carport — NO soil fill, NO paving.
   // Each tread is a solid box running down to the carport level, so the treads cover the descent
   // and nothing shows through beneath them.
@@ -1570,6 +1736,32 @@ const waterNormal = (() => {
 
 // VELUX roof windows over the southern attic room + štít window in the north gable
 {
+  if(window.RoofWindows&&localHouseData&&applyOpeningCutouts){
+    const model=window.RoofWindows.build({gable:GABLE,ridgeY:houseTerrainY+wallH+KNEE+roofRise,eaveY:houseTerrainY+wallH+KNEE-eaveDrop});
+    const volumes=model.cutouts.map(c=>({min:new THREE.Vector3(c.x0,0,c.z0),max:new THREE.Vector3(c.x1,20,c.z1)}));
+    const flashingVolumes=model.cutouts.map(c=>({min:new THREE.Vector3(c.x0-.18*Math.abs(c.slopeAxis[0]),0,c.z0-.12),
+      max:new THREE.Vector3(c.x1+.18*Math.abs(c.slopeAxis[0]),20,c.z1+.12)}));
+    const changed=new Set();
+    roofGroup.traverse(o=>{
+      if(!o.isMesh)return;
+      const cuts=o.geometry.type==='BoxGeometry'?flashingVolumes:volumes;
+      if(!changed.has(o.material)){applyOpeningCutouts(o.material,cuts);changed.add(o.material);}
+      o.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
+      o.customDistanceMaterial=new THREE.MeshDistanceMaterial();
+      applyOpeningCutouts(o.customDepthMaterial,cuts);applyOpeningCutouts(o.customDistanceMaterial,cuts);
+    });
+    roofGroup.add(buildModel(THREE,model));
+    const gable=localHouseData.gableOpening(),origin=localHouseData.originPlot,o=gable.opening;
+    const hole=[{min:new THREE.Vector3(origin.x+o.x-o.width/2,houseTerrainY+o.sill,HB[1]-.01),
+      max:new THREE.Vector3(origin.x+o.x+o.width/2,houseTerrainY+o.sill+o.height,HB[1]+.46)}];
+    const gableMaterials=new Set();
+    for(const mesh of gableFillMeshes){
+      if(!gableMaterials.has(mesh.material)){applyOpeningCutouts(mesh.material,hole);gableMaterials.add(mesh.material);}
+      mesh.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
+      applyOpeningCutouts(mesh.customDepthMaterial,hole);
+    }
+    const group=buildModel(THREE,{...gable,floorHeight:houseTerrainY});group.position.set(origin.x,houseTerrainY,origin.z);scene.add(group);
+  }else{
   const roofGlass = new THREE.MeshStandardMaterial({ color: 0x2a3540, roughness: 0.15, metalness: 0.6 });
   const veluxFrame = new THREE.MeshStandardMaterial({ color: 0x2b2d30, roughness: 0.5 });
   const rxMid = (GABLE[0] + GABLE[1]) / 2;
@@ -1599,97 +1791,36 @@ const waterNormal = (() => {
   const stitGlass = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.0, 0.05), roofGlass);
   stitGlass.position.set(rxMid, houseTerrainY + wallH + 1.0, HB[1] - 0.05);
   scene.add(stitGlass);
+  }
 }
 
 // ───────────────────────── FURNITURE / DECOR ─────────────────────────
-// Table + 4 chairs on east terrace
-{
-  const tx = 21.8, tz = 16, baseY = deckTop;
-  // Table
-  const table = new THREE.Mesh(
-    new THREE.BoxGeometry(1.6, 0.06, 0.9),
-    new THREE.MeshStandardMaterial({ color: 0x6e4f31, roughness: 0.4 })
-  );
-  table.position.set(tx, baseY + 0.75, tz);
-  table.castShadow = true;
-  furnitureGroup.add(table);
-  // 4 legs
-  for (const [dx, dz] of [[-0.7, -0.4],[0.7,-0.4],[-0.7,0.4],[0.7,0.4]]) {
-    const leg = new THREE.Mesh(
-      new THREE.BoxGeometry(0.06, 0.75, 0.06),
-      new THREE.MeshStandardMaterial({ color: 0x222222 })
-    );
-    leg.position.set(tx + dx, baseY + 0.375, tz + dz);
-    furnitureGroup.add(leg);
-  }
-  // 4 chairs
-  const chairLegMat = new THREE.MeshStandardMaterial({ color: 0x5a3e25 });
-  for (const [dx, dz, ry] of [[-0.6, -0.9, 0],[0.6,-0.9,0],[-0.6,0.9,Math.PI],[0.6,0.9,Math.PI]]) {
-    const seat = new THREE.Mesh(
-      new THREE.BoxGeometry(0.4, 0.05, 0.4),
-      new THREE.MeshStandardMaterial({ color: 0x7a5a3a })
-    );
-    seat.position.set(tx + dx, baseY + 0.45, tz + dz);
-    seat.rotation.y = ry;
-    seat.castShadow = true;
-    furnitureGroup.add(seat);
-    // 4 legs per chair, bottoms on the deck
-    for (const [ox, oz] of [[-0.16, -0.16], [0.16, -0.16], [-0.16, 0.16], [0.16, 0.16]]) {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.425, 0.04), chairLegMat);
-      leg.position.set(tx + dx + ox, baseY + 0.2125, tz + dz + oz);
-      furnitureGroup.add(leg);
-    }
-    const back = new THREE.Mesh(
-      new THREE.BoxGeometry(0.4, 0.5, 0.05),
-      new THREE.MeshStandardMaterial({ color: 0x7a5a3a })
-    );
-    back.position.set(tx + dx, baseY + 0.7, tz + dz + (dz > 0 ? 0.2 : -0.2));  // backrest on the outside → chair faces the table
-    back.rotation.y = ry;
-    furnitureGroup.add(back);
-  }
-}
+const outdoorLoungeGroup = buildModel(THREE, outdoorLoungeModel);
+furnitureGroup.add(outdoorLoungeGroup);
 
-// Stepping-stone paths (šlapáky) — flat stones draped on the terrain
-{
-  const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8f8a80, roughness: 0.95 });
-  for (const c of EL.steppingPaths.parts.filter(pt => pt.kind === 'circle')) {
-    const st = new THREE.Mesh(new THREE.CylinderGeometry(c.r, c.r * 1.08, 0.05, 9), stoneMat);
-    st.position.set(c.cx, terrainHeight(c.cx, c.cy) + 0.025, c.cy);
-    st.rotation.y = (c.cx * 7 + c.cy * 13) % 3.14;
-    st.receiveShadow = true;
-    scene.add(st);
-  }
-}
+const gardenRoutes=GardenRouteModel.create(THREE,{routes:GARDEN.gardenRoutes,height:siteTerrain.routeHeight});
+scene.add(gardenRoutes);
 
 // Zašívárna — hidden red bench off the garage north wall (Flera-style)
 const hiddenBenchGroup = buildModel(THREE, hiddenBenchModel);
 scene.add(hiddenBenchGroup);
 
-// Facade climbers — vine clusters flattened against the wall (garage E + atrium N/S walls)
+// Facade climbers on the garage E and solid atrium N/S walls.
+const { ClimberModel } = await import('./climber-model.js');
 function addWallClimber(x1, z1, x2, z2, nx, nz, h = 2.2) {
   const len = Math.hypot(x2 - x1, z2 - z1);
   const n = Math.max(2, Math.round(len / 1.1));
   for (let i = 0; i < n; i++) {
     const t = (i + 0.5) / n;
     const wx = x1 + (x2 - x1) * t, wz = z1 + (z2 - z1) * t;
+    if (overlapsStructureAccess(wx + nx * 0.15, wz + nz * 0.15, 0.22)) continue;
     const baseY = terrainHeight(wx, wz);
-    const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.02, 0.035, h, 5),
-      new THREE.MeshStandardMaterial({ color: 0x4a3a28, roughness: 0.9 })
-    );
-    stem.position.set(wx + nx * 0.08, baseY + h / 2, wz + nz * 0.08);
-    treesGroup.add(stem);
-    const blobs = 3 + Math.floor(Math.random() * 3);
-    for (let b = 0; b < blobs; b++) {
-      const by = baseY + 0.5 + Math.random() * (h - 0.6);
-      const r = 0.22 + Math.random() * 0.2;
-      const leaf = new THREE.Mesh(icoGeo, foliageMatFor(b % 2 ? 0x4e7d35 : 0x3d6b2c));
-      leaf.scale.setScalar(r * 1.35);
-      leaf.position.set(wx + nx * (0.14 + r * 0.3) + (Math.abs(nz) ? (Math.random() - 0.5) * 0.6 : 0), by, wz + nz * (0.14 + r * 0.3) + (Math.abs(nx) ? (Math.random() - 0.5) * 0.6 : 0));
-      leaf.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-      leaf.castShadow = true;
-      treesGroup.add(leaf);
-    }
+    const climber = ClimberModel.create(THREE, { width: len / n, height: h,
+      seed: Math.round((wx * 71 + wz * 113) * 100),
+      blocked: (p, radius) => overlapsStructureAccess(wx + nz * p.x + nx * p.z, wz - nx * p.x + nz * p.z, radius) });
+    climber.position.set(wx, baseY, wz);
+    climber.rotation.y = Math.atan2(nx, nz);
+    treesGroup.add(climber);
   }
 }
 addWallClimber(34.13, 19.7, 34.13, 26.2, 1, 0);         // garage east wall, foliage facing east
@@ -1702,35 +1833,13 @@ const vehiclesGroup = new THREE.Group();
 scene.add(vehiclesGroup);
 for (const v of GARDEN.vehicles) {
   const cz = v.noseZ + v.l / 2;
-  const g = INTERIORS3D.buildVehicle(THREE, v);
-  g.position.set(v.cx, v.bay === 'garage' ? garageFloorY : terrainHeight(v.cx, cz), cz);
+  const g = INTERIORS3D.buildVehicle(THREE, v, buildModel);
+  g.position.set(v.cx, v.bay === 'garage' ? garageFloorY : terrainHeight(v.cx, cz) + 0.05, cz);
   if (v.reversed) g.rotation.y = Math.PI;
   vehiclesGroup.add(g);
 }
 
-// ───────────────────────── BUSHES AROUND HOUSE ─────────────────────────
-const bushPositions = [
-  // Along west fence, between house and orchard (not on sidewalk)
-  [7, 11, 0.7, 0x6a8e5a],
-  [7, 14, 0.6, 0x7a9a6a],
-  [7, 18, 0.7, 0x6a8e5a],
-  [7, 22, 0.6, 0x7a9a6a],
-  // By the pond (outside rim x=27.2-32.8, z=13-17)
-  [25.5, 12.5, 0.55, 0x9aae6a],
-  [34.5, 12.5, 0.55, 0x9aae6a],
-  [25.5, 17.8, 0.55, 0x9aae6a],
-  [34.5, 17.8, 0.55, 0x9aae6a],
-  // By sauna (south, outside structures)
-  [4, 6, 0.5, 0x6a8e5a],
-  [11.5, 6, 0.5, 0x6a8e5a],
-];
-bushPositions.forEach(([x, z, s, c]) => addBush(x, z, s, c));
-
-// Conifers in north strip (mixed with deciduous, NOT in sauna/pergola)
-addConifer(11.5, 1.4, 5);   // open between sauna (x<10.5) and pergola (x>25.78)
-addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
-
-// ───────────────────────── PLANTING ZONES (Flera review) — vegetation scattered per meta.plant ─────────────────────────
+// Planting communities follow the shared room boundaries.
 {
   const inPoly = (pts, x, z) => {
     let inside = false;
@@ -1745,6 +1854,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
   const capAtGarage = (x, z, s) => (z < GA.y && z > GA.y - 2 && x > GA.x - 1 && x < GA.x + GA.w + 1)
     ? Math.min(s, Math.max(0.2, (GA.y - 0.02 - z) / 0.72)) : s;
   for (const el of GARDEN.elements.filter(e => e.meta && e.meta.plant)) {
+    const random = zoneRandom(el.id);
     const rects = el.parts.filter(p => p.kind === 'rect');
     const poly = el.parts.find(p => p.kind === 'polygon');
     const ell = el.parts.find(p => p.kind === 'ellipse');
@@ -1758,9 +1868,9 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
     if (rects.length) {
       area = rects.reduce((s, r) => s + r.w * r.d, 0);
       sample = () => {
-        let t = Math.random() * area, r = rects[rects.length - 1];
+        let t = random() * area, r = rects[rects.length - 1];
         for (const q of rects) { if (t < q.w * q.d) { r = q; break; } t -= q.w * q.d; }
-        return [r.x + Math.random() * r.w, r.y + Math.random() * r.d];
+        return [r.x + random() * r.w, r.y + random() * r.d];
       };
     } else if (poly) {
       const xs = poly.points.map(p => p[0]), zs = poly.points.map(p => p[1]);
@@ -1772,7 +1882,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
       area = Math.abs(area) / 2;
       sample = () => {
         for (let k = 0; k < 30; k++) {
-          const x = x0 + Math.random() * (x1 - x0), z = z0 + Math.random() * (z1 - z0);
+          const x = x0 + random() * (x1 - x0), z = z0 + random() * (z1 - z0);
           if (inPoly(poly.points, x, z)) return [x, z];
         }
         return null;
@@ -1781,7 +1891,7 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
       area = Math.PI * ell.rx * ell.ry - (excl ? Math.PI * excl.rx * excl.ry : 0);
       sample = () => {
         for (let k = 0; k < 30; k++) {
-          const a = Math.random() * 2 * Math.PI, rr = Math.sqrt(Math.random());
+          const a = random() * 2 * Math.PI, rr = Math.sqrt(random());
           const x = ell.cx + rr * ell.rx * Math.cos(a), z = ell.cy + rr * ell.ry * Math.sin(a);
           if (excl && ((x - excl.cx) / (excl.rx + 0.3)) ** 2 + ((z - excl.cy) / (excl.ry + 0.3)) ** 2 < 1) continue;
           return [x, z];
@@ -1790,30 +1900,22 @@ addConifer(35.5, 1.6, 4.5); // open between pergola (x<31.78) and east fence
       };
     } else continue;
     const kind = el.meta.plant;
-    const nPer = kind === 'shrubs' ? 0 : Math.round(area * (kind === 'meadow' ? 1.6 : 1.1));
+    const nPer = kind === 'shrubs' ? 0 : Math.round(area * (kind === 'meadow' ? 1.6 : 2.7));
     const nShr = kind === 'perennials' || kind === 'meadow' ? 0 : Math.round(area / (kind === 'shrubs' ? 2.5 : 5));
-    for (let i = 0; i < nPer; i++) {
-      const pt = sample();
-      if (!pt || !inPlot(pt[0], pt[1])) continue;
-      const baseY = terrainHeight(pt[0], pt[1]);
-      const sz = capAtGarage(pt[0], pt[1], (kind === 'meadow' ? 0.28 : 0.48) + Math.random() * (kind === 'meadow' ? 0.18 : 0.32));
-      if (overlapsStructureAccess(pt[0], pt[1], Math.max(sz * 0.72, 0.26))) continue;
-      const q = new THREE.Mesh(icoGeo, foliageMatFor(LEAF_GREENS[1 + (Math.random() * 3 | 0)]));
-      q.position.set(pt[0], baseY + sz * 0.38, pt[1]);
-      q.scale.setScalar(sz * 0.72);
-      q.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-      treesGroup.add(q);
-      if (Math.random() < (kind === 'meadow' ? 0.55 : 0.45)) {
-        const fl = new THREE.Mesh(flowerDotGeo, flowerMatFor(perennialColors[Math.floor(Math.random() * perennialColors.length)]));
-        fl.position.set(pt[0] + (Math.random() - 0.5) * 0.25, baseY + sz * 0.85, pt[1] + (Math.random() - 0.5) * 0.25);
-        treesGroup.add(fl);
+    const plantPerennialPass = () => {
+      for (let i = 0; i < nPer; i++) {
+        const pt = sample();
+        if (!pt || !inPlot(pt[0], pt[1])) continue;
+        addPerennial(el.id, pt[0], pt[1], kind);
       }
-    }
+    };
+    plantPerennialPass();
     for (let i = 0; i < nShr; i++) {
       const pt = sample();
       if (!pt || !inPlot(pt[0], pt[1])) continue;
-      addBush(pt[0], pt[1], capAtGarage(pt[0], pt[1], 0.45 + Math.random() * 0.35), 0x5f8452);
+      addBush(pt[0], pt[1], capAtGarage(pt[0], pt[1], 0.45 + random() * 0.35), 0x5f8452);
     }
+    for (let pass = 1; pass < perennialDensity; pass++) plantPerennialPass();
   }
 }
 
@@ -1843,35 +1945,6 @@ const smokeParticles = [];
     smokeParticles.push(p);
   }
 }
-
-// ───────────────────────── SMALL GRASS TUFTS (visual detail) ─────────────────────────
-const grassPositions = [];
-for (let i = 0; i < 80; i++) {
-  const tx = 5 + Math.random() * 35;
-  const tz = 4 + Math.random() * 32;
-  if (!inPlot(tx, tz)) continue;
-  // Avoid buildings (house, garage, etc.) — rough check
-  if (tx > 9 && tx < 22 && tz > 5 && tz < 27) continue; // house
-  if (tx > 21 && tx < 35 && tz > 19 && tz < 27) continue; // carport+garáž
-  if (tx > 25 && tx < 32 && tz > 0 && tz < 6) continue; // pergola
-  if (tx > 0 && tx < 6 && tz > 18 && tz < 35) continue; // orchard
-  if (tx > 28 && tx < 35 && tz > 7 && tz < 13) continue; // water
-  grassPositions.push([tx, tz]);
-}
-grassPositions.forEach(([x, z]) => {
-  const r = 0.06 + Math.random() * 0.06;
-  const h = 0.1 + Math.random() * 0.15;
-  const baseY = terrainHeight(x, z);
-  const tuft = new THREE.Mesh(
-    new THREE.ConeGeometry(r, h, 5),
-    new THREE.MeshStandardMaterial({
-      color: Math.random() > 0.7 ? 0x9bc26d : 0x88af5d,
-      roughness: 1
-    })
-  );
-  tuft.position.set(x, baseY + h/2, z);
-  treesGroup.add(tuft);
-});
 
 // ───────────────────────── FENCE ─────────────────────────
 // Fence follows the whole plot boundary (general polygon — any vertex count), with a GATE + wicket
@@ -1952,8 +2025,11 @@ for (let i = 0; i < plotVerts.length; i++) {
 }
 
 // ───────────────────────── CAMERA PRESETS ─────────────────────────
+const plantingPreview = PlantingPreview.create({ scene, camera, renderer, treesGroup });
+PlantingGuide.create(perennialPlants,treesGroup.children.filter(p=>p.userData.treeForm));
 const targetCenter = new THREE.Vector3(22, 0, 17);
 window.setPreset = function(name) {
+  const bedsPad=rectOf('raisedBedsPad'),bench=rectOf('zasivarna');
   const positions = {
     iso:    [60, 35, 55],
     top:    [22, 90, 17],
@@ -1963,11 +2039,17 @@ window.setPreset = function(name) {
     ground: [22, 1.7, 17],
     garage: [28.0, garageFloorY + 1.6, 26.0],
     sauna: [SH.x - 3.2, saunaFloorY + 3.0, SA.y + SA.d + 7.2],
+    tubSeat: [SH.x + SH.w / 2, saunaFloorY + 1.1, SH.y + SH.d / 2 + 0.45],
+    pergolaSeat: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.2, PG.y + PG.d - 1.1],
+    westPath: [9.98, deckTop + 1.65, 10.5],
+    cars: [26.8, garageFloorY + 2.2, 29],
+    eastLounge: [21.08, deckTop + 1.15, 17.8],
+    atriumLounge: [11.25, deckTop + 1.15, 18.55],
     pergola: [PG.x + PG.w + 5, pergolaModel.floorHeight + 3.4, PG.y + PG.d + 6.5],
     greenhouse: [GH.x - 1.1, greenhouseModel.floorHeight + 3.56, GH.y - 1.5],
-    raisedBeds: [7, raisedBedsModel.floorHeight + 4, 16],
+    raisedBeds: [bedsPad.x+bedsPad.w+3, raisedBedsModel.floorHeight + 4, bedsPad.y+bedsPad.d+3],
     firepit: [FPC.cx - 4, firepitModel.floorHeight + 3.3, FPC.cy + 4],
-    hiddenBench: [30.4, hiddenBenchModel.floorHeight + 1.6, 15.8]
+    hiddenBench: [bench.x-3, hiddenBenchModel.floorHeight + 1.6, bench.y-2]
   };
   const targets = {
     iso:    [22, 0, 17],
@@ -1978,11 +2060,17 @@ window.setPreset = function(name) {
     ground: [22, 1.7, 30],
     garage: [33.2, garageFloorY + 0.7, 20.0],
     sauna: [SA.x + 0.5, saunaFloorY + 1.35, SA.y + SA.d / 2],
+    tubSeat: [SH.x + SH.w / 2 - 0.5, saunaFloorY + 1.1, SH.y],
+    pergolaSeat: [FPC.cx, pergolaModel.floorHeight + 1.2, FPC.cy],
+    westPath: [9.98, deckTop + 1.1, 5.2],
+    cars: [26.5, garageFloorY + 0.75, 22.5],
+    eastLounge: [PBOWL.cx, deckTop + .8, PBOWL.cz],
+    atriumLounge: [13.73, deckTop + 1.15, 16.6],
     pergola: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.1, PG.y + PG.d / 2],
     greenhouse: [GH.x + GH.w / 2, greenhouseModel.floorHeight + 1.1, GH.y + GH.d / 2],
-    raisedBeds: [2.25, raisedBedsModel.floorHeight + 0.5, 12.5],
+    raisedBeds: [bedsPad.x+bedsPad.w/2, raisedBedsModel.floorHeight + 0.5, bedsPad.y+bedsPad.d/2],
     firepit: [FPC.cx, firepitModel.floorHeight + 0.3, FPC.cy],
-    hiddenBench: [32.3, hiddenBenchModel.floorHeight + 0.45, 18.55]
+    hiddenBench: [bench.x+bench.w/2, hiddenBenchModel.floorHeight + 0.45, bench.y+bench.d/2]
   };
   const p = positions[name];
   const t = targets[name];
@@ -1992,7 +2080,7 @@ window.setPreset = function(name) {
   if (!p || !t) return;
   // Eye level — adjust Y to actual terrain height + 1.7 m
   if (name === 'ground') {
-    p[1] = terrainHeight(p[0], p[2]) + 1.7;
+    p[1] = walkingHeight(p[0], p[2]) + 1.7;
     t[1] = terrainHeight(t[0], t[2]) + 1.7;
   }
   camera.position.set(...p);
@@ -2045,6 +2133,7 @@ const timeSlider = document.getElementById('timeSlider');
 const timeLabel = document.getElementById('timeLabel');
 const daySlider = document.getElementById('daySlider');
 const dateLabel = document.getElementById('dateLabel');
+const seasonalPlanting = SeasonalPlanting.create({ THREE, treesGroup, renderer });
 
 function dayToDate(d) {
   const md = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -2066,6 +2155,10 @@ function updateDayLabel() {
   const v = parseInt(daySlider.value);
   dateLabel.textContent = dayToDate(v);
   currentDay = v;
+  seasonalPlanting.update(v);
+  const month = new Date(Date.UTC(2025, 0, v)).getUTCMonth() + 1;
+  for (const plant of perennialPlants) PerennialModel.update(plant, month);
+  renderer.shadowMap.needsUpdate = true;
   // Highlight matching season button
   document.querySelectorAll('#timeBar .seasons button').forEach(b => {
     b.classList.toggle('active', parseInt(b.dataset.day) === v);
@@ -2082,6 +2175,37 @@ document.querySelectorAll('#timeBar .seasons button').forEach(b => {
 });
 updateTimeLabel();
 updateDayLabel();
+const winterPrivacyButton = document.createElement('button');
+winterPrivacyButton.type = 'button';
+winterPrivacyButton.style.cssText = 'display:block;margin-top:8px;padding:6px 9px;background:#526575;color:white;border:0;border-radius:4px;cursor:pointer';
+const plantingToggle = document.getElementById('toggleTrees');
+let seasonBeforePrivacy = null;
+function updatePlantingVisibilityButton() {
+  if (plantingToggle.checked && seasonBeforePrivacy !== null) {
+    if (daySlider.value === '355') {
+      daySlider.value = seasonBeforePrivacy;
+      updateDayLabel();
+    }
+    seasonBeforePrivacy = null;
+  }
+  winterPrivacyButton.textContent = plantingToggle.checked ? 'Winter privacy: hide planting' : 'Show planting';
+  winterPrivacyButton.setAttribute('aria-pressed', String(!plantingToggle.checked));
+}
+plantingToggle.addEventListener('change', updatePlantingVisibilityButton);
+updatePlantingVisibilityButton();
+winterPrivacyButton.addEventListener('click', () => {
+  if (plantingToggle.checked) {
+    seasonBeforePrivacy = daySlider.value;
+    daySlider.value = '355';
+    updateDayLabel();
+  }
+  plantingToggle.checked = !plantingToggle.checked;
+  plantingToggle.dispatchEvent(new Event('change'));
+});
+const seasonNote = document.createElement('small');
+seasonNote.textContent = 'Planting is a design proposal. Deciduous trees and illustrative climbers lose leaves; evergreen concepts retain them. Perennials show approximate flowering months and dry winter structure, with spring cutback. Species, nursery sizes and site suitability are unconfirmed. Hide planting checks screens alone.';
+seasonNote.style.cssText = 'display:block;max-width:300px;margin-top:6px;color:#ccd3d7';
+document.getElementById('timeBar').append(winterPrivacyButton, seasonNote);
 
 // ───────────────────────── HOVER LABELS (raycaster) ─────────────────────────
 const tooltip = document.getElementById('tooltip');
@@ -2121,7 +2245,7 @@ addHoverTarget(wtSidewalk.x, wtSidewalk.y, wtSidewalk.w, wtSidewalk.d, 0.4, 'Wes
   addHoverTarget(bx, by, bw, bd, 0.4, 'Raised beds (4×)');
 }
 hoverRect('rainTank', 0.1);
-hoverRect('orchard', 0.5);
+for(const c of circlesOf('orchard'))addHoverTarget(c.cx-c.r,c.cy-c.r,2*c.r,2*c.r,4,EL.orchard.name);
 hoverRect('greenhouse', 2.6);
 hoverRect('compost', 1.0);
 hoverRect('binStore', 1.235);
@@ -2156,7 +2280,7 @@ document.getElementById('toggleFP').addEventListener('change', e => {
   fpState.active = e.target.checked;
   if (fpState.active) {
     controls.enabled = false;
-    fpCamera.position.set(20, terrainHeight(20, 20) + 1.7, 20);
+    fpCamera.position.set(20, walkingHeight(20, 20) + 1.7, 20);
     lockPointer();
   } else {
     controls.enabled = true;
@@ -2197,11 +2321,7 @@ function fpUpdate(dt) {
   if (fpState.keys['a']) fpCamera.position.addScaledVector(right, -step);
   if (fpState.keys['d']) fpCamera.position.addScaledVector(right, step);
   // Stay above terrain
-  let tY = terrainHeight(fpCamera.position.x, fpCamera.position.z);
-  for (const s of walkSurfaces) {
-    if (fpCamera.position.x >= s.x0 && fpCamera.position.x <= s.x1 &&
-        fpCamera.position.z >= s.z0 && fpCamera.position.z <= s.z1) tY = s.y;
-  }
+  const tY = walkingHeight(fpCamera.position.x, fpCamera.position.z);
   fpCamera.position.y = tY + 1.7;
   // Apply look direction
   const lookAt = _v3.set(
@@ -2221,38 +2341,24 @@ window.addEventListener('resize', () => {
 });
 
 // ───────────────────────── WALKING TOUR (POV walkthrough) ─────────────────────────
-// Each waypoint: p = [x, z] walker position, la = [x, z] look-at (always horizontal — same eye level)
-// Walker stays inside the plot; every look-at frames a garden feature from viewing distance
-// (never the fence up close), with the house kept out of or at the edge of the frame.
-// Position and look-at each follow a Catmull-Rom spline through the waypoints — continuous
-// walking speed, no stop-start at waypoints; dur = seconds to reach the NEXT waypoint.
-const tourPath = [
-  { p: [42.5, 29.8], la: [34, 27.5],   dur: 2.5, label: 'At the gate' },
-  { p: [38, 29],     la: [31.2, 26.6], dur: 2.5, label: 'Driveway — garage' },
-  { p: [33, 30.5],   la: [24, 32.5],   dur: 2.5, label: 'South lawn' },
-  { p: [26, 31],     la: [4, 30.5],    dur: 2.5, label: 'Toward the orchard' },
-  { p: [14, 31],     la: [2, 28.5],    dur: 3,   label: 'Orchard ahead' },
-  { p: [7, 29],      la: [2.75, 24],   dur: 3,   label: 'In the orchard' },
-  { p: [6, 21],      la: [2, 14],      dur: 2.5, label: 'Raised beds ahead' },
-  { p: [6.5, 13],    la: [2.75, 12],   dur: 3,   label: 'At the raised beds' },
-  { p: [7, 8],       la: [5, 3],       dur: 2.5, label: 'Toward the sauna' },
-  { p: [8.5, 6],     la: [5, 2.5],     dur: 3,   label: 'Sauna + hot tub' },
-  { p: [12, 4.5],    la: [17, 1.5],    dur: 2.5, label: 'Perennials by north fence' },
-  { p: [19, 4.5],    la: [27, 2.5],    dur: 2.5, label: 'Approaching pergola' },
-  { p: [24, 6.5],    la: [28.5, 3.0],  dur: 3,   label: 'At pergola + grill' },
-  { p: [30, 7.5],    la: [37.5, 6.6],  dur: 2.5, label: 'Toward fire pit' },
-  { p: [34.5, 9],    la: [37.5, 6.6],  dur: 3,   label: 'At fire pit' },
-  { p: [38, 12],     la: [42.3, 14],   dur: 2.5, label: 'East trees (privacy)' },
-  { p: [34, 12],     la: [30.8, 14.4], dur: 3,   label: 'At the pond' },
-  { p: [35, 18],     la: [40.5, 23.5], dur: 2.5, label: 'Parking + rain tank' },
-  { p: [39, 26],     la: [43.6, 30.1], dur: 2.5, label: 'Back at the gate' },
-  { p: [40, 25],     la: [35.5, 9.5],  dur: 3,   label: 'Final overview' },
-];
-// Waypoints must be distinct — duplicates make the centripetal Catmull-Rom divide by zero (NaN camera)
-
+// Linear walking segments stay on the route centreline; curved interpolation cuts across beds.
+const tourRoute = GARDEN.gardenRoutes.find(route => route.id === 'Pond walk');
+const tourPond = EL.pond.parts.find(part => part.kind === 'ellipse');
+const tourPergola = EL.pergola.parts.find(part => part.kind === 'rect');
+const tourFire = EL.firePit.parts.find(part => part.kind === 'circle');
+const tourPath = [...tourRoute.points, ...tourRoute.points.slice(0, -1).reverse()].map((p, index, points) => {
+  const next = points[index + 1];
+  const atGathering = index >= tourRoute.points.length - 3 && index <= tourRoute.points.length;
+  const atPergola = index === tourRoute.points.length - 1;
+  return { p, la: atPergola ? [tourPergola.x + tourPergola.w / 2, tourPergola.y + tourPergola.d / 2]
+    : atGathering ? [tourFire.cx, tourFire.cy] : [tourPond.cx, tourPond.cy],
+    dur: next ? Math.hypot(next[0] - p[0], next[1] - p[1]) / .9 : 0,
+    label: atPergola ? 'Pergola gathering room' : atGathering ? 'Corten fire pit'
+      : index < tourRoute.points.length ? 'Gathering and pond walk' : 'Return along the pond' };
+});
 const tourCurves = {
-  walk: new THREE.CatmullRomCurve3(tourPath.map(w => new THREE.Vector3(w.p[0], 0, w.p[1])), false, 'centripetal'),
-  look: new THREE.CatmullRomCurve3(tourPath.map(w => new THREE.Vector3(w.la[0], 0, w.la[1])), false, 'centripetal'),
+  walk: tourPath.map(w => new THREE.Vector3(w.p[0], 0, w.p[1])),
+  look: tourPath.map(w => new THREE.Vector3(w.la[0], 0, w.la[1])),
   cum: tourPath.reduce((acc, w) => (acc.push(acc[acc.length - 1] + w.dur), acc), [0]),
 };
 
@@ -2290,11 +2396,10 @@ function tourUpdate() {
   while (elapsed >= tourCurves.cum[tourIndex + 1]) tourIndex++;
   const seg = tourPath[tourIndex];
   const localT = (elapsed - tourCurves.cum[tourIndex]) / seg.dur;
-  // Spline parameter: waypoint i sits at u = i/(n-1)
-  const u = Math.min(1, (tourIndex + localT) / (n - 1));
-  const pos = tourCurves.walk.getPoint(u, _v);
-  const la = tourCurves.look.getPoint(u, _v2);
-  const py = terrainHeight(pos.x, pos.z) + 1.7;
+  const pos = _v.lerpVectors(tourCurves.walk[tourIndex], tourCurves.walk[tourIndex + 1], localT);
+  const lookT = localT * localT * (3 - 2 * localT);
+  const la = _v2.lerpVectors(tourCurves.look[tourIndex], tourCurves.look[tourIndex + 1], lookT);
+  const py = walkingHeight(pos.x, pos.z) + 1.7;
   // LookAt at SAME eye level as walker — purely horizontal view, no looking up/down
   camera.position.set(pos.x, py, pos.z);
   camera.lookAt(la.x, py, la.z);

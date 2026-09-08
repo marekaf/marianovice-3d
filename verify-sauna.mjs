@@ -4,7 +4,18 @@ const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
 const { TERRAIN } = require('./terrain.js');
 const { SaunaModel } = require('./sauna-model.js');
-const model = SaunaModel.build(GARDEN, TERRAIN.plane);
+const { SiteTerrain } = require('./site-terrain.js');
+const { GarageModel } = require('./garage-model.js');
+const { PergolaModel } = require('./pergola-model.js');
+const { GreenhouseModel } = require('./greenhouse-model.js');
+const { RaisedBedsModel } = require('./raised-beds-model.js');
+const site = SiteTerrain.create(GARDEN, TERRAIN.plane, {
+  garage: GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5),
+  pergola: PergolaModel.build(GARDEN).groundPatch,
+  greenhouse: GreenhouseModel.build(GARDEN, TERRAIN.plane).groundPatch,
+  raisedBeds: RaisedBedsModel.build(GARDEN).groundPatch,
+});
+const model = SaunaModel.build(GARDEN, site.spec.deckTop);
 const parts = new Map(model.parts.map(p => [p.name, p]));
 const rect = id => GARDEN.elements.find(e => e.id === id).parts.find(p => p.kind === 'rect');
 const sauna = rect('sauna');
@@ -15,7 +26,13 @@ const bounds = p => ({ min: p.position.map((v, i) => v - p.size[i] / 2), max: p.
 const overlaps = (a, b) => a.min.every((v, i) => Math.min(a.max[i], b.max[i]) - Math.max(v, b.min[i]) > 0.001);
 
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
-assert.deepEqual(model, SaunaModel.build(GARDEN, TERRAIN.plane), 'Geometry must be repeatable');
+assert.deepEqual(model, SaunaModel.build(GARDEN, site.spec.deckTop), 'Geometry must be repeatable');
+near(model.floorHeight, site.spec.deckTop);
+assert.ok(!model.parts.some(p => /^entry_(step|tread)/.test(p.name)), 'House-to-sauna route must not contain stairs');
+for (const r of GARDEN.elements.filter(e => ['sauna', 'saunaShelter', 'saunaPath'].includes(e.id)).flatMap(e => e.parts.filter(p => p.kind === 'rect'))) {
+  for (let x = r.x; x <= r.x + r.w; x += 0.1) for (let z = r.y; z <= r.y + r.d; z += 0.1)
+    assert.ok(site.height(x, z) <= model.floorHeight - 0.1, 'Soil must stay below sauna decks and approach');
+}
 for (const [name, category] of Object.entries({ wall_north: 'N', wall_west: 'W', wall_east: 'E',
   window_glass: 'S', door_glass: 'S', sauna_floor: 'floor', sauna_roof: 'roof', sauna_ceiling: 'roof',
   heater_body: 'furniture', bench_1_slat_0: 'furniture', tub_shell: 'outdoor', shelter_roof: 'outdoor' })) {
@@ -60,12 +77,6 @@ assert.ok(top(parts.get('heater_foot_0')) >= bottom(parts.get('heater_body')), '
 near(top(parts.get('ceiling_light_housing')), bottom(parts.get('sauna_ceiling')));
 near(top(parts.get('bench_light')), bottom(parts.get('bench_1_slat_0')));
 
-for (const part of model.parts.filter(p => p.name.startsWith('entry_tread'))) {
-  const b = bounds(part);
-  for (const x of [b.min[0], b.max[0]]) for (const y of [b.min[1], b.max[1]]) {
-    assert.ok(model.floorHeight + top(part) > TERRAIN.basePlaneHeight(x, y), `${part.name} is buried`);
-  }
-}
 const roof = parts.get('shelter_roof').vertices;
 const roofHeight = y => roof[0][2] + (y - roof[0][1]) * (roof[2][2] - roof[0][2]) / (roof[2][1] - roof[0][1]);
 for (const part of model.parts.filter(p => p.name.startsWith('shelter_rafter'))) {
@@ -77,7 +88,7 @@ const landing = GARDEN.elements.find(e => e.id === 'saunaPath').parts.find(p => 
 near(landing.y, sauna.y + sauna.d);
 assert.ok(landing.x <= sauna.x + door.from && landing.x + landing.w >= sauna.x + door.to, 'Door must open onto landing');
 const approach = GARDEN.elements.find(e => e.id === 'saunaPath').parts.find(p => !p.role);
-near(landing.y + landing.d, approach.y);
+assert.ok(landing.x<=approach.x+approach.w&&landing.x+landing.w>=approach.x&&landing.y<=approach.y+approach.d&&landing.y+landing.d>=approach.y,'Landing and approach must connect');
 for (const fixture of GARDEN.elements.filter(e => e.meta?.light).flatMap(e => e.parts.filter(p => p.kind === 'circle'))) {
   for (const r of [sauna, rect('saunaShelter'), landing]) {
     assert.ok(!(fixture.cx > r.x && fixture.cx < r.x + r.w && fixture.cy > r.y && fixture.cy < r.y + r.d),

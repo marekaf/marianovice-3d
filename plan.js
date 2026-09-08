@@ -25,7 +25,7 @@
     const plotPts = garden.plot.vertices.map(([x, y]) => `${px(x)},${px(y)}`).join(" ");
     const out = [];
 
-    out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 880" font-family="-apple-system, BlinkMacSystemFont, sans-serif">`);
+    out.push(`<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="880" viewBox="0 0 1100 880" font-family="-apple-system, BlinkMacSystemFont, sans-serif">`);
     out.push(`  <defs>
     <pattern id="cellgrid" width="${cell}" height="${cell}" patternUnits="userSpaceOnUse">
       <path d="M ${cell} 0 L 0 0 0 ${cell}" fill="none" stroke="#d8d8d8" stroke-width="0.6"/>
@@ -93,13 +93,19 @@
     }
     out.push(`    </g>`);
 
-    for (const el of garden.elements) {
+    const renderElement = el => {
       out.push(`    <g class="el" data-id="${esc(el.id)}"><title>${esc(el.name)}</title>`);
       for (const p of el.parts) {
         out.push(`      ${renderPart(p, px)}`);
       }
       out.push(`    </g>`);
+    };
+    garden.elements.filter(el=>el.meta?.plant).forEach(renderElement);
+    for(const route of garden.gardenRoutes ?? []) {
+      const points=route.points.map(([x,y])=>`${px(x)},${px(y)}`).join(' ');
+      out.push(`<polyline data-route="${esc(route.id)}" points="${points}" fill="none" stroke="#c8bea5" stroke-width="${px(route.width)}" stroke-linecap="round" stroke-linejoin="round"><title>${esc(route.id)}</title></polyline>`);
     }
+    garden.elements.filter(el=>!el.meta?.plant).forEach(renderElement);
     out.push(`  </g>`);
 
     out.push(`  <g transform="translate(1020, 110)">

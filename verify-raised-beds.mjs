@@ -35,8 +35,8 @@ const touchesStem = (point, beam) => {
 
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
 assert.deepEqual(model, RaisedBedsModel.build(GARDEN), 'Geometry must be deterministic');
-near(model.floorHeight, 3.21, 'Raised beds must rest on the existing gravel pad');
-near(model.groundPatch.level, 3.15, 'Existing subgrade must remain unchanged');
+near(model.floorHeight, model.groundPatch.level+.06, 'Raised beds must rest on the gravel pad');
+near(model.groundPatch.level, GARDEN.elements.find(e=>e.id==='raisedBedsPad').meta.grading.level, 'Subgrade must follow layout datum');
 for (const key of ['x', 'y', 'w', 'd']) near(model.groundPatch[key], rect('raisedBedsPad')[key]);
 for (const part of model.parts) {
   assert.ok(model.materials[part.material], `${part.name}: missing material`);

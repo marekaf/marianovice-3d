@@ -34,12 +34,18 @@
     <g class="axis"><text x="18" y="-6">1</text><text x="54" y="-6">2</text><text x="90" y="-6">3</text><text x="126" y="-6">4</text><text x="162" y="-6">5</text><text x="198" y="-6">6</text><text x="234" y="-6">7</text><text x="270" y="-6">8</text><text x="306" y="-6">9</text><text x="342" y="-6">10</text><text x="378" y="-6">11</text><text x="414" y="-6">12</text><text x="450" y="-6">13</text><text x="486" y="-6">14</text><text x="522" y="-6">15</text><text x="558" y="-6">16</text><text x="594" y="-6">17</text><text x="630" y="-6">18</text><text x="666" y="-6">19</text><text x="702" y="-6">20</text><text x="738" y="-6">21</text><text x="774" y="-6">22</text></g>
     <g class="axis"><text x="-12" y="22">a</text><text x="-12" y="58">b</text><text x="-12" y="94">c</text><text x="-12" y="130">d</text><text x="-12" y="166">e</text><text x="-12" y="202">f</text><text x="-12" y="238">g</text><text x="-12" y="274">h</text><text x="-12" y="310">i</text><text x="-12" y="346">j</text><text x="-12" y="382">k</text><text x="-12" y="418">l</text><text x="-12" y="454">m</text><text x="-12" y="490">n</text><text x="-12" y="526">o</text><text x="-12" y="562">p</text><text x="-12" y="598">q</text></g>
     <g clip-path="url(#plotShape)" fill="#f3f3f3" stroke="#d3d3d3" stroke-width="0.8">
+      <polygon points="-16.2,18 30.6,18 30.6,118.8 72,135 55.8,225 28.8,279 27,390.6 3.6,396 -16.2,216" />
+      <polygon points="3.6,396 50.4,392.4 108,396 154.8,387 154.8,414 9,417.6" />
+      <polygon points="27,279 59.4,275.4 118.8,279 145.8,302.4 138.6,320.4 111.6,300.6 63,295.2 41.4,324 45,369 90,383.4 126,374.4 147.6,387 108,396 27,390.6" />
+      <polygon points="405,14.4 662.4,5.4 673.2,117 748.8,117 761.4,318.6 678.6,333 626.4,327.6 570.6,336.6 500.4,333 482.4,309.6 558,300.6 568.8,252 554.4,214.2 583.2,194.4 583.2,93.6 504,90 432,108 406.8,72" />
+      <polygon points="450,212.4 460.8,230.4 460.8,284.4 450,298.8 442.8,288 442.8,225" />
       <polygon points="188.64,129.24 383.04,129.24 383.04,208.44 370.44,208.44 370.44,405.54 383.04,405.54 383.04,475.74 188.64,475.74 188.64,345.24 268.74,345.24 268.74,286.74 188.64,286.74" />
       <rect x="170.64" y="129.24" width="18" height="346.5" />
       <rect x="188.64" y="286.74" width="80.1" height="58.5" />
       <rect x="370.44" y="208.44" width="54" height="140.76" />
-      <rect x="63" y="93.06" width="126" height="14.4" />
-      <rect x="171" y="107.46" width="18" height="21.78" />
+      <rect x="41.4" y="90" width="126" height="21.6" />
+      <rect x="167.4" y="93.6" width="21.24" height="18" />
+      <rect x="170.64" y="102.6" width="18" height="26.64" />
       <rect x="383.04" y="349.2" width="114.3" height="126.9" />
       <rect x="497.34" y="348.84" width="117" height="126.9" />
       <rect x="510.84" y="472.68" width="90" height="5.94" />
@@ -48,139 +54,65 @@
       <line x1="776.52" y1="502.02" x2="767.34" y2="583.02" />
       <rect x="720" y="583.2" width="14.76" height="25.38" />
       <rect x="720" y="399.6" width="45" height="45" />
-      <ellipse cx="549" cy="277.2" rx="79.2" ry="61.2" />
-      <ellipse cx="540" cy="270" rx="50.4" ry="36" />
-      <circle cx="675" cy="118.8" r="31.5" />
-      <circle cx="675" cy="118.8" r="9" />
-      <circle cx="675" cy="118.8" r="5.76" />
-      <circle cx="234" cy="21.6" r="9" />
-      <circle cx="306" cy="27" r="9" />
-      <circle cx="378" cy="18" r="9" />
-      <circle cx="612" cy="23.4" r="9" />
-      <circle cx="684" cy="28.8" r="9" />
-      <circle cx="738" cy="21.6" r="9" />
-      <circle cx="729" cy="32.4" r="9" />
-      <circle cx="752.4" cy="144" r="9" />
-      <circle cx="756" cy="216" r="9" />
-      <circle cx="765" cy="288" r="9" />
-      <circle cx="765" cy="360" r="9" />
-      <circle cx="756" cy="594" r="9" />
-      <circle cx="738" cy="603" r="9" />
-      <rect x="117" y="39.06" width="72" height="54" />
-      <rect x="63" y="39.06" width="54" height="54" />
+      <ellipse cx="626.4" cy="252" rx="50.4" ry="36" />
+      <circle cx="621" cy="153" r="36" />
+      <circle cx="621" cy="153" r="9" />
+      <circle cx="621" cy="153" r="8.93" />
+      <circle cx="444.6" cy="64.8" r="9" />
+      <circle cx="626.4" cy="55.8" r="9" />
+      <circle cx="536.4" cy="45" r="9" />
+      <circle cx="4.5" cy="79.2" r="9" />
+      <circle cx="50.4" cy="288" r="9" />
+      <circle cx="723.6" cy="252" r="9" />
+      <circle cx="711" cy="144" r="9" />
+      <circle cx="738" cy="190.8" r="9" />
+      <rect x="95.4" y="36" width="72" height="54" />
+      <rect x="41.4" y="36" width="54" height="54" />
       <rect x="4.5" y="12.6" width="34.29" height="19.62" />
-      <circle cx="90" cy="66.06" r="16.2" />
-      <rect x="464.04" y="28.98" width="108" height="72" />
-      <rect x="467.64" y="32.58" width="100.8" height="64.8" />
-      <rect x="493.2" y="55.98" width="50.4" height="18" />
-      <rect x="12.6" y="174.6" width="55.8" height="100.8" />
-      <rect x="18" y="180" width="18" height="36" />
-      <rect x="18" y="234" width="18" height="36" />
-      <rect x="45" y="180" width="18" height="36" />
-      <rect x="45" y="234" width="18" height="36" />
-      <rect x="248.94" y="3.6" width="43.2" height="2.52" />
-      <rect x="15.48" y="294.48" width="2.52" height="43.2" />
-      <rect x="252" y="565.2" width="43.2" height="2.52" />
-      <rect x="9" y="383.4" width="93.6" height="158.4" />
-      <rect x="7.2" y="379.98" width="100.08" height="162" />
-      <circle cx="21.6" cy="396" r="9" />
-      <circle cx="72" cy="423" r="9" />
-      <circle cx="21.6" cy="468" r="9" />
-      <circle cx="72" cy="495" r="9" />
-      <circle cx="21.6" cy="540" r="9" />
-      <circle cx="72" cy="522" r="9" />
-      <rect x="27" y="432" width="46.8" height="64.8" />
-      <rect x="28.8" y="509.4" width="36" height="18" />
-      <rect x="442.8" y="208.8" width="43.2" height="140.4" />
-      <rect x="513" y="129.6" width="81" height="64.8" />
-      <rect x="10.8" y="35.46" width="46.8" height="57.6" />
-      <rect x="36" y="111.06" width="108" height="28.8" />
-      <rect x="417.6" y="28.98" width="36" height="72" />
-      <rect x="583.2" y="28.98" width="36" height="72" />
-      <polygon points="383.4,539.1 763.2,579.6 752.4,604.8 383.4,583.2" />
-      <rect x="720" y="81" width="39.6" height="297" />
+      <circle cx="68.4" cy="63" r="16.2" />
+      <rect x="450" y="122.4" width="108" height="72" />
+      <rect x="453.6" y="126" width="100.8" height="64.8" />
+      <rect x="482.76" y="148.5" width="43.2" height="19.8" />
+      <rect x="79.2" y="421.2" width="75.6" height="111.6" />
+      <rect x="90" y="432" width="18" height="36" />
+      <rect x="126" y="432" width="18" height="36" />
+      <rect x="90" y="486" width="18" height="36" />
+      <rect x="126" y="486" width="18" height="36" />
+      <rect x="583.2" y="101.34" width="79.2" height="2.52" />
+      <rect x="37.44" y="36" width="2.52" height="54" />
+      <rect x="41.4" y="32.04" width="126" height="2.52" />
+      <polygon points="36,144 140.4,144 149.4,246.6 72,268.2 39.6,234" />
+      <circle cx="50.4" cy="162" r="9" />
+      <circle cx="122.4" cy="226.8" r="9" />
+      <rect x="18" y="432" width="46.8" height="64.8" />
+      <rect x="18" y="513" width="36" height="18" />
       <circle cx="203.4" cy="295.2" r="6.3" />
       <circle cx="244.8" cy="297" r="10.8" />
       <circle cx="250.2" cy="333" r="6.3" />
-      <rect x="192.6" y="100.8" width="190.8" height="27" />
-      <rect x="189" y="478.8" width="194.4" height="32.4" />
-      <rect x="444.6" y="320.4" width="180" height="27" />
+      <rect x="170.64" y="99.54" width="221.4" height="21.6" />
+      <rect x="170.64" y="99.54" width="18.36" height="29.7" />
       <rect x="627.48" y="352.8" width="4.5" height="118.8" />
       <rect x="192.6" y="287.64" width="70.2" height="4.5" />
       <rect x="192.6" y="341.1" width="70.2" height="4.5" />
-      <rect x="565.2" y="329.4" width="32.4" height="9" />
-      <rect x="687.6" y="39.6" width="66.6" height="68.4" />
-      <circle cx="178.2" cy="457.74" r="4.32" />
-      <circle cx="166.86" cy="450" r="4.32" />
-      <circle cx="162.36" cy="437.04" r="4.32" />
-      <circle cx="151.02" cy="429.48" r="4.32" />
-      <circle cx="146.52" cy="416.52" r="4.32" />
-      <circle cx="135.18" cy="408.96" r="4.32" />
-      <circle cx="132.12" cy="395.46" r="4.32" />
-      <circle cx="121.86" cy="386.28" r="4.32" />
-      <circle cx="119.34" cy="372.96" r="4.32" />
-      <circle cx="109.08" cy="363.78" r="4.32" />
-      <circle cx="106.56" cy="350.46" r="4.32" />
-      <circle cx="98.46" cy="339.84" r="4.32" />
-      <circle cx="98.46" cy="326.16" r="4.32" />
-      <circle cx="90.18" cy="315.36" r="4.32" />
-      <circle cx="90.18" cy="301.68" r="4.32" />
-      <circle cx="450.36" cy="261.54" r="4.32" />
-      <circle cx="449.64" cy="247.86" r="4.32" />
-      <circle cx="457.2" cy="236.7" r="4.32" />
-      <circle cx="456.66" cy="223.02" r="4.32" />
-      <circle cx="464.58" cy="211.86" r="4.32" />
-      <circle cx="464.76" cy="198.18" r="4.32" />
-      <circle cx="473.04" cy="187.38" r="4.32" />
-      <circle cx="473.22" cy="173.7" r="4.32" />
-      <circle cx="482.22" cy="163.26" r="4.32" />
-      <circle cx="483.12" cy="149.58" r="4.32" />
-      <circle cx="491.94" cy="139.32" r="4.32" />
-      <circle cx="495" cy="126.18" r="4.32" />
-      <circle cx="505.98" cy="118.26" r="4.32" />
-      <circle cx="584.46" cy="88.56" r="4.32" />
-      <circle cx="598.14" cy="87.84" r="4.32" />
-      <circle cx="609.48" cy="95.4" r="4.32" />
-      <circle cx="623.16" cy="95.04" r="4.32" />
-      <circle cx="633.78" cy="103.5" r="4.32" />
-      <circle cx="647.46" cy="103.68" r="4.32" />
-      <circle cx="674.82" cy="152.1" r="4.32" />
-      <circle cx="673.56" cy="165.78" r="4.32" />
-      <circle cx="664.56" cy="175.86" r="4.32" />
-      <circle cx="663.3" cy="189.54" r="4.32" />
-      <circle cx="653.58" cy="199.08" r="4.32" />
-      <circle cx="650.7" cy="212.4" r="4.32" />
-      <circle cx="640.26" cy="221.4" r="4.32" />
-      <circle cx="637.56" cy="234.72" r="4.32" />
-      <circle cx="627.12" cy="243.72" r="4.32" />
-      <circle cx="624.24" cy="257.04" r="4.32" />
-      <circle cx="613.98" cy="266.04" r="4.32" />
-      <circle cx="612" cy="279.36" r="4.32" />
-      <circle cx="603.36" cy="289.98" r="4.32" />
-      <circle cx="602.82" cy="303.66" r="4.32" />
-      <circle cx="594" cy="313.92" r="4.32" />
-      <circle cx="592.56" cy="327.6" r="4.32" />
-      <circle cx="414" cy="545.4" r="3.24" />
-      <circle cx="522" cy="558" r="3.24" />
-      <circle cx="630" cy="570.6" r="3.24" />
-      <circle cx="738" cy="583.2" r="3.24" />
-      <circle cx="156.6" cy="111.6" r="3.24" />
-      <circle cx="163.8" cy="117" r="3.24" />
-      <circle cx="435.6" cy="394.2" r="3.24" />
-      <circle cx="745.2" cy="604.8" r="3.96" />
-      <circle cx="745.2" cy="604.8" r="1.26" />
-      <circle cx="608.4" cy="244.8" r="3.96" />
-      <circle cx="608.4" cy="244.8" r="1.26" />
-      <circle cx="450" cy="113.4" r="3.96" />
-      <circle cx="450" cy="113.4" r="1.26" />
+      <rect x="644.4" y="297" width="32.4" height="9" />
+      <circle cx="144" cy="122.4" r="3.24" />
+      <circle cx="160.2" cy="383.4" r="3.24" />
+      <circle cx="138.6" cy="361.8" r="3.24" />
+      <circle cx="415.8" cy="189" r="3.24" />
+      <circle cx="504" cy="298.8" r="3.24" />
+      <circle cx="646.2" cy="414" r="3.24" />
+      <circle cx="133.2" cy="266.4" r="3.96" />
+      <circle cx="133.2" cy="266.4" r="1.26" />
+      <circle cx="547.2" cy="252" r="3.96" />
+      <circle cx="547.2" cy="252" r="1.26" />
     </g>
     <g clip-path="url(#plotShape)">
-      <rect x="464.04" y="28.98" width="108" height="72" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
-      <rect x="467.64" y="32.58" width="100.8" height="64.8" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
-      <rect x="493.2" y="55.98" width="50.4" height="18" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
-      <rect x="117" y="39.06" width="72" height="54" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
-      <rect x="63" y="39.06" width="54" height="54" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
-      <rect x="27" y="432" width="46.8" height="64.8" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="450" y="122.4" width="108" height="72" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="453.6" y="126" width="100.8" height="64.8" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="482.76" y="148.5" width="43.2" height="19.8" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="95.4" y="36" width="72" height="54" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="41.4" y="36" width="54" height="54" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
+      <rect x="18" y="432" width="46.8" height="64.8" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
       <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
       <rect x="497.34" y="348.84" width="117" height="126.9" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
       <rect x="510.84" y="472.68" width="90" height="5.94" fill="#f6c9a0" fill-opacity="0.75" stroke="#c25e12" stroke-width="1.6" />
@@ -189,26 +121,26 @@
       <rect x="170.64" y="129.24" width="18" height="346.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
       <rect x="188.64" y="286.74" width="80.1" height="58.5" fill="#d9ead3" fill-opacity="0.75" stroke="#5a9a3c" stroke-width="1.6" />
       <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 671.94,486.36 775.44,502.02 765.9,583.02 383.04,534.96" fill="url(#fallhatch)" stroke="#2f6fae" stroke-width="1.6" />
-      <circle cx="675" cy="118.8" r="31.5" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
-      <circle cx="675" cy="118.8" r="9" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
-      <circle cx="675" cy="118.8" r="5.76" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
-      <rect x="12.6" y="174.6" width="55.8" height="100.8" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
-      <rect x="28.8" y="509.4" width="36" height="18" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <circle cx="621" cy="153" r="36" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <circle cx="621" cy="153" r="9" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <circle cx="621" cy="153" r="8.93" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <rect x="79.2" y="421.2" width="75.6" height="111.6" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
+      <rect x="18" y="513" width="36" height="18" fill="#fff2cc" fill-opacity="0.75" stroke="#bf9000" stroke-width="1.6" />
       <rect x="720" y="583.2" width="14.76" height="25.38" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
       <rect x="4.5" y="12.6" width="34.29" height="19.62" fill="#ffe0b2" fill-opacity="0.75" stroke="#e08a1e" stroke-width="1.6" />
     </g>
-    <circle cx="518.04" cy="64.98" r="8" fill="#e08a1e"/>
-    <text x="518.04" y="68.18" class="tag" fill="#fff">1</text>
-    <text x="518.04" y="82.98" class="zlvl">−1.41</text>
-    <circle cx="153" cy="66.06" r="8" fill="#e08a1e"/>
-    <text x="153" y="69.26" class="tag" fill="#fff">2</text>
-    <text x="153" y="84.06" class="zlvl">−0.01</text>
-    <circle cx="90" cy="66.06" r="8" fill="#e08a1e"/>
-    <text x="90" y="69.26" class="tag" fill="#fff">3</text>
-    <text x="90" y="84.06" class="zlvl">−0.01</text>
-    <circle cx="50.4" cy="464.4" r="8" fill="#e08a1e"/>
-    <text x="50.4" y="467.59999999999997" class="tag" fill="#fff">4</text>
-    <text x="50.4" y="482.4" class="zlvl">+1.11</text>
+    <circle cx="504" cy="158.4" r="8" fill="#e08a1e"/>
+    <text x="504" y="161.6" class="tag" fill="#fff">1</text>
+    <text x="504" y="176.4" class="zlvl">−0.36</text>
+    <circle cx="131.4" cy="63" r="8" fill="#e08a1e"/>
+    <text x="131.4" y="66.2" class="tag" fill="#fff">2</text>
+    <text x="131.4" y="81" class="zlvl">−0.01</text>
+    <circle cx="68.4" cy="63" r="8" fill="#e08a1e"/>
+    <text x="68.4" y="66.2" class="tag" fill="#fff">3</text>
+    <text x="68.4" y="81" class="zlvl">−0.01</text>
+    <circle cx="41.4" cy="464.4" r="8" fill="#e08a1e"/>
+    <text x="41.4" y="467.59999999999997" class="tag" fill="#fff">4</text>
+    <text x="41.4" y="482.4" class="zlvl">+1.14</text>
     <circle cx="440.19" cy="412.65" r="8" fill="#c25e12"/>
     <text x="440.19" y="415.84999999999997" class="tag" fill="#fff">5</text>
     <text x="440.19" y="430.65" class="zlvl">−0.50</text>
@@ -224,15 +156,15 @@
     <circle cx="579.24" cy="466.11" r="8" fill="#2f6fae"/>
     <text x="579.24" y="469.31" class="tag" fill="#fff">9</text>
     <text x="579.24" y="484.11" class="zlvl">fall</text>
-    <circle cx="675" cy="118.8" r="8" fill="#bf9000"/>
-    <text x="675" y="122" class="tag" fill="#fff">10</text>
-    <text x="675" y="136.8" class="zlvl">−2.03</text>
-    <circle cx="40.5" cy="225" r="8" fill="#bf9000"/>
-    <text x="40.5" y="228.2" class="tag" fill="#fff">11</text>
-    <text x="40.5" y="243" class="zlvl">+0.69</text>
-    <circle cx="46.8" cy="518.4" r="8" fill="#bf9000"/>
-    <text x="46.8" y="521.6" class="tag" fill="#fff">12</text>
-    <text x="46.8" y="536.4" class="zlvl">+1.33</text>
+    <circle cx="621" cy="153" r="8" fill="#bf9000"/>
+    <text x="621" y="156.2" class="tag" fill="#fff">10</text>
+    <text x="621" y="171" class="zlvl">−1.78</text>
+    <circle cx="117" cy="477" r="8" fill="#bf9000"/>
+    <text x="117" y="480.2" class="tag" fill="#fff">11</text>
+    <text x="117" y="495" class="zlvl">+0.69</text>
+    <circle cx="36" cy="522" r="8" fill="#bf9000"/>
+    <text x="36" y="525.2" class="tag" fill="#fff">12</text>
+    <text x="36" y="540" class="zlvl">+1.38</text>
     <circle cx="727.38" cy="595.89" r="8" fill="#e08a1e"/>
     <text x="727.38" y="599.09" class="tag" fill="#fff">13</text>
     <text x="727.38" y="613.89" class="zlvl">−0.88</text>
@@ -263,18 +195,18 @@
     <text x="0" y="112" class="panelh">LEVELS SCHEDULE</text>
     <text x="0" y="125" class="th">#  area</text><text x="118" y="125" class="th" text-anchor="end">±0.000</text><text x="158" y="125" class="th" text-anchor="end">Bpv</text><text x="184" y="125" class="th" text-anchor="end">cut m</text><text x="208" y="125" class="th" text-anchor="end">fill m</text>
     <line x1="0" y1="129" x2="208" y2="129" stroke="#bbb" stroke-width="0.8"/>
-    <text x="0" y="141" class="td">1  Pergola + grill</text><text x="118" y="141" class="td" text-anchor="end">−1.41</text><text x="158" y="141" class="td" text-anchor="end">395.58</text><text x="184" y="141" class="td" text-anchor="end">0.29</text><text x="208" y="141" class="td" text-anchor="end">0.28</text>
-    <text x="0" y="153" class="td">2  Sauna</text><text x="118" y="153" class="td" text-anchor="end">−0.01</text><text x="158" y="153" class="td" text-anchor="end">396.99</text><text x="184" y="153" class="td" text-anchor="end">0.11</text><text x="208" y="153" class="td" text-anchor="end">0.28</text>
-    <text x="0" y="165" class="td">3  Hot-tub shelter</text><text x="118" y="165" class="td" text-anchor="end">−0.01</text><text x="158" y="165" class="td" text-anchor="end">396.99</text><text x="184" y="165" class="td" text-anchor="end">0.31</text><text x="208" y="165" class="td" text-anchor="end">0.02</text>
-    <text x="0" y="177" class="td">4  Greenhouse</text><text x="118" y="177" class="td" text-anchor="end">+1.11</text><text x="158" y="177" class="td" text-anchor="end">398.11</text><text x="184" y="177" class="td" text-anchor="end">0.33</text><text x="208" y="177" class="td" text-anchor="end">—</text>
+    <text x="0" y="141" class="td">1  Pergola + grill</text><text x="118" y="141" class="td" text-anchor="end">−0.36</text><text x="158" y="141" class="td" text-anchor="end">396.63</text><text x="184" y="141" class="td" text-anchor="end">0.00</text><text x="208" y="141" class="td" text-anchor="end">1.04</text>
+    <text x="0" y="153" class="td">2  Sauna</text><text x="118" y="153" class="td" text-anchor="end">−0.01</text><text x="158" y="153" class="td" text-anchor="end">396.99</text><text x="184" y="153" class="td" text-anchor="end">0.18</text><text x="208" y="153" class="td" text-anchor="end">0.21</text>
+    <text x="0" y="165" class="td">3  Hot-tub shelter</text><text x="118" y="165" class="td" text-anchor="end">−0.01</text><text x="158" y="165" class="td" text-anchor="end">396.99</text><text x="184" y="165" class="td" text-anchor="end">0.38</text><text x="208" y="165" class="td" text-anchor="end">—</text>
+    <text x="0" y="177" class="td">4  Greenhouse</text><text x="118" y="177" class="td" text-anchor="end">+1.14</text><text x="158" y="177" class="td" text-anchor="end">398.14</text><text x="184" y="177" class="td" text-anchor="end">0.33</text><text x="208" y="177" class="td" text-anchor="end">—</text>
     <text x="0" y="189" class="td">5  Carport slab</text><text x="118" y="189" class="td" text-anchor="end">−0.50</text><text x="158" y="189" class="td" text-anchor="end">396.50</text><text x="184" y="189" class="td" text-anchor="end">0.61</text><text x="208" y="189" class="td" text-anchor="end">0.12</text>
     <text x="0" y="201" class="td">6  Garage slab/apron</text><text x="118" y="201" class="td" text-anchor="end">−0.50</text><text x="158" y="201" class="td" text-anchor="end">396.50</text><text x="184" y="201" class="td" text-anchor="end">0.20</text><text x="208" y="201" class="td" text-anchor="end">0.54</text>
     <text x="0" y="213" class="td">7  Terrace E (fill)</text><text x="118" y="213" class="td" text-anchor="end">−0.02</text><text x="158" y="213" class="td" text-anchor="end">396.98</text><text x="184" y="213" class="td" text-anchor="end">0.00</text><text x="208" y="213" class="td" text-anchor="end">0.69</text>
     <text x="0" y="225" class="td">8  Terrace W</text><text x="118" y="225" class="td" text-anchor="end">+0.05</text><text x="158" y="225" class="td" text-anchor="end">397.05</text><text x="184" y="225" class="td" text-anchor="end">posts</text><text x="208" y="225" class="td" text-anchor="end">—</text>
     <text x="0" y="237" class="td">9  Driveway</text><text x="118" y="237" class="td" text-anchor="end">—</text><text x="158" y="237" class="td" text-anchor="end">—</text><text x="184" y="237" class="td" text-anchor="end">Δ1.49</text><text x="208" y="237" class="td" text-anchor="end">—</text>
-    <text x="0" y="249" class="td">10  Fire-pit seating</text><text x="118" y="249" class="td" text-anchor="end">−2.03</text><text x="158" y="249" class="td" text-anchor="end">394.97</text><text x="184" y="249" class="td" text-anchor="end">0.38</text><text x="208" y="249" class="td" text-anchor="end">—</text>
-    <text x="0" y="261" class="td">11  Raised-beds pad</text><text x="118" y="261" class="td" text-anchor="end">+0.69</text><text x="158" y="261" class="td" text-anchor="end">397.69</text><text x="184" y="261" class="td" text-anchor="end">0.25</text><text x="208" y="261" class="td" text-anchor="end">0.21</text>
-    <text x="0" y="273" class="td">12  Compost</text><text x="118" y="273" class="td" text-anchor="end">+1.33</text><text x="158" y="273" class="td" text-anchor="end">398.33</text><text x="184" y="273" class="td" text-anchor="end">0.17</text><text x="208" y="273" class="td" text-anchor="end">—</text>
+    <text x="0" y="249" class="td">10  Fire-pit seating</text><text x="118" y="249" class="td" text-anchor="end">−1.78</text><text x="158" y="249" class="td" text-anchor="end">395.22</text><text x="184" y="249" class="td" text-anchor="end">0.44</text><text x="208" y="249" class="td" text-anchor="end">—</text>
+    <text x="0" y="261" class="td">11  Raised-beds pad</text><text x="118" y="261" class="td" text-anchor="end">+0.69</text><text x="158" y="261" class="td" text-anchor="end">397.69</text><text x="184" y="261" class="td" text-anchor="end">0.66</text><text x="208" y="261" class="td" text-anchor="end">—</text>
+    <text x="0" y="273" class="td">12  Compost</text><text x="118" y="273" class="td" text-anchor="end">+1.38</text><text x="158" y="273" class="td" text-anchor="end">398.38</text><text x="184" y="273" class="td" text-anchor="end">0.17</text><text x="208" y="273" class="td" text-anchor="end">—</text>
     <text x="0" y="285" class="td">13  Bin store</text><text x="118" y="285" class="td" text-anchor="end">−0.88</text><text x="158" y="285" class="td" text-anchor="end">396.12</text><text x="184" y="285" class="td" text-anchor="end">0.12</text><text x="208" y="285" class="td" text-anchor="end">—</text>
     <text x="0" y="297" class="td">14  Tool store</text><text x="118" y="297" class="td" text-anchor="end">+0.18</text><text x="158" y="297" class="td" text-anchor="end">397.18</text><text x="184" y="297" class="td" text-anchor="end">0.17</text><text x="208" y="297" class="td" text-anchor="end">—</text>
     <text x="0" y="317" class="note">±0.000 = house FF = 397.00 Bpv.</text>

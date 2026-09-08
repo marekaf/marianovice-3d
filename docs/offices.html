@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Office concepts · local preview</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { color: #24312d; background: #eeeae2; font: 14px/1.5 system-ui, sans-serif; }
+    body { margin: 0; display: grid; grid-template-columns: 320px minmax(0,1fr); height: 100dvh; }
+    aside { padding: 26px 22px; background: #faf8f3; border-right: 1px solid #d9d5cb; overflow: auto; }
+    .eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: .17em; color: #6e7972; }
+    h1 { font-size: 27px; line-height: 1.2; font-weight: 550; margin: 8px 0 12px; }
+    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .09em; margin: 24px 0 9px; }
+    p { margin: 8px 0; }
+    select, button { font: inherit; border: 1px solid #c8cfc5; border-radius: 5px; background: #fffefa; color: inherit; padding: 10px; cursor: pointer; }
+    select { width: 100%; }
+    .views { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    button.active { background: #35574e; color: white; border-color: #35574e; }
+    button:focus-visible, select:focus-visible { outline: 3px solid #a88e62; outline-offset: 2px; }
+    label { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+    label[hidden] { display: none; }
+    input { accent-color: #35574e; }
+    .measure { font-variant-numeric: tabular-nums; padding: 10px 12px; background: #eaece4; border-radius: 5px; }
+    .muted, #notes { font-size: 12px; color: #69726b; }
+    #notes { padding-left: 17px; }
+    #notes li { margin: 8px 0; }
+    .swatches { display: flex; gap: 8px; margin: 10px 0; }
+    .swatch { flex: 1; border: 1px solid #d6d5cc; border-radius: 4px; overflow: hidden; font-size: 10px; }
+    .swatch i { display: block; height: 30px; }
+    .swatch span { display: block; padding: 5px; }
+    a { color: #35574e; }
+    main { min-width: 0; min-height: 0; position: relative; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #caption { position: absolute; top: 20px; left: 20px; pointer-events: none; padding: 9px 13px; border-radius: 5px; background: #faf8f3dc; }
+    #caption strong { font-weight: 550; }
+    #hint { position: absolute; bottom: 16px; left: 20px; right: 20px; color: #5f6962; pointer-events: none; font-size: 12px; }
+    #error { position: absolute; inset: 20px; color: #852f2f; background: #fff8f1; padding: 20px; display: none; }
+    @media(max-width: 760px) { body { grid-template-columns: 1fr; grid-template-rows: minmax(320px,58dvh) 1fr; } main { grid-row: 1; } aside { grid-row: 2; padding: 16px; border: 0; border-top: 1px solid #d9d5cb; } h1 { font-size: 22px; } h2 { margin-top: 16px; } #caption { top: 10px; left: 10px; } #hint { left: 10px; bottom: 8px; } }
+  </style>
+  <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+  <aside>
+    <div class="eyebrow">Office concept · 01</div>
+    <h1>Two rooms.<br>Two ways to work.</h1>
+    <p class="muted">Existing room geometry. Proposed furniture and finishes. Nothing on this page is published.</p>
+    <h2>Office</h2>
+    <select id="room" aria-label="Choose office"><option value="1.05">1.05 · Work + LEGO</option><option value="1.08">1.08 · Work + reading</option></select>
+    <p id="description"></p>
+    <h2>Explore</h2>
+    <div class="views"><button data-view="cutaway">Desk wall</button><button data-view="reverse">Opposite wall</button><button data-view="plan">Floor plan</button><button data-view="doorway">From doorway</button><button data-view="seated">Seated view</button><button data-view="standing">Standing view</button></div>
+    <label><input id="raised" type="checkbox">Raise work desk</label>
+    <label><input id="ceiling" type="checkbox">Show ceiling</label>
+    <label><input id="doorOpen" type="checkbox">Open room door</label>
+    <label id="shelfLedControl"><input id="shelfLed" type="checkbox" checked>Shelf LED</label>
+    <div id="dimensions" class="measure"></div>
+    <h2>Palette</h2>
+    <div class="swatches"><div class="swatch"><i id="wallSwatch" style="background:#66857f"></i><span>Seafoam 765A</span></div><div class="swatch"><i id="ceilingSwatch" style="background:#ddd1be"></i><span>Mocha 205F</span></div><div class="swatch"><i style="background:linear-gradient(90deg,#c1b39b,#d3c4aa,#bbae96)"></i><span>Champagne-like (illustrative)</span></div></div>
+    <p class="muted">Screen colours are indicative. Check physical paint and floor samples in the room.</p>
+    <h2>What to judge</h2>
+    <ul id="notes"></ul>
+    <p><a href="../interior.html#house-cut3d">Whole-house interior</a></p>
+  </aside>
+  <main id="viewport"><div id="caption"></div><div id="hint"></div><div id="error" role="alert"></div></main>
+  <script src="../house-interior.js"></script>
+  <script src="office-rooms.js"></script>
+  <script src="office-furniture.js"></script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { buildModel } from '../model3d.js';
+    import { loadOfficeIntegration } from './office-integration.js';
+    const officeIntegration = await loadOfficeIntegration();
+    const viewport=document.querySelector('#viewport'), roomSelect=document.querySelector('#room');
+    const raised=document.querySelector('#raised'), ceiling=document.querySelector('#ceiling');
+    const scene=new THREE.Scene(); scene.background=new THREE.Color('#eeeae2');
+    const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1;
+    viewport.prepend(renderer.domElement);
+    const orbitCamera=new THREE.PerspectiveCamera(42,1,.025,100);
+    const planCamera=new THREE.OrthographicCamera(-3,3,3,-3,.01,100);
+    let camera=orbitCamera;
+    const controls=new OrbitControls(orbitCamera,renderer.domElement);
+    controls.enableDamping=true; controls.minDistance=.2; controls.maxDistance=16; controls.maxPolarAngle=Math.PI*.49;
+    scene.add(new THREE.HemisphereLight('#f7f8f2','#a49982',2));
+    const sunlight=new THREE.DirectionalLight('#fff2da',2.8); sunlight.castShadow=true;
+    sunlight.shadow.mapSize.set(2048,2048); sunlight.shadow.camera.left=-6; sunlight.shadow.camera.right=6;
+    sunlight.shadow.camera.top=6; sunlight.shadow.camera.bottom=-6; sunlight.shadow.normalBias=.012;
+    scene.add(sunlight,sunlight.target);
+    const fill=new THREE.DirectionalLight('#dfeaf1',.8); scene.add(fill);
+    let roomModel, furnitureModel, shell, furniture, view='cutaway', yaw=0, pitch=0, drag=null;
+    function dispose(group) {
+      if(!group)return; scene.remove(group); const materials=new Set(), textures=new Set();
+      group.traverse(o=>{o.geometry?.dispose(); for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});
+      for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}
+      for(const t of textures)t.dispose();
+    }
+    function eyeLook() { camera.lookAt(camera.position.clone().add(new THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch)))); }
+    function resize() {
+      const w=viewport.clientWidth,h=viewport.clientHeight; renderer.setSize(w,h);
+      orbitCamera.aspect=w/h; orbitCamera.updateProjectionMatrix();
+      if(roomModel){const b=roomModel.bounds,cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2;
+        const half=Math.max((b.z1-b.z0)/2+.45,((b.x1-b.x0)/2+.45)/(w/h));
+        planCamera.left=-half*w/h;planCamera.right=half*w/h;planCamera.top=half;planCamera.bottom=-half;
+        planCamera.position.set(cx,12,cz);planCamera.up.set(0,0,-1);planCamera.lookAt(cx,0,cz);planCamera.updateProjectionMatrix();
+      }
+    }
+    function applyView(reposition=true) {
+      const b=roomModel.bounds,cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2;
+      const eye=['seated','standing','doorway'].includes(view); controls.enabled=!eye&&view!=='plan'; camera=view==='plan'?planCamera:orbitCamera;
+      if(furniture.userData.categories.chair)furniture.userData.categories.chair.visible=!eye;
+      for(const side of ['north','south','east','west'])if(shell.userData.categories[side])shell.userData.categories[side].visible=true;
+      if(view==='cutaway'||view==='reverse'){
+        const forward=roomSelect.value==='1.05'?'south':'north',back=roomSelect.value==='1.05'?'north':'south';
+        for(const side of ['east',view==='cutaway'?forward:back])if(shell.userData.categories[side])shell.userData.categories[side].visible=false;
+      }
+      shell.userData.categories.roof.visible=ceiling.checked&&view!=='plan';
+      renderer.clippingPlanes=view==='plan'?[new THREE.Plane(new THREE.Vector3(0,-1,0),1.35)]:[];
+      if(reposition){
+        if(view==='cutaway'||view==='reverse'){const sign=(roomSelect.value==='1.05'?1:-1)*(view==='reverse'?-1:1);orbitCamera.fov=42;orbitCamera.position.set(cx+6.5,6.5,cz+sign*3.4);controls.target.set(cx,.85,cz);controls.update();}
+        else if(eye){const d=furnitureModel.desk;orbitCamera.fov=65;
+          if(view==='doorway'){orbitCamera.position.set(b.x1-.20,d.eyeStanding,roomSelect.value==='1.05'?14.1:6.3);yaw=-Math.PI/2;pitch=-.12;}
+          else {orbitCamera.position.set(d.x,view==='seated'?d.eyeSeated:d.eyeStanding,d.z);yaw=Math.atan2(d.facing[0],d.facing[1]);pitch=-.03;}
+          eyeLook();}
+        orbitCamera.updateProjectionMatrix();
+      }
+      for(const button of document.querySelectorAll('[data-view]'))button.classList.toggle('active',button.dataset.view===view);
+      document.querySelector('#caption').innerHTML=`<strong>Office ${roomSelect.value}</strong> · ${view==='plan'?'Plan section at 1.35 m':view==='cutaway'?'Desk wall':view==='reverse'?'Opposite wall':`${view} · eye ${camera.position.y.toFixed(2)} m`}`;
+      document.querySelector('#hint').textContent=eye?'Drag to look around from a fixed eye position. Heights are approximate.':view==='plan'?'North is up. Upper shelves are cut away to reveal the working surfaces.':'Drag to orbit · Scroll to zoom · Right-drag to pan';
+      window.OFFICE_PREVIEW={scene,camera,renderer,roomModel,furnitureModel,shell,furniture,view};
+      resize();
+    }
+    function build(reposition=true) {
+      try {
+        dispose(shell);dispose(furniture);
+        ({roomModel,furnitureModel,shell,furniture}=officeIntegration.createOffice(THREE,HOUSE_INTERIOR,roomSelect.value,
+          {buildModel,renderer,doorOpen:document.querySelector('#doorOpen').checked,standing:raised.checked,shelfLed:document.querySelector('#shelfLed').checked}));
+        scene.add(shell,furniture);
+        document.querySelector('#shelfLedControl').hidden=roomSelect.value!=='1.05';
+        const b=roomModel.bounds,cx=(b.x0+b.x1)/2,cz=(b.z0+b.z1)/2;
+        sunlight.position.set(cx-5,6,cz-1);sunlight.target.position.set(cx,.5,cz);fill.position.set(cx+3,4,cz+2);
+        document.querySelector('#description').textContent=roomSelect.value==='1.05'?'Adjustable work desk by the window; fixed-height LEGO table by the door. Both remain on the atrium wall.':'An adjustable atrium-wall desk, sofa against the bathroom wall, and storage beside the niche.';
+        document.querySelector('#dimensions').textContent=`Room ${roomSelect.value==='1.05'?'4.00 × 3.10':'4.00 × 4.00, with recesses'} m · Worktop ${Math.round(furnitureModel.desk.top*100)} cm`;
+        const notes=[...(furnitureModel.notes||[]),'Desk heights and eye positions are concept settings, not individual ergonomic measurements.','Office windows follow the supplier layout: fixed glazing plus a tilt-and-turn sash. Profile details are approximate.'];
+        document.querySelector('#notes').replaceChildren(...notes.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
+        document.querySelector('#wallSwatch').style.background=roomModel.materials.wallPaint.color;
+        document.querySelector('#ceilingSwatch').style.background=roomModel.materials.ceilingPaint.color;
+        applyView(reposition);document.querySelector('#error').textContent='';document.querySelector('#error').style.display='none';
+      }catch(error){document.querySelector('#error').style.display='block';document.querySelector('#error').textContent=`Preview could not load: ${error.message}`;throw error;}
+    }
+    roomSelect.addEventListener('change',()=>{location.hash=roomSelect.value;build();});
+    window.addEventListener('hashchange',()=>{if(['1.05','1.08'].includes(location.hash.slice(1))&&roomSelect.value!==location.hash.slice(1)){roomSelect.value=location.hash.slice(1);build();}});
+    for(const button of document.querySelectorAll('[data-view]'))button.addEventListener('click',()=>{view=button.dataset.view;if(view==='doorway')document.querySelector('#doorOpen').checked=true;if(view==='seated'||view==='standing'){raised.checked=view==='standing';ceiling.checked=true;}else ceiling.checked=view==='doorway';build();});
+    raised.addEventListener('change',()=>build(false));ceiling.addEventListener('change',()=>applyView(false));
+    document.querySelector('#doorOpen').addEventListener('change',()=>build(false));
+    document.querySelector('#shelfLed').addEventListener('change',()=>build(false));
+    renderer.domElement.addEventListener('pointerdown',e=>{if(['seated','standing','doorway'].includes(view)){drag={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);}});
+    renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;yaw-=(e.clientX-drag.x)*.004;pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-drag.y)*.004));drag={x:e.clientX,y:e.clientY};eyeLook();});
+    for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,()=>drag=null);
+    window.addEventListener('resize',resize);
+    if(['1.05','1.08'].includes(location.hash.slice(1)))roomSelect.value=location.hash.slice(1);
+    build();renderer.setAnimationLoop(()=>{if(controls.enabled)controls.update();renderer.render(scene,camera);});
+  </script>
+</body>
+</html>

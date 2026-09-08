@@ -1,8 +1,14 @@
-# Garden visualization
+# House and garden visualization
 
-Interactive 3D model of a residential garden.
+Interactive 3D model of a house and its garden.
 
 **Live:** https://marianovice.marekbartik.com
+
+[House interiors](https://marianovice.marekbartik.com/interior.html) · [Office views](https://marianovice.marekbartik.com/docs/offices.html)
+
+This is a visualization, not a construction drawing or clearance approval. Some furniture dimensions, equipment placements, roof geometry and lighting remain proposals. Original drawings, supplier documents and reference photographs are not included.
+
+The pale-oak flooring uses an original procedural texture. It is an illustrative approximation, not an exact product photograph or colour sample.
 
 ## Contents
 
@@ -14,15 +20,15 @@ Interactive 3D model of a residential garden.
   - Hover labels for major elements
   - Camera presets (top-down, isometric, walking eye level, etc.)
   - Garage interior — hollow shell with real gate + door openings, open/closed gate toggle
-- [`interior.html`](interior.html) — dedicated interiors page: orthographic floor plan + one elevation per wall (the wall you look through is hidden), cutaway 3D, PNG export with a scale bar. Ships with the garage; the house appears when a local (gitignored) `house-interior.js` room-data file is present
+- [`interior.html`](interior.html) — house, loft, garage and sauna interiors: floor plans, wall elevations, cutaway 3D, furnished eye-level views and PNG export. House cutaway is the default view
 - [`interiors3d.js`](interiors3d.js) — shared garage-interior builder consumed by both viewers
 - [`sauna-model.js`](sauna-model.js) — shared sauna, shelter, hot tub and entrance geometry; used by the browser and exported to Blender
 - [`pergola-model.js`](pergola-model.js) — shared timber frame, paving, dining furniture and lighting; rendered through `model3d.js` and `blender/model_parts.py`
 - [`garage-model.js`](garage-model.js) — shared hollow garage, wall finishes, sectional-door mechanisms and workshop furniture; preserves wall and gate cutaways in the interiors viewer
-- [`furniture-model.js`](furniture-model.js) — data-driven cabinetry, sanitary fixtures and bedding; generic examples are available at [`fixtures.html`](fixtures.html), separate from the private house floor plan
+- [`furniture-model.js`](furniture-model.js) — data-driven cabinetry, sanitary fixtures and bedding; generic examples are available at [`fixtures.html`](fixtures.html)
 - [`greenhouse-model.js`](greenhouse-model.js) — shared hollow greenhouse, framed glazing, roof vent, drainage and potting furniture
 - [`raised-beds-model.js`](raised-beds-model.js) — four timber beds with recessed soil, irrigation and crops on their shared gravel pad
-- [`firepit-model.js`](firepit-model.js) — hollow stone firepit, logs and supported benches following the existing slope
+- [`firepit-model.js`](firepit-model.js) — hollow corten firepit, logs and supported benches following the existing slope
 - [`hidden-bench-model.js`](hidden-bench-model.js) — painted garden bench with slats, metal framing and feet fitted to the garage-side grading
 - [`site-terrain.js`](site-terrain.js) — shared grading definition and house/deck rendering levels; Blender evaluates the exported definition through [`blender/site_terrain.py`](blender/site_terrain.py)
 - [`editor.html`](editor.html) — interactive 2D editor (drag-drop on a grid, mouse or touch); exports an updated `layout.js` or SVG
@@ -33,7 +39,7 @@ Interactive 3D model of a residential garden.
 
 - Vanilla HTML + JS
 - Three.js loaded from CDN
-- No build step — just open in a browser
+- No build step — serve the repository over HTTP and open it in a browser
 
 ## Model previews
 

@@ -32,6 +32,28 @@ jobs:
       - name: Interior fixture geometry (footprints, heights and floor offsets)
         run: node verify-fixtures.mjs
 
+      - name: Public runtime dependencies and procedural flooring
+        run: node verify-public-runtime.mjs
+
+      - name: House room data and interior models
+        run: |
+          node verify-interior-data.mjs house-interior.js
+          node verify-hoxter-stove.mjs
+          node verify-ravak-freedom.mjs
+          node verify-stair-flight.mjs
+          node verify-kitchen-fronts.mjs
+          node verify-cabinet-finishes.mjs
+          node verify-window-seat-handles.mjs
+          node verify-bathroom-fixtures.mjs
+          node docs/verify-utility-joinery.mjs
+          node docs/verify-kitchen-spec.mjs
+          node docs/verify-shower-fittings.mjs
+          node docs/verify-utility-rack-placement.mjs
+          node docs/verify-entrance-threshold.mjs
+          node docs/verify-eye-level-walkthrough.mjs
+          node docs/verify-electrical-model.mjs
+          node docs/verify-electrical-points.mjs
+
       - name: Greenhouse geometry (openings, vent and interior supports)
         run: node verify-greenhouse.mjs
 

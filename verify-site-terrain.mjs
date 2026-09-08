@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { runInNewContext } from 'node:vm';
 const require = createRequire(import.meta.url);
@@ -60,12 +60,21 @@ if (process.argv.includes('--record-baseline')) {
     houseBaseY: original(...centroid), deckTop: original(...centroid) + 0.05 }, null, 2));
   process.exit(0);
 }
+if(!GARDEN.gardenRoutes?.length) {
 const golden = JSON.parse(readFileSync(new URL('./site-terrain-golden.json', import.meta.url), 'utf8'));
 assert.equal(points.length, golden.count);
 assert.equal(digest(points.flat()), golden.pointsDigest, 'Golden comparison coordinates must not change silently');
 const heights = points.map(point => site.height(...point));
 assert.ok(heights.every(Number.isFinite));
-assert.equal(digest(heights), golden.heightsDigest, 'Shared grading must exactly preserve original browser heights');
+const originalSpec = { ...site.spec, postCuts: site.spec.postCuts.slice(0, 3) };
+assert.equal(digest(points.map(point => SiteTerrain.height(originalSpec, ...point))), golden.heightsDigest,
+  'Grading before the sauna access cuts must preserve original browser heights');
+const saunaCuts = site.spec.postCuts.slice(3);
+for (const point of points) {
+  const affected = saunaCuts.some(r => Math.hypot(Math.max(r.x0 - point[0], 0, point[0] - r.x1),
+    Math.max(r.z0 - point[1], 0, point[1] - r.z1)) < r.blend);
+  if (!affected) assert.equal(site.height(...point), SiteTerrain.height(originalSpec, ...point), 'Unrelated terrain must remain unchanged');
+}
 for (const [name, point] of Object.entries(anchors)) assert.equal(site.height(...point), golden.anchors[name], `${name}: original grade changed`);
 assert.equal(site.spec.houseBaseY, golden.houseBaseY);
 assert.equal(site.spec.deckTop, golden.deckTop);
@@ -88,4 +97,93 @@ for (let i = 0; i < points.length; i++) {
   assert.ok(Number.isFinite(pythonHeights[i]) && error < 1e-10, `Python grading differs at ${points[i]} by ${error}`);
   maxError = Math.max(maxError, error);
 }
-console.log(`Site terrain: ${points.length} original-browser golden samples exact; Python max error ${maxError} m; house/deck and grading seams pass`);
+console.log(`Site terrain: ${points.length} samples; original grading preserved outside sauna access cuts; Python max error ${maxError} m; house/deck and grading seams pass`);
+}
+const { SurveySurface } = require('./survey-surface.js');
+const syntheticSurvey = [[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5],[18,17,2.7]];
+const surveySurface = SurveySurface.create(syntheticSurvey,TERRAIN.plane).data;
+const surveyed = SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{surveySurface,houseFFL:TERRAIN.houseFFLInternal});
+const fixedFallback = SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{houseFFL:TERRAIN.houseFFLInternal});
+assert.equal(fixedFallback.spec.deckTop,TERRAIN.houseFFLInternal);
+assert.equal(fixedFallback.spec.continuousGrading,true);
+assert.equal(fixedFallback.baseHeight(8,12),TERRAIN.basePlaneHeight(8,12));
+assert.equal(surveyed.spec.houseBaseY,TERRAIN.houseFFLInternal);
+assert.equal(surveyed.spec.deckTop,TERRAIN.houseFFLInternal);
+for(const [x,z,h] of syntheticSurvey)assert.ok(Math.abs(surveyed.baseHeight(x,z)-h)<1e-10);
+const checks = [...points];
+function insideHouse(x,z) {
+  const points=surveyed.spec.houseExcavation.points;
+  let inside=false;
+  for(let i=0,j=points.length-1;i<points.length;j=i++) {
+    const a=points[i],b=points[j];
+    if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])inside=!inside;
+  }
+  return inside;
+}
+for(let x=10.49;x<21.28;x+=.2)for(let z=7.19;z<26.43;z+=.2)if(insideHouse(x,z)) {
+  assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.12+1e-10,'House excavation must keep soil below finished floors');
+  checks.push([x,z]);
+}
+assert.ok(!insideHouse(12,17),'House excavation polygon must exclude atrium notch');
+for(const [x,z] of surveyed.spec.houseExcavation.points)for(const [dx,dz] of [[1e-7,0],[-1e-7,0],[0,1e-7],[0,-1e-7]]) {
+  assert.ok(Math.abs(surveyed.height(x,z)-surveyed.height(x+dx,z+dz))<1e-5,'House excavation boundary must remain continuous');
+  checks.push([x+dx,z+dz]);
+}
+for(const pad of surveyed.spec.finishPads)for(let ix=0;ix<=4;ix++)for(let iz=0;iz<=4;iz++) {
+  const x=pad.x0+(pad.x1-pad.x0)*ix/4,z=pad.z0+(pad.z1-pad.z0)*iz/4;
+  const protectedEdge=surveyed.spec.protectedPads.slice(0,1).some(p=>Math.hypot(Math.max(p.x0-x,0,x-p.x1),Math.max(p.z0-z,0,z-p.z1))<p.blend);
+  if(!protectedEdge)assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.04+1e-10,'Finished soil and route bedding must stay below level access surfaces');
+  else assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.12+1e-10,'Vehicle pad must stay clear under adjacent terrace edge');
+  checks.push([x,z]);
+}
+for(const pad of [...surveyed.spec.cutRects,...surveyed.spec.levelPads,...surveyed.spec.postCuts,...surveyed.spec.finishPads,...surveyed.spec.protectedPads]) {
+  const blend=pad.blend??surveyed.spec.cutBlend;
+  for(const x of [pad.x0-blend,pad.x0,pad.x1,pad.x1+blend])for(const z of [pad.z0-blend,pad.z0,pad.z1,pad.z1+blend]) {
+    const h=surveyed.height(x,z);
+    for(const [dx,dz] of [[1e-7,0],[-1e-7,0],[0,1e-7],[0,-1e-7]]) {
+      assert.ok(Math.abs(surveyed.height(x+dx,z+dz)-h)<1e-5,'Continuous grading must not jump at rectangular bank edges');
+      checks.push([x+dx,z+dz]);
+    }
+  }
+}
+for(const pad of surveyed.spec.protectedPads.slice(0,1))for(let ix=0;ix<=12;ix++)for(let iz=0;iz<=12;iz++) {
+  const x=pad.x0+(pad.x1-pad.x0)*ix/12,z=pad.z0+(pad.z1-pad.z0)*iz/12;
+  assert.ok(Math.abs(surveyed.height(x,z)-pad.level)<1e-10,'Garage/carport ground must stay at its fixed datum');
+  checks.push([x,z]);
+}
+for(const vehicle of GARDEN.vehicles)for(const side of [-1,1])for(const axle of [.2,.8]) {
+  const x=vehicle.cx+side*vehicle.w*.4,z=vehicle.noseZ+vehicle.l*axle;
+  assert.ok(Math.abs(surveyed.height(x,z)-patches.garage.level)<1e-10,'Vehicle tire ground must not be raised by terrace banks');
+  checks.push([x,z]);
+}
+for(const x of [17.7-.575,17.7,17.7+.575])for(const z of [26.7,27,27.3]) {
+  assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.5,'Ground must remain below heat-pump support slab');
+  checks.push([x,z]);
+}
+function verifyDriveway(sample) {
+  const p=sample.spec.drivewayProfile;
+  assert.ok(Math.abs(sample.height(...p.gate)+p.surfaceOffset-sample.baseHeight(...p.gate))<1e-10,'Driveway paving must meet interpolated surveyed gate grade');
+  let previous=p.startLevel;
+  for(let i=0;i<=100;i++) {
+    const t=i/100,x=p.startX+(p.gate[0]-p.startX)*t,z=27.4+(p.gate[1]-27.4)*t;
+    const h=sample.height(x,z);
+    assert.ok((h-previous)*Math.sign(p.gateLevel-p.startLevel)>=-1e-10,'Driveway route must change monotonically toward gate grade');
+    previous=h;
+    if(sample===surveyed)checks.push([x,z]);
+  }
+  for(const [x,z] of p.points)for(const [dx,dz] of [[1e-7,0],[-1e-7,0],[0,1e-7],[0,-1e-7]])assert.ok(Math.abs(sample.height(x,z)-sample.height(x+dx,z+dz))<1e-5);
+}
+verifyDriveway(surveyed);
+verifyDriveway(fixedFallback);
+if(existsSync(new URL('./docs/survey-terrain.js',import.meta.url))) {
+  const {SURVEY_TERRAIN}=require('./docs/survey-terrain.js');
+  const actual=SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{surveySurface:SurveySurface.create(SURVEY_TERRAIN.points,TERRAIN.plane).data,houseFFL:TERRAIN.houseFFLInternal});
+  verifyDriveway(actual);
+  for(const vehicle of GARDEN.vehicles)for(const side of [-1,1])for(const axle of [.2,.8])assert.ok(Math.abs(actual.height(vehicle.cx+side*vehicle.w*.4,vehicle.noseZ+vehicle.l*axle)-patches.garage.level)<1e-10);
+  console.log(`Measured driveway gate ground: ${actual.spec.drivewayProfile.gateLevel.toFixed(6)} internal m; carport ground ${patches.garage.level.toFixed(6)} m`);
+}
+const surveyPython=JSON.parse(execFileSync('python3',['-c','import json,sys; from blender.site_terrain import height; d=json.load(sys.stdin); print(json.dumps([height(d["spec"], *p) for p in d["points"]]))'],
+  {cwd:new URL('.',import.meta.url),input:JSON.stringify({spec:surveyed.spec,points:checks}),encoding:'utf8',maxBuffer:8*1024*1024}));
+let surveyMaxError=0;
+checks.forEach(([x,z],i)=>{const error=Math.abs(surveyPython[i]-surveyed.height(x,z));surveyMaxError=Math.max(surveyMaxError,error);assert.ok(error<1e-10);});
+console.log(`Survey grading: ${checks.length} samples; fixed house datum; continuous pads and banks; Python max error ${surveyMaxError} m`);

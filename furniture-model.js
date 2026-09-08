@@ -11,8 +11,15 @@ const FurnitureModel = (() => {
       plinth: { color: '#2b2b2b', roughness: 0.8 },
       mattress: { color: '#eeeae0', roughness: 0.94 },
       green: { color: '#7f8a7d', roughness: 0.76 },
+      greenMatt: { color: '#7f8a7d', roughness: 0.9 },
+      cashmere: { color: '#b8b2a7', roughness: 0.75 },
+      cashmereTop: { color: '#b8b2a7', roughness: 0.45 },
+      whiteBoard: { color: '#f3f2ed', roughness: 0.75 },
       stone: { color: '#dcd9d2', roughness: 0.35 },
       hardware: { color: '#babfbe', metalness: 0.88, roughness: 0.2 },
+      graphite: { color: '#404746', metalness: 0.85, roughness: 0.27 },
+      grip: { color: '#17191a', metalness: 0.65, roughness: 0.32 },
+      ovenGlass: { color: '#11171b', metalness: 0.25, roughness: 0.14 },
     };
     const parts = [];
     const box = (name, x0, y0, z0, width, depth, height, material, bevel = 0.003) => {
@@ -22,6 +29,19 @@ const FurnitureModel = (() => {
     const cylinder = (name, position, radius, height, material, axis = 'z') => {
       parts.push({ name, type: 'cylinder', position, radiusTop: radius, radiusBottom: radius,
         height, axis, material, category: 'furniture', segments: 24 });
+    };
+    const cutSlab = (name, x0, y0, z0, width, depth, height, material, cutouts, bevel) => {
+      if (!cutouts?.length) return box(name, x0, y0, z0, width, depth, height, material, bevel);
+      const x1 = x0 + width, y1 = y0 + depth;
+      const cuts = cutouts.map(cut => ({ x0: Math.max(x0, cut.x0), x1: Math.min(x1, cut.x1),
+        z0: Math.max(y0, cut.z0), z1: Math.min(y1, cut.z1) })).filter(cut => cut.x0 < cut.x1 && cut.z0 < cut.z1);
+      const xs = [...new Set([x0, x1, ...cuts.flatMap(cut => [cut.x0, cut.x1])])].sort((a, b) => a - b);
+      const ys = [...new Set([y0, y1, ...cuts.flatMap(cut => [cut.z0, cut.z1])])].sort((a, b) => a - b);
+      for (let i = 0; i < xs.length - 1; i++) for (let j = 0; j < ys.length - 1; j++) {
+        const cx = (xs[i] + xs[i + 1]) / 2, cy = (ys[j] + ys[j + 1]) / 2;
+        if (cuts.some(cut => cx > cut.x0 && cx < cut.x1 && cy > cut.z0 && cy < cut.z1)) continue;
+        box(`${name}_${i}_${j}`, xs[i], ys[j], z0, xs[i + 1] - xs[i], ys[j + 1] - ys[j], height, material, 0);
+      }
     };
     const shell = (name, cx, cy, rx, ry, profile, material) => {
       const segments = 48, vertices = [], faces = [];
@@ -45,6 +65,7 @@ const FurnitureModel = (() => {
         const modules = f.modules || [alongX ? w : d], tags = f.tags || modules.map(() => 'd');
         const plinth = f.plinth || 0, panel = Math.min(0.018, w / 8, d / 8, (h - plinth) / 8);
         const carc = mat(f.cmat, 'carc'), frontMat = mat(f.fmat, 'front');
+        const interior = mat(f.imat, carc);
         const base = z + plinth, bodyH = h - plinth;
         if (plinth > 0) {
           const west = fronts.includes('W') ? 0.05 : 0, east = fronts.includes('E') ? 0.05 : 0;
@@ -52,28 +73,28 @@ const FurnitureModel = (() => {
           box(`${prefix}_plinth`, x + west, y + north, z, w - west - east, d - north - south, plinth, 'plinth');
         }
         box(`${prefix}_bottom`, x, y, base, w, d, panel, carc);
-        box(`${prefix}_top`, x, y, z + h - panel, w, d, panel, carc);
-        const section = (name, at, thickness) => alongX
-          ? box(name, at, y, base + panel, thickness, d, bodyH - 2 * panel, carc)
-          : box(name, x, at, base + panel, w, thickness, bodyH - 2 * panel, carc);
+        cutSlab(`${prefix}_top`, x, y, z + h - panel, w, d, panel, carc, f.worktop?.cutouts, 0.003);
+        const section = (name, at, thickness, material = carc) => alongX
+          ? box(name, at, y, base + panel, thickness, d, bodyH - 2 * panel, material)
+          : box(name, x, at, base + panel, w, thickness, bodyH - 2 * panel, material);
         section(`${prefix}_side_0`, alongX ? x : y, panel);
         section(`${prefix}_side_1`, (alongX ? x + w : y + d) - panel, panel);
         const runStart = alongX ? x : y;
         let cursor = runStart;
         for (const [i, width] of modules.entries()) {
           const next = cursor + width;
-          if (i < modules.length - 1) section(`${prefix}_divider_${i}`, next - panel / 2, panel);
+          if (i < modules.length - 1) section(`${prefix}_divider_${i}`, next - panel / 2, panel, interior);
           const left = cursor + (i === 0 ? panel : panel / 2), right = next - (i === modules.length - 1 ? panel : panel / 2);
           const tag = tags[i];
           if (tag === 'f') {
             if (alongX) box(`${prefix}_filler_${i}`, left, y, base + panel, right - left, d, bodyH - 2 * panel, carc);
             else box(`${prefix}_filler_${i}`, x, left, base + panel, w, right - left, bodyH - 2 * panel, carc);
-          } else {
+          } else if (tag !== 's' && !(tag === 'a' && f.appliances?.[i] === 'oven')) {
             const shelfCount = Math.max(1, Math.floor(bodyH / 0.5));
             for (let j = 0; j < shelfCount; j++) {
               const shelfZ = base + (j + 1) * bodyH / (shelfCount + 1);
-              if (alongX) box(`${prefix}_shelf_${i}_${j}`, left, y + panel, shelfZ, right - left, d - 2 * panel, panel, carc);
-              else box(`${prefix}_shelf_${i}_${j}`, x + panel, left, shelfZ, w - 2 * panel, right - left, panel, carc);
+              if (alongX) box(`${prefix}_shelf_${i}_${j}`, left, y + panel, shelfZ, right - left, d - 2 * panel, panel, interior);
+              else box(`${prefix}_shelf_${i}_${j}`, x + panel, left, shelfZ, w - 2 * panel, right - left, panel, interior);
             }
           }
           cursor = next;
@@ -85,7 +106,30 @@ const FurnitureModel = (() => {
           else box(`${prefix}_back_${face}`, face === 'W' ? x : x + w - panel, y + panel,
             base + panel, panel, d - 2 * panel, bodyH - 2 * panel, carc);
         }
+        if (interior !== carc) {
+          const skin = 0.0005, innerW = w - 2 * panel, innerD = d - 2 * panel;
+          box(`${prefix}_inner_bottom`, x + panel, y + panel, base + panel,
+            innerW, innerD, skin, interior, 0);
+          cutSlab(`${prefix}_inner_top`, x + panel, y + panel, z + h - panel - skin,
+            innerW, innerD, skin, interior, f.worktop?.cutouts, 0);
+          for (const face of ['N', 'S', 'W', 'E'].filter(face => !fronts.includes(face))) {
+            if (face === 'N' || face === 'S') box(`${prefix}_inner_${face}`, x + panel,
+              face === 'N' ? y + panel : y + d - panel - skin, base + panel,
+              innerW, skin, bodyH - 2 * panel, interior, 0);
+            else box(`${prefix}_inner_${face}`, face === 'W' ? x + panel : x + w - panel - skin,
+              y + panel, base + panel, skin, innerD, bodyH - 2 * panel, interior, 0);
+          }
+        }
         for (const face of fronts) {
+          const golaGap = f.handle === 'gola' ? Math.min(0.04, bodyH * 0.12) : 0;
+          const bottomGrip = f.golaEdge === 'bottom';
+          if (golaGap) {
+            const across = face === 'N' || face === 'S';
+            box(`${prefix}_gola_${face}`, across ? x : face === 'W' ? x + 0.012 : x + w - 0.02,
+              across ? face === 'N' ? y + 0.012 : y + d - 0.02 : y,
+              bottomGrip ? base + 0.005 : z + h - golaGap - 0.005,
+              across ? w : 0.008, across ? 0.008 : d, golaGap, 'grip', 0.001);
+          }
           let at = runStart;
           for (const [i, width] of modules.entries()) {
             const start = at + 0.005, span = width - 0.01;
@@ -96,9 +140,26 @@ const FurnitureModel = (() => {
             const frontY = face === 'N' ? y - 0.012 : face === 'S' ? y + d - 0.006 : start;
             const across = face === 'N' || face === 'S';
             const frontW = across ? span : 0.018, frontD = across ? 0.018 : span;
-            const frontZ = base + 0.005, frontH = bodyH - 0.01;
+            const frontZ = base + 0.005 + (bottomGrip ? golaGap : 0), frontH = bodyH - 0.01 - golaGap;
             box(`${prefix}_front_${face}_${i}`, frontX, frontY, frontZ, frontW, frontD, frontH, surface, 0.002);
-            const pullW = Math.min(0.16, span * 0.55), pullZ = frontZ + frontH - Math.min(0.055, frontH * 0.2);
+            if (interior !== carc && tags[i] !== 'a') {
+              const skin = 0.0005;
+              box(`${prefix}_inner_front_${face}_${i}`,
+                across ? frontX : face === 'W' ? frontX + frontW : frontX - skin,
+                across ? face === 'N' ? frontY + frontD : frontY - skin : frontY,
+                frontZ, across ? frontW : skin, across ? skin : frontD, frontH, interior, 0);
+            }
+            const oven = tags[i] === 'a' && f.appliances?.[i] === 'oven';
+            if (oven) {
+              const panelAt = face === 'N' ? frontY - 0.003 : face === 'S' ? frontY + frontD : face === 'W' ? frontX - 0.003 : frontX + frontW;
+              const appliancePanel = (name, inset, zz, hh, material) => box(`${prefix}_oven_${name}_${face}_${i}`,
+                across ? start + inset : panelAt, across ? panelAt : start + inset, zz,
+                across ? span - 2 * inset : 0.003, across ? 0.003 : span - 2 * inset, hh, material, 0.001);
+              appliancePanel('glass', span * 0.08, frontZ + frontH * 0.14, frontH * 0.6, 'ovenGlass');
+              appliancePanel('controls', span * 0.06, frontZ + frontH * 0.82, frontH * 0.12, 'grip');
+            }
+            if (!oven && (f.handle === 'gola' || f.handle === 'push')) continue;
+            const pullW = Math.min(0.16, span * 0.55), pullZ = f.handleHeight ?? frontZ + frontH - Math.min(0.055, frontH * 0.2);
             const edge = face === 'N' ? frontY : face === 'S' ? frontY + frontD : face === 'W' ? frontX : frontX + frontW;
             const outward = face === 'N' || face === 'W' ? -1 : 1;
             const gripAt = edge + outward * 0.009, center = start + span / 2;
@@ -116,7 +177,8 @@ const FurnitureModel = (() => {
             x0: x - (fronts.includes('W') ? 0.02 : 0), x1: x + w + (fronts.includes('E') ? 0.02 : 0),
             z0: y - (fronts.includes('N') ? 0.02 : 0), z1: y + d + (fronts.includes('S') ? 0.02 : 0), th: f.worktop,
           };
-          box(`${prefix}_worktop`, top.x0, top.z0, z + h, top.x1 - top.x0, top.z1 - top.z0, top.th, mat(f.wmat, 'wood'), 0.006);
+          cutSlab(`${prefix}_worktop`, top.x0, top.z0, z + h, top.x1 - top.x0, top.z1 - top.z0,
+            top.th, mat(f.wmat, 'wood'), top.cutouts, 0.006);
         }
       } else if (f.kind === 'slab' || f.kind === 'glass') {
         box(`${prefix}_${f.kind}`, x, y, z, w, d, h, f.kind === 'glass' ? 'glass' : mat(f.mat, 'wood'), f.kind === 'glass' ? 0 : 0.004);
@@ -140,6 +202,18 @@ const FurnitureModel = (() => {
             [[0,z], [0.65,z], [0.82,z+h*0.05], [1,rim-h*0.06], [1,rim-h*0.015], [0.98,rim],
               [inner,rim], [inner-0.025,rim-h*0.06], [0.53,z+h*0.18], [0,z+h*0.18]], 'ceramic');
           cylinder(`${prefix}_drain`, [cx,cy,z+h*0.186], Math.min(w,d)*0.032, h*0.012, 'hardware');
+          if(f.tap?.mount==='wall'){
+            const {wall,wallAt,height,reach}=f.tap;
+            const south=wall==='S',axis=south?'y':'x',along=south?cx:cy;
+            const point=(u,v,zz)=>south?[u,wallAt-v,zz]:[wallAt-v,u,zz];
+            cylinder(`${prefix}_wall_tap_spout_plate`,point(along,.004,height),.0325,.008,'graphite',axis);
+            cylinder(`${prefix}_wall_tap_spout`,point(along,reach/2,height),.012,reach,'graphite',axis);
+            cylinder(`${prefix}_wall_tap_outlet`,point(along,reach-.013,height-.014),.012,.028,'graphite');
+            const control=along+(south?-.15:.15);
+            cylinder(`${prefix}_wall_tap_control_plate`,point(control,.004,height),.0325,.008,'graphite',axis);
+            cylinder(`${prefix}_wall_tap_control`,point(control,.023,height),.022,.038,'graphite',axis);
+            cylinder(`${prefix}_wall_tap_lever`,point(control,.04,height+.055),.0045,.11,'graphite');
+          }else{
           const tapY = y + d * 0.065, tapRadius = Math.min(w * 0.017, d * 0.022, h * 0.03);
           cylinder(`${prefix}_tap_base`, [cx,tapY,rim+h*0.012], tapRadius*1.5,h*0.025,'hardware');
           cylinder(`${prefix}_tap_stem`, [cx,tapY,rim+h*0.1],tapRadius,h*0.2,'hardware');
@@ -147,6 +221,7 @@ const FurnitureModel = (() => {
           cylinder(`${prefix}_tap_outlet`, [cx,tapY+d*0.14,z+h*0.923],tapRadius,h*0.05,'hardware');
           box(`${prefix}_tap_lever`, cx - tapRadius, tapY - tapRadius, z + h * 0.985,
             tapRadius * 2, Math.min(d * 0.08, 0.06), h * 0.015, 'hardware', 0.002);
+          }
         }
       } else if (f.kind === 'bed') {
         const head = f.head || 'N', sideways = head === 'E' || head === 'W';

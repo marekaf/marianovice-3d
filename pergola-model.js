@@ -1,4 +1,5 @@
 const PergolaModel = (() => {
+  const screens = typeof module !== 'undefined' ? require('./privacy-screen-model.js').PrivacyScreenModel : PrivacyScreenModel;
   function build(garden) {
     const element = garden.elements.find(e => e.id === 'pergola');
     const footprint = element.parts.find(p => p.kind === 'rect');
@@ -90,76 +91,85 @@ const PergolaModel = (() => {
         w + 0.16, 0.065, 0.045, 'frame_x', 'roof');
     }
 
-    const tableTop = 0.76, boardCount = 7;
-    for (let i = 0; i < boardCount; i++) {
-      box(`table_board_${i}`, table.x, table.y + i * table.d / boardCount, tableTop - 0.045,
-        table.w, table.d / boardCount - 0.006, 0.045, 'furniture_x', 'furniture', 0.008);
-    }
-    for (const [i, py] of [table.y + 0.1, table.y + table.d - 0.13].entries()) {
-      box(`table_apron_${i}`, table.x + 0.2, py, 0.615, table.w - 0.4, 0.03, 0.1, 'furniture_x', 'furniture');
-    }
-    for (const [i, px] of [table.x + 0.23, table.x + table.w - 0.31].entries()) {
-      box(`table_trestle_${i}`, px, table.y + 0.06, 0.61, 0.08, table.d - 0.12, 0.105, 'furniture_y', 'furniture');
-      for (const [j, py] of [table.y + 0.13, table.y + table.d - 0.2].entries()) {
-        box(`table_leg_${i}_${j}`, px, py, 0, 0.08, 0.07, 0.615, 'furniture_z', 'furniture');
+    const tableTop = .75, tableCenter = [table.x + table.w / 2, table.y + table.d / 2];
+    materials.table_ceramic = { color: '#d9d3c7', roughness: .56 };
+    materials.table_base = { color: '#a67b52', roughness: .59, metalness: .22, grain: 'z' };
+    materials.table_rim = { color: '#a67b52', roughness: .59, metalness: .22, grain: 'x' };
+    materials.table_glide = { color: '#4e4840', roughness: .9 };
+    function roundedTop(name, width, depth, bottom, height, material) {
+      const vertices=[], faces=[], outline=[], radius=.17;
+      for(const [cx,cy,start] of [[width/2-radius,depth/2-radius,0],[-width/2+radius,depth/2-radius,Math.PI/2],[-width/2+radius,-depth/2+radius,Math.PI],[width/2-radius,-depth/2+radius,Math.PI*1.5]]) {
+        for(let i=0;i<=10;i++) { const a=start+i*Math.PI/20; outline.push([cx+radius*Math.cos(a),cy+radius*Math.sin(a)]); }
       }
-      box(`table_stretcher_y_${i}`, px, table.y + 0.13, 0.16, 0.08, table.d - 0.26, 0.07, 'furniture_y', 'furniture');
+      for(const h of [bottom,bottom+height]) for(const [u,v] of outline) vertices.push([tableCenter[0]+u,tableCenter[1]+v,h]);
+      const n=outline.length;
+      vertices.push([tableCenter[0],tableCenter[1],bottom],[tableCenter[0],tableCenter[1],bottom+height]);
+      for(let i=0;i<n;i++) {const j=(i+1)%n;faces.push([i,j,j+n,i+n],[2*n,j,i],[2*n+1,i+n,j+n]);}
+      parts.push({name,type:'mesh',vertices,faces,material,category:'furniture'});
     }
-    box('table_stretcher_x', table.x + 0.23, table.y + table.d / 2 - 0.035, 0.17,
-      table.w - 0.46, 0.07, 0.07, 'furniture_x', 'furniture');
-    for (const [side, centerY, outward] of [['north', table.y - 0.51, -1], ['south', table.y + table.d + 0.51, 1]]) {
-      const length = table.w - 0.16, bx = table.x + 0.08, by = centerY - 0.22;
-      for (let i = 0; i < 4; i++) box(`bench_${side}_seat_${i}`, bx, by + i * 0.11, 0.415,
-        length, 0.103, 0.045, 'furniture_x', 'furniture', 0.008);
-      for (const [i, py] of [by + 0.04, by + 0.33].entries()) {
-        box(`bench_${side}_apron_${i}`, bx + 0.12, py, 0.33, length - 0.24, 0.05, 0.085, 'furniture_x', 'furniture');
-      }
-      const backY = centerY + outward * 0.2;
-      for (const [i, px] of [bx + 0.15, bx + length - 0.21].entries()) {
-        for (const [j, py] of [by + 0.04, by + 0.33].entries()) {
-          box(`bench_${side}_leg_${i}_${j}`, px, py, 0, 0.06, 0.06, 0.415, 'furniture_z', 'furniture');
+    roundedTop('table_ceramic_top',table.w,table.d,.741,.009,'table_ceramic');
+    roundedTop('table_rounded_rim',table.w-.012,table.d-.012,.695,.046,'table_rim');
+    function branch(name, lower, upper, lowerSize, upperSize) {
+      const vertices=[];
+      for(const [p,size] of [[lower,lowerSize],[upper,upperSize]])for(const [u,v] of [[-1,-1],[1,-1],[1,1],[-1,1]]) vertices.push([tableCenter[0]+p[0]+u*size[0]/2,tableCenter[1]+p[1]+v*size[1]/2,p[2]]);
+      parts.push({name,type:'mesh',vertices,faces:[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]],material:'table_base',category:'furniture'});
+    }
+    const tableFeet=[];
+    for(const [i,[sx,sy]] of [[-1,-1],[-1,1],[1,-1],[1,1]].entries()) {
+      const foot=[sx*.73,sy*.34,.015],hub=[sx*.11,sy*.055,.355],head=[sx*.7,sy*.31,.695];
+      const px=tableCenter[0]+foot[0],py=tableCenter[1]+foot[1];
+      box('table_foot_'+i,px-.055,py-.044,0,.11,.088,.015,'table_glide','furniture',.003);
+      tableFeet.push({name:'table_foot_'+i,position:[px,py,0]});
+      branch('table_lower_branch_'+i,foot,hub,[.14,.1],[.17,.13]);
+      branch('table_upper_branch_'+i,[hub[0],hub[1],.315],head,[.17,.13],[.13,.1]);
+    }
+    box('table_hub',tableCenter[0]-.15,tableCenter[1]-.1,.31,.3,.2,.095,'table_base','furniture',.035);
+    materials.chair_shell = { color: '#d1ad40', roughness: 0.68 };
+    materials.chair_glide = { color: '#6d6650', roughness: 0.86 };
+    const diningSeats = [];
+    function chair(name, cx, cy, angle) {
+      const c = Math.cos(angle), s = Math.sin(angle);
+      const point = (u, v, z) => [cx + u*c-v*s, cy+u*s+v*c, z];
+      const partBox = (suffix, u, v, z, width, depth, height, material, bevel=.008) => {
+        const p=point(u,v,z);
+        parts.push({name:name+'_'+suffix,type:'box',position:p,size:Math.abs(s)>.5?[depth,width,height]:[width,depth,height],material,bevel,category:'furniture'});
+      };
+      diningSeats.push({name, center:[cx,cy], angle, width:.56, depth:.58, seatHeight:.47});
+      partBox('seat',0,.015,.45,.47,.45,.04,'chair_shell',.02);
+      partBox('front_lip',0,.235,.445,.45,.025,.045,'chair_shell',.011);
+      for(const [i,u] of [-.225,.225].entries()) {
+        for(const [j,v] of [-.235,.235].entries()) {
+          partBox('glide_'+i+'_'+j,u,v,.007,.042,.042,.014,'chair_glide',.004);
+          beam(name+'_leg_'+i+'_'+j,point(u,v,.014),point(u*.89,v*.79,.435),.038,.043,'chair_shell','furniture');
         }
-        box(`bench_${side}_crossrail_${i}`, px, by + 0.04, 0.31, 0.06, 0.35, 0.08, 'furniture_y', 'furniture');
-        beam(`bench_${side}_back_support_${i}`, [px + 0.03, backY, 0.34],
-          [px + 0.03, backY + outward * 0.08, 0.96], 0.045, 0.055, 'furniture_z', 'furniture');
+        beam(name+'_arm_support_'+i,point(u,.17,.44),point(u,.17,.64),.037,.037,'chair_shell','furniture');
+        beam(name+'_arm_'+i,point(u,-.21,.659),point(u,.2,.659),.063,.045,'chair_shell','furniture');
+        beam(name+'_back_support_'+i,point(u,-.2,.42),point(u,-.23,.7),.036,.038,'chair_shell','furniture');
       }
-      for (let i = 0; i < 3; i++) {
-        const z = 0.59 + i * 0.13, py = backY + outward * (z - 0.34) * 0.08 / 0.62;
-        box(`bench_${side}_back_${i}`, bx, py - 0.018, z, length, 0.036, 0.085, 'furniture_x', 'furniture', 0.006);
+      const vertices=[],faces=[],n=24;
+      for(let i=0;i<=n;i++) {
+        const t=i/n,u=(t-.5)*.52,v=-.265+.11*Math.abs(t*2-1)**2;
+        for(const [offset,h] of [[-.012,.53],[.012,.53],[.012,.8],[-.012,.8]])vertices.push(point(u,v+offset,h));
+        if(i)for(let j=0;j<4;j++)faces.push([(i-1)*4+j,(i-1)*4+(j+1)%4,i*4+(j+1)%4,i*4+j]);
+      }
+      faces.push([3,2,1,0],[n*4,n*4+1,n*4+2,n*4+3]);
+      parts.push({name:name+'_curved_back',type:'mesh',vertices,faces,material:'chair_shell',category:'furniture'});
+    }
+    const settings=[];
+    for(const [side,cy,angle,py] of [['north',table.y-.48,0,table.y+.21],['south',table.y+table.d+.48,Math.PI,table.y+table.d-.21]]) {
+      for(let i=0;i<3;i++) {
+        const px=table.x+.5+i*(table.w-1)/2;
+        chair('chair_'+side+'_'+i,px,cy,angle);
+        settings.push({name:side+'_'+i,x:px,y:py,glassX:px+.16,glassY:py+(side==='north'?.15:-.15)});
       }
     }
-
-    function chair(name, cx, cy, facing) {
-      const point = (u, v, z) => [cx + v * facing, cy + u, z];
-      const timber = 'furniture_y';
-      for (let i = 0; i < 5; i++) {
-        box(`${name}_seat_${i}`, cx - 0.23 + i * 0.092, cy - 0.24, 0.42, 0.085, 0.48, 0.04, timber, 'furniture', 0.006);
-      }
-      for (const [i, u] of [-0.195, 0.195].entries()) {
-        for (const [j, v] of [-0.19, 0.19].entries()) {
-          const p = point(u, v, 0);
-          box(`${name}_leg_${i}_${j}`, p[0] - 0.022, p[1] - 0.022, 0, 0.044, 0.044, 0.42, 'furniture_z', 'furniture');
-        }
-        beam(`${name}_back_support_${i}`, point(u, -0.19, 0.3), point(u, -0.28, 0.94), 0.04, 0.04, 'furniture_z', 'furniture');
-        box(`${name}_seat_rail_${i}`, cx - 0.21, cy + u - 0.02, 0.35, 0.42, 0.04, 0.07, 'furniture_x', 'furniture');
-      }
-      for (let i = 0; i < 3; i++) {
-        const z = 0.6 + i * 0.13, p = point(0, -0.19 - (z - 0.3) * 0.09 / 0.64, z);
-        box(`${name}_back_${i}`, p[0] - 0.018, cy - 0.235, z, 0.036, 0.47, 0.085, timber, 'furniture', 0.006);
-      }
-    }
-    chair('chair_west', table.x - 0.53, table.y + table.d / 2, 1);
-    chair('chair_east', table.x + table.w + 0.53, table.y + table.d / 2, -1);
-
-    for (const [side, py] of [['north', table.y + 0.21], ['south', table.y + table.d - 0.21]]) {
-      for (let i = 0; i < 4; i++) {
-        const px = table.x + 0.35 + i * (table.w - 0.7) / 3;
-        lathe(`plate_${side}_${i}`, [px, py, tableTop], [[0,0.003], [0.072,0.003], [0.09,0.009],
-          [0.12,0.024], [0.125,0.027], [0.12,0.032], [0.085,0.017], [0,0.013]], 'ceramic');
-        const gy = py + (side === 'north' ? 0.16 : -0.16);
-        lathe(`glass_${side}_${i}`, [px + 0.18, gy, tableTop], [[0,0], [0.031,0], [0.034,0.095],
-          [0.031,0.095], [0.028,0.006], [0,0.006]], 'glass');
-      }
+    chair('chair_west',table.x-.48,table.y+table.d/2,-Math.PI/2);
+    chair('chair_east',table.x+table.w+.48,table.y+table.d/2,Math.PI/2);
+    settings.push({name:'west',x:table.x+.2,y:table.y+table.d/2,glassX:table.x+.37,glassY:table.y+table.d/2-.15},
+      {name:'east',x:table.x+table.w-.2,y:table.y+table.d/2,glassX:table.x+table.w-.37,glassY:table.y+table.d/2+.15});
+    for(const setting of settings) {
+      lathe('plate_'+setting.name,[setting.x,setting.y,tableTop],[[0,.003],[.072,.003],[.09,.009],[.12,.024],[.125,.027],[.12,.032],[.085,.017],[0,.013]],'ceramic');
+      lathe('glass_'+setting.name,[setting.glassX,setting.glassY,tableTop],[[0,0],[.031,0],[.034,.095],[.031,.095],[.028,.006],[0,.006]],'glass');
     }
     lathe('serving_bowl', [table.x + table.w / 2, table.y + table.d / 2, tableTop],
       [[0,0], [0.09,0], [0.17,0.08], [0.164,0.088], [0.083,0.013], [0,0.013]], 'ceramic');
@@ -182,7 +192,12 @@ const PergolaModel = (() => {
       { x: x + 1.72, y: y + d - 0.2, w: 1.2, d: 1.35 },
       { x: x + w - 0.2, y: y + 2.7, w: 1.1, d: 1.1 },
     ];
-    return { name: 'Pergola dining', materials, parts, lights, floorHeight, groundPatch, plantingClearances };
+    const panel = screens.build({ name: 'pergola_privacy_north', start: [x + postInset, y + postInset],
+      end: [x + w - postInset, y + postInset], side: 'north', category: 'structure' });
+    parts.push(...panel.parts);
+    Object.assign(materials, panel.materials);
+    return { name: 'Pergola dining', materials, parts, lights, floorHeight, groundPatch, plantingClearances, diningSeats,
+      diningTable: { center: tableCenter, width: table.w, depth: table.d, height: tableTop, feet: tableFeet }, privacyScreens: [panel.screen] };
   }
   return { build };
 })();

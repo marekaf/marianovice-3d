@@ -1,12 +1,14 @@
 const FirepitModel = (() => {
   function build(garden,terrainPlane) {
-    const circle=garden.elements.find(e=>e.id==='firePit').parts.find(p=>p.kind==='circle');
-    const {cx,cy,r}=circle,plane=(x,y)=>Math.max(0,terrainPlane.a*x+terrainPlane.b*y+terrainPlane.c);
+    const element=garden.elements.find(e=>e.id==='firePit'),circle=element.parts.find(p=>p.kind==='circle');
+    const surfaceOffset=element.meta?.grading?.surfaceOffset??0;
+    const {cx,cy,r}=circle,sample=typeof terrainPlane==='function'?terrainPlane:(x,y)=>Math.max(0,terrainPlane.a*x+terrainPlane.b*y+terrainPlane.c);
+    const plane=(x,y)=>sample(x,y)+surfaceOffset;
     const floorHeight=plane(cx,cy),ground=(x,y)=>plane(x,y)-floorHeight;
     const parts=[],benches=[];
     const materials={
       gravel:{color:'#9a9180',roughness:0.99},gravelLight:{color:'#b5a994',roughness:0.98},
-      stone:{color:'#817e72',roughness:0.96},stoneLight:{color:'#a29a88',roughness:0.95},stoneDark:{color:'#65665f',roughness:0.98},
+      corten:{color:'#a75e36',roughness:0.88,metalness:0.12,finish:'corten'},
       ash:{color:'#514d45',roughness:1},charcoal:{color:'#252622',roughness:0.99},charEnd:{color:'#514233',roughness:0.96},
       wood:{color:'#94714e',roughness:0.83,grain:'z'},woodLight:{color:'#a47e55',roughness:0.83,grain:'z'},
       steel:{color:'#555854',roughness:0.49,metalness:0.75},
@@ -33,29 +35,20 @@ const FirepitModel = (() => {
       for(let i=0;i<6;i++) {const a=i+2,b=(i+1)%6+2;faces.push([0,a,b],[1,b,a]);}
       mesh(name,vertices,faces,material,category);
     };
-    drapedDisk('gravel_apron',r,-0.006,0.008,'gravel');
+    drapedDisk('gravel_apron',r,-surfaceOffset-0.006,0.008,'gravel');
     for(let i=0;i<100;i++) {
       const a=random(i*3)*Math.PI*2,rr=Math.sqrt(0.55**2+random(i*3+1)*((r-0.035)**2-0.55**2));
       const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
       chip(`gravel_${i}`,x,y,0.015+random(i*3+2)*0.012,ground(x,y)+0.008,0.006,'gravelLight');
     }
-    for(let course=0;course<3;course++) for(let i=0;i<12;i++) {
-      const a=(i+course*0.5)*Math.PI/6+0.008,b=a+Math.PI/6-0.016;
-      const vertices=[],faces=[],base=course*0.09-0.006,top=base+0.09;
-      for(const [layer,z] of [base,base+0.012,top-0.012,top].entries()) {
-        const bevel=layer===0||layer===3?0.006:0;
-        for(const [radius,angle] of [[0.33+bevel,a+bevel],[0.5-bevel,a+bevel],[0.5-bevel,b-bevel],[0.33+bevel,b-bevel]]) {
-          const x=cx+Math.cos(angle)*radius,y=cy+Math.sin(angle)*radius;
-          vertices.push([x,y,ground(x,y)+z]);
-        }
-      }
-      faces.push([3,2,1,0],[12,13,14,15]);
-      for(let layer=0;layer<3;layer++) for(let edge=0;edge<4;edge++) {
-        const a=layer*4+edge,b=layer*4+(edge+1)%4;faces.push([a,b,b+4,a+4]);
-      }
-      mesh(`ring_course_${course}_stone_${i}`,vertices,faces,['stone','stoneLight','stoneDark'][(i+course)%3]);
-    }
-    drapedDisk('ash',0.329,0.004,0.018,'ash');
+    const outerRadius=.5,wallThickness=.004,innerRadius=outerRadius-wallThickness,wallHeight=.27;
+    const ringBottom=Math.min(...Array.from({length:128},(_,i)=>{
+      const a=i*Math.PI/64;return ground(cx+Math.cos(a)*outerRadius,cy+Math.sin(a)*outerRadius);
+    }))-.008;
+    parts.push({name:'corten_ring',type:'lathe',position:[cx,cy,0],segments:128,
+      profile:[[innerRadius,ringBottom],[outerRadius,ringBottom],[outerRadius,wallHeight],
+        [innerRadius,wallHeight],[innerRadius,ringBottom]],material:'corten',category:'structure'});
+    drapedDisk('ash',innerRadius-.001,0.004,0.018,'ash');
     for(let i=0;i<24;i++) {
       const a=random(i*5)*Math.PI*2,rr=Math.sqrt(random(i*5+1))*0.28,x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;
       chip(`ash_clod_${i}`,x,y,0.012+random(i*5+2)*0.012,ground(x,y)+0.018,0.007,i%3?'ash':'charcoal');
@@ -65,7 +58,7 @@ const FirepitModel = (() => {
       const angle=0.25+i*0.15,dx=Math.cos(angle),dy=Math.sin(angle),offset=(i-1)*0.095;
       const x=cx-dy*offset,y=cy+dx*offset,length=i===1?0.47:0.39,radius=0.041;
       const start=[x-dx*length/2,y-dy*length/2],end=[x+dx*length/2,y+dy*length/2];
-      const axis=[dx,dy,terrainPlane.a*dx+terrainPlane.b*dy],norm=Math.hypot(...axis),u=axis.map(n=>n/norm);
+      const axis=[dx,dy,(ground(...end)-ground(...start))/length],norm=Math.hypot(...axis),u=axis.map(n=>n/norm);
       const v=[-dy,dx,0],w=[-u[2]*dx,-u[2]*dy,Math.hypot(u[0],u[1])];
       const vertices=[],faces=[];
       for(const point of [start,end]) for(let j=0;j<12;j++) {
@@ -82,7 +75,9 @@ const FirepitModel = (() => {
           [end[0]-dy*side,end[1]+dx*side,ground(...end)+z],0.007,0.007,j===1?'charEnd':'charcoal','structure');
       }
     }
-    for(const [i,degrees] of [0,60,180,240,300].entries()) {
+    const pergola=garden.elements.find(e=>e.id==='pergola').parts.find(p=>p.kind==='rect');
+    const approachAngle=Math.atan2(pergola.y+pergola.d/2-cy,pergola.x+pergola.w/2-cx)*180/Math.PI;
+    for(const [i,degrees] of [60,120,180,240,300].map(a=>a+approachAngle).entries()) {
       const angle=degrees*Math.PI/180,radial=[Math.cos(angle),Math.sin(angle)],tangent=[-radial[1],radial[0]];
       const center=[cx+radial[0]*1.42,cy+radial[1]*1.42],seatHeight=ground(...center)+0.45,feet=[];
       const point=(u,v,z)=>[center[0]+tangent[0]*u+radial[0]*v,center[1]+tangent[1]*u+radial[1]*v,z];
@@ -121,9 +116,9 @@ const FirepitModel = (() => {
       chip(`coal_${i}`,x,y,0.024,ground(x,y)+0.018,0.018,'coal','fire');
     }
     return {name:'Firepit',materials,parts,floorHeight,firecenter:[cx,cy],benches,logs,
-      pit:{outerRadius:0.5,innerRadius:0.33,wallHeight:0.27,ashHeight:0.018},approach:{angle:120,width:50},
+      pit:{outerRadius,innerRadius,wallThickness,wallHeight,ashHeight:0.018,finish:'corten'},approach:{angle:approachAngle,width:50},
       categoryVisibility:{fire:false},lights:[{name:'fire_glow',position:[cx,cy,0.35],color:'#ff883b',power:35,category:'fire'}],
-      plantingClearances:[{x:cx-r,y:cy-r,w:r*2,d:r*2},{x:cx-1.65,y:cy+1.15,w:1.15,d:1.15}]};
+      plantingClearances:[{x:cx-r,y:cy-r,w:r*2,d:r*2},{x:cx+Math.cos(approachAngle*Math.PI/180)*(r+.25)-.7,y:cy+Math.sin(approachAngle*Math.PI/180)*(r+.25)-.7,w:1.4,d:1.4}]};
   }
   return {build};
 })();

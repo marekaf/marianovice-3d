@@ -44,6 +44,27 @@ function timberUVs(geometry, grain, seed) {
   }
 }
 
+function cortenTexture(THREE) {
+  const canvas=document.createElement('canvas');
+  canvas.width=512;canvas.height=256;
+  const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(canvas.width,canvas.height);
+  let seed=17419;
+  for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++){
+    const a=x/canvas.width*Math.PI*2;
+    seed=Math.imul(seed,1664525)+1013904223|0;
+    const patches=Math.sin(a*4+1.7*Math.sin(y*.039))*Math.sin(a*7+Math.cos(y*.047))*.6
+      +Math.sin(a*11+y*.072+Math.sin(a*3-y*.054))*.35;
+    const value=Math.max(95,Math.min(250,178+patches*55+(seed>>>24)/255*26));
+    const i=(y*canvas.width+x)*4;
+    pixels.data[i]=value;pixels.data[i+1]=value-9;pixels.data[i+2]=value-16;pixels.data[i+3]=255;
+  }
+  ctx.putImageData(pixels,0,0);
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+  texture.colorSpace=THREE.SRGBColorSpace;
+  return texture;
+}
+
 export function buildModel(THREE, model) {
   const group = new THREE.Group();
   group.name = model.name;
@@ -59,6 +80,7 @@ export function buildModel(THREE, model) {
   }));
   const wood = timberTexture(THREE);
   const materials = new Map(Object.entries(model.materials).map(([name, spec]) => {
+    const finishMap=spec.finish==='corten'?cortenTexture(THREE):null;
     const material = new THREE.MeshPhysicalMaterial({
       color: spec.color,
       roughness: spec.roughness,
@@ -69,6 +91,7 @@ export function buildModel(THREE, model) {
       emissive: spec.emissive || '#000000',
       emissiveIntensity: spec.emissiveIntensity || 0,
       ...(spec.grain ? { map: wood, bumpMap: wood, bumpScale: 0.0007 } : {}),
+      ...(finishMap ? {map:finishMap,bumpMap:finishMap,bumpScale:.00035} : {}),
     });
     material.name = name;
     return [name, material];
