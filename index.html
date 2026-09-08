@@ -104,10 +104,10 @@
 }
 </script>
 
-<script src="terrain.js?v=20260827"></script>
-<script src="layout.js?v=20260828g"></script>
+<script src="terrain.js?v=f11b9d65254d"></script>
+<script src="layout.js?v=49a7156ecb5b"></script>
 <script src="garden-route-model.js"></script>
-<script src="interiors3d.js?v=20260905d"></script>
+<script src="interiors3d.js?v=3816e2229931"></script>
 <script src="vehicle-model.js"></script>
 <script src="exterior-furniture-model.js"></script>
 <script src="portal-drain-model.js"></script>
@@ -119,27 +119,27 @@
 <script src="seasonal-planting.js"></script>
 <script src="privacy-preview.js"></script>
 <script src="privacy-screen-model.js"></script>
-<script src="sauna-model.js?v=20260905"></script>
-<script src="pergola-model.js?v=20260905"></script>
-<script src="garage-model.js?v=20260905"></script>
-<script src="furniture-model.js?v=20260905"></script>
-<script src="greenhouse-model.js?v=20260905"></script>
-<script src="raised-beds-model.js?v=20260905"></script>
-<script src="firepit-model.js?v=20260905"></script>
-<script src="hidden-bench-model.js?v=20260905"></script>
-<script src="site-terrain.js?v=20260905"></script>
+<script src="sauna-model.js?v=5d9cb500c019"></script>
+<script src="pergola-model.js?v=aa2ee0f82530"></script>
+<script src="garage-model.js?v=c91c7815f178"></script>
+<script src="furniture-model.js?v=6c32ded6b6ca"></script>
+<script src="greenhouse-model.js?v=5a206b73d3de"></script>
+<script src="raised-beds-model.js?v=d60bbe249234"></script>
+<script src="firepit-model.js?v=9a3aa87d36fe"></script>
+<script src="hidden-bench-model.js?v=1456e7ea5091"></script>
+<script src="site-terrain.js?v=4b1179b63b95"></script>
 <script src="survey-surface.js"></script>
 <script src="terrain-preview.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=20260905d';
+import { buildModel } from './model3d.js?v=f34dbf914610';
 import { GroundSurfaceModel } from './ground-surface-model.js';
 import { ShrubModel } from './shrub-model.js';
 
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=20260906';
+  script.src = './house-interior.js?v=c98b3507985e';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
 });
