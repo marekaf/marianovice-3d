@@ -9,16 +9,17 @@
   const slow=setTimeout(()=>{
     if(state==='loading')hint.textContent='This is taking a little longer. The detailed garden is still being prepared; keep this tab open.';
   },25000);
-  function fail(){
+  function fail(event){
     if(state!=='loading')return;
     state='error';clearTimeout(slow);overlay.dataset.state=state;
     stage.textContent='The model could not finish loading.';
-    hint.textContent='Check your connection and try again. If this keeps happening, the browser console has the error details.';
+    const detail=event?.reason?.message||event?.message;
+    hint.textContent=detail?`Error: ${detail}`:'A model resource failed to load. Check your connection and try again.';
     retry.hidden=false;
   }
   function resourceError(event){
-    if(event.target instanceof HTMLScriptElement&&!event.target.dataset.loadingOptional)fail();
-    else if(event instanceof ErrorEvent)fail();
+    if(event.target instanceof HTMLScriptElement&&!event.target.dataset.loadingOptional)fail({message:`Could not load ${event.target.src?.split('/').pop()?.split('?')[0]||'a required script'}`});
+    else if(event instanceof ErrorEvent)fail(event);
   }
   window.addEventListener('error',resourceError,true);
   window.addEventListener('unhandledrejection',fail);

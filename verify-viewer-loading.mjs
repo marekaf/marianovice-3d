@@ -4,7 +4,7 @@ import vm from 'node:vm';
 const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
 const source=readFileSync(new URL('./viewer-loading.js',import.meta.url),'utf8');
 assert(html.indexOf('id="viewerLoading"')<html.indexOf('src="terrain.js'));
-assert(html.indexOf('src="viewer-loading.js"')<html.indexOf('src="terrain.js'));
+assert(html.indexOf('src="viewer-loading.js?v=')<html.indexOf('src="terrain.js'));
 assert(html.includes('animate();\nViewerLoading.finish();'));
 function fixture(){
   const nodes=new Map(),events=new Map(),frames=[],timers=[];
@@ -24,7 +24,8 @@ success.frames.shift()();success.timers.find(t=>t.ms===400).fn();
 assert.equal(success.nodes.get('viewerLoading').removed,true);
 assert.equal(success.events.size,0);
 const failed=fixture();
-failed.events.get('unhandledrejection')();
+failed.events.get('unhandledrejection')({reason:{message:'WebGL context unavailable'}});
+assert.equal(failed.nodes.get('loadingHint').textContent,'Error: WebGL context unavailable');
 failed.window.ViewerLoading.finish();
 assert.equal(failed.nodes.get('viewerLoading').dataset.state,'error');
 assert.equal(failed.nodes.get('loadingRetry').hidden,false);

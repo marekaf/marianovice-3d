@@ -14,5 +14,7 @@ jobs:
           node-version: '22'
       - name: Enable pinned Yarn
         run: corepack enable
-      - name: Verify
+      - name: Install test dependencies
+        run: yarn install --frozen-lockfile
+      - name: Run verification
         run: yarn verify
