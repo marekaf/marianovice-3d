@@ -35,6 +35,7 @@ const checks=[
   'verify-gate-model.mjs',
   'verify-utility-pillar.mjs',
   'verify-viewer-loading.mjs',
+  'verify-render-scheduler.mjs',
   'verify-bathroom-fixtures.mjs',
   'docs/verify-utility-joinery.mjs',
   'docs/verify-kitchen-spec.mjs',
