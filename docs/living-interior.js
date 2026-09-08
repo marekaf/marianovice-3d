@@ -4,6 +4,7 @@ import {buildStairFlight} from '../stair-flight-model.js';
 import {attachHouseFlooring} from './house-flooring.js';
 import {buildNightstands} from './nightstand-model.js';
 import {prepareUtilityJoinery} from './utility-joinery.js';
+import {buildShowerFittings} from './shower-fittings.js';
 
 export const finishColors={wall:'#ddd1be',ceiling:'#ddd1be'};
 
@@ -47,7 +48,10 @@ export function prepareLivingData(data) {
     if(f.label==='dřez Blanco PLEON 5'||f.label==='varná deska Siemens')return [];
     if(f.kind!=='cab'||f.fmat!=='green')return [f];
     const next={...f,cmat:'green',handle:f.label.startsWith('ostrov')?'push':'gola'};
-    if(f.label.startsWith('ostrov'))next.h=.910-f.worktop.th;
+    if(f.label.startsWith('ostrov')){
+      next.h=.910-f.worktop.th;
+      next.worktop={...f.worktop,x0:f.x0,x1:f.x1};
+    }
     if(typeof f.worktop==='number')next.wmat='stone';
     if(f.y0>0)next.golaEdge='bottom';
     if(f.label.startsWith('kuchyň base run')){
@@ -147,6 +151,8 @@ export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagne
   house.furniture.add(group);
   const nightstandModel=buildNightstands(data),nightstands=buildModel(THREE,{...nightstandModel,floorHeight:house.dims.floorY});
   house.furniture.add(nightstands);
+  const showerModel=buildShowerFittings(data),showers=buildModel(THREE,{...showerModel,floorHeight:house.dims.floorY});
+  house.furniture.add(showers);
   group.userData.proposal='Sofa and ottoman are a layout study, not selected products; fireplace clearances need verification. Dining table size is provisional: 180 × 90 cm. Six chairs, three per long side, no end chairs. Joinery follows the selected U665/U702 palette; screen colours and surface textures are approximations. Vanity tops provisionally match their fronts. Cathedral ceiling is a section-based provisional volume, not an as-built survey.';
   const flooring=attachHouseFlooring(THREE,house,data,{buildModel,renderer,applyChampagneFloor});
   const hearthCenter=(data.fireplace.x0+data.fireplace.x1)/2,hearthBack=data.fireplace.z1;
@@ -185,7 +191,8 @@ export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagne
   const livingRoom=data.rooms.find(r=>r.id==='1.06');
   for(let z=livingRoom.z0;z<7;z+=.625)panel(livingRoom.x0,livingRoom.x1,z,Math.min(z+.623,7),2.515,2.515);
   ceilingFinish.position.y=house.dims.floorY;house.ceiling.add(ceilingFinish);
-  return {group,flooring,parts,bathtub,bathModel,hearth,nightstands,nightstandModel,proposal:group.userData.proposal,presets:{
+  return {group,flooring,parts,bathtub,bathModel,hearth,nightstands,nightstandModel,showers,showerModel,proposal:group.userData.proposal,presets:{
+    ...showerModel.presets,
     overview:{position:[5.05,2.3,8.9],target:[7.35,.75,10.9]},
     living:{position:[7.55+seatingShift,1.12,9.94],target:[8.35,1.05,12.72]},
     kitchen:{position:[7.9,1.62,8.85],target:[7.8,1.15,4.35]},

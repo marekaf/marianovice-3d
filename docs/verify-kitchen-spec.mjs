@@ -6,6 +6,9 @@ const require=createRequire(import.meta.url),{HOUSE_INTERIOR}=require('../house-
 const before=JSON.stringify(HOUSE_INTERIOR),data=prepareLivingData(HOUSE_INTERIOR);
 const island=data.furniture.find(f=>f.label.startsWith('ostrov'));
 assert(Math.abs(island.h+island.worktop.th-.910)<1e-9,'Island finished top must be 910 mm');
+assert(Math.abs(island.worktop.x1-island.worktop.x0-2)<1e-9,'Island finished top must be 2000 mm long');
+assert.equal(island.worktop.x0,island.x0,'Island top must be flush with its left side panel');
+assert.equal(island.worktop.x1,island.x1,'Island top must be flush with its right side panel');
 for(const f of data.furniture.filter(f=>f.kind==='cab'&&['1.06','nika'].includes(f.room)&&!f.y0&&!f.label.startsWith('TV'))){
   assert.equal(f.plinth,.125,`${f.label}: kitchen plinth must be 125 mm`);
   if(!f.label.startsWith('ostrov'))assert.equal(f.h,HOUSE_INTERIOR.furniture.find(source=>source.label===f.label).h,'Other counter and cabinet heights stay unchanged');

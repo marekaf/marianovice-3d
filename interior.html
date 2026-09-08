@@ -69,6 +69,8 @@
   <button data-view="garden" data-house-focus hidden>Toward east portal</button>
   <button data-view="dining" data-house-focus hidden>Dining set proposal</button>
   <button data-view="bathroom" data-house-focus hidden>Main bathroom</button>
+  <button data-view="mainShower" data-house-focus hidden>Main shower</button>
+  <button data-view="guestShower" data-house-focus hidden>Guest shower</button>
   <button data-view="mirror" data-house-focus hidden>Bathroom mirror</button>
   <button data-view="bedroom" data-house-focus hidden>Bedroom</button>
   <button data-view="windowSeat" data-house-focus hidden>Bedroom window seat</button>
@@ -236,6 +238,12 @@ const utilityFitout=utilityIntegration?.attachUtilityEquipment(THREE,hou,HOUSE_I
 const loftFitout=loft&&loftIntegration?.attachLoftInterior(THREE,loft,HOUSE_LOFT,{buildModel,renderer,applyChampagneFloor:officeFloorTexture});
 if(utilityFitout)Object.assign(livingFitout.presets,utilityFitout.presets);
 if (livingFitout) document.getElementById('fitoutProposal').textContent = livingFitout.proposal;
+if(livingFitout?.showerModel){
+  const details=document.createElement('details');details.id='showerNotes';
+  const summary=document.createElement('summary');summary.textContent='Shower fit and placement notes';
+  const note=document.createElement('small');note.textContent=livingFitout.showerModel.notes.join(' ');
+  details.append(summary,note);document.getElementById('info').append(details);
+}
 if(utilityFitout){
   const details=document.createElement('details');details.id='utilityNotes';
   const summary=document.createElement('summary');summary.textContent='Equipment placement notes';
@@ -337,6 +345,7 @@ function applyVisibility() {
   for (const button of document.querySelectorAll('[data-house-focus]')) button.hidden = curB !== 'house' || !livingFitout;
   for (const button of document.querySelectorAll('[data-loft-focus]')) button.hidden = curB !== 'loft' || !loftFitout;
   if(document.getElementById('utilityNotes'))document.getElementById('utilityNotes').hidden=curB!=='house'||!['utility','utilityLaundry','utilityRack'].includes(curV);
+  if(document.getElementById('showerNotes'))document.getElementById('showerNotes').hidden=curB!=='house'||!['bathroom','mainShower','guestShower'].includes(curV);
   const proposal = document.getElementById('fitoutProposal');
   proposal.hidden = !((curB === 'house' && livingFitout) || (curB === 'loft' && loftFitout));
   proposal.textContent = curB === 'loft' && loftFitout ? loftFitout.notes.slice(1, 5).join(' ') : livingFitout?.proposal || '';

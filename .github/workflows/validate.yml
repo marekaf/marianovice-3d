@@ -47,6 +47,7 @@ jobs:
           node verify-bathroom-fixtures.mjs
           node docs/verify-utility-joinery.mjs
           node docs/verify-kitchen-spec.mjs
+          node docs/verify-shower-fittings.mjs
           node docs/verify-utility-rack-placement.mjs
           node docs/verify-entrance-threshold.mjs
           node docs/verify-eye-level-walkthrough.mjs

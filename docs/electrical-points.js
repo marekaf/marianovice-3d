@@ -1,5 +1,49 @@
 export const ELECTRICAL_POINTS = [
   {
+    "id": "1.06-S02",
+    "room": "1.06",
+    "building": "house",
+    "kind": "power",
+    "count": 2,
+    "orientation": "vertical",
+    "frameId": "1.06-S02",
+    "source": {
+      "document": "electrical/mains-power.md",
+      "line": 130
+    },
+    "additionalSources": [
+      {
+        "document": "interior/kitchen.md",
+        "line": 719
+      }
+    ],
+    "wallLabel": "Island side, integrated Berker Integro Pure double socket",
+    "heightText": "Upper edge 30 mm below the worktop underside, kitchen section A-A",
+    "offsetText": "Floor supply approximately 310cm from office wall and 225cm from kitchen-run wall; socket face not dimensioned.",
+    "coordinateSpace": "house-local",
+    "resolved": false,
+    "reason": "S02 supplies the integrated Berker Integro Pure double socket, not the separate Z04 floor box. Section A-A places its upper edge 30 mm below the worktop underside; approximate floor-feed coordinates do not identify its global side-panel position."
+  },
+  {
+    "id": "1.06-Z-pending-fireplace",
+    "room": "1.06",
+    "building": "house",
+    "kind": "power",
+    "count": 1,
+    "orientation": "horizontal",
+    "frameId": "1.06-Z-pending-fireplace",
+    "source": {
+      "document": "electrical/mains-power.md",
+      "line": 170
+    },
+    "wallLabel": "Under fireplace firebox / inside plinth",
+    "heightText": null,
+    "offsetText": null,
+    "coordinateSpace": "house-local",
+    "resolved": false,
+    "reason": "Unnumbered requirement for one 230V Timpex controller supply socket. The source leaves its position and final Z number pending fireplace installer measurement; this ID is an inventory placeholder."
+  },
+  {
     "id": "1.02-Z01",
     "room": "1.02",
     "building": "house",
