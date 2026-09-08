@@ -9,76 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Layout geometry (inside plot / fence-through / collisions / index.html trees)
-        run: node validate-layout.js
-
-      - name: Site geometry (structures in plot, no overlaps, vehicles fit their bays)
-        run: node verify-exterior.mjs
-
-      - name: Sauna geometry (openings, access, footing and clearances)
-        run: node verify-sauna.mjs
-
-      - name: Pergola geometry (frame, furniture and lighting)
-        run: node verify-pergola.mjs
-
-      - name: Garage geometry (openings, gate states and parking clearances)
-        run: node verify-garage.mjs
-
-      - name: Interior fixture geometry (footprints, heights and floor offsets)
-        run: node verify-fixtures.mjs
-
-      - name: Public runtime dependencies and procedural flooring
-        run: node verify-public-runtime.mjs
-
-      - name: House room data and interior models
-        run: |
-          node verify-interior-data.mjs house-interior.js
-          node verify-hoxter-stove.mjs
-          node verify-ravak-freedom.mjs
-          node verify-stair-flight.mjs
-          node verify-kitchen-fronts.mjs
-          node verify-cabinet-finishes.mjs
-          node verify-window-seat-handles.mjs
-          node verify-bathroom-fixtures.mjs
-          node docs/verify-utility-joinery.mjs
-          node docs/verify-kitchen-spec.mjs
-          node docs/verify-shower-fittings.mjs
-          node docs/verify-utility-rack-placement.mjs
-          node docs/verify-entrance-threshold.mjs
-          node docs/verify-eye-level-walkthrough.mjs
-          node docs/verify-electrical-model.mjs
-          node docs/verify-electrical-points.mjs
-
-      - name: Greenhouse geometry (openings, vent and interior supports)
-        run: node verify-greenhouse.mjs
-
-      - name: Raised-bed geometry (shells, soil, planting and grading)
-        run: node verify-raised-beds.mjs
-
-      - name: Firepit geometry (cavity, seating, slope and access)
-        run: node verify-firepit.mjs
-
-      - name: Hidden bench geometry (supports, grading and footprint)
-        run: node verify-hidden-bench.mjs
-
-      - name: Browser and Blender grading parity
-        run: node verify-site-terrain.mjs
-
-      - name: 2D drawings match layout.js
-        run: |
-          node generate-svg.js
-          node generate-flat-plan.js
-          node generate-driveway-check.js
-          # --porcelain, not `git diff`: a commit that DELETES a generated SVG leaves the
-          # regenerated file untracked, which git diff does not report at all.
-          if [ -n "$(git status --porcelain -- '*.svg')" ]; then
-            echo "::error::committed SVGs are stale or missing — run the generators and commit the result"
-            git status --porcelain -- '*.svg'
-            git --no-pager diff --stat -- '*.svg'
-            exit 1
-          fi
+      - name: Enable pinned Yarn
+        run: corepack enable
+      - name: Verify
+        run: yarn verify
