@@ -144,7 +144,8 @@ const GreenhouseModel = (() => {
       box(`bench_shelf_support_${i}`,px,benchY+0.035,0.16,0.045,benchD-0.07,0.045,'timber_y','furniture');
     }
     box('bench_shelf',benchX+0.025,benchY+0.035,0.205,benchW-0.05,benchD-0.07,0.025,'timber_y','furniture');
-    for(let t=0;t<3;t++) {
+    const trayCount=Math.max(0,Math.min(3,1+Math.floor((benchD-.13-.48)/.77)));
+    for(let t=0;t<trayCount;t++) {
       const tx=benchX+0.045,ty=benchY+0.13+t*0.77,tw=0.4,td=0.48;
       box(`tray_${t}_bottom`,tx,ty,benchH,tw,td,0.012,'tray','furniture');
       for(const [i,px] of [tx,tx+tw-0.012].entries()) box(`tray_${t}_side_${i}`,px,ty,benchH+0.012,0.012,td,0.075,'tray','furniture');
@@ -160,7 +161,8 @@ const GreenhouseModel = (() => {
         }
       }
     }
-    for(let i=0;i<4;i++) {
+    const potCount=Math.max(0,Math.min(4,1+Math.floor((benchD-.3-.1133-.035)/.55)));
+    for(let i=0;i<potCount;i++) {
       const px=benchX+benchW/2,py=benchY+0.3+i*0.55,r=0.11,h=0.18;
       parts.push({name:`pot_${i}`,type:'lathe',position:[px,py,0.23],segments:40,material:'terracotta',category:'furniture',
         profile:[[0,0],[r*0.66,0],[r*0.7,0.015],[r,h-0.018],[r*1.03,h-0.018],[r*1.03,h],

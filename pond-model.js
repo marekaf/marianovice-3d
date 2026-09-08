@@ -1,6 +1,9 @@
 export const PondModel = {
   create(THREE, { basin, groundGeometry }) {
     const { cx, cz, rx, rz } = basin;
+    const areaScale=rx*rz/5.6,edgeScale=Math.sqrt(areaScale);
+    const stoneCount=Math.max(24,Math.round(380*areaScale)),shoreCount=Math.min(stoneCount,Math.max(8,Math.round(32*edgeScale)));
+    const clumpCount=Math.max(2,Math.round(8*edgeScale)),lilyCount=Math.max(1,Math.round(6*areaScale));
     const waterLevel = basin.edge - 0.1;
     const group = new THREE.Group();
     group.name = 'Natural garden pond';
@@ -92,12 +95,12 @@ export const PondModel = {
     group.add(water);
     const stoneGeometry = new THREE.IcosahedronGeometry(1, 1);
     const stoneMaterial = new THREE.MeshStandardMaterial({ color: '#aba391', roughness: 0.95 });
-    const stones = new THREE.InstancedMesh(stoneGeometry, stoneMaterial, 380);
+    const stones = new THREE.InstancedMesh(stoneGeometry, stoneMaterial, stoneCount);
     stones.name = 'Partly buried shore stones';
     const transform = new THREE.Object3D(), contacts = [];
-    for (let i = 0; i < 380; i++) {
-      const angle = random() * Math.PI * 2, r = i < 32 ? 0.79 + random() * 0.14 : 0.35 + Math.sqrt(random()) * 0.59;
-      const width = i < 32 ? 0.11 + random() * 0.14 : 0.018 + random() * 0.035;
+    for (let i = 0; i < stoneCount; i++) {
+      const angle = random() * Math.PI * 2, r = i < shoreCount ? 0.79 + random() * 0.14 : 0.35 + Math.sqrt(random()) * 0.59;
+      const width = i < shoreCount ? 0.11 + random() * 0.14 : 0.018 + random() * 0.035;
       const inset = Math.min(r, 1 - width / Math.min(rx, rz) - 0.012);
       const x = cx + Math.cos(angle) * rx * inset, z = cz + Math.sin(angle) * rz * inset;
       const h = width * (0.42 + random() * 0.25);
@@ -117,11 +120,11 @@ export const PondModel = {
     bladeGeometry.setAttribute('position', new THREE.Float32BufferAttribute([-0.015, 0, 0, 0.015, 0, 0, 0.018, 0.55, 0.08, 0, 1, 0.22, -0.012, 0.55, 0.08], 3));
     bladeGeometry.setIndex([0, 1, 2, 0, 2, 4, 4, 2, 3]);
     bladeGeometry.computeVertexNormals();
-    const plants = new THREE.InstancedMesh(bladeGeometry, new THREE.MeshStandardMaterial({ color: '#526c3b', side: THREE.DoubleSide, roughness: 0.93 }), 144);
+    const plants = new THREE.InstancedMesh(bladeGeometry, new THREE.MeshStandardMaterial({ color: '#526c3b', side: THREE.DoubleSide, roughness: 0.93 }), clumpCount*18);
     plants.name = 'Pond marginal foliage';
     let plant = 0;
-    for (let clump = 0; clump < 8; clump++) {
-      const angle = 0.1 + clump * 0.34;
+    for (let clump = 0; clump < clumpCount; clump++) {
+      const angle = 0.1 + clump * 2.38/(clumpCount-1);
       const x = cx + Math.cos(angle) * rx * 0.88, z = cz + Math.sin(angle) * rz * 0.88;
       for (let i = 0; i < 18; i++) {
         const px = x + (random() - 0.5) * 0.12, pz = z + (random() - 0.5) * 0.12;
@@ -135,14 +138,14 @@ export const PondModel = {
     plants.castShadow = true;
     plantingGroup.add(plants);
     const padMaterial = new THREE.MeshStandardMaterial({ color: '#4f703e', roughness: 0.52, side: THREE.DoubleSide });
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < lilyCount; i++) {
       const shape = new THREE.Shape();
       shape.moveTo(0, 0);
       for (let j = 0; j <= 30; j++) { const angle = 0.22 + j / 30 * (Math.PI * 2 - 0.44); shape.lineTo(Math.cos(angle) * 0.12, Math.sin(angle) * 0.1); }
       shape.closePath();
       const pad = new THREE.Mesh(new THREE.ShapeGeometry(shape), padMaterial);
       pad.rotation.set(-Math.PI / 2, 0, random() * Math.PI * 2);
-      pad.position.set(cx + 0.4 + (random() - 0.5) * 0.85, waterLevel + 0.004, cz - 0.15 + (random() - 0.5) * 0.7);
+      pad.position.set(cx + rx*(.18 + (random() - 0.5) * .30), waterLevel + 0.004, cz + rz*(-.075 + (random() - 0.5) * .35));
       pad.name = 'Floating lily pad';
       plantingGroup.add(pad);
     }

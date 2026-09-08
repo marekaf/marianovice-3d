@@ -42,6 +42,14 @@ assert.ok(!lounge.parts.some(p=>/outdoor_kitchen_(towel|lower_slat|leg_|rail_)/.
 assert.ok(Math.abs(worktop.position[1]-12.88)<.001,'Worktop spans the full usable nook');
 const sofa=lounge.footprints.find(p=>p.name==='east_sofa');
 const coffee=lounge.footprints.find(p=>p.name==='east_low_table');
+for(const name of ['east_low_table','atrium_low_table']){
+  const table=lounge.parts.find(p=>p.name===name),profile=table.profile;
+  assert.equal(Math.max(...profile.map(p=>p[0])),.3,'Garbet diameter is600mm');
+  assert.equal(Math.max(...profile.map(p=>p[1])),.4,'Garbet height is400mm');
+  assert(profile.filter(([r,h])=>h>=.20&&h<=.39).every(([r])=>r>=.295),'Garbet upper body must have near-vertical drum sides, not a tapering pot');
+  assert(profile.some(([r,h])=>h===.4&&r>=.295),'Flat tabletop must extend to its outer edge');
+  assert(profile.some(([r,h])=>h>.025&&h<.08&&r>.22),'Garbet lower body should round outward from its recessed base');
+}
 assert.equal(sofa.w,.8);assert.equal(sofa.d,1.64);
 assert.ok(sofa.x>=20.58&&sofa.x<20.8,'Sofa back sits beside the portal');
 assert.ok(coffee.x>sofa.x+sofa.w,'Coffee table sits garden-side of the sofa');

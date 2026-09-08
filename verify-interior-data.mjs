@@ -8,6 +8,7 @@
 // and every long DXF wall run has a model wall (both directions).
 import { createRequire } from 'module';
 import { resolve } from 'path';
+import { doorApproach } from './door-approach.js';
 const require = createRequire(import.meta.url);
 const TOL = 0.03;
 
@@ -186,7 +187,7 @@ function verify(data, name, dxfPath) {
   if (data.furniture) {
     const KINDS = { cab: 1, slab: 1, glass: 1, fix: 1, bed: 1 };
     const FIXT = { bath: 1, wc: 1, basin: 1 };
-    const MATS = { wood: 1, front: 1, carc: 1, appliance: 1, ceramic: 1, mirror: 1, plinth: 1, mattress: 1, green: 1, stone: 1 };
+    const MATS = { wood: 1, front: 1, carc: 1, appliance: 1, ceramic: 1, mirror: 1, plinth: 1, mattress: 1, green: 1, stone: 1, whiteBoard: 1 };
     const TAGS = { f: 1, d: 1, a: 1, o: 1 };
     const fid = f => `[${f.label || `${f.kind}@${f.x0},${f.z0}`}] `;
     const topOf = f => (f.y0 ?? 0) + f.h + (typeof f.worktop === 'number' ? f.worktop : (f.worktop?.th ?? 0));
@@ -243,11 +244,10 @@ function verify(data, name, dxfPath) {
           const zone = ax === 'x'
             ? { x0: from, x1: from + o.w, z0: r.z0 - 0.7, z1: r.z1 + 0.7 }
             : { x0: r.x0 - 0.7, x1: r.x1 + 0.7, z0: from, z1: from + o.w };
-          for (const f of data.furniture) {
-            if ((f.y0 ?? 0) >= 1.97) continue;  // clears head height in the door zone
-            const ox = Math.min(zone.x1, f.x1) - Math.max(zone.x0, f.x0);
-            const oz = Math.min(zone.z1, f.z1) - Math.max(zone.z0, f.z0);
-            if (ox > 0.05 && oz > 0.05) note('ERR', `${fid(f)}blocks the ${wid(w)}door zone at (${from.toFixed(2)})`);
+          const approach=doorApproach({axis:ax,from,width:o.w,zone,furniture:data.furniture});
+          if(approach.intrusions){
+            const required=Math.min(.8,o.w);
+            note(approach.clear+1e-9<required?'ERR':'WARN',`${wid(w)}door approach at (${from.toFixed(2)}): ${(approach.clear*100).toFixed(0)} cm continuously clear; ${(required*100).toFixed(0)} cm model target. Furniture enters the approach zone; door swing is not verified.`);
           }
         } else if (o.sill) {
           const span = ax === 'x'

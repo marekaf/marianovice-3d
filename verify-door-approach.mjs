@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import {doorApproach} from './door-approach.js';
+import {createRequire} from 'node:module';
+const {HOUSE_INTERIOR}=createRequire(import.meta.url)('./house-interior.js');
+const opening={axis:'z',from:2.5,width:.9,zone:{x0:5,x1:6.55,z0:2.5,z1:3.4}};
+const bed={x0:6.47,x1:8.57,z0:.45,z1:2.58};
+assert(Math.abs(doorApproach({...opening,furniture:[bed]}).clear-.82)<1e-9);
+assert(Math.abs(doorApproach({...opening,furniture:[]}).clear-.9)<1e-9);
+assert(doorApproach({...opening,furniture:[{...bed,z1:2.8}]}).clear<.8);
+assert.equal(doorApproach({...opening,furniture:[{...bed,z0:2.4,z1:3.5}]}).clear,0);
+assert(doorApproach({...opening,furniture:[bed,{...bed,z0:3.1,z1:3.5}]}).clear<.8);
+assert.equal(doorApproach({...opening,furniture:[{...bed,y0:2}]}).intrusions,0);
+const bedroomBed=HOUSE_INTERIOR.furniture.find(f=>f.kind==='bed'&&f.room==='1.12');
+assert.equal(bedroomBed.x0,6.47);
+assert.equal(bedroomBed.z1,2.58);
+const wall=HOUSE_INTERIOR.intWalls.find(w=>w.id==='W13'),door=wall.openings[0];
+const southJamb=wall.a[1]+door.at+door.w;
+// D11 has an 800mm leaf at the south jamb. Reserve100mm for frame/hinge position and hardware.
+const nearestHingeZ=southJamb-.1,hardwareSweep=.8+.1;
+const distance=Math.hypot(bedroomBed.x0-wall.b[0],nearestHingeZ-bedroomBed.z1);
+assert(distance>hardwareSweep,'Fixed bedroom bed must remain outside the conservative D11 swing envelope');
+console.log('Door approach: corner intrusion retains82cm; blocked and combined obstructions reduce continuous clearance');

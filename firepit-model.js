@@ -7,7 +7,7 @@ const FirepitModel = (() => {
     const floorHeight=plane(cx,cy),ground=(x,y)=>plane(x,y)-floorHeight;
     const parts=[],benches=[];
     const materials={
-      gravel:{color:'#9a9180',roughness:0.99},gravelLight:{color:'#b5a994',roughness:0.98},
+      gravel:{color:'#a6a39a',roughness:0.99},gravelLight:{color:'#bbb8af',roughness:0.98},
       corten:{color:'#a75e36',roughness:0.88,metalness:0.12,finish:'corten'},
       ash:{color:'#514d45',roughness:1},charcoal:{color:'#252622',roughness:0.99},charEnd:{color:'#514233',roughness:0.96},
       wood:{color:'#94714e',roughness:0.83,grain:'z'},woodLight:{color:'#a47e55',roughness:0.83,grain:'z'},

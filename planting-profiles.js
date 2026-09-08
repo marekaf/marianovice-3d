@@ -29,6 +29,12 @@ const PlantingProfiles = (() => {
       spread:Math.min(.48,Math.max(.28,height*.4)),seed,
       bloom:source.bloom??[6,7,8],winterInterest:!!source.winterInterest};
   }
-  return {sample,hash};
+  function clearsTankAccess(tank,x,z,radius){
+    const cx=tank.x+tank.w/2,cz=tank.y+tank.d/2;
+    if(Math.hypot(x-cx,z-cz)<.75+radius)return false;
+    const dx=Math.max(cx-.45-x,0,x-cx-.45),dz=Math.max(cz-z,0,z-tank.y-tank.d-.5);
+    return Math.hypot(dx,dz)>radius;
+  }
+  return {sample,hash,clearsTankAccess};
 })();
 if(typeof module!=='undefined')module.exports={PlantingProfiles};

@@ -1206,6 +1206,7 @@ sloped_slab("carport_roof", c["x"], c["x"] + c["w"], cp_west, cp_east,
 roof_seams("cp", c["x"], cp_west + 0.08, c["x"] + c["w"], cp_east + 0.08,
            c["y"], c["y"] + c["d"], MAT["roof"])
 
+# Terraces and house-level stepping slabs.
 stone_materials = [mat_concrete("garden_slab_%d" % i, hexc(color), hexc("#b4ab98"))
                    for i, color in enumerate(("#c1baaa", "#bcb5a6", "#c8c1b2", "#b6af9f"))]
 

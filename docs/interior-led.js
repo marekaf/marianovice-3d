@@ -1,3 +1,5 @@
+import {buildCoronaBed} from '../corona-bed-model.js';
+
 export function attachInteriorLed(THREE,house,data) {
   const group=new THREE.Group();group.name='Interior LED lighting';
   const fixtures=[],lights=[],notes=[];
@@ -34,9 +36,9 @@ export function attachInteriorLed(THREE,house,data) {
   strip('Coffee niche strip',[niche.x1-.045,niche.y0-.004,niche.z0+.03],[niche.x1-.045,niche.y0-.004,niche.z1-.03],[0,-1,0],niche.room);
   const windowTop=find('okno horní pás').fixture;
   strip('Sitting window strip',[windowTop.x0+.035,windowTop.y0-.004,windowTop.z0+.025],[windowTop.x0+.035,windowTop.y0-.004,windowTop.z1-.025],[0,-1,0],windowTop.room,.40);
-  const bedIndex=data.furniture.findIndex(f=>f.kind==='bed'&&f.room==='1.12');
-  if(bedIndex<0)throw new Error('Missing bedroom bed');
-  const bed=data.furniture[bedIndex],headboard=FurnitureModel.build([bed]).parts.find(p=>p.name.endsWith('_headboard'));
+  const bed=data.bedroomBed;
+  if(!bed)throw new Error('Missing bedroom bed');
+  const headboard=buildCoronaBed(bed).parts.find(p=>p.name.endsWith('_headboard'));
   if(!headboard)throw new Error('Missing bedroom headboard geometry');
   const headTop=headboard.position[2]+headboard.size[2]/2;
   if((bed.head??'N')!=='N')throw new Error('Bedroom headboard strip requires north headboard');
