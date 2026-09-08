@@ -20,6 +20,12 @@ while (pending.length) {
   for (const match of source.matchAll(/(['"])([^'"`\s]+\.(?:m?js|html|css|jpg|png|svg)(?:[?#][^'"]*)?)\1/g)) {
     const path = match[2];
     if (/^(?:https?:|data:|three\/)/.test(path)) continue;
+    const version=path.match(/\?v=([^&#]+)/)?.[1];
+    if(version){
+      const asset=resolve(dirname(file),path.split('?')[0]);
+      const expected=createHash('sha256').update(readFileSync(asset)).digest('hex').slice(0,12);
+      assert.equal(version,expected,`Stale asset version in ${relative(root,file)}: ${path}. Run yarn assets:version.`);
+    }
     pending.push(resolve(dirname(file), path.split(/[?#]/)[0]));
   }
 }

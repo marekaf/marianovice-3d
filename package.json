@@ -2,6 +2,7 @@
   "private": true,
   "packageManager": "yarn@1.22.18",
   "scripts": {
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "assets:version": "node scripts/version-assets.mjs"
   }
 }

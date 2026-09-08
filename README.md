@@ -16,6 +16,8 @@ Run `yarn verify` with Node.js 22 and Yarn 1.22.18, or run `corepack enable` to 
 
 This runs the same checks as CI and regenerates the three SVG drawings. It fails if any check fails or Git reports changed, staged, or untracked SVGs. Review and commit intentional drawing updates before rerunning.
 
+After changing an asset referenced with `?v=`, run `yarn assets:version` and commit the updated viewer pages. These URLs use content hashes so returning browsers fetch changed scripts. `yarn verify` rejects stale hashes.
+
 ## Contents
 
 - [`layout.js`](layout.js) — single source of truth for the garden layout (all coordinates in meters); consumed by the 3D viewer, the 2D editor and the SVG generator
