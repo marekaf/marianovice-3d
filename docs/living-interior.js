@@ -47,6 +47,7 @@ export function prepareLivingData(data) {
     if(f.label==='dřez Blanco PLEON 5'||f.label==='varná deska Siemens')return [];
     if(f.kind!=='cab'||f.fmat!=='green')return [f];
     const next={...f,cmat:'green',handle:f.label.startsWith('ostrov')?'push':'gola'};
+    if(f.label.startsWith('ostrov'))next.h=.910-f.worktop.th;
     if(typeof f.worktop==='number')next.wmat='stone';
     if(f.y0>0)next.golaEdge='bottom';
     if(f.label.startsWith('kuchyň base run')){
@@ -55,7 +56,7 @@ export function prepareLivingData(data) {
       next.worktop={...f.worktop,cutouts:[{x0:7.19,z0:4.34,x1:7.70,z1:4.73}]};
     }
     return [next];
-  }).map(prepareUtilityJoinery).map(joineryFinish)};
+  }).map(f=>f.kind==='cab'&&['1.06','nika'].includes(f.room)&&!f.y0&&!f.label.startsWith('TV')?{...f,plinth:.125}:f).map(prepareUtilityJoinery).map(joineryFinish)};
 }
 
 export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagneFloor,renderer}) {
@@ -63,11 +64,11 @@ export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagne
   const parts=[], materials={
     upholstery:{color:'#c6b9a7',roughness:.98},piping:{color:'#ab9c89',roughness:1},
     cushion:{color:'#8b9d91',roughness:.97},clay:{color:'#ab7c67',roughness:.94},
-    dark:{color:'#202624',roughness:.5},metal:{color:'#777e7b',metalness:.9,roughness:.24},
+    dark:{color:'#202624',roughness:.5},metal:{color:'#777e7b',metalness:.9,roughness:.24},tapGraphite:{color:'#404746',metalness:.85,roughness:.27},
     glass:{color:'#101b20',roughness:.12,metalness:.22},whiteGlass:{color:'#f5f5f2',roughness:.08,metalness:.04},ceramic:{color:'#ece6d9',roughness:.3},
     rug:{color:'#b9ad97',roughness:1},oak:{color:'#bba181',roughness:.8},tableStone:{color:'#c5bca9',roughness:.84},
     diffuser:{color:'#fff0d9',emissive:'#ffe2b1',emissiveIntensity:1.5,roughness:.5},
-    sink:{color:'#333936',roughness:.74},water:{color:'#19201e',roughness:.2},
+    sink:{color:'#827565',roughness:.74},water:{color:'#19201e',roughness:.2},
   };
   const box=(name,x,z,y,w,d,h,material,bevel=.003)=>parts.push({name,type:'box',position:[x+w/2,z+d/2,y+h/2],size:[w,d,h],material,bevel,category:'furniture'});
   const cylinder=(name,x,z,y,r,h,material,axis='z')=>parts.push({name,type:'cylinder',position:[x,z,y],radiusTop:r,radiusBottom:r,height:h,segments:32,axis,material,category:'furniture'});
@@ -125,11 +126,11 @@ export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagne
   box('sink_east',7.68,4.36,.746,.02,.35,.20,'sink');
   cylinder('sink_drain',7.445,4.535,.766,.039,.004,'metal');
   cylinder('sink_drain_dark',7.445,4.535,.769,.027,.003,'dark');
-  cylinder('tap_foot',7.445,4.265,.954,.025,.017,'metal');
-  cylinder('tap_riser',7.445,4.265,1.09,.014,.26,'metal');
-  cylinder('tap_spout',7.445,4.375,1.22,.014,.22,'metal','y');
-  cylinder('tap_outlet',7.445,4.48,1.202,.016,.04,'metal');
-  cylinder('tap_lever',7.49,4.265,1.06,.008,.07,'metal');
+  cylinder('tap_foot',7.445,4.265,.954,.025,.017,'tapGraphite');
+  cylinder('tap_riser',7.445,4.265,1.09,.014,.26,'tapGraphite');
+  cylinder('tap_spout',7.445,4.375,1.22,.014,.22,'tapGraphite','y');
+  cylinder('tap_outlet',7.445,4.48,1.202,.016,.04,'tapGraphite');
+  cylinder('tap_lever',7.49,4.265,1.06,.008,.07,'tapGraphite');
   box('hob_glass',8.36,4.32,.949,.56,.43,.009,'glass',.006);
   for(const[i,x]of[8.49,8.78].entries())for(const[j,z]of[4.43,4.64].entries()){
     cylinder(`hob_ring_${i}_${j}`,x,z,.959,.080,.001,'metal');

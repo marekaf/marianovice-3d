@@ -16,7 +16,7 @@ export const ELECTRICAL_POINTS = [
     "offsetText": "nad rackem, hned pod stropem",
     "coordinateSpace": "house-local",
     "resolved": false,
-    "reason": "Only described above rack; horizontal offset absent and model rack wall differs from source entrance-wall description."
+    "reason": "Specified above the entrance-wall rack, but no horizontal offset is dimensioned. The modeled rack position remains a coordination proposal."
   },
   {
     "id": "1.02-Z02",

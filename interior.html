@@ -78,6 +78,7 @@
   <button data-view="entranceCoats" data-house-focus hidden>Hallway shelf and hooks</button>
   <button data-view="entranceControls" data-house-focus hidden>Entrance keys and intercom</button>
   <button data-view="utilityLaundry" data-house-focus hidden>Utility sink and laundry</button>
+  <button data-view="utilityRack" data-house-focus hidden>Utility rack and electrical board</button>
   <button data-view="stairs" data-house-focus hidden>Stair underside</button>
   <button data-view="utility" data-house-focus hidden>Utility equipment</button>
   <button data-view="room" data-loft-focus hidden>Loft room</button>
@@ -335,7 +336,7 @@ function applyVisibility() {
   document.getElementById('rowLabels').style.display = BUILDINGS[curB].labels && !camera.isPerspectiveCamera ? '' : 'none';
   for (const button of document.querySelectorAll('[data-house-focus]')) button.hidden = curB !== 'house' || !livingFitout;
   for (const button of document.querySelectorAll('[data-loft-focus]')) button.hidden = curB !== 'loft' || !loftFitout;
-  if(document.getElementById('utilityNotes'))document.getElementById('utilityNotes').hidden=curB!=='house'||curV!=='utility';
+  if(document.getElementById('utilityNotes'))document.getElementById('utilityNotes').hidden=curB!=='house'||!['utility','utilityLaundry','utilityRack'].includes(curV);
   const proposal = document.getElementById('fitoutProposal');
   proposal.hidden = !((curB === 'house' && livingFitout) || (curB === 'loft' && loftFitout));
   proposal.textContent = curB === 'loft' && loftFitout ? loftFitout.notes.slice(1, 5).join(' ') : livingFitout?.proposal || '';

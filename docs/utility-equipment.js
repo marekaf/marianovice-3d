@@ -94,7 +94,7 @@ export function buildUtilityEquipment(data) {
   box('electrical_board_latch',bx-.012,bz+.055,1.015,.009,.017,.058,'metal',.003);
   box('electrical_board_identification',bx-.014,bz+.20,1.40,.004,.17,.034,'dark',.001);
 
-  const ax=room.x0+1.84,az=room.z0+.008;
+  const ax=room.x0+2.38,az=room.z0+.008;
   start('Jablotron control enclosure', {x0:ax,z0:az,x1:ax+.25,z1:az+.075,y0:1.47,y1:1.67},
     {product:'Jablotron panel envelope; JA-103K/106K/107K unresolved in quote'});
   box('jablotron_case',ax,az,1.47,.25,.07,.20,'white',.010);
@@ -107,6 +107,22 @@ export function buildUtilityEquipment(data) {
     box(`rack_socket_${i}`,room.x1-.018,rz+.08+i*.084,2.36,.018,.075,.075,'white',.006);
     cylinder(`rack_socket_insert_${i}`,room.x1-.020,rz+.1175+i*.084,2.3975,.020,.003,'dark','x');
   }
+  const rackLeft=room.x0+1.67,rackBack=room.z0+.02;
+  const rotateBounds=b=>({...b,x0:rackLeft+b.z0-rz,x1:rackLeft+b.z1-rz,
+    z0:rackBack+rx+rw-b.x1,z1:rackBack+rx+rw-b.x0});
+  const rackAssembly=new Set(['UniFi 12U wall rack','Electrical distribution board','Utility service accessories']);
+  for(const model of models.filter(m=>rackAssembly.has(m.name)))for(const part of model.parts){
+    const [x,z,y]=part.position;
+    part.position=[rackLeft+z-rz,rackBack+rx+rw-x,y];
+    if(part.size)[part.size[0],part.size[1]]=[part.size[1],part.size[0]];
+    if(part.type==='cylinder'&&part.axis!=='z')part.axis=part.axis==='x'?'y':'x';
+  }
+  for(const item of equipment.filter(e=>rackAssembly.has(e.name))){
+    item.bounds=rotateBounds(item.bounds);
+    if(item.service)item.service=rotateBounds(item.service);
+    item.wallId='W27';
+    item.horizontalPlacement='proposed';
+  }
   const joinery = buildUtilityJoinery(data);
   if (joinery) models.push(joinery);
   const notes = [
@@ -116,11 +132,13 @@ export function buildUtilityEquipment(data) {
     'The ventilation brief describes a small ceiling unit; the Vent 5000 C envelope modeled here is upright 785×595×840mm. Confirm exact variant and mounting against the revised HVAC drawings.',
     'The four ventilation risers only show connection space. Distribution ducts, condensate and hydraulic routes are not an installation design.',
     'Existing electrical notes place heat-pump/ventilation supplies at the bathroom wall, where the current joinery already sits. Proposed east-wall equipment therefore needs installer coordination.',
-    'Rack sits above the 120-module board at 1620mm. This east-wall proposal differs from the specified entrance-side wall; equipment clearance coordination remains outstanding. Exact control-board enclosures remain unconfirmed.',
+    'Rack and the 120-module board below it are on the specified entrance-side wall. Rack bottom is 1620mm and power sockets are above it at approximately 2400mm. The horizontal offset is proposed, not dimensioned in the electrical schedule.',
+    'The adjacent Jablotron enclosure is placed to the right of the rack/board. Door access, an 800mm rack service zone, laundry and the currently modeled HVAC bodies remain clear; final enclosures and ventilation coordination require installer confirmation.',
   ];
   return {models,equipment,notes,presets:{
     utility:{position:[room.x0+1.05,1.60,room.z0+.50],target:[room.x1-.20,1.32,room.z0+1.48]},
     utilityLaundry:{position:[room.x1-.75,1.60,room.z0+1.15],target:[room.x0+.35,1.05,room.z1-.80]},
+    utilityRack:{position:[room.x0+1.20,1.60,room.z0+1.85],target:[rackLeft+.30,1.52,room.z0+.20]},
   }};
 }
 

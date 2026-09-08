@@ -24,6 +24,8 @@
 !/docs/electrical-view.js
 !/docs/electrical-points.js
 !/docs/verify-utility-joinery.mjs
+!/docs/verify-kitchen-spec.mjs
+!/docs/verify-utility-rack-placement.mjs
 !/docs/verify-entrance-threshold.mjs
 !/docs/verify-eye-level-walkthrough.mjs
 !/docs/verify-electrical-model.mjs
