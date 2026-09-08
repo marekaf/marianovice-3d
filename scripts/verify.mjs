@@ -18,6 +18,7 @@ const checks=[
   'verify-fixtures.mjs',
   'verify-public-runtime.mjs',
   'verify-interior-data.mjs house-interior.js',
+  'verify-door-approach.mjs',
   'verify-hoxter-stove.mjs',
   'verify-ravak-freedom.mjs',
   'verify-stair-flight.mjs',
