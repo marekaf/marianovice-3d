@@ -58,7 +58,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
     <noscript>This 3D viewer needs JavaScript enabled.</noscript>
   </div>
 </section>
-<script src="viewer-loading.js"></script>
+<script src="viewer-loading.js?v=af17efe587d0"></script>
 
 <div id="info">
   <b>Garden — 3D visualization</b><br>
@@ -152,7 +152,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="tree-model.js"></script>
 <script src="planting-profiles.js"></script>
 <script src="planting-guide.js"></script>
-<script src="perennial-model.js"></script>
+<script src="perennial-model.js?v=ab389727ee00"></script>
 <script src="seasonal-planting.js"></script>
 <script src="privacy-preview.js"></script>
 <script src="privacy-screen-model.js"></script>
@@ -247,9 +247,11 @@ scene.fog = new THREE.FogExp2(0xc4d8e8, 0.008);
 
 const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 1000);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const mobileRendering = matchMedia('(pointer: coarse)').matches;
+const renderer = new THREE.WebGLRenderer({ antialias: !mobileRendering });
+renderer.domElement.addEventListener('webglcontextlost', () => ViewerLoading.fail({message:'The WebGL graphics context was lost while loading.'}));
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, mobileRendering ? 1 : 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Nothing that casts a shadow moves on its own — the sun only moves when a slider does, and the
@@ -328,8 +330,8 @@ scene.add(hemi);
 
 const sun = new THREE.DirectionalLight(0xfff5d0, 1.4);
 sun.castShadow = true;
-sun.shadow.mapSize.width = 4096;
-sun.shadow.mapSize.height = 4096;
+sun.shadow.mapSize.width = mobileRendering ? 1024 : 4096;
+sun.shadow.mapSize.height = mobileRendering ? 1024 : 4096;
 const sd = 32;
 sun.shadow.camera.left = -sd;
 sun.shadow.camera.right = sd;
@@ -1575,7 +1577,7 @@ function addPerennial(zoneId, x, z, kind) {
     if(!PlantingProfiles.clearsTankAccess(rectOf('rainTank'),x,z,spec.spread))return;
   }
   if (!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread,zone?.utilityCover===true)) return;
-  const root = PerennialModel.create(THREE, spec);
+  const root = PerennialModel.createShared(THREE, spec);
   root.name = spec.name;
   root.position.set(x, terrainHeight(x, z), z);
   root.userData.zoneId = zoneId;
@@ -2426,7 +2428,7 @@ window.addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, mobileRendering ? 1 : 2));
 });
 
 // ───────────────────────── WALKING TOUR (POV walkthrough) ─────────────────────────

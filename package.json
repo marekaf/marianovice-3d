@@ -4,5 +4,8 @@
   "scripts": {
     "verify": "node scripts/verify.mjs",
     "assets:version": "node scripts/version-assets.mjs"
+  },
+  "devDependencies": {
+    "three": "0.160.0"
   }
 }

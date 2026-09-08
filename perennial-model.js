@@ -131,6 +131,33 @@ const PerennialModel = (() => {
     update(root, 7);
     return root;
   }
+  const sharedVariants = new WeakMap();
+  function createShared(THREE, { profile = 'grass', height = .8, spread = .35, seed = 1, bloom = [6, 7, 8], color, winterInterest = true } = {}) {
+    if (!profiles.includes(profile) || !(height > 0) || !(spread > 0) || !Number.isFinite(height + spread))
+      throw new Error('Perennial form needs a known profile and positive finite dimensions');
+    if (!sharedVariants.has(THREE)) sharedVariants.set(THREE, new Map());
+    const cache = sharedVariants.get(THREE);
+    const numericSeed = (Number(seed) || 1) >>> 0, variant = numericSeed % 4;
+    const key = `${profile}/${variant}`;
+    if (!cache.has(key)) {
+      const template = create(THREE, { profile, seed: variant + 1 });
+      for (const mesh of template.children) mesh.geometry.scale(1 / .35, 1 / .8, 1 / .35);
+      cache.set(key, template);
+    }
+    // Geometry belongs to the variant cache; specimen cleanup must not dispose it.
+    const root = cache.get(key).clone();
+    root.scale.set(spread, height, spread);
+    root.rotation.y = numericSeed * 2.399963229728653 % (Math.PI * 2);
+    root.userData = { profile, plantingScale: .45, bloom: [...bloom], height, spread, winterInterest };
+    for (const mesh of root.children) {
+      mesh.material = mesh.material.clone();
+      if (mesh.userData.plantPart === 'flower' && color !== undefined) {
+        mesh.material.color.set(color);
+        mesh.userData.summerColor = color;
+      }
+    }
+    return update(root, 7);
+  }
   function update(root, month) {
     const winter = month <= 3 || month >= 11;
     const blooming = root.userData.bloom.includes(month);
@@ -152,6 +179,6 @@ const PerennialModel = (() => {
     root.userData.month = month;
     return root;
   }
-  return { create, update };
+  return { create, createShared, update };
 })();
 if (typeof module !== 'undefined') module.exports = { PerennialModel };
