@@ -11,7 +11,7 @@ export function electricalFacePoint(point, [u,v,depth]) {
 }
 
 export function buildElectricalOutlet(point) {
-  if (!['power','data','coax'].includes(point.kind) || !Number.isInteger(point.count) || point.count < 1
+  if (!['power','data','coax','switch'].includes(point.kind) || !Number.isInteger(point.count) || point.count < 1
     || !Number.isInteger(point.switchCount??0) || (point.switchCount??0)<0
     || !['horizontal','vertical'].includes(point.orientation)
     || point.position?.length !== 3 || !point.position.every(Number.isFinite)
@@ -31,7 +31,10 @@ export function buildElectricalOutlet(point) {
     for(let slot=0;slot<count;slot++,deviceIndex++){
       const along=cursor+.040+slot*pitch,x=vertical?0:along,y=vertical?-along:0,n=`device_${deviceIndex}`;
       devices.push({index:deviceIndex,frame,kind:point.kind,center:[x,y],ports:1});
-      if(point.kind==='power'){
+      if(point.kind==='switch'){
+        panel(`${n}_switch_reveal`,x,y,.005,.064,.064,.003,'recess');
+        panel(`${n}_rocker`,x,y,.0081,.059,.059,.003,'white');
+      }else if(point.kind==='power'){
         panel(`${n}_face`,x,y,.005,.064,.064,.005,'white',[{type:'circle',x:0,y:0,radius:.019}]);
         circle(`${n}_recess`,x,y,.0051,.019,.0005,'recess');
         parts.push({name:`${n}_socket`,type:'disc',position:[x,y,.006],radius:.0185,depth:.0015,material:'ivory',holes:[{type:'circle',x:-.0095,y:0,radius:.0023},{type:'circle',x:.0095,y:0,radius:.0023}]});
@@ -63,7 +66,7 @@ function roundedPath(THREE,width,height,radius) {
 }
 
 export function buildElectricalFrame(points) {
-  const order={power:0,data:1,coax:2},records=[...points].sort((a,b)=>order[a.kind]-order[b.kind]||a.id.localeCompare(b.id));
+  const order={power:0,data:1,coax:2,switch:3},records=[...points].sort((a,b)=>order[a.kind]-order[b.kind]||a.id.localeCompare(b.id));
   const anchor=records[0];
   if(!anchor)throw new Error('Electrical frame requires at least one point');
   for(const record of records){
@@ -71,7 +74,7 @@ export function buildElectricalFrame(points) {
     if(record.orientation!==anchor.orientation || record.normal.some((n,i)=>n!==anchor.normal[i])
       || record.position.some((n,i)=>Math.abs(n-anchor.position[i])>1e-6)) throw new Error(`Electrical frame ${anchor.frameId} has inconsistent anchors`);
   }
-  const socketCount=records.reduce((sum,p)=>sum+p.count,0),switchCount=records.reduce((sum,p)=>sum+(p.switchCount??0),0);
+  const socketCount=records.reduce((sum,p)=>sum+(p.kind==='switch'?0:p.count),0),switchCount=records.reduce((sum,p)=>sum+(p.switchCount??0)+(p.kind==='switch'?p.count:0),0);
   const model=buildElectricalOutlet({...anchor,count:socketCount+switchCount});
   model.parts=model.parts.filter(part=>part.name.startsWith('frame_'));
   let index=0;

@@ -164,7 +164,7 @@ export function buildModel(THREE, model) {
     if (material.transmission) {
       categories[category].add(mesh);
     } else {
-      const baked = geometry.index ? geometry.toNonIndexed() : geometry.clone();
+      const baked = geometry.clone();
       baked.translate(mesh.position.x, mesh.position.y, mesh.position.z);
       const key = `${category}/${part.material}`;
       if (!batches.has(key)) batches.set(key, { category, material: part.material, geometries: [] });
@@ -173,6 +173,28 @@ export function buildModel(THREE, model) {
     }
   }
   for (const { material, category, geometries } of batches.values()) {
+    if (geometries.some(geometry => geometry.index)) {
+      let vertices = 0, indices = 0, attributeBytes = 0, expandedBytes = 0;
+      for (const geometry of geometries) {
+        const count = geometry.attributes.position.count;
+        const drawCount = geometry.index?.count ?? count;
+        const bytes = Object.values(geometry.attributes).reduce((sum, attribute) => sum + attribute.array.byteLength, 0);
+        vertices += count;
+        indices += drawCount;
+        attributeBytes += bytes;
+        expandedBytes += bytes / count * drawCount;
+      }
+      const indexedBytes = attributeBytes + indices * (vertices > 65535 ? 4 : 2);
+      for (let i = 0; i < geometries.length; i++) {
+        const geometry = geometries[i];
+        if (indexedBytes < expandedBytes) {
+          if (!geometry.index) geometry.setIndex(Array.from({ length: geometry.attributes.position.count }, (_, vertex) => vertex));
+        } else if (geometry.index) {
+          geometries[i] = geometry.toNonIndexed();
+          geometry.dispose();
+        }
+      }
+    }
     const mesh = new THREE.Mesh(mergeGeometries(geometries), materials.get(material));
     mesh.name = `${model.name}_${category}_${material}`;
     mesh.castShadow = mesh.receiveShadow = true;

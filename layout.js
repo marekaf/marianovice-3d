@@ -36,20 +36,40 @@ const GARDEN = {
   ],
   gardenRoutes: [
     {id:"Wellness access",points:[[9.98,7.2],[9.98,5.7],[8,5.7]],width:1},
-    {id:"Productive access",points:[[9.98,22.5],[9.1,22.5],[4.2,22.5],[4.2,29.5]],width:1},
-    {id:"Bed access",points:[[4.2,26.5],[8.5,26.5]],width:1},
-    {id:"Greenhouse access",points:[[4.2,23.3],[2.3,23.3]],width:1.2},
+    {id:"Productive access",points:[[9.98,13],[9.1,13],[4.7,13]],width:1},
+    {id:"Bed access",points:[[4.7,13],[6.7,13],[6.7,9.8]],width:1},
+    {id:"Greenhouse access",points:[[4.7,13],[4.7,11.8],[3.2,11.8]],width:1},
     {id:"Daily dining",points:[[23,12],[24.2,12],[24.2,11.4],[27,11.2]],width:1.2},
     {id:"Quiet garden approach",points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
-    {id:"Gathering connection",points:[[31.5,8.7],[32.5,8.7]],width:1.4},
+    {id:"Gathering connection",points:[[30.5,10.6],[30.5,11.8],[31.8,11.8],[31.8,9.6],[32.6,8.0]],width:1.2},
     {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[31.7,9.3],[31.4,9.3]],width:1.2},
     {id:"Service connection",points:[[38.7,17.8],[37,20],[37,26.3]],width:1.2}
   ],
   gardenReserves: [{"id":"Eastern utilities: verify extent","kind":"rect","x":38,"y":19,"w":5,"d":7,"type":"reserve"},{"id":"Low ground: drainage investigation","kind":"rect","x":37.8,"y":0.2,"w":4.1,"d":5.8,"type":"reserve"}],
   elements: [
-    {"id":"westBackbone","name":"West structural planting","meta":{"palette":"saunaBed","plant":"mixed"},"parts":[{"kind":"polygon","points":[[-0.9,1],[1.7,1],[1.7,6.6],[4,7.5],[3.1,12.5],[1.6,15.5],[1.5,21.7],[0.2,22],[-0.9,12]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
-    {"id":"productiveBorder","name":"Productive court border","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[0.2,22],[2.8,21.8],[6,22],[8.6,21.5],[8.6,23],[0.5,23.2]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
-    {"id":"quietGardenBorder","name":"Quiet garden enclosure","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[1.5,15.5],[3.3,15.3],[6.6,15.5],[8.1,16.8],[7.7,17.8],[6.2,16.7],[3.5,16.4],[2.3,18],[2.5,20.5],[5,21.3],[7,20.8],[8.2,21.5],[6,22],[1.5,21.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {id:'arrivalStrip',name:'South driveway flowering border',meta:{palette:'arrivalStrip',plant:'perennials',maxHeight:.9},parts:[{kind:'polygon',points:[[21.4,30.1],[38.9,32.3],[38.9,33.5],[21.4,31.8]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},
+    {id:'tankCover',name:'Tank low cover proposal: soil depth and loads unconfirmed',meta:{plant:'perennials',utilityCover:true,maxHeight:.25},parts:[{kind:'polygon',points:[[39.4,21.7],[42.4,21.7],[42.4,25.2],[39.4,25.2]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},
+    {id:'guestBathroomPrivacy',name:'Guest bathroom south-neighbour privacy: 2.3m height proposal',meta:{screen:{h:2.3},proposal:true},parts:[{kind:'rect',x:15.7,y:28.05,w:2.4,d:.14,fill:'#41474a'}]},
+    {id:'dressingNorthShrubs',name:'Dressing-room evergreen garden backdrop proposal',meta:{plant:'shrubs',leafHabit:'evergreen',proposal:true},parts:[
+      {kind:'circle',cx:12.8,cy:2.4,r:1.55,fill:'#496748'},
+      {kind:'circle',cx:15.1,cy:2.1,r:1.65,fill:'#496748'},
+      {kind:'circle',cx:17.1,cy:2.4,r:1.6,fill:'#496748'}
+    ]},
+    {id:'westEvergreenShrubs',name:'Layered evergreen west privacy planting proposal',meta:{plant:'shrubs',leafHabit:'evergreen',proposal:true},parts:[
+      {kind:'circle',cx:.5,cy:9.6,r:1.15,fill:'#496748'},
+      {kind:'circle',cx:1.05,cy:11.1,r:1.2,fill:'#496748'},
+      {kind:'circle',cx:.45,cy:12.8,r:1.2,fill:'#496748'},
+      {kind:'circle',cx:.95,cy:14.5,r:1.25,fill:'#496748'},
+      {kind:'circle',cx:.55,cy:16.1,r:1.3,fill:'#496748'},
+      {kind:'circle',cx:1.25,cy:17.4,r:1.35,fill:'#496748'},
+      {kind:'circle',cx:.9,cy:18.9,r:1.3,fill:'#496748'},
+      {kind:'circle',cx:1.35,cy:20.4,r:1.35,fill:'#496748'},
+      {kind:'circle',cx:.9,cy:21.8,r:1.2,fill:'#496748'}
+    ]},
+    {id:'officeViewBorder',name:'Office view flowering foreground',meta:{palette:'prairieIsland',plant:'perennials',maxHeight:.8},parts:[{kind:'polygon',points:[[4.4,20],[5.8,19.7],[7.2,20],[7.6,21.4],[7.2,22.3],[5.1,22.5],[4.4,21.6]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},
+    {"id":"westBackbone","name":"West structural planting","meta":{"palette":"saunaBed","plant":"mixed"},"parts":[{"kind":"polygon","points":[[-0.9,1],[1.7,1],[1.7,6.6],[1.7,12.5],[1.6,15.5],[1.5,21.7],[0.2,22],[-0.9,12]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"productiveBorder","name":"Productive court border","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[2.1,8.8],[5,8.5],[9,8.8],[9,9.5],[5.2,9.4],[2.1,9.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"quietGardenBorder","name":"Quiet garden enclosure","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[1.5,16.3],[3.3,16.3],[6.6,16.6],[8.1,17.4],[7.7,17.8],[6.2,17.3],[3.5,17.2],[2.3,18],[2.5,20.5],[5,21.3],[7,20.8],[8.2,21.5],[6,22],[1.5,21.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"eastGatheringBorder","name":"Gathering room and pond planting","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[36.8,0.3],[37.4,6.5],[41.6,6.5],[42.3,17.7],[37.7,18.5],[34.8,18.2],[31.7,18.7],[27.8,18.5],[26.8,17.2],[31,16.7],[31.6,14],[30.8,11.9],[32.4,10.8],[32.4,5.2],[28,5],[24,6],[22.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"terraceFrontage","name":"Low terrace foreground","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[25,11.8],[25.6,12.8],[25.6,15.8],[25,16.6],[24.6,16],[24.6,12.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {
@@ -132,9 +152,9 @@ const GARDEN = {
     },
     {
       id: "gate",
-      name: "Gate ~4.5 m",
+      name: "Expanded-metal gate 4 m clear",
       parts: [
-        { kind: "line", x1: 43.14, y1: 27.89, x2: 42.63, y2: 32.39, stroke: "#3a3a3a", sw: 6, cap: "round" },
+        { kind: "line", x1: 43.070913189862225, y1: 28.47633723662397, x2: 42.62589441523663, y2: 32.451504942549185, stroke: "#3a3a3a", sw: 6, cap: "round" },
         { kind: "text", x: 43.7, y: 30, text: "GATE", cls: "lbl-sm", weight: 700, anchor: "start" },
         { kind: "text", x: 43.7, y: 30.78, text: "4.0 m clear", cls: "dim", anchor: "start" }
       ]
@@ -160,22 +180,23 @@ const GARDEN = {
 
     {
       id: "pond",
-      name: "Pond 5.6 × 4 m",
+      name: "Pond 3 × 2 m proposal",
+      meta: {proposal:true},
       parts: [
-        {kind: "ellipse", cx: 34.8, cy: 14, rx: 2.8, ry: 2, fill: "#3a7ab8", opacity: 0.65, stroke: "#5a4a30", sw: 1.5},
+        {kind: "ellipse", cx: 34.8, cy: 14, rx: 1.5, ry: 1, fill: "#3a7ab8", opacity: 0.65, stroke: "#5a4a30", sw: 1.5},
         {kind: "text", x: 34.8, y: 13.89, text: "pond", cls: "lbl-sm", fill: "#fff", weight: 700},
-        {kind: "text", x: 34.8, y: 14.56, text: "5.6 × 4 m", cls: "dim", fill: "#fff"}
+        {kind: "text", x: 34.8, y: 14.56, text: "~3 × 2 m", cls: "dim", fill: "#fff"}
       ]
     },
     {
       id: "firePit",
       name: "Corten fire pit ø1 m + mlat seating area ø4 m",
-      meta: {grading: {surfaceOffset: 0.092}},
+      meta: {grading: {level: 1.515, surfaceOffset: 0.092}},
       parts: [
-        {kind: "circle", cx: 34.5, cy: 8.5, r: 2, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5, 4"},
-        {kind: "circle", cx: 34.5, cy: 8.5, r: 0.5, fill: "#a75e36", opacity: 0.85, stroke: "#693e28", sw: 1},
-        {kind: "circle", cx: 34.5, cy: 8.5, r: 0.496, fill: "#514d45", opacity: 0.9},
-        {kind: "text", x: 34.5, y: 10.9, text: "corten fire pit ø1 m · mlat ø4 m", cls: "lbl-sm", fill: "#5a4828"}
+        {kind: "circle", cx: 34.5, cy: 7.5, r: 2, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5, 4"},
+        {kind: "circle", cx: 34.5, cy: 7.5, r: 0.5, fill: "#a75e36", opacity: 0.85, stroke: "#693e28", sw: 1},
+        {kind: "circle", cx: 34.5, cy: 7.5, r: 0.496, fill: "#514d45", opacity: 0.9},
+        {kind: "text", x: 34.5, y: 9.9, text: "corten fire pit ø1 m · mlat ø4 m", cls: "lbl-sm", fill: "#5a4828"}
       ]
     },
     {
@@ -186,7 +207,13 @@ const GARDEN = {
         {kind: "circle", cx: 34.8, cy: 3.1, r: 0.5, canopyRadius: 2, fill: "#4d7a4d"},
         {kind: "circle", cx: 29.8, cy: 2.5, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"},
         {kind: "circle", cx: 0.25, cy: 4.4, r: 0.5, canopyRadius: 1.2, form: "evergreen", fill: "#4d7a4d"},
-        {kind: "circle", cx: 2.8, cy: 16, r: 0.5, canopyRadius: 1.3, fill: "#4d7a4d"}
+        {kind: "circle", cx: .55, cy: 10.3, r: .5, canopyRadius: 1, form: "evergreen", fill: "#426544"},
+        {kind: "circle", cx: .7, cy: 16.8, r: .5, canopyRadius: 1.1, form: "evergreen", fill: "#426544"},
+        {kind: "circle", cx: .7, cy: 21.1, r: .5, canopyRadius: 1, form: "evergreen", fill: "#426544"},
+        {kind: "circle", cx: 15, cy: 3.8, r: .5, canopyRadius: .9, form: "multistem", fill: "#567447"},
+        {kind: "circle", cx: 14.6, cy: 1.5, r: .5, canopyRadius: 1, form: "evergreen", fill: "#426544"},
+        {kind: "circle", cx: 2.8, cy: 18.2, r: 0.5, canopyRadius: 1.3, fill: "#4d7a4d"},
+        {kind: "circle", cx: 6, cy: 20.8, r: 0.5, canopyRadius: 1.1, form:'multistem', fill: "#4d7a4d"}
       ]
     },
     {
@@ -236,7 +263,7 @@ const GARDEN = {
     {
       id: "pergola",
       name: "Pergola + grill 6 × 4 m",
-      meta: {grading: {level: 2.1, blend: 1.2}},
+      meta: {grading: {level: 1.915, blend: 1.2}},
       parts: [
         {kind: "rect", x: 25, y: 6.8, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6, 3"},
         {kind: "rect", role: "paving", x: 25.2, y: 7, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9},
@@ -249,42 +276,42 @@ const GARDEN = {
     {
       id: "raisedBedsPad",
       name: "Productive court raised-beds pad 4.2 × 6.2 m",
-      meta: {grading: {level: 3.5294, blend: 1}},
+      meta: {grading: {level: 2.82, blend: 1}},
       parts: [
-        {kind: "rect", x: 4.4, y: 23.4, w: 4.2, d: 6.2, fill: "#c8c2b0", opacity: 0.55, stroke: "#9a9074", sw: 1}
+        {kind: "rect", x: 4.6, y: 9.9, w: 4.2, d: 6.2, fill: "#c8c2b0", opacity: 0.55, stroke: "#9a9074", sw: 1}
       ]
     },
     {
       id: "raisedBed1",
       name: "Raised bed 1 (1.0 × 2.0 m)",
       parts: [
-        {kind: "rect", x: 5, y: 24, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
-        {kind: "text", x: 5.6, y: 25, text: "raised bed 1", cls: "lbl-sm-w", rotate: -90}
+        {kind: "rect", x: 5.2, y: 10.5, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
+        {kind: "text", x: 5.7, y: 11.5, text: "raised bed 1", cls: "lbl-sm-w", rotate: -90}
       ]
     },
     {
       id: "raisedBed2",
       name: "Raised bed 2 (1.0 × 2.0 m)",
       parts: [
-        {kind: "rect", x: 7, y: 24, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
-        {kind: "text", x: 7.6, y: 25, text: "raised bed 2", cls: "lbl-sm-w", rotate: -90}
+        {kind: "rect", x: 7.2, y: 10.5, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
+        {kind: "text", x: 7.7, y: 11.5, text: "raised bed 2", cls: "lbl-sm-w", rotate: -90}
       ]
     },
     {
       id: "raisedBed3",
       name: "Raised bed 3 (1.0 × 2.0 m)",
       parts: [
-        {kind: "rect", x: 5, y: 27, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
-        {kind: "text", x: 5.6, y: 28, text: "raised bed 3", cls: "lbl-sm-w", rotate: -90}
+        {kind: "rect", x: 5.2, y: 13.5, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
+        {kind: "text", x: 5.7, y: 14.5, text: "raised bed 3", cls: "lbl-sm-w", rotate: -90}
       ]
     },
     {
       id: "raisedBed4",
       name: "Raised bed 4 (1.0 × 2.0 m)",
       parts: [
-        {kind: "rect", x: 7, y: 27, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
-        {kind: "text", x: 7.6, y: 28, text: "raised bed 4", cls: "lbl-sm-w", rotate: -90},
-        {kind: "text", x: 8.7, y: 26.5, text: "each 1.0 × 2.0 m,  0.6 m tall", cls: "dim", anchor: "start"}
+        {kind: "rect", x: 7.2, y: 13.5, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
+        {kind: "text", x: 7.7, y: 14.5, text: "raised bed 4", cls: "lbl-sm-w", rotate: -90},
+        {kind: "text", x: 5.2, y: 16.5, text: "each 1.0 × 2.0 m,  0.6 m tall", cls: "dim", anchor: "start"}
       ]
     },
     {
@@ -316,24 +343,26 @@ const GARDEN = {
       name: "Orchard meadow",
       meta: {plant: "meadow"},
       parts: [
-        {kind: "polygon", points: [[2, 8], [7.8, 8], [8.3, 13.7], [4, 14.9], [2.2, 13]], fill: "#b5c98a", opacity: 0.35}
+        {kind: "polygon", points: [[1.5,23],[8.7,23],[8.7,29.6],[3.2,29.6],[3.2,27.5],[1.5,27.5]], fill: "#b5c98a", opacity: 0.35}
       ]
     },
     {
       id: "orchard",
       name: "Orchard meadow canopy",
       parts: [
-        {kind: "circle", cx: 2.8, cy: 9, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"},
-        {kind: "circle", cx: 6.8, cy: 12.6, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"}
+        {kind: "circle", cx: 3, cy: 25, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"},
+        {kind: "circle", cx: 6.8, cy: 27, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"},
+        {kind: "circle", cx: 2, cy: 28.5, r: .5, canopyRadius: 1, fill: "#4d7a4d"},
+        {kind: "circle", cx: 4.4, cy: 28.6, r: .5, canopyRadius: 1.1, fill: "#4d7a4d"}
       ]
     },
     {
       id: "greenhouse",
-      name: "Greenhouse 2.6 × 3.6 m",
+      name: "Greenhouse 2 × 3 m (size proposal)",
       short: "Greenhouse",
       parts: [
-        {kind: "rect", x: 1, y: 24, w: 2.6, d: 3.6, clipToPlot: true, fill: "#cfe8ef", opacity: 0.8, stroke: "#5f93a8", sw: 1.2},
-        {kind: "text", x: 2.3, y: 25.8, text: "greenhouse", cls: "lbl-sm", fill: "#245a6a", rotate: -90}
+        {kind: "rect", x: 2.2, y: 12.5, w: 2, d: 3, clipToPlot: true, fill: "#cfe8ef", opacity: 0.8, stroke: "#5f93a8", sw: 1.2},
+        {kind: "text", x: 3.2, y: 14, text: "greenhouse", cls: "lbl-sm", fill: "#245a6a", rotate: -90}
       ]
     },
     {
@@ -341,8 +370,8 @@ const GARDEN = {
       name: "Compost bin 2.0 × 1.0 m (open,  slatted)",
       short: "Compost",
       parts: [
-        {kind: "rect", x: 1, y: 28.5, w: 2, d: 1, clipToPlot: true, fill: "#6a4a2a", opacity: 0.6, stroke: "#4a3218", sw: 1},
-        {kind: "text", x: 2, y: 29.15, text: "compost", cls: "lbl-sm", fill: "#fff"}
+        {kind: "rect", x: 2.2, y: 9.7, w: 2, d: 1, clipToPlot: true, fill: "#6a4a2a", opacity: 0.6, stroke: "#4a3218", sw: 1},
+        {kind: "text", x: 3.2, y: 10.35, text: "compost", cls: "lbl-sm", fill: "#fff"}
       ]
     },
 
@@ -387,11 +416,11 @@ const GARDEN = {
     },
     {
       id: "zasivarna",
-      name: "Zašívárna — hidden bench (blue/red)",
+      name: "HAY Palissade dining bench, iron red",
       short: "Zašívárna",
       parts: [
-        {kind: "rect", x: 35.8, y: 16.5, w: 1.8, d: 0.5, fill: "#c0392b", stroke: "#8a2a1e", sw: 0.8},
-        {kind: "text", x: 36.7, y: 16.15, text: "zašívárna", cls: "lbl-sm", fill: "#8a2a1e"}
+        {kind: "rect", x: 31.66, y: 18.2, w: 1.28, d: 0.7, fill: "#91463e", stroke: "#8a2a1e", sw: 0.8},
+        {kind: "text", x: 32.3, y: 17.95, text: "zašívárna", cls: "lbl-sm", fill: "#8a2a1e"}
       ]
     },
 
@@ -402,7 +431,7 @@ const GARDEN = {
       meta: { light: "bollard" },
       parts: [
         { kind: "circle", cx: 8, cy: 6.8, r: 0.18, route: "Wellness access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 8.9, cy: 21.3, r: 0.18, route: "Productive access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 8.9, cy: 14.2, r: 0.18, route: "Productive access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 7.7, cy: 20.1, r: 0.18, route: "Quiet garden approach", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 23.1, cy: 10.5, r: 0.18, route: "Daily dining", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 28, cy: 16.6, r: 0.18, route: "Pond walk", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
@@ -415,8 +444,8 @@ const GARDEN = {
       short: "Garden spots",
       meta: { light: "spot" },
       parts: [
-        { kind: "circle", cx: 7.4, cy: 14.8, r: 0.22, target: [6.8, 12.6], fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 7.4, cy: 14.8, r: 0.07, fill: "#8a6a1a" },
+        { kind: "circle", cx: 9, cy: 27, r: 0.22, target: [6.8, 27], fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 9, cy: 27, r: 0.07, fill: "#8a6a1a" },
         { kind: "circle", cx: 30.4, cy: 14, r: 0.22, target: [34.8, 14], fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 30.4, cy: 14, r: 0.07, fill: "#8a6a1a" }
       ]

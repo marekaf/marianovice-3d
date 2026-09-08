@@ -24,6 +24,15 @@ const checks=[
   'verify-kitchen-fronts.mjs',
   'verify-cabinet-finishes.mjs',
   'verify-window-seat-handles.mjs',
+  'verify-corona-bed.mjs',
+  'verify-driveway-check.mjs',
+  'verify-grading-data.mjs',
+  'verify-grading-report.mjs',
+  'verify-terrain-banks.mjs',
+  'verify-fence-model.mjs',
+  'verify-gate-model.mjs',
+  'verify-utility-pillar.mjs',
+  'verify-viewer-loading.mjs',
   'verify-bathroom-fixtures.mjs',
   'docs/verify-utility-joinery.mjs',
   'docs/verify-kitchen-spec.mjs',
@@ -39,7 +48,6 @@ const checks=[
   'verify-hidden-bench.mjs',
   'verify-site-terrain.mjs',
   'generate-svg.js',
-  'generate-flat-plan.js',
   'generate-driveway-check.js',
 ];
 

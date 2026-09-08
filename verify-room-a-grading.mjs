@@ -22,14 +22,15 @@ const site=SiteTerrain.create(GARDEN,TERRAIN.plane,{
 },{houseFFL:TERRAIN.houseFFLInternal,surveySurface:surveyData?SurveySurface.create(surveyData.points,TERRAIN.plane).data:undefined});
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
 const fire=FirepitModel.build(GARDEN,site.height);
-near(fire.floorHeight+.008,pergola.floorHeight);
-for(const v of fire.parts.find(p=>p.name==='gravel_apron').vertices.slice(65))near(v[2]+fire.floorHeight,pergola.floorHeight);
+near(pergola.floorHeight,2.015);
+near(fire.floorHeight+.008,1.615);
+for(const v of fire.parts.find(p=>p.name==='gravel_apron').vertices.slice(65))near(v[2]+fire.floorHeight,1.615);
 for(const route of site.spec.routeProfiles) {
-  near(site.routeHeight(...route.points[0]),TERRAIN.houseFFLInternal);
-  near(site.routeHeight(...route.points.at(-1)),pergola.floorHeight);
+  near(site.routeHeight(...route.points[0]),route.id==='Daily dining'?TERRAIN.houseFFLInternal:pergola.floorHeight);
+  near(site.routeHeight(...route.points.at(-1)),route.id==='Daily dining'?pergola.floorHeight:1.615);
   for(let j=1;j<route.points.length;j++)for(let i=0;i<=20;i++) {
     const t=i/20,a=route.points[j-1],b=route.points[j],x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;
-    near(site.routeHeight(x,z)-site.height(x,z),.04);
+    near(site.routeHeight(x,z)-site.height(x,z),route.bedding);
   }
 }
 const link=GARDEN.gardenRoutes.find(r=>r.id==='Gathering connection');
@@ -37,10 +38,10 @@ for(let i=0;i<128;i++)for(const radius of [.5,.9,1]) {
   const p=site.spec.pond,a=i*Math.PI/64,x=p.cx+Math.cos(a)*p.rx*radius,z=p.cz+Math.sin(a)*p.rz*radius;
   assert.ok(site.height(x,z)<=p.edge-p.depth*.5*(1+Math.cos(radius*Math.PI))+1e-7,'Gathering banks must not fill the pond basin');
 }
-for(const p of link.points)near(site.routeHeight(...p),pergola.floorHeight);
+assert(site.routeHeight(...link.points[0])>site.routeHeight(...link.points.at(-1)));
 for(const p of site.spec.finishPads.filter(p=>p.x1<11))near(site.height((p.x0+p.x1)/2,(p.z0+p.z1)/2),TERRAIN.houseFFLInternal-.12);
 const bench=HiddenBenchModel.build(GARDEN,site.height);
-near(bench.floorHeight,site.height(bench.footprint.x+bench.footprint.w/2,bench.footprint.y+bench.footprint.d/2));
+for(const foot of bench.feet)for(const [x,z,y]of foot.bottomCorners){near(bench.floorHeight+y,site.height(x,z));assert(y<0,'Rigid bench rests above graded leveling pads');}
 for(const pad of [beds.groundPatch,greenhouse.groundPatch])near(site.height(pad.x+pad.w/2,pad.y+pad.d/2),pad.level);
 let minFill=Infinity,maxFill=-Infinity;
 for(let x=25;x<=36.5;x+=.5)for(let z=6.8;z<=10.5;z+=.5) {
@@ -48,6 +49,33 @@ for(let x=25;x<=36.5;x+=.5)for(let z=6.8;z<=10.5;z+=.5) {
   const h=site.height(x,z);near(h,site.height(x+1e-9,z));
 }
 console.log(JSON.stringify({gatheringFinished:pergola.floorHeight,houseFinished:site.spec.deckTop,gatheringFillRange:[minFill,maxFill],routeChecks:'pass'}));
+assert.equal(site.spec.gatheringPads.length,2,'Only independent pergola and circular fire pads remain');
+assert.equal(site.spec.gatheringPads[1].radius,2);
+assert(maxFill<1.53305,'Lower terraces must reduce the previous maximum fill');
+const grades=site.spec.routeProfiles.map(route=>{
+  let maximum=0,localMaximum=0;
+  for(let i=1;i<route.points.length;i++){
+    const [a,b]=[route.points[i-1],route.points[i]],distance=Math.hypot(b[0]-a[0],b[1]-a[1]);
+    maximum=Math.max(maximum,Math.abs(route.levels[i]-route.levels[i-1])/distance);
+    let previous=site.routeHeight(...a);
+    for(let j=1;j<=100;j++){
+      const t=j/100,h=site.routeHeight(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t);
+      localMaximum=Math.max(localMaximum,Math.abs(h-previous)/(distance/100));previous=h;
+      for(const side of [-route.width/2,route.width/2]){
+        const x=a[0]+(b[0]-a[0])*t+side*(b[1]-a[1])/distance,z=a[1]+(b[1]-a[1])*t-side*(b[0]-a[0])/distance;
+        near(site.routeHeight(x,z)-site.height(x,z),route.bedding);
+      }
+    }
+  }
+  assert(maximum<.11,`${route.id} grade exceeds concept limit`);
+  assert(localMaximum<.13,`${route.id} local transition exceeds 13% concept grade`);
+  return {route:route.id,nominalMaximumGrade:maximum,localMaximumGrade:localMaximum};
+});
+let bankMaximum=0;
+const firePad=site.spec.gatheringPads[1];
+for(let z=firePad.cz+firePad.radius;z<site.spec.pond.cz-site.spec.pond.rz;z+=.025)bankMaximum=Math.max(bankMaximum,Math.abs(site.height(firePad.cx,z+.025)-site.height(firePad.cx,z))/.025);
+assert(bankMaximum<.55,'Planted fire-to-pond bank must remain below the 55% concept grade');
+console.log(JSON.stringify({grades,fireToPondBankMaximumGrade:bankMaximum}));
 const routeGeometry=GardenRouteModel.geometry(GARDEN.gardenRoutes,site.routeHeight);
 let maxRouteError=0,worstRoutePoint;
 for(let i=0;i<routeGeometry.positions.length;i+=3) {

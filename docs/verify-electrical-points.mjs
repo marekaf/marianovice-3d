@@ -3,11 +3,19 @@ import {ELECTRICAL_POINTS as points} from './electrical-points.js';
 import {buildElectricalFrame} from './electrical-model.js';
 import {outletOnFinishedSurface} from './electrical-view.js';
 
-assert.equal(points.length,82);
-assert.equal(new Set(points.map(p=>p.id)).size,82);
+assert.equal(points.length,84);
+assert.equal(new Set(points.map(p=>p.id)).size,84);
 assert.equal(points.filter(p=>p.kind==='power').length,73);
 assert.equal(points.filter(p=>p.kind==='power').reduce((sum,p)=>sum+p.count,0),165);
-assert.equal(points.reduce((sum,p)=>sum+p.count,0),178);
+assert.equal(points.reduce((sum,p)=>sum+p.count,0),180);
+for(const [id,x] of [['1.12-V02',6.37],['1.12-V03',8.67]]){
+  const point=points.find(p=>p.id===id);
+  assert.deepEqual(point.position,[x,.8,.45]);
+  const model=buildElectricalFrame([point]);
+  assert.equal(model.socketCount,0);
+  assert.equal(model.switchCount,1);
+  assert(model.parts.some(p=>p.name.endsWith('_rocker')));
+}
 for(const [id,count] of [['1.06-S02',2],['1.06-Z-pending-fireplace',1]]){
   const point=points.find(p=>p.id===id);
   assert(point,id);
@@ -45,7 +53,7 @@ if(process.env.ELECTRICAL_BROWSER==='1'){
     assert.equal(await page.locator('#electricalError').count(),0);
     await page.waitForFunction(()=>window.DEBUG?.electrical);
     assert(await page.evaluate(()=>DEBUG.electrical.groups.house.children.find(g=>g.userData.recordIds.includes('1.06-Z11')).position.x>=4.125),'Coffee outlets must mount on the finished backsplash face');
-    assert.equal(await page.locator('#electricalPoint option').count(),82);
+    assert.equal(await page.locator('#electricalPoint option').count(),84);
     await page.locator('#electrical summary').click();
     await page.locator('#electrical-power').uncheck();
     assert(await page.evaluate(()=>Object.values(DEBUG.electrical.groups).every(g=>g.children.filter(o=>o.userData.kind==='power').every(o=>!o.visible))));

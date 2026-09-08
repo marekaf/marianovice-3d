@@ -100,23 +100,24 @@
 <div id="scalebar"><div id="scaleline"></div><span id="scaletext"></span></div>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=49a7156ecb5b"></script>
-<script src="garage-model.js?v=c91c7815f178"></script>
+<script src="layout.js?v=22e55cbaea9a"></script>
+<script src="garage-model.js?v=cdb29f4bf771"></script>
 <script src="furniture-model.js?v=6c32ded6b6ca"></script>
 <script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=5d9cb500c019"></script>
 <script src="interiors3d.js?v=3816e2229931"></script>
 <script src="vehicle-model.js"></script>
-<script src="house-interior.js?v=c98b3507985e"></script>
+<script src="house-interior.js?v=d982f196640c"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mountInteriorUI } from './interior-ui.js';
 import { attachEyeLevelWalkthrough } from './docs/eye-level-walkthrough.js';
 import { ELECTRICAL_POINTS } from './docs/electrical-points.js';
 import { attachElectricalView } from './docs/electrical-view.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { buildModel } from './model3d.js?v=f34dbf914610';
+import { buildModel } from './model3d.js?v=bbc15acd4fb9';
 
 RectAreaLightUniformsLib.init();
 const scene = new THREE.Scene();
@@ -397,6 +398,9 @@ function setView(name) {
   document.getElementById('dims').textContent = BUILDINGS[curB].dims;
   document.querySelectorAll('#views button[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
   document.querySelectorAll('#views button[data-building]').forEach(b => b.classList.toggle('active', b.dataset.building === curB));
+  if (document.querySelector(`#views button[data-view="${name}"]`)) {
+    history.replaceState(null, '', `#${curB}-${name}`);
+  }
   updateScalebar();
 }
 
@@ -523,6 +527,7 @@ electrical = attachElectricalView(THREE, {
   document.getElementById('views').append(status);
 }
 applyHash();
+mountInteriorUI();
 window.addEventListener('hashchange', applyHash);
 
 window.DEBUG = { scene, get camera() { return camera; }, walkthrough, electrical, gar, livingFitout,utilityFitout,loftFitout,stairFitout,ledFitout,entranceFitout,kitchenWindowFitout,cathedralFitout,

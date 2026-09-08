@@ -5,8 +5,8 @@ const ExteriorFurnitureModel = (() => {
       lounge_fabric: { color: '#dedbd0', roughness: 0.96 },
       lounge_piping: { color: '#c8c5ba', roughness: 1 },
       lounge_feet: { color: '#323633', roughness: 0.86 },
-      lounge_stone: { color: '#a6a69c', roughness: 0.88 },
-      lounge_stone_edge: { color: '#96978e', roughness: 0.92 },
+      lounge_stone: { color: '#aaa69c', roughness: 0.88 },
+      lounge_stone_edge: { color: '#89867e', roughness: 0.92 },
       worktop: { color: '#b5b6ae', roughness: .42, metalness: .45 },
       joinery_front: { color: '#45494a', roughness: .48 },
       joinery_case: { color: '#45494a', roughness: .48 },
@@ -51,9 +51,14 @@ const ExteriorFurnitureModel = (() => {
     }
     function table(name, x, y) {
       footprints.push({ name, x: x - .3, y: y - .3, w: .6, d: .6, height: .4 });
-      parts.push({ name, type: 'lathe', position: [x,y,0], profile: [[0,0],[.2,0],[.217,.014],[.225,.05],[.255,.27],[.282,.34],[.298,.36],[.3,.382],[.294,.397],[.28,.4],[0,.4]],
-        segments: 64, material: 'lounge_stone', category: 'furniture' });
-      parts.push({ name: `${name}_base`, type: 'cylinder', position: [x,y,.006], radiusTop:.198,radiusBottom:.198,height:.012,segments:48,axis:'z',material:'lounge_stone_edge',category:'furniture' });
+      const lowerBody=Array.from({length:25},(_,i)=>{
+        const angle=i*Math.PI/48;
+        return [.15+.15*Math.sin(angle),.006+.194*(1-Math.cos(angle))];
+      });
+      parts.push({ name, type: 'lathe', position: [x,y,0], profile: [[0,.006],...lowerBody,[.3,.32],[.3,.397],[.2995,.399],[.298,.4],[0,.4]],
+        segments: 96, material: 'lounge_stone', category: 'furniture',
+        product:{name:'Garbet',diameter:.6,height:.4,finish:'Grey cement',geometry:'Photo-informed profile; curvature and finish are illustrative'} });
+      parts.push({ name: `${name}_base`, type: 'cylinder', position: [x,y,.004], radiusTop:.148,radiusBottom:.148,height:.008,segments:64,axis:'z',material:'lounge_stone_edge',category:'furniture' });
     }
     const east = garden.elements.find(e => e.id === 'eastTerrace').parts.find(p => p.kind === 'rect');
     const atrium = garden.elements.find(e => e.id === 'house').meta.atrium;

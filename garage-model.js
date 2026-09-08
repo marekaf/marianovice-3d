@@ -21,6 +21,8 @@ const GarageModel = (() => {
       steel: { color: '#626a6d', roughness: 0.4, metalness: 0.75 },
       hardware: { color: '#b6bab9', roughness: 0.25, metalness: 0.9 },
       charcoal: { color: '#333a3d', roughness: 0.48, metalness: 0.45 },
+      gateLightGrey: { color: '#c6c9c7', roughness: 0.52, metalness: 0.18 },
+      gateInteriorWhite: { color: '#eeefeb', roughness: 0.55, metalness: 0.12 },
       rubber: { color: '#222827', roughness: 0.93 },
       toolRed: { color: '#a33d32', roughness: 0.5 },
       toolBlue: { color: '#405c73', roughness: 0.52 },
@@ -145,7 +147,9 @@ const GarageModel = (() => {
         const py = closed ? gateY - 0.025 : trackY - 0.2 - (i + 1) * sectionH;
         const pz = closed ? i * sectionH + 0.003 : trackTop - 0.028;
         box(`${state}_panel_${i}`, gate.from + 0.012, py, pz, gate.w - 0.024,
-          closed ? 0.05 : sectionH - 0.006, closed ? sectionH - 0.006 : 0.05, 'charcoal', state, 0.008);
+          closed ? 0.05 : sectionH - 0.006, closed ? sectionH - 0.006 : 0.05, 'gateLightGrey', state, 0.008);
+        box(`${state}_interior_skin_${i}`,gate.from+.020,closed?py-.001:py+.004,closed?pz+.004:pz-.001,gate.w-.040,
+          closed?.001:sectionH-.014,closed?sectionH-.014:.001,'gateInteriorWhite',state,.0002);
         for (const [j, px] of [gate.from + 0.18, gate.from + gate.w / 2, gate.from + gate.w - 0.18].entries()) {
           box(`${state}_stile_${i}_${j}`, px - 0.022, closed ? py - 0.014 : py + 0.025,
             closed ? pz + 0.025 : pz - 0.014, 0.044, closed ? 0.014 : sectionH - 0.05,
@@ -277,6 +281,8 @@ const GarageModel = (() => {
     box('toolbox_handle', caseX + 0.11, caseY + 0.13, caseZ + 0.26, 0.3, 0.04, 0.025, 'rubber', 'furniture', 0.008);
     return { name: 'Garage', materials, parts, lights, floorHeight, groundPatch: groundPatch(garden, floorHeight),
       categoryVisibility: { gateOpen: false },
+      gateFinish: {manufacturer:'Hörmann',model:'RENOMATIC',surface:'PLANAR',style:'L',exterior:'light grey',interior:'white',
+        note:'Light grey is an approximate visualization colour; exact RAL and finish sample are unconfirmed.'},
       dims: { rect, wallT, wallTop: floorHeight + wallTop, roofHigh: floorHeight + roofHigh, pitch, floorY: floorHeight } };
   }
   return { build, groundPatch };

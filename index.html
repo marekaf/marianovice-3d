@@ -2,8 +2,26 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Garden — 3D viewer</title>
 <style>
+html { background: #eeeee7; }
+body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { visibility: hidden; }
+#viewerLoading { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 28px; box-sizing: border-box; background: radial-gradient(ellipse at 75% 20%, #dce4d5, transparent 60%), #eeeee7; color: #303e36; transition: opacity .35s ease; }
+#viewerLoading.leaving { opacity: 0; pointer-events: none; }
+.loading-card { width: min(100%, 390px); }
+.loading-kicker { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #667768; }
+.loading-card h1 { font-family: Georgia, serif; font-size: clamp(34px, 6vw, 48px); font-weight: 400; letter-spacing: -.04em; margin: 20px 0 14px; line-height: 1.12; }
+.loading-description { font-size: 15px; line-height: 1.6; color: #647064; margin: 0 0 36px; }
+.loading-line { height: 2px; overflow: hidden; background: #cdd4c7; margin: 20px 0; }
+.loading-line::after { content: ''; display: block; height: 100%; width: 38%; background: #526e58; animation: loading-drift 1.8s ease-in-out infinite; }
+#loadingStage { font-size: 14px; margin: 0; min-height: 1.5em; }
+#loadingHint { font-size: 12px; line-height: 1.6; color: #697367; min-height: 3.2em; margin-top: 14px; }
+#loadingRetry { border: 1px solid #526e58; border-radius: 5px; color: #fff; background: #526e58; padding: 10px 16px; cursor: pointer; font: inherit; }
+#loadingRetry:focus-visible { outline: 3px solid #a4b69e; outline-offset: 3px; }
+#viewerLoading[data-state="error"] .loading-line::after { animation: none; width: 100%; background: #a0604d; }
+@keyframes loading-drift { from { transform: translateX(-105%); } to { transform: translateX(365%); } }
+@media (prefers-reduced-motion: reduce) { #viewerLoading { transition: none; } .loading-line::after { animation: none; width: 100%; opacity: .6; } }
   body { margin: 0; overflow: hidden; font-family: -apple-system, sans-serif; background: #87ceeb; }
   #info { position: absolute; top: 0; left: 0; padding: 12px 16px; background: rgba(0,0,0,0.65); color: white; z-index: 100; line-height: 1.5; max-width: 320px; border-bottom-right-radius: 8px; font-size: 13px; }
   #info b { font-size: 14px; }
@@ -27,12 +45,26 @@
   #tooltip { position: absolute; pointer-events: none; background: rgba(0,0,0,0.85); color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; opacity: 0; transition: opacity 0.15s; z-index: 200; }
 </style>
 </head>
-<body>
+<body class="viewer-loading">
+<section id="viewerLoading" data-state="loading" aria-label="Loading the garden">
+  <div class="loading-card">
+    <div class="loading-kicker">House &amp; garden</div>
+    <h1>A place to call home.</h1>
+    <p class="loading-description">Preparing your house, garden and the views between them.</p>
+    <div class="loading-line" aria-hidden="true"></div>
+    <p id="loadingStage" role="status" aria-live="polite">Connecting to the viewer…</p>
+    <p id="loadingHint">Detailed planting and materials can take a moment to load.</p>
+    <button id="loadingRetry" type="button" hidden>Try again</button>
+    <noscript>This 3D viewer needs JavaScript enabled.</noscript>
+  </div>
+</section>
+<script src="viewer-loading.js"></script>
 
 <div id="info">
   <b>Garden — 3D visualization</b><br>
   <small>Left mouse: rotate · Right mouse: pan · Scroll: zoom</small><br>
-  <small style="opacity:0.85">Other: <a href="editor.html" style="color:#5dade2">2D editor</a> · <a href="zahrada-plan.svg" style="color:#5dade2">2D plan</a> · <a href="zahrada-flat-plan.svg" style="color:#5dade2" title="Older layout and levels; not the current grading proposal">legacy grading plan</a> · <a href="zahrada-driveway-check.svg" style="color:#5dade2">driveway check</a> · <a href="interior.html" style="color:#5dade2">interiors</a></small>
+  <small style="opacity:0.85"><a href="zahrada-plan.svg">Garden layout plan</a> · <a href="grading.html">Terrain works plan</a> · <a href="interior.html">Interiors</a></small>
+  <div data-advanced-links><a href="editor.html">2D layout editor (file export)</a> · <a href="zahrada-driveway-check.svg">Parking clearance study</a></div>
 </div>
 
 <div id="presets">
@@ -52,6 +84,10 @@
   <button onclick="setPreset('eastLounge')">East terrace lounge</button>
   <button onclick="setPreset('atriumLounge')">Atrium lounge</button>
   <button onclick="setPreset('cars')">Parked cars</button>
+  <button onclick="setPreset('entranceGate')">Entrance gate</button>
+  <button onclick="setPreset('marekOfficeView')">Marek’s office view</button>
+  <button onclick="setPreset('cristinaOfficeView')">Cristina’s office view</button>
+  <button onclick="setPreset('dressingRoomView')">Dressing-room view</button>
   <button onclick="setPreset('greenhouse')">Greenhouse</button>
   <button onclick="setPreset('raisedBeds')">Kitchen garden</button>
   <button onclick="setPreset('firepit')">Firepit seating</button>
@@ -64,6 +100,7 @@
   <label><input type="checkbox" id="toggleTrees" checked> Planting</label>
   <label><input type="checkbox" id="toggleRoof" checked> Roof</label>
   <label><input type="checkbox" id="toggleGate"> Garage gate open</label>
+  <label><input type="checkbox" id="toggleEntranceGate" checked onchange="toggleEntranceGate(this.checked)"> Entrance gate open</label>
   <label><input type="checkbox" id="toggleVehicles" checked> Vehicles parked</label>
   <label><input type="checkbox" id="toggleFurniture" checked> Furniture</label>
   <label><input type="checkbox" id="toggleAxes"> XYZ axes</label>
@@ -105,7 +142,7 @@
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=49a7156ecb5b"></script>
+<script src="layout.js?v=22e55cbaea9a"></script>
 <script src="garden-route-model.js"></script>
 <script src="interiors3d.js?v=3816e2229931"></script>
 <script src="vehicle-model.js"></script>
@@ -121,46 +158,56 @@
 <script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=5d9cb500c019"></script>
 <script src="pergola-model.js?v=aa2ee0f82530"></script>
-<script src="garage-model.js?v=c91c7815f178"></script>
+<script src="garage-model.js?v=cdb29f4bf771"></script>
 <script src="furniture-model.js?v=6c32ded6b6ca"></script>
-<script src="greenhouse-model.js?v=5a206b73d3de"></script>
+<script src="greenhouse-model.js?v=51fb1ff1098f"></script>
 <script src="raised-beds-model.js?v=d60bbe249234"></script>
-<script src="firepit-model.js?v=9a3aa87d36fe"></script>
-<script src="hidden-bench-model.js?v=1456e7ea5091"></script>
-<script src="site-terrain.js?v=4b1179b63b95"></script>
+<script src="firepit-model.js?v=13aeea817164"></script>
+<script src="hidden-bench-model.js?v=cd83b90f23d3"></script>
+<script src="gate-model.js"></script>
+<script src="fence-model.js"></script>
+<script src="utility-pillar-model.js"></script>
+<script src="site-terrain.js?v=275cbcb1ed2e"></script>
 <script src="survey-surface.js"></script>
+<script src="grading-site.js"></script>
 <script src="terrain-preview.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=f34dbf914610';
+import { buildModel } from './model3d.js?v=bbc15acd4fb9';
 import { GroundSurfaceModel } from './ground-surface-model.js';
 import { ShrubModel } from './shrub-model.js';
 
+await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=c98b3507985e';
+  script.src = './house-interior.js?v=d982f196640c';
+  script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
 });
 const localHouseData = typeof HOUSE_INTERIOR === 'undefined' ? null : HOUSE_INTERIOR;
 if(localHouseData)await new Promise(resolve=>{
   const script=document.createElement('script');script.src='./docs/planting-palette.js';
+  script.dataset.loadingOptional='true';
   script.onload=script.onerror=resolve;document.head.appendChild(script);
 });
 const localPalette=typeof PLANTING_PALETTE==='undefined'?null:PLANTING_PALETTE;
 if(localHouseData)await new Promise(resolve=>{
   const script=document.createElement('script');script.src='./docs/survey-terrain.js';
+  script.dataset.loadingOptional='true';
   script.onload=script.onerror=resolve;document.head.appendChild(script);
 });
 const surveySurface=typeof SURVEY_TERRAIN==='undefined'?null:SurveySurface.create(SURVEY_TERRAIN.points,TERRAIN.plane);
 const existingGround=surveySurface?.height??((x,z)=>TERRAIN.basePlaneHeight(x,z));
 if(localHouseData?.roofWindowModelUrl)await new Promise(resolve=>{
   const script=document.createElement('script');script.src=localHouseData.roofWindowModelUrl;
+  script.dataset.loadingOptional='true';
   script.onload=script.onerror=resolve;document.head.appendChild(script);
 });
 
 // Layout (footprints in meters) comes from layout.js — x → east, y → south (z here)
+await ViewerLoading.stage('Shaping the terrain…');
 const EL = Object.fromEntries(GARDEN.elements.map(e => [e.id, e]));
 const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
@@ -169,9 +216,8 @@ const pergolaModel = PergolaModel.build(GARDEN);
 const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround);
 const raisedBedsModel = RaisedBedsModel.build(GARDEN);
 const garageGround = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
-const siteTerrain = SiteTerrain.create(GARDEN, TERRAIN.plane, { garage: garageGround,
-  pergola: pergolaModel.groundPatch, greenhouse: greenhouseModel.groundPatch, raisedBeds: raisedBedsModel.groundPatch },
-  {surveySurface:surveySurface?.data,houseFFL:TERRAIN.houseFFLInternal});
+const {site:siteTerrain} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:surveySurface,
+  groundPatches:{garage:garageGround,pergola:pergolaModel.groundPatch,greenhouse:greenhouseModel.groundPatch,raisedBeds:raisedBedsModel.groundPatch}});
 const firepitModel = FirepitModel.build(GARDEN, siteTerrain.height);
 const hiddenBenchModel = HiddenBenchModel.build(GARDEN, siteTerrain.height);
 const outdoorLoungeModel = ExteriorFurnitureModel.build(GARDEN, siteTerrain.spec.deckTop);
@@ -181,9 +227,9 @@ const plantingClearances = [...SaunaModel.plantingClearances(GARDEN), ...pergola
   ...hiddenBenchModel.plantingClearances, ...outdoorLoungeModel.circulation, ...facadeGravelClearances,
   ...GARDEN.elements.filter(e => e.meta?.circulation).flatMap(e => e.parts.filter(p => p.kind === 'rect')),
   ...outdoorLoungeModel.footprints.map(r => ({ x:r.x-.08,y:r.y-.08,w:r.w+.16,d:r.d+.16 }))];
-function overlapsStructureAccess(x, y, radius) {
+function overlapsStructureAccess(x, y, radius, utilityCover=false) {
   if (GardenRouteModel.distance(GARDEN.gardenRoutes ?? [],x,y)<=radius) return true;
-  if ((GARDEN.gardenReserves ?? []).some(r=>Math.hypot(Math.max(r.x-x,0,x-r.x-r.w),Math.max(r.y-y,0,y-r.y-r.d))<=radius)) return true;
+  if (!utilityCover && (GARDEN.gardenReserves ?? []).some(r=>Math.hypot(Math.max(r.x-x,0,x-r.x-r.w),Math.max(r.y-y,0,y-r.y-r.d))<=radius)) return true;
   const pond=EL.pond.parts.find(p=>p.kind==='ellipse');
   if (((x-pond.cx)/(pond.rx+radius+.25))**2+((y-pond.cy)/(pond.ry+radius+.25))**2<1) return true;
   return plantingClearances.some(r => {
@@ -646,39 +692,9 @@ function addTerrainPlatform(verts2d, thickness, color, opts = {}) {
   return mesh;
 }
 
-// Fence segment — posts on local terrain, 3 rails per bay pitched to follow the slope
-const fencePostGeo = new THREE.BoxGeometry(0.09, 1.6, 0.09);
-const fencePostMat = new THREE.MeshStandardMaterial({ color: 0x6e5a40, roughness: 0.85 });
-const fenceRailMat = new THREE.MeshStandardMaterial({ color: 0x8a7355, roughness: 0.8 });
-function addFenceSegment(x1, z1, x2, z2) {
-  const dx = x2 - x1, dz = z2 - z1;
-  const len = Math.hypot(dx, dz);
-  const yaw = Math.atan2(dx, dz);
-  const nBays = Math.max(1, Math.round(len / 2.5));
-  for (let i = 0; i <= nBays; i++) {
-    const t = i / nBays;
-    const px = x1 + dx * t, pz = z1 + dz * t;
-    const post = new THREE.Mesh(fencePostGeo, fencePostMat);
-    post.position.set(px, terrainHeight(px, pz) + 0.8, pz);
-    post.rotation.y = yaw;
-    post.castShadow = true;
-    fenceGroup.add(post);
-  }
-  for (let i = 0; i < nBays; i++) {
-    const ax = x1 + dx * (i / nBays), az = z1 + dz * (i / nBays);
-    const bx = x1 + dx * ((i + 1) / nBays), bz = z1 + dz * ((i + 1) / nBays);
-    const y0 = terrainHeight(ax, az), y1 = terrainHeight(bx, bz);
-    const horiz = Math.hypot(bx - ax, bz - az);
-    const bayLen = Math.hypot(horiz, y1 - y0);
-    const pitch = Math.atan2(y1 - y0, horiz);
-    for (const rh of [0.35, 0.85, 1.35]) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.1, bayLen), fenceRailMat);
-      rail.position.set((ax + bx) / 2, (y0 + y1) / 2 + rh, (az + bz) / 2);
-      rail.rotation.set(-pitch, yaw, 0, 'YXZ');
-      rail.castShadow = true;
-      fenceGroup.add(rail);
-    }
-  }
+function addFenceSegment(x1, z1, x2, z2, {startPost=true,endPost=true}={}) {
+  const model=FenceModel.build({start:[x1,z1],end:[x2,z2],heightAt:terrainHeight,startPost,endPost});
+  fenceGroup.add(buildModel(THREE,model));
 }
 
 const treesGroup = new THREE.Group();
@@ -692,9 +708,11 @@ scene.add(roofGroup);
 scene.add(furnitureGroup);
 
 // Rooted shrub canopy.
-function addBush(plotX, plotY, size = 1, color = 0x5f8452) {
+function addBush(plotX, plotY, size = 1, color = 0x5f8452, leafHabit='deciduous') {
   if (overlapsStructureAccess(plotX, plotY, size * .72)) return;
   const bush = ShrubModel.create(THREE,{x:plotX,z:plotY,groundY:terrainHeight(plotX,plotY),size,color});
+  bush.userData.leafHabit=leafHabit;
+  bush.traverse(object=>{if(object.userData.leafHabit)object.userData.leafHabit=leafHabit;});
   treesGroup.add(bush);
 }
 
@@ -797,14 +815,16 @@ const groundGeom = (() => {
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const contactPoints = hiddenBenchModel.feet.flatMap(foot => foot.bottomCorners);
   const gradingRects = [...siteTerrain.spec.cutRects, ...siteTerrain.spec.fillPads, ...siteTerrain.spec.levelPads,
-    ...siteTerrain.spec.postCuts, ...siteTerrain.spec.finishPads ?? [], ...siteTerrain.spec.protectedPads ?? []];
+    ...siteTerrain.spec.postCuts, ...siteTerrain.spec.finishPads ?? [], ...siteTerrain.spec.protectedPads ?? [], siteTerrain.spec.benchPad];
   const samples = (start, end, axis) => {
     const count = Math.ceil((end - start) / 0.7);
     const boundaries = gradingRects.flatMap(rect => {
       const blend = rect.blend ?? rect.eastBlend ?? siteTerrain.spec.cutBlend;
       const offsets = blend <= .35 ? Array.from({ length: Math.ceil(blend / .05) * 2 + 1 }, (_, i) =>
         -blend + i * blend / Math.ceil(blend / .05)) : [-blend, -blend + .1, -.1, 0, .1, blend - .1, blend];
-      return [rect[axis === 0 ? 'x0' : 'z0'], rect[axis === 0 ? 'x1' : 'z1']].flatMap(value => offsets.map(offset => value + offset));
+      const edges = [rect[axis === 0 ? 'x0' : 'z0'], rect[axis === 0 ? 'x1' : 'z1']].flatMap(value => offsets.map(offset => value + offset));
+      if (axis === 1 && rect.southBlend) edges.push(rect.z1 - rect.southBlend, rect.z1 + rect.southBlend);
+      return edges;
     });
     return [...new Set([...Array.from({ length: count + 1 }, (_, i) => start + (end - start) * i / count),
       ...contactPoints.map(point => point[axis]), ...boundaries]
@@ -854,6 +874,7 @@ scene.add(ground);
 const terrainPreview=TerrainPreview.create({THREE,scene,ground,existingHeight:existingGround,proposedHeight:terrainHeight,surveyed:!!surveySurface});
 
 // ───────────────────────── HOUSE ─────────────────────────
+await ViewerLoading.stage('Building the house and terraces…');
 const houseVerts = EL.house.parts.find(p => p.kind === 'polygon').points;
 // bbox [x0,y0,x1,y1], coreX = gable core x-range, atrium [x0,y0,x1,y1] (open, no roof)
 const { bbox: HB, coreX: HC, atrium: HA } = EL.house.meta;
@@ -1036,11 +1057,20 @@ function walkingHeight(x,z){
 }
 
 // Garage pult roof — high at the carport junction (west), low at the east eave; no N/S overhang
+const garageRoofSkin = 0.001;
 {
   // makePultRoofWE args are y at xMin / y at xMax — here west is the high edge
   const geom = makePultRoofWE(GA.x - 0.3, GA.x + GA.w + 0.3, GA.y, GA.y + GA.d,
     garageRoofHigh + 0.3 * garagePitch, garageWallTop - 0.3 * garagePitch);
-  const m = new THREE.Mesh(geom, roofMat);
+  const positions = Array.from(geom.attributes.position.array);
+  positions.push(...positions.map((value, index) => index % 3 === 1 ? value + garageRoofSkin : value));
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geom.setIndex([0,1,2,0,2,3,4,6,5,4,7,6,0,4,5,0,5,1,1,5,6,1,6,2,2,6,7,2,7,3,3,7,4,3,4,0]);
+  const skin = geom.toNonIndexed();
+  geom.dispose();
+  skin.computeVertexNormals();
+  const m = new THREE.Mesh(skin, roofMat);
+  m.name = 'garage-roof-metal-skin';
   m.castShadow = true;
   roofGroup.add(m);
 }
@@ -1064,7 +1094,7 @@ const carportWestY = garageWallTop + 0.5;
   const gAng = Math.atan2(1.2, GA.w);
   for (let zs = GA.y + 0.2; zs < GA.y + GA.d; zs += 0.4) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(gLen, 0.06, 0.04), stripeMat);
-    s.position.set(GA.x + GA.w / 2, (garageRoofHigh + garageWallTop) / 2 + 0.03, zs);
+    s.position.set(GA.x + GA.w / 2, (garageRoofHigh + garageWallTop) / 2 + garageRoofSkin + 0.03, zs);
     s.rotation.z = -gAng;
     roofGroup.add(s);
   }
@@ -1105,6 +1135,7 @@ scene.add(saunaGroup);
 lampLights.push(...saunaGroup.userData.lights);
 
 // ───────────────────────── PERGOLA ─────────────────────────
+await ViewerLoading.stage('Adding garden rooms and furniture…');
 const PG = rectOf('pergola');
 const pergolaGroup = buildModel(THREE, pergolaModel);
 scene.add(pergolaGroup);
@@ -1483,22 +1514,19 @@ scene.add(raisedBedsGroup);
 
 // ───────────────────────── PRIVACY SCREENS (paravány) — 2 m louvre panels ─────────────────────────
 function addScreen(r, h = 2.0) {
-  const postMat = new THREE.MeshStandardMaterial({ color: 0x33343a, roughness: 0.55, metalness: 0.4 });
-  const slatMat = new THREE.MeshStandardMaterial({ color: 0x6e5a40, roughness: 0.8 });
-  const horiz = r.w >= r.d, long = Math.max(r.w, r.d);
-  const cx = r.x + r.w / 2, cz = r.y + r.d / 2, postH = h + 0.08;
-  const ends = horiz ? [[r.x + 0.06, cz], [r.x + r.w - 0.06, cz]] : [[cx, r.y + 0.06], [cx, r.y + r.d - 0.06]];
-  for (const [px, pz] of ends) {
-    const p = new THREE.Mesh(new THREE.BoxGeometry(0.1, postH, 0.1), postMat);
-    p.position.set(px, terrainHeight(px, pz) + postH / 2, pz);
-    p.castShadow = true; fenceGroup.add(p);
-  }
-  const baseY = terrainHeight(cx, cz), n = 11;
-  for (let i = 0; i < n; i++) {
-    const yy = baseY + 0.14 + i * (h - 0.24) / (n - 1);
-    const slat = new THREE.Mesh(
-      horiz ? new THREE.BoxGeometry(long - 0.1, 0.1, 0.03) : new THREE.BoxGeometry(0.03, 0.1, long - 0.1), slatMat);
-    slat.position.set(cx, yy, cz); slat.castShadow = true; slat.receiveShadow = true; fenceGroup.add(slat);
+  const horizontal=r.w>=r.d,length=Math.max(r.w,r.d),bays=Math.ceil(length/1.45);
+  const at=t=>horizontal?[r.x+t*length,r.y+r.d/2]:[r.x+r.w/2,r.y+t*length];
+  for(let i=0;i<bays;i++){
+    const start=at(i/bays),end=at((i+1)/bays);
+    const heights=Array.from({length:17},(_,j)=>[-.10,0,.10].map(offset=>terrainHeight(start[0]+(end[0]-start[0])*j/16+(horizontal?0:offset),start[1]+(end[1]-start[1])*j/16+(horizontal?offset:0)))).flat();
+    const base=Math.max(...heights)+.05,top=base+h;
+    const screen=PrivacyScreenModel.build({name:`garden_screen_${r.x}_${r.y}_${i}`,start,end,side:'garden',category:'structure',bottom:0,top:top-base});
+    for(const material of Object.values(screen.materials))material.color='#41474a';
+    for(const [j,p]of[start,end].entries()){
+      const bottom=terrainHeight(...p)-base-.2,postTop=h+.04;
+      screen.parts.push({name:`screen_post_${i}_${j}`,type:'box',position:[p[0],p[1],(bottom+postTop)/2],size:[.08,.08,postTop-bottom],material:'privacy_frame',category:'structure'});
+    }
+    fenceGroup.add(buildModel(THREE,{...screen,floorHeight:base,lights:[]}));
   }
 }
 GARDEN.elements.filter(e => e.meta?.screen && !['screenWest','screenSouth'].includes(e.id)).forEach(e => {
@@ -1507,6 +1535,7 @@ GARDEN.elements.filter(e => e.meta?.screen && !['screenWest','screenSouth'].incl
 });
 
 // ───────────────────────── ORCHARD + GREENHOUSE ─────────────────────────
+await ViewerLoading.stage('Growing the trees and planting…');
 const GH = rectOf('greenhouse');
 const greenhouseGroup = buildModel(THREE, greenhouseModel);
 scene.add(greenhouseGroup);
@@ -1541,7 +1570,11 @@ function addPerennial(zoneId, x, z, kind) {
   const zone=EL[zoneId]?.meta;
   const spec = PlantingProfiles.sample(zone?.palette ?? zoneId, x, z, kind, localPalette ?? {});
   if(zone?.maxHeight)spec.height=Math.min(spec.height,zone.maxHeight);
-  if (!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread)) return;
+  if(zone?.utilityCover){
+    Object.assign(spec,{profile:'broadleaf',height:.18,spread:.22,name:'Low tank-cover planting proposal'});
+    if(!PlantingProfiles.clearsTankAccess(rectOf('rainTank'),x,z,spec.spread))return;
+  }
+  if (!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread,zone?.utilityCover===true)) return;
   const root = PerennialModel.create(THREE, spec);
   root.name = spec.name;
   root.position.set(x, terrainHeight(x, z), z);
@@ -1798,12 +1831,23 @@ let applyOpeningCutouts;
 const outdoorLoungeGroup = buildModel(THREE, outdoorLoungeModel);
 furnitureGroup.add(outdoorLoungeGroup);
 
-const gardenRoutes=GardenRouteModel.create(THREE,{routes:GARDEN.gardenRoutes,height:siteTerrain.routeHeight});
+const gardenRoutes=GardenRouteModel.create(THREE,{routes:GARDEN.gardenRoutes,height:siteTerrain.routeHeight,garden:GARDEN,exclusions:[{kind:'rect',...hiddenBenchModel.groundPatch}]});
 scene.add(gardenRoutes);
 
 // Zašívárna — hidden red bench off the garage north wall (Flera-style)
 const hiddenBenchGroup = buildModel(THREE, hiddenBenchModel);
 scene.add(hiddenBenchGroup);
+hiddenBenchGroup.updateMatrixWorld(true);
+hiddenBenchGroup.userData.categories.ground.traverse(mesh => {
+  if (!mesh.isMesh) return;
+  const positions = mesh.geometry.attributes.position, uv = [], point = new THREE.Vector3();
+  for (let i = 0; i < positions.count; i++) {
+    point.fromBufferAttribute(positions, i).applyMatrix4(mesh.matrixWorld);
+    uv.push(point.x, point.z);
+  }
+  mesh.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  mesh.material = gardenRoutes.material;
+});
 
 // Facade climbers on the garage E and solid atrium N/S walls.
 const { ClimberModel } = await import('./climber-model.js');
@@ -1861,7 +1905,7 @@ for (const v of GARDEN.vehicles) {
     const zoneCircles = el.parts.filter(p => p.kind === 'circle');
     const excl = el.meta.exclude ? EL[el.meta.exclude].parts.find(p => p.kind === 'ellipse') : null;
     if (zoneCircles.length && !rects.length && !poly && !ell) {
-      zoneCircles.forEach(c => addBush(c.cx, c.cy, Math.max(0.35, c.r), 0x5f8452));
+      zoneCircles.forEach(c => addBush(c.cx, c.cy, Math.max(0.35, c.r), 0x5f8452,el.meta.leafHabit??'deciduous'));
       continue;
     }
     let area = 0, sample;
@@ -1902,20 +1946,21 @@ for (const v of GARDEN.vehicles) {
     const kind = el.meta.plant;
     const nPer = kind === 'shrubs' ? 0 : Math.round(area * (kind === 'meadow' ? 1.6 : 2.7));
     const nShr = kind === 'perennials' || kind === 'meadow' ? 0 : Math.round(area / (kind === 'shrubs' ? 2.5 : 5));
-    const plantPerennialPass = () => {
+    const plantPerennialPass = async () => {
       for (let i = 0; i < nPer; i++) {
         const pt = sample();
         if (!pt || !inPlot(pt[0], pt[1])) continue;
         addPerennial(el.id, pt[0], pt[1], kind);
+        if(i%32===31)await ViewerLoading.yield();
       }
     };
-    plantPerennialPass();
+    await plantPerennialPass();
     for (let i = 0; i < nShr; i++) {
       const pt = sample();
       if (!pt || !inPlot(pt[0], pt[1])) continue;
       addBush(pt[0], pt[1], capAtGarage(pt[0], pt[1], 0.45 + random() * 0.35), 0x5f8452);
     }
-    for (let pass = 1; pass < perennialDensity; pass++) plantPerennialPass();
+    for (let pass = 1; pass < perennialDensity; pass++) await plantPerennialPass();
   }
 }
 
@@ -1947,6 +1992,7 @@ const smokeParticles = [];
 }
 
 // ───────────────────────── FENCE ─────────────────────────
+await ViewerLoading.stage('Building the entrance and boundary…');
 // Fence follows the whole plot boundary (general polygon — any vertex count), with a GATE + wicket
 // gap on whichever edge the gate line sits on.
 function lerp2(a, b, t) {
@@ -1970,65 +2016,96 @@ const gateT = lerp2(eL1, eL2, tBranaT);   // vehicle-gate north jamb (= the post
 const gateB = lerp2(eL1, eL2, tBranaB);   // vehicle-gate south jamb
 const gateGL = Math.hypot(gateB[0] - gateT[0], gateB[1] - gateT[1]);
 const gux = (gateB[0] - gateT[0]) / gateGL, guz = (gateB[1] - gateT[1]) / gateGL;  // along the opening (→ south)
-const wicketS = [gateB[0] + gux * 0.9, gateB[1] + guz * 0.9];   // wicket south jamb, 0.9 m S of the gate
+const entranceFixedLength=Math.hypot(gateT[0]-eL1[0],gateT[1]-eL1[1])-.28;
+const entranceGateModel=GateModel.build({openingStart:gateT,direction:[gux,guz],fixedPanelLength:entranceFixedLength,floorHeight:siteTerrain.spec.gateRunback.finishedLevel,open:1,wicketOpen:1});
+{
+  const landing=siteTerrain.spec.wicketLanding;
+  const thresholdOverhang=.06;
+  const points=landing.points.map((point,i)=>i<2?[point[0]+guz*thresholdOverhang,point[1]-gux*thresholdOverhang]:point.slice());
+  const geometry=new THREE.ExtrudeGeometry(makePolyShape(points),{depth:landing.finishedLevel-landing.level,bevelEnabled:false});
+  geometry.rotateX(-Math.PI/2);geometry.translate(0,landing.level,0);
+  const surface=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:'#a8aaa5',roughness:.9}));
+  surface.name='wicket-level-landing';surface.receiveShadow=true;scene.add(surface);
+}
+let entranceGate=buildModel(THREE,entranceGateModel),entranceGateOpen=true;scene.add(entranceGate);
+{
+  const strip=siteTerrain.spec.gateRunback,[ux,uz]=strip.direction,nx=-uz,nz=ux;
+  const at=(t,d)=>[strip.start[0]+ux*t+nx*d,strip.start[1]+uz*t+nz*d];
+  const points=[at(strip.from,0),at(0,0),at(0,strip.width),at(strip.from,strip.width)];
+  const geometry=new THREE.ExtrudeGeometry(makePolyShape(points),{depth:strip.finishedLevel-strip.level,bevelEnabled:false});
+  geometry.rotateX(-Math.PI/2);geometry.translate(0,strip.level,0);
+  const surface=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());
+  surface.name='gate-runback-gravel';surface.receiveShadow=true;surface.castShadow=true;scene.add(surface);
+  const {GravelSurfaceModel}=await import('./gravel-surface-model.js');
+  const stones=GravelSurfaceModel.create(THREE,{surface,bounds:{x0:Math.min(...points.map(p=>p[0])),x1:Math.max(...points.map(p=>p[0])),z0:Math.min(...points.map(p=>p[1])),z1:Math.max(...points.map(p=>p[1]))},seed:129});
+  const transform=new THREE.Object3D();
+  for(const [i,p] of stones.userData.parts.entries()){
+    const inset=(p.x-strip.start[0])*nx+(p.z-strip.start[1])*nz;
+    transform.position.set(p.x,p.y,p.z);transform.rotation.set(0,p.rotation,0);
+    transform.scale.set(p.radius,p.halfHeight,p.radius);
+    if(inset<.35)transform.scale.setScalar(0);
+    transform.updateMatrix();stones.setMatrixAt(i,transform.matrix);
+  }
+  stones.instanceMatrix.needsUpdate=true;stones.name='gate-runback-gravel-stones';scene.add(stones);
+  const edgeParts=[];
+  for(const [edge,a,b,inside] of [
+    ['outer',at(strip.from,0),at(0,0),[nx,nz]],
+    ['inner',at(strip.from,strip.width),at(0,strip.width),[-nx,-nz]],
+    ['end',at(strip.from,0),at(strip.from,strip.width),[ux,uz]],
+  ]){
+    const count=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/.3);
+    for(let i=0;i<count;i++){
+      const p=lerp2(a,b,i/count),q=lerp2(a,b,(i+1)/count),r=[q[0]+inside[0]*.06,q[1]+inside[1]*.06],s=[p[0]+inside[0]*.06,p[1]+inside[1]*.06];
+      const bottom=(v)=>Math.min(strip.level,siteTerrain.baseHeight(v[0]-inside[0]*.45,v[1]-inside[1]*.45))-.12;
+      const bp=bottom(p),bq=bottom(q),top=strip.finishedLevel-.002;
+      const faces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
+      if((q[0]-p[0])*inside[1]-(q[1]-p[1])*inside[0]<0)faces.forEach(face=>face.reverse());
+      edgeParts.push({name:`gate_runback_edge_${edge}_${i}`,type:'mesh',vertices:[[...p,bp],[...q,bq],[...r,bq],[...s,bp],[...p,top],[...q,top],[...r,top],[...s,top]],faces,material:'retainedEdge',category:'structure'});
+    }
+  }
+  scene.add(buildModel(THREE,{name:'Gate runback retained edge',parts:edgeParts,lights:[],floorHeight:0,materials:{retainedEdge:{color:'#888b86',roughness:.95}}}));
+  entranceGateModel.notes.push('The level gravel run-back and retained edges are a grading proposal. Their foundations, boundary position and drainage need coordination; the motor side is not an approved structural detail.');
+}
+window.toggleEntranceGate=(open=!entranceGateOpen)=>{
+  if(open===entranceGateOpen)return;
+  const materials=new Set();
+  entranceGate.traverse(object=>{if(object.isMesh){object.geometry.dispose();materials.add(object.material);}});
+  for(const material of materials)material.dispose();
+  scene.remove(entranceGate);entranceGateOpen=open;
+  entranceGate=buildModel(THREE,GateModel.build({openingStart:gateT,direction:[gux,guz],fixedPanelLength:entranceFixedLength,floorHeight:entranceGateModel.floorHeight,open:entranceGateOpen?1:0,wicketOpen:entranceGateOpen?1:0}));
+  scene.add(entranceGate);
+  document.getElementById('toggleEntranceGate').checked=entranceGateOpen;
+};
+const gateNotes=document.createElement('details');gateNotes.hidden=true;
+const gateSummary=document.createElement('summary');gateSummary.textContent='Gate specification and fit';
+const gateText=document.createElement('small');gateText.textContent=entranceGateModel.notes.join(' ');
+gateNotes.append(gateSummary,gateText);document.getElementById('info').append(gateNotes);
+const southeastCorner=GARDEN.plot.vertices[4],southwestCorner=GARDEN.plot.vertices[5];
+const southLength=Math.hypot(southwestCorner[0]-southeastCorner[0],southwestCorner[1]-southeastCorner[1]);
+const southDirection=[(southwestCorner[0]-southeastCorner[0])/southLength,(southwestCorner[1]-southeastCorner[1])/southLength];
+const pillarCenter=southeastCorner.map((v,i)=>v+southDirection[i]*.28);
+const utilityPillarModel=UtilityPillarModel.build({center:pillarCenter,direction:[southDirection[1],-southDirection[0]],floorHeight:terrainHeight(...pillarCenter)});
+scene.add(buildModel(THREE,utilityPillarModel));
+gateText.textContent+=' '+utilityPillarModel.notes.join(' ');
+const fixedPanelStart=entranceGateModel.dims.fixedPanelStart;
 for (let i = 0; i < plotVerts.length; i++) {
   const a = plotVerts[i], b = plotVerts[(i + 1) % plotVerts.length];
   if (i === gateEdge) {
-    addFenceSegment(a[0], a[1], gateT[0], gateT[1]);       // fence north of the gate (run-back parks behind it)
-    addFenceSegment(wicketS[0], wicketS[1], b[0], b[1]);   // fence south of the 0.9 m wicket
+    if(Math.hypot(a[0]-fixedPanelStart[0],a[1]-fixedPanelStart[1])>.01)addFenceSegment(a[0], a[1], fixedPanelStart[0], fixedPanelStart[1],{endPost:false});
+  } else if(i===4){
+    addFenceSegment(a[0]+southDirection[0]*.60,a[1]+southDirection[1]*.60,b[0],b[1]);
   } else {
-    addFenceSegment(a[0], a[1], b[0], b[1]);
+    addFenceSegment(a[0], a[1], b[0], b[1],{endPost:Math.hypot(b[0]-fixedPanelStart[0],b[1]-fixedPanelStart[1])>.01});
   }
 }
 
-// Entrance: posuvná brána (cantilever sliding, 4.0 m clear) retracting NORTH + a SEPARATE 0.9 m
-// wicket (branka) to the SOUTH — opposite side, so it never overlaps the retracted gate. Both OPEN.
-{
-  const ux = gux, uz = guz;                 // along the opening (→ south)
-  const nx = -uz, nz = ux;                  // inward normal (−x into the plot)
-  const barMat = new THREE.MeshStandardMaterial({ color: 0x33343a, roughness: 0.5, metalness: 0.45 });
-  const postMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 });
-  // Framed leaf: rails + vertical pickets, centred at origin, length along local +X, thin in Z.
-  const makeLeaf = (len, h) => {
-    const g = new THREE.Group();
-    for (const yy of [h / 2 - 0.05, -h / 2 + 0.05]) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.08, 0.05), barMat);
-      rail.position.set(0, yy, 0); g.add(rail);
-    }
-    const nb = Math.max(4, Math.round(len / 0.14));
-    for (let i = 0; i <= nb; i++) {
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.025, h - 0.12, 0.025), barMat);
-      bar.position.set(-len / 2 + len * i / nb, 0, 0); g.add(bar);
-    }
-    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
-    return g;
-  };
-  const placeLeaf = (cx, cz, len, h, dx, dz) => {
-    const leaf = makeLeaf(len, h);
-    leaf.position.set(cx, terrainHeight(cx, cz) + h / 2, cz);
-    leaf.rotation.y = Math.atan2(-dz, dx);
-    scene.add(leaf);
-  };
-  // Sliding gate 4.0 m, retracted north on its run-back (open), on the track just inside the line
-  const slideLen = 4.0, slideH = 1.5;
-  placeLeaf(gateT[0] - ux * (slideLen / 2 + 0.2) + nx * 0.18,
-            gateT[1] - uz * (slideLen / 2 + 0.2) + nz * 0.18, slideLen, slideH, ux, uz);
-  // Wicket 0.9 m (south of the gate), hinged at gateB, swung ~90° inward (open)
-  const brankaLen = 0.9, brankaH = 1.5;
-  placeLeaf(gateB[0] + nx * (brankaLen / 2), gateB[1] + nz * (brankaLen / 2), brankaLen, brankaH, nx, nz);
-  // Posts: gate N jamb (gateT), the post BETWEEN gate & wicket (gateB), and the wicket S jamb (wicketS)
-  for (const [gx, gz] of [gateT, gateB, wicketS]) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.75, 0.14), postMat);
-    post.position.set(gx, terrainHeight(gx, gz) + 0.875, gz); post.castShadow = true;
-    scene.add(post);
-  }
-}
 
 // ───────────────────────── CAMERA PRESETS ─────────────────────────
 const plantingPreview = PlantingPreview.create({ scene, camera, renderer, treesGroup });
 PlantingGuide.create(perennialPlants,treesGroup.children.filter(p=>p.userData.treeForm));
 const targetCenter = new THREE.Vector3(22, 0, 17);
 window.setPreset = function(name) {
+  gateNotes.hidden=name!=='entranceGate';
   const bedsPad=rectOf('raisedBedsPad'),bench=rectOf('zasivarna');
   const positions = {
     iso:    [60, 35, 55],
@@ -2043,6 +2120,10 @@ window.setPreset = function(name) {
     pergolaSeat: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.2, PG.y + PG.d - 1.1],
     westPath: [9.98, deckTop + 1.65, 10.5],
     cars: [26.8, garageFloorY + 2.2, 29],
+    entranceGate: [36.5,entranceGateModel.floorHeight+2.5,35.5],
+    marekOfficeView: [10.7,deckTop+1.2,21.43],
+    cristinaOfficeView: [10.7,deckTop+1.2,13.68],
+    dressingRoomView: [15.03,deckTop+1.55,7.4],
     eastLounge: [21.08, deckTop + 1.15, 17.8],
     atriumLounge: [11.25, deckTop + 1.15, 18.55],
     pergola: [PG.x + PG.w + 5, pergolaModel.floorHeight + 3.4, PG.y + PG.d + 6.5],
@@ -2064,6 +2145,10 @@ window.setPreset = function(name) {
     pergolaSeat: [FPC.cx, pergolaModel.floorHeight + 1.2, FPC.cy],
     westPath: [9.98, deckTop + 1.1, 5.2],
     cars: [26.5, garageFloorY + 0.75, 22.5],
+    entranceGate: [42.6,entranceGateModel.floorHeight+.7,31.1],
+    marekOfficeView: [6,deckTop+1.2,20.8],
+    cristinaOfficeView: [6.7,deckTop+.7,13.5],
+    dressingRoomView: [15,deckTop+1.2,3.8],
     eastLounge: [PBOWL.cx, deckTop + .8, PBOWL.cz],
     atriumLounge: [13.73, deckTop + 1.15, 16.6],
     pergola: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.1, PG.y + PG.d / 2],
@@ -2252,6 +2337,10 @@ hoverRect('binStore', 1.235);
 hoverRect('toolStore', 1.325);
 
 window.addEventListener('mousemove', e => {
+  if (e.target.closest?.('.viewer-ui, #restoreUI') || document.getElementById('viewerUI')?.hidden) {
+    tooltip.style.opacity = 0;
+    return;
+  }
   mouse.x = (e.clientX / innerWidth) * 2 - 1;
   mouse.y = -(e.clientY / innerHeight) * 2 + 1;
   raycaster.setFromCamera(mouse, camera);
@@ -2366,6 +2455,7 @@ let tourActive = false;
 let tourIndex = 0;
 let tourStart = 0;
 const tourLabel = document.createElement('div');
+tourLabel.id = 'tourLabel';
 tourLabel.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.75);color:white;padding:8px 16px;border-radius:6px;font-size:14px;z-index:200;pointer-events:none;opacity:0;transition:opacity 0.3s;';
 document.body.appendChild(tourLabel);
 
@@ -2385,6 +2475,7 @@ function tourUpdate() {
   const elapsed = clock.getElapsedTime() - tourStart;
   if (elapsed >= tourCurves.cum[n - 1]) {
     tourActive = false;
+    document.dispatchEvent(new Event('viewer-tour-ended'));
     // Reset OrbitControls target so it doesn't snap camera back to house center
     const dir = new THREE.Vector3();
     camera.getWorldDirection(dir);
@@ -2437,7 +2528,17 @@ function animate() {
   if (!tourActive && !fpState.active) controls.update();
   renderer.render(scene, camera);
 }
+await ViewerLoading.stage('Preparing the first view…');
+const { mountViewerUI } = await import('./viewer-ui.js');
+mountViewerUI({ stopTour() {
+  if (!tourActive) return;
+  tourActive = false;
+  controls.target.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(20));
+  controls.enabled = true;
+  tourLabel.style.opacity = 0;
+} });
 animate();
+ViewerLoading.finish();
 </script>
 
 </body>

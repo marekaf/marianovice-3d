@@ -1,6 +1,6 @@
-// Renders zahrada-driveway-check.svg — a top-down parking & maneuvering check: do the specific
-// vehicles fit their assigned bays, and can a car get from the gate to the carport comfortably?
+// Static body footprints and planar clearances do not establish swept-path feasibility.
 // Regenerate with: node generate-driveway-check.js
+const { GateModel } = require('./gate-model.js');
 const ROWS = "abcdefghijklmnopqrstuvwxyz";
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -27,9 +27,7 @@ const distToEdge = (pts, x, y) => {
 const rectRing = (r) => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
 const insideRect = (r, x, y) => x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.d;
 
-// Biggest circle that fits inside the drivable area, inside the parcel, and clear of `blockers` —
-// the space a car has to turn in one sweep. Coarse grid, then refinements around the best point;
-// the drivable area is a simple strip, so a local refine does not get trapped away from the maximum.
+// Sampled empty-space circle, not a vehicle turning envelope or a guaranteed global maximum.
 function largestClearCircle(area, plot, blockers = []) {
   const xs = area.map((p) => p[0]), ys = area.map((p) => p[1]);
   let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
@@ -50,7 +48,29 @@ function largestClearCircle(area, plot, blockers = []) {
   return best;
 }
 
+function drivewayStudy(garden) {
+  const elements = Object.fromEntries(garden.elements.map(e => [e.id, e]));
+  const line = elements.gate.parts.find(p => p.kind === 'line');
+  const gate = GateModel.build({openingStart:[line.x1,line.y1],direction:[line.x2-line.x1,line.y2-line.y1],open:0,wicketOpen:0});
+  const {wicketHinge, wicketOpening, direction} = gate.dims;
+  const post = gate.parts.find(p => p.name === 'gate_post_1');
+  const sharedFace = Math.max(...post.vertices.map(p => (p[0]-line.x1)*direction[0]+(p[1]-line.y1)*direction[1]));
+  const wicketStart = [line.x1+direction[0]*sharedFace,line.y1+direction[1]*sharedFace];
+  const wicketEnd = wicketStart.map((v,i)=>v+direction[i]*wicketOpening);
+  const bays = Object.fromEntries(['carport','garage'].map(id => {
+    const rect=elements[id].parts.find(p=>p.kind==='rect');
+    const wall=id==='garage'?elements.garage.meta.wallT:0;
+    const bench=id==='garage'?elements.garage.meta.workbench.d:0;
+    const vehicles=garden.vehicles.filter(v=>v.bay===id).sort((a,b)=>a.cx-b.cx);
+    const gaps=vehicles.slice(1).map((v,i)=>v.cx-v.w/2-(vehicles[i].cx+vehicles[i].w/2));
+    const boundaryClearance=Math.min(...vehicles.flatMap(v=>[v.cx-v.w/2-rect.x-wall,rect.x+rect.w-wall-v.cx-v.w/2,v.noseZ-rect.y-wall-bench,rect.y+rect.d-wall-v.noseZ-v.l]));
+    return [id,{rect,gaps,boundaryClearance}];
+  }));
+  return {gate,bays,wicketStart,wicketEnd,wicketHinge};
+}
+
 function renderDrivewayCheckSVG(garden) {
+  const study = drivewayStudy(garden);
   const VEH = garden.vehicles;
   const EL = Object.fromEntries(garden.elements.map((e) => [e.id, e]));
   const S = garden.m2px;
@@ -69,26 +89,21 @@ function renderDrivewayCheckSVG(garden) {
   const dw = EL.driveway.parts.find((p) => p.kind === "polygon").points;
   const gt = EL.gate.parts.find((p) => p.kind === "line");
 
-  // A motorbike turns inside anything a car needs, so the widest car sets the requirement. Two
-  // numbers matter: what is clear with both bays occupied (the everyday case) and what opens up
-  // once the carport is empty. The bays are drivable but not dependably free.
   const worst = VEH.filter((v) => !v.moto).reduce((a, v) => (v.turn > a.turn ? v : a));
   const circle = largestClearCircle(dw, garden.plot.vertices, [cp, ga]);
   const have = circle.r * 2;
   const emptied = largestClearCircle(dw, garden.plot.vertices, [ga]).r * 2;
-  const fits = have >= worst.turn;
   const turn = {
-    need: worst.turn, have, circle, fits,
-    headline: fits
-      ? `✓ one-sweep turn fits (Ø ${have.toFixed(1)} m clear)`
-      : `✗ no one-sweep turn: Ø ${have.toFixed(1)} m vs Ø ${worst.turn.toFixed(1)} m`,
+    need: worst.turn, have, circle,
+    headline: 'No swept-path simulation performed',
     lines: [
-      "Gate 4.0 m clear (+ separate 0.9 m wicket).",
-      `Tightest car is the ${worst.name.replace("Audi ", "")},`,
-      `kerb-to-kerb Ø ${worst.turn.toFixed(1)} m.`,
-      `Clear turning circle: Ø ${have.toFixed(1)} m with the bays`,
-      `in use, Ø ${emptied.toFixed(1)} m with the carport empty.`,
-      fits ? "Drive in and out forward." : "Every car reverses in or out of the gate.",
+      `Gate ${study.gate.dims.opening.toFixed(1)} m; wicket ${study.gate.dims.wicketOpening.toFixed(1)} m clear.`,
+      `Largest listed turning diameter ${worst.turn.toFixed(1)} m.`,
+      `Sampled empty circle Ø ${have.toFixed(1)} m with both`,
+      `bays excluded; Ø ${emptied.toFixed(1)} m excluding garage.`,
+      'Circles do not prove entry, turning or exit.',
+      'Validate wheel paths, overhangs and steering',
+      'with actual vehicles before construction.',
     ],
   };
 
@@ -113,8 +128,8 @@ function renderDrivewayCheckSVG(garden) {
     .bad{font-size:10px;font-weight:700;fill:#c0392b}
   </style>`);
   out.push(`  <rect width="1100" height="880" fill="white"/>`);
-  out.push(`  <text x="430" y="26" class="title">Parking &amp; maneuvering — vehicle fit</text>`);
-  out.push(`  <text x="430" y="44" class="sub">M4 + Ténéré in the garage · Scala + A6 allroad under the carport</text>`);
+  out.push(`  <text x="430" y="26" class="title">Diagrammatic parking and clearance study</text>`);
+  out.push(`  <text x="430" y="44" class="sub">Current model footprints. Not a swept-path simulation or construction setting-out drawing.</text>`);
 
   out.push(`  <g transform="translate(70, 96)">`);
   out.push(`    <g clip-path="url(#plot)"><rect x="-50" y="-10" width="900" height="720" fill="url(#mg)"/></g>`);
@@ -153,15 +168,8 @@ function renderDrivewayCheckSVG(garden) {
   // Carport walkways to the two pedestrian doors (keep clear of parked cars)
   out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(0.8)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
   out.push(`    <rect x="${px(cp.x + cp.w - 0.85)}" y="${px(cp.y)}" width="${px(0.85)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
-  // Pedestrian doors + swing arcs. House entry is IN THE NOTCH (recessed back wall x=eNotch[0]),
-  // into the zádveří at ~z 21.7 — reached from the carport through the notch (NOT on the carport wall).
-  const notchX = EL.house.meta.eNotch[0];
-  out.push(`    <line x1="${px(notchX)}" y1="${px(21.15)}" x2="${px(notchX)}" y2="${px(22.25)}" stroke="#1f7a3d" stroke-width="3"/>`);
-  out.push(`    <path d="M ${px(notchX)},${px(21.15)} A ${px(1.1)} ${px(1.1)} 0 0 0 ${px(notchX - 1.1)},${px(22.25)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`); // opens inward (west)
-  out.push(`    <text x="${px(notchX) - 3}" y="${px(20.9)}" class="dim" fill="#1f7a3d" text-anchor="end">house door (in the notch)</text>`);
-  out.push(`    <line x1="${px(ga.x)}" y1="${px(21.13)}" x2="${px(ga.x)}" y2="${px(22.56)}" stroke="#1f7a3d" stroke-width="3"/>`);
-  out.push(`    <path d="M ${px(ga.x)},${px(22.56)} A ${px(1.43)} ${px(1.43)} 0 0 0 ${px(ga.x + 1.43)},${px(21.13)}" fill="none" stroke="#1f7a3d" stroke-width="0.8" stroke-dasharray="3,2"/>`); // garage personnel door opens INSIDE (east, into the garage)
-  out.push(`    <circle cx="${px(ga.x)}" cy="${px(21.13)}" r="1.8" fill="#1f7a3d"/>`); // hinge
+  const personnelDoor=gaM.openings.find(o=>o.wall==='W'&&o.kind==='door');
+  out.push(`    <line x1="${px(ga.x)}" y1="${px(personnelDoor.from)}" x2="${px(ga.x)}" y2="${px(personnelDoor.from+personnelDoor.w)}" stroke="#1f7a3d" stroke-width="3"/>`);
   // Vehicles to scale, drawn with the two front doors open. `reversed` = parked nose-out (front
   // toward the south/door). fy = front edge in local y; rs = local direction toward the rear.
   for (const v of VEH) {
@@ -191,18 +199,14 @@ function renderDrivewayCheckSVG(garden) {
 
   // Gate + access route + the turning space actually available (getting to the carport)
   out.push(`    <line x1="${px(gt.x1)}" y1="${px(gt.y1)}" x2="${px(gt.x2)}" y2="${px(gt.y2)}" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>`);
-  out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate 4.0 m</text>`);
-  // Wicket (branka) — separate 0.9 m pedestrian gate immediately S of the vehicle gate, post between them
-  { const gl = Math.hypot(gt.x2 - gt.x1, gt.y2 - gt.y1), wx = (gt.x2 - gt.x1) / gl, wy = (gt.y2 - gt.y1) / gl;
-    const wSx = gt.x2 + wx * 0.9, wSy = gt.y2 + wy * 0.9;
-    out.push(`    <circle cx="${px(gt.x2)}" cy="${px(gt.y2)}" r="2" fill="#7a6f52"/>`);
-    out.push(`    <line x1="${px(gt.x2)}" y1="${px(gt.y2)}" x2="${px(wSx)}" y2="${px(wSy)}" stroke="#1f7a3d" stroke-width="3" stroke-dasharray="2,2"/>`);
-    out.push(`    <text x="${px(wSx) + 8}" y="${px((gt.y2 + wSy) / 2)}" class="dim" fill="#1f7a3d" text-anchor="start">wicket 0.9 m</text>`); }
+  out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate ${study.gate.dims.opening.toFixed(1)} m</text>`);
+  { const [a,b]=[study.wicketStart,study.wicketEnd];
+    out.push(`    <line id="wicket-clear-opening" x1="${px(a[0])}" y1="${px(a[1])}" x2="${px(b[0])}" y2="${px(b[1])}" stroke="#1f7a3d" stroke-width="3" stroke-dasharray="2,2"/>`);
+    out.push(`    <text x="${px(b[0]) + 8}" y="${px((a[1]+b[1])/2)}" class="dim" fill="#1f7a3d" text-anchor="start">wicket ${study.gate.dims.wicketOpening.toFixed(1)} m</text>`); }
   out.push(`    <circle cx="${px(turn.circle.x)}" cy="${px(turn.circle.y)}" r="${px(turn.need / 2)}" fill="none" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>`);
   out.push(`    <circle cx="${px(turn.circle.x)}" cy="${px(turn.circle.y)}" r="${px(turn.circle.r)}" fill="#1f7a3d" fill-opacity="0.07" stroke="#1f7a3d" stroke-width="1.4"/>`);
   out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y)}" class="dim" fill="#1f7a3d">clear Ø ${turn.have.toFixed(1)} m</text>`);
-  out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y) + 11}" class="dim">needs Ø ${turn.need.toFixed(1)} m</text>`);
-  out.push(`    <path d="M ${px(gt.x1 - 0.3)},${px(30)} Q ${px(34)},${px(29)} ${px(28)},${px(27.8)} T ${px(24.4)},${px(24)}" fill="none" stroke="#c0392b" stroke-width="1.6" stroke-dasharray="3,3" marker-end="url(#arrow)"/>`);
+  out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y) + 11}" class="dim">reference Ø ${turn.need.toFixed(1)} m</text>`);
 
   out.push(`  </g>`);
 
@@ -211,12 +215,11 @@ function renderDrivewayCheckSVG(garden) {
 
   // Fit table
   out.push(`  <g transform="translate(872, 150)">`);
-  out.push(`    <text x="0" y="0" class="ph">VEHICLE FIT (nominal specs)</text>`);
+  out.push(`    <text x="0" y="0" class="ph">VEHICLE FOOTPRINTS (nominal)</text>`);
   out.push(`    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vehicle</text><text x="142" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">L × W m</text><text x="170" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>`);
   out.push(`    <line x1="0" y1="20" x2="170" y2="20" stroke="#bbb" stroke-width="0.8"/>`);
   let y = 33;
-  const grp = { carport: "CARPORT 6.35 × 7.05 — two side-by-side", garage: "GARAGE 6.50 × 7.05 (door 5.0 m)" };
-  const verdict = { carport: "✓ both fit; ~0.65 m gaps (fold mirrors)", garage: "✓ car + bike, ~1 m between them" };
+  const grp = Object.fromEntries(Object.entries(study.bays).map(([id,{rect}])=>[id,`${id.toUpperCase()} ${rect.w.toFixed(2)} × ${rect.d.toFixed(2)} m footprint`]));
   for (const bay of ["carport", "garage"]) {
     out.push(`    <text x="0" y="${y}" class="pt" font-weight="700" fill="#333">${esc(grp[bay])}</text>`);
     y += 13;
@@ -226,32 +229,35 @@ function renderDrivewayCheckSVG(garden) {
       out.push(`    <text x="13" y="${y}" class="pt">${esc(sn)}</text><text x="142" y="${y}" class="pt" text-anchor="end">${v.l.toFixed(2)} × ${v.w.toFixed(2)}</text><text x="170" y="${y}" class="pt" text-anchor="end">${v.turn.toFixed(1)}</text>`);
       y += 12;
     }
-    out.push(`    <text x="0" y="${y}" class="ok" font-size="8.5">${esc(verdict[bay])}</text>`);
+    const {gaps,boundaryClearance}=study.bays[bay];
+    out.push(`    <text x="0" y="${y}" class="pt">Body-to-body gaps: ${gaps.map(g=>g.toFixed(2)+' m').join(', ')||'n/a'}</text>`);
+    y += 12;
+    out.push(`    <text x="0" y="${y}" class="pt">Min. body-to-bay edge: ${boundaryClearance.toFixed(2)} m</text>`);
     y += 20;
   }
   out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Door &amp; exit clearance (carport)</text>`);
   y += 12;
   for (const line of [
-    "House door is in the notch → reached via the W",
-    "walkway + notch (clear of the cars): OK.",
-    "E walkway 0.85 m → garage door: OK.",
-    "Between the cars ~1.0 m → inner doors ~0.5 m",
-    "each: tight — get out on the outer side.",
-    "Keep both side strips clear (no parking on them).",
+    'Yellow strips are proposed pedestrian routes.',
+    'Open car doors are illustrative, not collision-tested.',
+    'Body gaps exclude mirrors, users and luggage.',
+    'Garage edge allows for walls and workbench.',
+    'Carport posts are not included in gap figures.',
+    'Confirm door access and walkways on site.',
   ]) { out.push(`    <text x="0" y="${y}" class="pt" fill="#555">${esc(line)}</text>`); y += 12; }
   y += 6;
   out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Access from the gate</text>`);
   y += 12;
-  out.push(`    <text x="0" y="${y}" class="${turn.fits ? "ok" : "bad"}" font-size="8.5">${esc(turn.headline)}</text>`);
+  out.push(`    <text x="0" y="${y}" class="bad" font-size="8.5">${esc(turn.headline)}</text>`);
   y += 13;
   for (const line of turn.lines) { out.push(`    <text x="0" y="${y}" class="pt" fill="#555">${esc(line)}</text>`); y += 12; }
   y += 6;
-  out.push(`    <text x="0" y="${y}" class="pt" fill="#888">Widths exclude mirrors (~+0.25 m). Fold mirrors</text>`);
-  out.push(`    <text x="0" y="${y + 12}" class="pt" fill="#888">for the side-by-side carport pair.</text>`);
+  out.push(`    <text x="0" y="${y}" class="pt" fill="#888">Nominal vehicle specs require confirmation.</text>`);
+  out.push(`    <text x="0" y="${y + 12}" class="pt" fill="#888">Slope and vertical clearances are not assessed.</text>`);
   out.push(`  </g>`);
 
   out.push(`</svg>`);
   return out.join("\n");
 }
 
-module.exports = { renderDrivewayCheckSVG };
+module.exports = { renderDrivewayCheckSVG, drivewayStudy };

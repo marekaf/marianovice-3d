@@ -3,6 +3,8 @@ import {buildRavakFreedomWall} from '../ravak-freedom-model.js';
 import {buildStairFlight} from '../stair-flight-model.js';
 import {attachHouseFlooring} from './house-flooring.js';
 import {buildNightstands} from './nightstand-model.js';
+import {buildCoronaBed} from '../corona-bed-model.js';
+import {buildDressingRoom} from './dressing-model.js';
 import {prepareUtilityJoinery} from './utility-joinery.js';
 import {buildShowerFittings} from './shower-fittings.js';
 
@@ -26,7 +28,7 @@ export function prepareLivingData(data) {
   for(const label of ['kuchyň base run','dřez Blanco PLEON 5','varná deska Siemens']){
     if(!data.furniture.some(f=>f.label.startsWith(label)))throw new Error(`Missing kitchen fixture: ${label}`);
   }
-  return {...data,buildStairs:()=>buildStairFlight(data.stairs),buildFireplace:()=>{
+  return {...data,bedroomBed:data.furniture.find(f=>f.kind==='bed'&&f.room==='1.12'),buildStairs:()=>buildStairFlight(data.stairs),buildFireplace:()=>{
     const model=buildHoxterH60(),f=data.fireplace,cx=(f.x0+f.x1)/2;
     const place=([x,z,y])=>[x+cx,z+f.z1-.65,y+.007];
     const chimney=[
@@ -40,6 +42,8 @@ export function prepareLivingData(data) {
       return part;
     }),...chimney]};
   }, furniture:data.furniture.flatMap(f=>{
+    if(f.kind==='bed'&&f.room==='1.12')return [];
+    if(f.room==='1.11'&&f.kind==='cab')return [];
     if(['1.12','1.04'].includes(f.room)&&f.label.startsWith('noční stolek'))return [];
     if(f.type==='bath'&&f.room==='1.10')return [];
     if(f.room!=='1.06'&&f.room!=='nika')return [f];
@@ -151,6 +155,11 @@ export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagne
   house.furniture.add(group);
   const nightstandModel=buildNightstands(data),nightstands=buildModel(THREE,{...nightstandModel,floorHeight:house.dims.floorY});
   house.furniture.add(nightstands);
+  const bedData=data.furniture.find(f=>f.kind==='bed'&&f.room==='1.12');
+  const bedModel=buildCoronaBed(bedData),bed=buildModel(THREE,{...bedModel,floorHeight:house.dims.floorY});
+  house.furniture.add(bed);
+  const dressingModel=buildDressingRoom(data),dressing=buildModel(THREE,{...dressingModel,floorHeight:house.dims.floorY});
+  house.furniture.add(dressing);
   const showerModel=buildShowerFittings(data),showers=buildModel(THREE,{...showerModel,floorHeight:house.dims.floorY});
   house.furniture.add(showers);
   group.userData.proposal='Sofa and ottoman are a layout study, not selected products; fireplace clearances need verification. Dining table size is provisional: 180 × 90 cm. Six chairs, three per long side, no end chairs. Joinery follows the selected U665/U702 palette; screen colours and surface textures are approximations. Vanity tops provisionally match their fronts. Cathedral ceiling is a section-based provisional volume, not an as-built survey.';

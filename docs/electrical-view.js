@@ -25,7 +25,7 @@ export function attachElectricalView(THREE, buildings, points, container, focus)
   panel.id='electrical';
   const summary=document.createElement('summary');summary.textContent='Sockets and data outlets';panel.append(summary);
   const toggles={};
-  for(const [kind,label] of [['power','Power sockets'],['data','Data outlets'],['coax','Coax outlets']]){
+  for(const [kind,label] of [['power','Power sockets & switches'],['data','Data outlets'],['coax','Coax outlets']]){
     const row=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=true;input.id=`electrical-${kind}`;
     row.append(input,document.createTextNode(` ${label}`));panel.append(row);toggles[kind]=input;input.addEventListener('change',updateVisibility);
   }
@@ -49,7 +49,7 @@ export function attachElectricalView(THREE, buildings, points, container, focus)
       const records=fixture.userData.records;
       const point=points.find(p=>p.id===records[0].id),wall=buildings[building].data?.extWalls?.find(w=>w.id===point.wallId);
       const wallVisible=!wall||buildings[building].house.walls[wall.face]?.visible!==false;
-      fixture.visible=wallVisible&&records.some(r=>toggles[r.kind].checked);
+      fixture.visible=wallVisible&&records.some(r=>toggles[r.kind==='switch'?'power':r.kind].checked);
       for(const mesh of fixture.children)if(mesh.userData.kind)mesh.visible=toggles[mesh.userData.kind==='switch'?'power':mesh.userData.kind].checked;
     }
   }

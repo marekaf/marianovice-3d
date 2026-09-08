@@ -28,6 +28,31 @@ def polygon_distance(points, x, y):
     return 0 if inside else distance
 
 
+def route_sample(route, x, y):
+    samples = []
+    for i in range(1, len(route['points'])):
+        a, b = route['points'][i - 1], route['points'][i]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        t = max(0, min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)))
+        d = math.hypot(x - a[0] - t * dx, y - a[1] - t * dy)
+        samples.append((d, route['levels'][i - 1] + (route['levels'][i] - route['levels'][i - 1]) * t))
+    distance = min(sample[0] for sample in samples)
+    weighted, total = 0, 0
+    for d, value in samples:
+        weight = smoothstep(1 - (d - distance) / .2)/(d*d+1e-12)
+        weighted += value * weight
+        total += weight
+    level = weighted / total
+    if route.get('endCircle'):
+        circle = route['endCircle']
+        d = max(0, math.hypot(x-circle['cx'], y-circle['cz'])-circle['radius'])
+        level = route['levels'][-1]+(level-route['levels'][-1])*smoothstep(d/.6)
+    if route.get('startRect'):
+        d = rect_distance(route['startRect'], x, y)
+        level = route['levels'][0]+(level-route['levels'][0])*smoothstep(d/.6)
+    return distance, level
+
+
 def height(spec, x, y):
     plane = spec["plane"]
     base = survey_height(spec['surveySurface'], x, y) if spec.get('surveySurface') else max(0.0, plane["a"] * x + plane["b"] * y + plane["c"])
@@ -83,26 +108,51 @@ def height(spec, x, y):
         distance = rect_distance(pad, x, y)
         if distance < pad['blend']:
             h = pad['level'] + (h - pad['level']) * smoothstep(distance / pad['blend'])
+    gathering_samples = [(pad, rect_distance(pad, x, y) if 'radius' not in pad else max(0, math.hypot(x-pad['cx'], y-pad['cz'])-pad['radius'])) for pad in spec.get('gatheringPads', [])]
+    core = next((pad for pad, distance in gathering_samples if distance == 0), None)
+    if core is not None:
+        h = core['level']
+    else:
+        total, level, strength = 0, 0, 0
+        for pad, distance in gathering_samples:
+            if distance < pad['blend']:
+                influence = 1-smoothstep(distance/pad['blend'])
+                weight = influence/(distance*distance)
+                total += weight
+                level += pad['level']*weight
+                strength = max(strength, influence)
+        if total:
+            h += (level/total-h)*strength
+    for route in [r for r in spec.get('routeProfiles', []) if r.get('bankApron')]:
+        nearest, level = route_sample(route, x, y)
+        clear = min([rect_distance(p, x, y) for p in spec.get('finishPads', [])+spec.get('protectedPads', [])]+[d for _, d in gathering_samples]+[polygon_distance(spec['houseExcavation']['points'], x, y) if spec.get('houseExcavation') else math.inf])
+        influence = (1-smoothstep(max(0, nearest-route['width']/2)/route['bankApron']['blend']))*smoothstep(clear/route['bankApron']['clearBlend'])
+        h += (level-route.get('bedding', .04)-h)*influence
     for route in spec.get('routeProfiles', []):
-        samples = []
-        for i in range(1, len(route['points'])):
-            a, b = route['points'][i - 1], route['points'][i]
-            dx, dy = b[0] - a[0], b[1] - a[1]
-            t = max(0, min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)))
-            d = math.hypot(x - a[0] - t * dx, y - a[1] - t * dy)
-            samples.append((d, route['levels'][i - 1] + (route['levels'][i] - route['levels'][i - 1]) * t))
-        distance = min(sample[0] for sample in samples)
-        weighted, total = 0, 0
-        for d, value in samples:
-            weight = smoothstep(1 - (d - distance) / .2)
-            weighted += value * weight
-            total += weight
-        level = weighted / total
+        distance, level = route_sample(route, x, y)
         distance = max(0, distance - route['width'] / 2)
-        if distance < .5:
-            h = level - .04 + (h - level + .04) * smoothstep(distance / .5)
+        blend = route.get('bankBlend', .5)
+        if distance < blend:
+            bedding = route.get('bedding', .04)
+            h = level - bedding + (h - level + bedding) * smoothstep(distance / blend)
+    pond_outer = 1.3+(pond.get('northBankOuter', 1.3)-1.3)*max(0, (pond['cz']-y)/(pond['rz']*radius or 1))**16 if continuous and y < pond['cz'] else 1.3
     if continuous and radius <= 1:
         h = min(h, pond['edge'] - pond['depth'] * .5 * (1 + math.cos(radius * math.pi)))
-    elif continuous and radius < 1.3:
-        h = min(h, pond['edge'] + (h - pond['edge']) * smoothstep((radius - 1) / .3))
+    elif continuous and radius < pond_outer:
+        h = min(h, pond['edge'] + (h - pond['edge']) * smoothstep((radius - 1) / (pond_outer-1)))
+    if spec.get('gateRunback'):
+        runback = spec['gateRunback']
+        distance = polygon_distance(runback['points'], x, y)
+        if distance < runback['blend']:
+            h = runback['level']+(h-runback['level'])*smoothstep(distance/runback['blend'])
+    if spec.get('wicketLanding'):
+        landing = spec['wicketLanding']
+        distance = polygon_distance(landing['points'], x, y)
+        if distance < landing['blend'] and polygon_distance(landing['boundary'], x, y) < 1e-9:
+            h = landing['level']+(h-landing['level'])*smoothstep(distance/landing['blend'])
+    if spec.get('benchPad'):
+        pad = spec['benchPad']
+        distance = math.hypot(max(pad['x0']-x, 0, x-pad['x1'])/pad['blend'], max(pad['z0']-y, 0)/pad['blend'], max(y-pad['z1'], 0)/pad['southBlend'])
+        if distance < 1:
+            h = pad['level']+(h-pad['level'])*smoothstep(distance)
     return h

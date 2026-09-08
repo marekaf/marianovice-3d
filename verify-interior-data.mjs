@@ -186,7 +186,7 @@ function verify(data, name, dxfPath) {
   if (data.furniture) {
     const KINDS = { cab: 1, slab: 1, glass: 1, fix: 1, bed: 1 };
     const FIXT = { bath: 1, wc: 1, basin: 1 };
-    const MATS = { wood: 1, front: 1, carc: 1, appliance: 1, ceramic: 1, mirror: 1, plinth: 1, mattress: 1, green: 1, stone: 1 };
+    const MATS = { wood: 1, front: 1, carc: 1, appliance: 1, ceramic: 1, mirror: 1, plinth: 1, mattress: 1, green: 1, stone: 1, whiteBoard: 1 };
     const TAGS = { f: 1, d: 1, a: 1, o: 1 };
     const fid = f => `[${f.label || `${f.kind}@${f.x0},${f.z0}`}] `;
     const topOf = f => (f.y0 ?? 0) + f.h + (typeof f.worktop === 'number' ? f.worktop : (f.worktop?.th ?? 0));

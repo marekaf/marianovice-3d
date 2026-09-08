@@ -1,5 +1,17 @@
 export const ELECTRICAL_POINTS = [
   {
+    id:'1.12-V02',room:'1.12',building:'house',kind:'switch',count:1,
+    orientation:'horizontal',frameId:'1.12-V02',resolved:true,wallId:'W1',
+    position:[6.37,.8,.45],normal:[0,0,1],coordinateSpace:'house-local',
+    resolutionBasis:'520mm from bedroom west inner wall; 800mm above finished floor.'
+  },
+  {
+    id:'1.12-V03',room:'1.12',building:'house',kind:'switch',count:1,
+    orientation:'horizontal',frameId:'1.12-V03',resolved:true,wallId:'W1',
+    position:[8.67,.8,.45],normal:[0,0,1],coordinateSpace:'house-local',
+    resolutionBasis:'2820mm from bedroom west inner wall; 800mm above finished floor.'
+  },
+  {
     "id": "1.06-S02",
     "room": "1.06",
     "building": "house",

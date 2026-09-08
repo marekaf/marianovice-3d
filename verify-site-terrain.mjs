@@ -132,7 +132,7 @@ for(const [x,z] of surveyed.spec.houseExcavation.points)for(const [dx,dz] of [[1
 for(const pad of surveyed.spec.finishPads)for(let ix=0;ix<=4;ix++)for(let iz=0;iz<=4;iz++) {
   const x=pad.x0+(pad.x1-pad.x0)*ix/4,z=pad.z0+(pad.z1-pad.z0)*iz/4;
   const protectedEdge=surveyed.spec.protectedPads.slice(0,1).some(p=>Math.hypot(Math.max(p.x0-x,0,x-p.x1),Math.max(p.z0-z,0,z-p.z1))<p.blend);
-  if(!protectedEdge)assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.04+1e-10,'Finished soil and route bedding must stay below level access surfaces');
+  if(!protectedEdge)assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.04+1e-10,`Finished soil and route bedding must stay below level access surfaces at ${x},${z}: ${surveyed.height(x,z)}`);
   else assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.12+1e-10,'Vehicle pad must stay clear under adjacent terrace edge');
   checks.push([x,z]);
 }
@@ -180,8 +180,51 @@ if(existsSync(new URL('./docs/survey-terrain.js',import.meta.url))) {
   const actual=SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{surveySurface:SurveySurface.create(SURVEY_TERRAIN.points,TERRAIN.plane).data,houseFFL:TERRAIN.houseFFLInternal});
   verifyDriveway(actual);
   for(const vehicle of GARDEN.vehicles)for(const side of [-1,1])for(const axle of [.2,.8])assert.ok(Math.abs(actual.height(vehicle.cx+side*vehicle.w*.4,vehicle.noseZ+vehicle.l*axle)-patches.garage.level)<1e-10);
+  const corridor=actual.spec.gateRunback;
+  let maximumFill=0,maximumCut=0;
+  for(let t=corridor.from;t<=corridor.to;t+=.05)for(const inset of [.05,.18,.75]){
+    const [ux,uz]=corridor.direction,x=corridor.start[0]+ux*t-uz*inset,z=corridor.start[1]+uz*t+ux*inset;
+    assert(Math.abs(actual.height(x,z)-corridor.level)<1e-8,'Measured terrain must stay level under full gate travel');
+    const delta=actual.height(x,z)-actual.baseHeight(x,z);maximumFill=Math.max(maximumFill,delta);maximumCut=Math.max(maximumCut,-delta);
+  }
+  console.log(JSON.stringify({measuredRunback:{maximumFill,maximumCut,finishedLevel:corridor.finishedLevel}}));
   console.log(`Measured driveway gate ground: ${actual.spec.drivewayProfile.gateLevel.toFixed(6)} internal m; carport ground ${patches.garage.level.toFixed(6)} m`);
 }
+assert(surveyed.spec.gateRunback,'Sliding gate needs a level runback strip');
+assert(surveyed.spec.wicketLanding,'Pedestrian gate needs an independent level landing');
+const landing=surveyed.spec.wicketLanding;
+assert.equal(landing.from,4.02);assert.equal(landing.to,5.30);assert.equal(landing.width,1.20);
+assert(Math.abs(landing.finishedLevel-surveyed.spec.gateRunback.finishedLevel)<1e-9);
+const landingPoint=(t,inset)=>[landing.start[0]+landing.direction[0]*t-landing.direction[1]*inset,landing.start[1]+landing.direction[1]*t+landing.direction[0]*inset];
+for(let angle=0;angle<=90;angle++)for(let step=0;step<=20;step++){
+  const a=angle*Math.PI/180,s=.948*step/20,t=5.10-Math.cos(a)*s,inset=Math.sin(a)*s;
+  const p=landingPoint(t,inset);
+  assert(Math.abs(surveyed.height(...p)-landing.level)<1e-8,'Whole wicket sweep must have level subgrade');
+  assert(Math.abs(landing.finishedLevel+.035-(surveyed.height(...p)+.05)-.035)<1e-8,'Wicket must clear finished paving by35mm at every angle');
+  checks.push(p);
+}
+const drivewayEnd=Math.max(...surveyed.spec.drivewayProfile.points.map(p=>(p[0]-landing.start[0])*landing.direction[0]+(p[1]-landing.start[1])*landing.direction[1]));
+assert(landing.from>drivewayEnd,'Wicket landing must stay south of vehicle driveway');
+for(const t of [landing.from,landing.to])for(const inset of [.1,.6,1.2]){
+  const p=landingPoint(t,inset),h=surveyed.height(...p);
+  for(const [dx,dz]of[[1e-7,0],[-1e-7,0],[0,1e-7],[0,-1e-7]])assert(Math.abs(surveyed.height(p[0]+dx,p[1]+dz)-h)<1e-5,'Wicket landing edge must blend continuously');
+}
+const withoutLanding={...surveyed.spec,wicketLanding:undefined};
+for(const t of [6.6,6.8,7])for(const inset of [.1,.6,1.2]){
+  const p=landingPoint(t,inset);
+  assert.equal(surveyed.height(...p),SiteTerrain.height(withoutLanding,...p),'Wicket grading must not alter neighbor ground');
+}
+const runback=surveyed.spec.gateRunback;
+assert(Math.abs(runback.finishedLevel-runback.level-.05)<1e-9,'Runback gravel must meet the 50mm driveway finish');
+let runbackMaxFill=0,runbackMaxCut=0;
+for(let t=runback.from;t<=runback.to;t+=.05)for(const inset of [.05,.18,.75]){
+  const [ux,uz]=runback.direction,x=runback.start[0]+ux*t-uz*inset,z=runback.start[1]+uz*t+ux*inset;
+  assert(Math.abs(surveyed.height(x,z)-runback.level)<1e-8,'Gate runback ground must share the opening datum');
+  assert(Math.abs(runback.finishedLevel+.035-(surveyed.height(x,z)+.05)-.035)<1e-8,'Cantilever runner retains 35 mm clearance over finished gravel throughout travel');
+  const delta=surveyed.height(x,z)-surveyed.baseHeight(x,z);runbackMaxFill=Math.max(runbackMaxFill,delta);runbackMaxCut=Math.max(runbackMaxCut,-delta);
+  checks.push([x,z]);
+}
+console.log(JSON.stringify({gateRunbackWidth:runback.width,runbackMaxFill,runbackMaxCut}));
 const surveyPython=JSON.parse(execFileSync('python3',['-c','import json,sys; from blender.site_terrain import height; d=json.load(sys.stdin); print(json.dumps([height(d["spec"], *p) for p in d["points"]]))'],
   {cwd:new URL('.',import.meta.url),input:JSON.stringify({spec:surveyed.spec,points:checks}),encoding:'utf8',maxBuffer:8*1024*1024}));
 let surveyMaxError=0;

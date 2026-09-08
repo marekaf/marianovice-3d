@@ -1,81 +1,84 @@
-const HiddenBenchModel = (() => {
-  function build(garden,terrainPlane) {
+const HiddenBenchModel=(()=>{
+  function groundPatch(garden,grade){
     const footprint=garden.elements.find(e=>e.id==='zasivarna').parts.find(p=>p.kind==='rect');
-    const {x,y,w,d}=footprint,cx=x+w/2,cy=y+d/2;
-    const graded=(px,py)=>{
-      if(typeof terrainPlane==='function')return terrainPlane(px,py);
-      return Math.max(0,terrainPlane.a*px+terrainPlane.b*py+terrainPlane.c);
-    };
-    const floorHeight=graded(cx,cy),ground=(px,py)=>graded(px,py)-floorHeight,parts=[],feet=[];
-    const materials={
-      paint:{color:footprint.fill,roughness:0.65,grain:'x'},
-      armPaint:{color:footprint.fill,roughness:0.65,grain:'y'},
-      paintEdge:{color:'#cc4939',roughness:0.64,grain:'x'},
-      metal:{color:'#292d2b',roughness:0.46,metalness:0.72},
-      hardware:{color:'#777d77',roughness:0.34,metalness:0.9},
-      cap:{color:'#252926',roughness:0.88},
-    };
-    const box=(name,px,py,pz,width,depth,height,material,bevel=0.003)=>parts.push({name,type:'box',position:[px+width/2,py+depth/2,pz+height/2],size:[width,depth,height],material,bevel,category:'furniture'});
-    const beam=(name,start,end,width,depth,material='metal')=>parts.push({name,type:'beam',start,end,width,depth,material,bevel:0.002,category:'furniture'});
-    const bolt=(name,position,axis='z')=>parts.push({name,type:'cylinder',position,radiusTop:0.006,radiusBottom:0.006,height:0.003,segments:12,axis,material:'hardware',category:'furniture'});
-    const seatHeight=0.45,seatBottom=0.408,frameTop=seatBottom,front=y+0.075,rear=y+d-0.105;
-    const supportXs=[x+0.16,x+w-0.16];
-    const faces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
-    for(const [i,px] of supportXs.entries()) {
-      for(const [j,py] of [front,rear].entries()) {
-        const name=`foot_${i}_${j}`,width=0.12,depth=0.086;
-        const corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>[px+a*width/2,py+b*depth/2]);
-        const top=Math.max(...corners.map(p=>ground(...p)))+0.012;
-        const vertices=[...corners.map(p=>[...p,ground(...p)]),...corners.map(p=>[...p,top])];
-        parts.push({name,type:'mesh',vertices,faces,material:'metal',category:'furniture'});
-        feet.push({name,center:[px,py],width,depth,bottomCorners:vertices.slice(0,4),topHeight:top,leg:`leg_${i}_${j}`});
-        box(`leg_${i}_${j}`,px-0.018,py-0.018,top,0.036,0.036,frameTop-top,'metal');
-        box(`leg_cap_${i}_${j}`,px-0.019,py-0.019,frameTop-0.004,0.038,0.038,0.006,'cap',0.002);
-        for(const [k,offset] of [-0.044,0.044].entries()) bolt(`foot_bolt_${i}_${j}_${k}`,[px+offset,py,top+0.001]);
-        beam(`knee_brace_${i}_${j}`,[px,py,frameTop-0.12],[px,py+(j?-1:1)*0.09,frameTop-0.018],0.022,0.022);
-      }
-      box(`side_rail_${i}`,px-0.02,front-0.018,frameTop-0.038,0.04,rear-front+0.036,0.038,'metal');
-      box(`lower_side_rail_${i}`,px-0.013,front,0.235,0.026,rear-front,0.026,'metal');
-    }
-    for(const [i,py] of [front,rear].entries()) box(`long_rail_${i}`,supportXs[0],py-0.013,frameTop-0.034,supportXs[1]-supportXs[0],0.026,0.03,'metal');
-    box('lower_stretcher',supportXs[0],cy-0.012,0.235,supportXs[1]-supportXs[0],0.024,0.026,'metal');
-    for(let i=0;i<5;i++) {
-      const py=y+0.035+i*0.072;
-      box(`seat_slat_${i}`,x+0.075,py,seatBottom,w-0.15,0.064,seatHeight-seatBottom,'paint',0.005);
-      box(`seat_edge_${i}`,x+0.083,py+0.004,seatHeight-0.0005,w-0.166,0.004,0.001,'paintEdge',0.0002);
-      for(const [j,px] of supportXs.entries()) {
-        bolt(`seat_bolt_${i}_${j}`,[px,py+0.032,seatHeight-0.001]);
-        box(`seat_bolt_slot_${i}_${j}`,px-0.004,py+0.031,seatHeight+0.0004,0.008,0.0015,0.0005,'metal',0);
-      }
-    }
-    const backAt=z=>y+d-0.105+(z-frameTop)*0.12;
-    for(const [i,px] of supportXs.entries()) {
-      beam(`back_stay_${i}`,[px,rear,frameTop-0.1],[px,backAt(0.887),0.887],0.032,0.032);
-      box(`back_cap_${i}`,px-0.017,backAt(0.887)-0.017,0.884,0.034,0.034,0.006,'cap',0.002);
-      for(const [j,z] of [0.39,0.49].entries()) bolt(`back_mount_bolt_${i}_${j}`,[px,backAt(z)-0.017,z],'y');
-    }
-    for(let i=0;i<4;i++) {
-      const z=0.535+i*0.09,py=backAt(z+0.037)-0.037;
-      box(`back_slat_${i}`,x+0.075,py,z,w-0.15,0.027,0.075,'paint',0.005);
-      box(`back_edge_${i}`,x+0.083,py-0.0005,z+0.068,w-0.166,0.001,0.004,'paintEdge',0.0002);
-      for(const [j,px] of supportXs.entries()) {
-        bolt(`back_bolt_${i}_${j}`,[px,py-0.0005,z+0.0375],'y');
-        box(`back_bolt_slot_${i}_${j}`,px-0.004,py-0.0021,z+0.037,0.008,0.0005,0.0015,'metal',0);
-      }
-    }
-    for(const [i,px] of [x+0.047,x+w-0.047].entries()) {
-      const supportX=supportXs[i],armTop=0.66;
-      beam(`arm_front_bracket_${i}`,[supportX,front,frameTop-0.02],[px,front,frameTop-0.02],0.026,0.026);
-      beam(`arm_front_post_${i}`,[px,front,frameTop-0.02],[px,front,armTop-0.025],0.026,0.026);
-      beam(`arm_rear_bracket_${i}`,[supportX,backAt(armTop-0.04),armTop-0.04],[px,backAt(armTop-0.04),armTop-0.04],0.026,0.026);
-      box(`arm_rail_${i}`,px-0.014,front-0.01,armTop-0.044,0.028,backAt(armTop-0.04)-front+0.024,0.026,'metal');
-      box(`arm_pad_${i}`,px-0.026,y+0.047,armTop-0.022,0.052,0.365,0.022,'armPaint',0.009);
-      for(const [j,py] of [front+0.025,rear-0.025].entries()) bolt(`arm_bolt_${i}_${j}`,[px,py,armTop-0.001]);
-      for(const [j,py] of [front,backAt(armTop-0.04)].entries()) box(`arm_cap_${i}_${j}`,px-0.015,py-0.014,armTop-0.045,0.03,0.003,0.029,'cap',0.002);
-    }
-    return {name:'Hidden bench',materials,parts,lights:[],floorHeight,footprint,feet,seatHeight,backHeight:0.9,facing:'N',
-      groundPatches:[],plantingClearances:[{x:x-0.1,y:y-0.1,w:w+0.2,d:d+0.2},{x:x-0.1,y:y-0.7,w:w+0.2,d:0.7}]};
+    const cx=footprint.x+footprint.w/2,cy=footprint.y+footprint.d/2;
+    return {x:cx-1,y:cy-.65,w:2,d:1.3,level:grade(cx,cy),blend:.8,southBlend:.15,surfaceOffset:.02};
   }
-  return {build};
+  function build(garden,terrainPlane){
+    const footprint=garden.elements.find(e=>e.id==='zasivarna').parts.find(p=>p.kind==='rect');
+    const x=footprint.x+(footprint.w-1.28)/2,y=footprint.y+(footprint.d-.70)/2,parts=[],feet=[];
+    const grade=(px,py)=>typeof terrainPlane==='function'?terrainPlane(px,py):Math.max(0,terrainPlane.a*px+terrainPlane.b*py+terrainPlane.c);
+    const pads=[];
+    for(const [i,px]of[.015,1.265].entries())for(const[j,py]of[.025,.685].entries()){
+      const x0=i?1.19:0,y0=j?.61:0;
+      pads.push({i,j,px,py,corners:[[x+x0,y+y0],[x+x0+.09,y+y0],[x+x0+.09,y+y0+.09],[x+x0,y+y0+.09]]});
+    }
+    const patch=groundPatch(garden,grade),floorHeight=patch.level+patch.surfaceOffset;
+    const materials={ironRed:{color:'#783d32',roughness:.52,metalness:.3},glider:{color:'#282321',roughness:.9},mineral:{color:'#a6a39a',roughness:1}};
+    function mesh(name,vertices,faces,material='ironRed',smooth=false){
+      let volume=0;const origin=vertices[0];
+      for(const face of faces)for(let i=1;i<face.length-1;i++){
+        const[a,b,c]=[face[0],face[i],face[i+1]].map(j=>vertices[j].map((v,k)=>v-origin[k]));
+        volume+=a[0]*(b[1]*c[2]-b[2]*c[1])+a[1]*(b[2]*c[0]-b[0]*c[2])+a[2]*(b[0]*c[1]-b[1]*c[0]);
+      }
+      parts.push({name,type:'mesh',vertices,faces:volume<0?faces.map(f=>[...f].reverse()):faces,material,smooth,category:'furniture'});
+    }
+    const point=([px,py,pz])=>[x+px,y+py,pz];
+    function tube(name,path,radius=.013,material='ironRed'){
+      const vertices=[],faces=[],sides=12;
+      for(let i=0;i<path.length;i++){
+        const a=path[Math.max(0,i-1)],b=path[Math.min(path.length-1,i+1)],d=b.map((v,k)=>v-a[k]),length=Math.hypot(...d),t=d.map(v=>v/length);
+        const reference=Math.abs(t[0])<.9?[1,0,0]:[0,1,0];
+        const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+        const raw=cross(t,reference),n=raw.map(v=>v/Math.hypot(...raw)),q=cross(t,n);
+        for(let j=0;j<sides;j++){
+          const angle=j*Math.PI*2/sides;
+          vertices.push(point(path[i].map((v,k)=>v+radius*(Math.cos(angle)*n[k]+Math.sin(angle)*q[k]))));
+          if(i)faces.push([(i-1)*sides+j,(i-1)*sides+(j+1)%sides,i*sides+(j+1)%sides,i*sides+j]);
+        }
+      }
+      faces.push(Array.from({length:sides},(_,i)=>sides-1-i),Array.from({length:sides},(_,i)=>(path.length-1)*sides+i));
+      mesh(name,vertices,faces,material,true);
+    }
+    const bezier=(a,b,c,d,steps=12)=>Array.from({length:steps+1},(_,i)=>{const t=i/steps,s=1-t;return a.map((v,k)=>s*s*s*v+3*s*s*t*b[k]+3*s*t*t*c[k]+t*t*t*d[k]);});
+    const profile=[
+      ...bezier([.068,.359],[.002,.366],[.002,.446],[.072,.446]),
+      ...bezier([.072,.446],[.18,.446],[.33,.417],[.39,.438]).slice(1),
+      ...bezier([.39,.438],[.495,.464],[.505,.720],[.603,.780]).slice(1),
+      ...bezier([.603,.780],[.615,.788],[.640,.787],[.667,.787]).slice(1),
+    ];
+    for(let rib=0;rib<23;rib++){
+      const center=.084+rib*(1.112/22),polygon=[];
+      for(const sign of [-1,1]){
+        const edge=profile.map((p,i)=>{const a=profile[Math.max(0,i-1)],b=profile[Math.min(profile.length-1,i+1)],d=b.map((v,k)=>v-a[k]),length=Math.hypot(...d);return[p[0]-sign*d[1]/length*.0025,p[1]+sign*d[0]/length*.0025];});
+        polygon.push(...(sign===-1?edge:edge.reverse()));
+      }
+      const vertices=[...polygon.map(([py,pz])=>point([center-.013,py,pz])),...polygon.map(([py,pz])=>point([center+.013,py,pz]))],n=polygon.length;
+      const faces=[];
+      for(let i=0;i<profile.length-1;i++)faces.push([i,i+1,n-2-i,n-1-i],[n+i,n+i+1,2*n-2-i,2*n-1-i]);
+      for(let i=0;i<n;i++)faces.push([i,(i+1)%n,(i+1)%n+n,i+n]);
+      mesh(`formed_rib_${rib}`,vertices,faces);
+    }
+    for(const [i,px]of[.015,1.265].entries()){
+      tube(`front_leg_arm_${i}`,[[px,.025,.008],[px,.025,.615],...bezier([px,.025,.615],[px,.025,.659],[px,.050,.675],[px,.095,.675]),[px,.667,.675]]);
+      tube(`rear_leg_${i}`,[[px,.685,.008],[px,.667,.735],...bezier([px,.667,.735],[px,.667,.780],[px,.667,.787],[i?1.125:.125,.667,.787])]);
+      tube(`side_seat_rail_${i}`,[[px,.025,.350],[px,.677,.350]],.012);
+    }
+    tube('back_top_rail',[[.125,.667,.787],[1.125,.667,.787]],.013);
+    tube('seat_front_rail',[[.015,.068,.357],[1.265,.068,.357]],.012);
+    tube('lower_rear_rail',[[.015,.677,.350],[1.265,.677,.350]],.012);
+    for(const p of pads){
+      tube(`glider_${p.i}_${p.j}`,[[p.px,p.py,0],[p.px,p.py,.012]],.015,'glider');
+      feet.push({name:`foot_${p.i}_${p.j}`,center:[x+p.px,y+p.py],bottomCorners:p.corners.map(c=>[...c,-patch.surfaceOffset]),topHeight:0});
+    }
+    const corners=[[patch.x,patch.y],[patch.x+patch.w,patch.y],[patch.x+patch.w,patch.y+patch.d],[patch.x,patch.y+patch.d]];
+    mesh('bench_mineral_pad',[...corners.map(c=>[...c,-patch.surfaceOffset]),...corners.map(c=>[...c,0])],[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]],'mineral');
+    parts.at(-1).category='ground';
+    return{name:'Palissade dining bench',product:'HAY Palissade Dining Bench',materials,parts,lights:[],floorHeight,footprint,feet,seatHeight:.45,backHeight:.80,facing:'N',
+      dimensions:{width:1.28,depth:.70,height:.80,seatHeight:.45},groundPatch:patch,groundPatches:[patch],
+      notes:['Iron-red powder-coated steel, 128×70×80 cm and 45 cm seat height. Curved steel ribs and tubular frame follow the product reference; rib spacing and tube gauges are visual approximations. The level mineral pad and grading are a landscape proposal.'],
+      plantingClearances:[patch,{x:x-.1,y:y-.7,w:1.48,d:.7}]};
+  }
+  return{build,groundPatch};
 })();
-if(typeof module!=='undefined') module.exports={HiddenBenchModel};
+if(typeof module!=='undefined')module.exports={HiddenBenchModel};

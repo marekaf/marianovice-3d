@@ -124,4 +124,27 @@ for (const x of [door.from, door.from + door.w]) for (const y of [footprint.y - 
   assert.ok(model.plantingClearances.some(rect => contains(rect, x, y)), 'Entrance must exclude external planting');
 }
 near(model.groundPatch.level, model.floorHeight - 0.04);
+for(const [w,d] of [[2,3],[2.6,3.6]]){
+  const garden=structuredClone(GARDEN),rect=garden.elements.find(e=>e.id==='greenhouse').parts.find(p=>p.kind==='rect');
+  Object.assign(rect,{x:2.2,y:12.5,w,d});
+  const resized=GreenhouseModel.build(garden,TERRAIN.plane),byName=new Map(resized.parts.map(p=>[p.name,p]));
+  near(resized.openings[0].w,.9,'Resizing must preserve the 900 mm entrance');
+  const tops=resized.parts.filter(p=>p.name.startsWith('bench_top_')).map(bounds);
+  const bench={min:[Math.min(...tops.map(p=>p.min[0])),Math.min(...tops.map(p=>p.min[1]))],max:[Math.max(...tops.map(p=>p.max[0])),Math.max(...tops.map(p=>p.max[1]))]};
+  assert(bench.min[0]-(rect.x+.12)>=1.1,'Keep a usable aisle beside the potting bench');
+  for(const tray of resized.parts.filter(p=>/^tray_\d+_bottom$/.test(p.name))){
+    const b=bounds(tray);
+    for(const axis of [0,1])assert(b.min[axis]>=bench.min[axis]&&b.max[axis]<=bench.max[axis],`${w}×${d}: ${tray.name} must stay on the bench`);
+  }
+  const shelfBounds=bounds(byName.get('bench_shelf'));
+  for(const pot of resized.parts.filter(p=>/^pot_\d+$/.test(p.name))){
+    const radius=Math.max(...pot.profile.map(p=>p[0]));
+    for(const axis of [0,1])assert(pot.position[axis]-radius>=shelfBounds.min[axis]&&pot.position[axis]+radius<=shelfBounds.max[axis],`${w}×${d}: ${pot.name} must stay on the shelf`);
+  }
+  assert(!byName.has('roof_glass_east_2'),'Roof vent must retain its opening when resized');
+  for(const p of resized.parts){
+    assert([...p.position??[],...p.size??[],...p.vertices?.flat()??[],...p.start??[],...p.end??[]].every(Number.isFinite),p.name);
+    if(p.size)assert(p.size.every(n=>n>0),p.name);
+  }
+}
 console.log(`Greenhouse: ${model.parts.length} parts; hollow walls, doorway, bench supports, vent and planting clearance pass`);

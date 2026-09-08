@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 const require=createRequire(import.meta.url);
 const { SurveySurface }=require('./survey-surface.js');
@@ -62,6 +63,9 @@ function verify(surface) {
 console.log('Synthetic survey',verify(planar));
 const irregular=Array.from({length:49},(_,i)=>{const x=i%7*3+Math.sin(i)*.14,z=Math.floor(i/7)*3+Math.cos(i)*.13;return [x,z,3+Math.sin(x*.2)+Math.cos(z*.3)];});
 console.log('Irregular survey',verify(SurveySurface.create(irregular,fallback)));
-const {SURVEY_TERRAIN}=require('./docs/survey-terrain.js');
-const {TERRAIN}=require('./terrain.js');
-console.log('Measured survey',verify(SurveySurface.create(SURVEY_TERRAIN.points,TERRAIN.plane)));
+const privatePath=new URL('./docs/survey-terrain.js',import.meta.url);
+if(existsSync(privatePath)) {
+  const {SURVEY_TERRAIN}=require('./docs/survey-terrain.js');
+  const {TERRAIN}=require('./terrain.js');
+  console.log('Private measured survey',verify(SurveySurface.create(SURVEY_TERRAIN.points,TERRAIN.plane)));
+}

@@ -17,6 +17,9 @@ const bounds = part => part.vertices
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
 assert.deepEqual(model, GarageModel.build(GARDEN, floorHeight));
 assert.equal(model.categoryVisibility.gateOpen, false);
+assert.equal(model.materials.gateLightGrey.color,'#c6c9c7');
+assert.match(model.gateFinish.note,/approximate/);
+assert.equal(parts.get('personnel_leaf').material,'charcoal');
 assert.deepEqual(model.groundPatch, GarageModel.groundPatch(GARDEN, floorHeight));
 near(model.floorHeight - model.groundPatch.level, 0.04);
 for (const height of [-0.5, 0, floorHeight]) {
@@ -47,7 +50,11 @@ const gate = element.meta.openings.find(o => o.kind === 'gate');
 for (const state of ['gateClosed', 'gateOpen']) {
   const panels = model.parts.filter(p => p.name.startsWith(`${state}_panel_`));
   assert.equal(panels.length, 5);
+  const skins=model.parts.filter(p=>p.name.startsWith(`${state}_interior_skin_`));
+  assert.equal(skins.length,5);
+  assert(skins.every(p=>p.material==='gateInteriorWhite'));
   for (const panel of panels) {
+    assert.equal(panel.material,'gateLightGrey');
     const b = bounds(panel);
     assert.ok(b[0][0] >= gate.from && b[0][1] <= gate.from + gate.w);
     if (state === 'gateClosed') assert.ok(b[2][0] >= 0 && b[2][1] <= gate.h);
