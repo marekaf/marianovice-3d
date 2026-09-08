@@ -10,6 +10,12 @@ This is a visualization, not a construction drawing or clearance approval. Some 
 
 The pale-oak flooring uses an original procedural texture. It is an illustrative approximation, not an exact product photograph or colour sample.
 
+## Verification
+
+Run `yarn verify` with Node.js 22 and Yarn 1.22.18, or run `corepack enable` to use the pinned Yarn version. No dependency installation is needed.
+
+This runs the same checks as CI and regenerates the three SVG drawings. It fails if any check fails or Git reports changed, staged, or untracked SVGs. Review and commit intentional drawing updates before rerunning.
+
 ## Contents
 
 - [`layout.js`](layout.js) — single source of truth for the garden layout (all coordinates in meters); consumed by the 3D viewer, the 2D editor and the SVG generator

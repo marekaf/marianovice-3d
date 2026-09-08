@@ -1,0 +1,59 @@
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+
+const cwd=fileURLToPath(new URL('../',import.meta.url));
+function run(command,args,stdio='inherit') {
+  const result=spawnSync(command,args,{cwd,stdio,encoding:'utf8'});
+  if(result.error)throw result.error;
+  if(result.status!==0)process.exit(result.status??1);
+  return result.stdout;
+}
+
+const checks=[
+  'validate-layout.js',
+  'verify-exterior.mjs',
+  'verify-sauna.mjs',
+  'verify-pergola.mjs',
+  'verify-garage.mjs',
+  'verify-fixtures.mjs',
+  'verify-public-runtime.mjs',
+  'verify-interior-data.mjs house-interior.js',
+  'verify-hoxter-stove.mjs',
+  'verify-ravak-freedom.mjs',
+  'verify-stair-flight.mjs',
+  'verify-kitchen-fronts.mjs',
+  'verify-cabinet-finishes.mjs',
+  'verify-window-seat-handles.mjs',
+  'verify-bathroom-fixtures.mjs',
+  'docs/verify-utility-joinery.mjs',
+  'docs/verify-kitchen-spec.mjs',
+  'docs/verify-shower-fittings.mjs',
+  'docs/verify-utility-rack-placement.mjs',
+  'docs/verify-entrance-threshold.mjs',
+  'docs/verify-eye-level-walkthrough.mjs',
+  'docs/verify-electrical-model.mjs',
+  'docs/verify-electrical-points.mjs',
+  'verify-greenhouse.mjs',
+  'verify-raised-beds.mjs',
+  'verify-firepit.mjs',
+  'verify-hidden-bench.mjs',
+  'verify-site-terrain.mjs',
+  'generate-svg.js',
+  'generate-flat-plan.js',
+  'generate-driveway-check.js',
+];
+
+for(const check of checks){
+  console.log(`\n> ${check}`);
+  run(process.execPath,check.split(' '));
+}
+
+// Porcelain also catches staged changes and regenerated files deleted from Git.
+const changed=run('git',['status','--porcelain','--','*.svg'],'pipe');
+if(changed){
+  console.error('Generated SVGs are stale or missing. Review and commit the regenerated drawings.');
+  console.error(changed.trimEnd());
+  run('git',['--no-pager','diff','--stat','--','*.svg']);
+  process.exit(1);
+}
+console.log('\nAll verification checks passed.');
