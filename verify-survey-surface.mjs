@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { existsSync, readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { runPythonJson } from './scripts/python-json.mjs';
 const require=createRequire(import.meta.url);
 const { SurveySurface }=require('./survey-surface.js');
 const fallback={a:.01,b:-.02,c:3};
@@ -53,8 +53,8 @@ function verify(surface) {
       assert.ok(Math.abs(surface.height(x,z)-nearby)<1e-5,'No jump where nearest hull edge changes near a corner');
     }
   }
-  const python=JSON.parse(execFileSync('python3',['-c','import json,sys; from blender.survey_surface import height; d=json.load(sys.stdin); print(json.dumps([height(d["data"], *p) for p in d["points"]]))'],
-    {cwd:new URL('.',import.meta.url),input:JSON.stringify({data,points:parityPoints}),encoding:'utf8',maxBuffer:8*1024*1024}));
+  const python=runPythonJson('import json,sys; from blender.survey_surface import height; d=json.load(sys.stdin); print(json.dumps([height(d["data"], *p) for p in d["points"]]))',
+    {data,points:parityPoints},{cwd:new URL('.',import.meta.url)});
   assert.equal(python.length,parityPoints.length);
   let maxError=0;
   parityPoints.forEach(([x,z],i)=>{const error=Math.abs(surface.height(x,z)-python[i]);maxError=Math.max(maxError,error);assert.ok(error<1e-9,`Python sampler differs by ${error} m`);});

@@ -49,6 +49,7 @@ const checks=[
   'verify-firepit.mjs',
   'verify-hidden-bench.mjs',
   'verify-site-terrain.mjs',
+  'verify-python-json.mjs',
   'generate-svg.js',
   'generate-driveway-check.js',
 ];
