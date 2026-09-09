@@ -241,13 +241,28 @@ const SiteTerrain = (() => {
         finishedLevel:spec.gateRunback.finishedLevel,boundary:garden.plot.vertices.map(p=>p.slice()),
         points:[gatePoint(4.02,0),gatePoint(5.30,0),gatePoint(5.30,1.20),gatePoint(4.02,1.20)]};
       addBenchPad();
+      const productivePads=[
+        {...patchRect(groundPatches.raisedBeds),finish:groundPatches.raisedBeds.level+.06},
+        {...patchRect(groundPatches.greenhouse),finish:groundPatches.greenhouse.level+.04}];
       const routeHeight=(x,z)=>{
         const pads=[...spec.finishPads.map(p=>({...p,finish:options.houseFFL})),
-          {...patchRect(gathering),finish:gathering.level+.1},
-          {...patchRect(groundPatches.raisedBeds),finish:groundPatches.raisedBeds.level+.06},
-          {...patchRect(groundPatches.greenhouse),finish:groundPatches.greenhouse.level+.04}];
+          {...patchRect(gathering),finish:gathering.level+.1}];
         let result=height(spec,x,z)+.02;
         for(const p of pads){const d=rectDistance(p,x,z);if(d<.6)result=p.finish+(result-p.finish)*smoothstep(d/.6);}
+        const productive=productivePads.map(p=>({p,d:rectDistance(p,x,z)})).filter(s=>s.d<.6);
+        if(productive.length===1){const {p,d}=productive[0];result=p.finish+(result-p.finish)*smoothstep(d/.6);}
+        else if(productive.length>1){
+          const core=productive.find(s=>s.d===0);
+          if(core)result=core.p.finish;
+          else {
+            let total=0,finish=0,strength=0;
+            for(const {p,d}of productive){
+              const influence=1-smoothstep(d/.6),weight=influence/(d*d);
+              total+=weight;finish+=p.finish*weight;strength=Math.max(strength,influence);
+            }
+            result+=(finish/total-result)*strength;
+          }
+        }
         for(const route of spec.routeProfiles){const sample=routeSample(route,x,z),d=Math.max(0,sample.distance-route.width/2-.02);if(d<.5)result=sample.level+(result-sample.level)*smoothstep(d/.5);}
         return result;
       };
