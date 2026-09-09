@@ -74,22 +74,24 @@ const FurnitureModel = (() => {
         }
         box(`${prefix}_bottom`, x, y, base, w, d, panel, carc);
         cutSlab(`${prefix}_top`, x, y, z + h - panel, w, d, panel, carc, f.worktop?.cutouts, 0.003);
-        const section = (name, at, thickness, material = carc) => alongX
-          ? box(name, at, y, base + panel, thickness, d, bodyH - 2 * panel, material)
-          : box(name, x, at, base + panel, w, thickness, bodyH - 2 * panel, material);
+        const section = (name, at, thickness, material = carc, divider = false) => {
+          const inset = divider && f.drawerRows ? .04 : 0;
+          if (alongX) box(name, at, y + (fronts.includes('N') ? inset : 0), base + panel, thickness, d-inset, bodyH-2*panel, material);
+          else box(name, x + (fronts.includes('W') ? inset : 0), at, base + panel, w-inset, thickness, bodyH-2*panel, material);
+        };
         section(`${prefix}_side_0`, alongX ? x : y, panel);
         section(`${prefix}_side_1`, (alongX ? x + w : y + d) - panel, panel);
         const runStart = alongX ? x : y;
         let cursor = runStart;
         for (const [i, width] of modules.entries()) {
           const next = cursor + width;
-          if (i < modules.length - 1) section(`${prefix}_divider_${i}`, next - panel / 2, panel, interior);
+          if (i < modules.length - 1) section(`${prefix}_divider_${i}`, next - panel / 2, panel, interior, true);
           const left = cursor + (i === 0 ? panel : panel / 2), right = next - (i === modules.length - 1 ? panel : panel / 2);
           const tag = tags[i];
           if (tag === 'f') {
             if (alongX) box(`${prefix}_filler_${i}`, left, y, base + panel, right - left, d, bodyH - 2 * panel, carc);
             else box(`${prefix}_filler_${i}`, x, left, base + panel, w, right - left, bodyH - 2 * panel, carc);
-          } else if (tag !== 's' && !(tag === 'a' && f.appliances?.[i] === 'oven')) {
+          } else if (!f.drawerRows && tag !== 's' && !(tag === 'a' && f.appliances?.[i] === 'oven')) {
             const shelfCount = Math.max(1, Math.floor(bodyH / 0.5));
             for (let j = 0; j < shelfCount; j++) {
               const shelfZ = base + (j + 1) * bodyH / (shelfCount + 1);
@@ -121,6 +123,39 @@ const FurnitureModel = (() => {
           }
         }
         for (const face of fronts) {
+          if (f.drawerRows && f.handle === 'gola-c') {
+            const across = face === 'N' || face === 'S';
+            const outward = face === 'N' || face === 'W' ? -1 : 1;
+            const edge = face === 'N' ? y : face === 'S' ? y+d : face === 'W' ? x : x+w;
+            const faceBox = (name, at, span, heightAt, height, depthAt, depth, material) => box(name,
+              across ? at : depthAt, across ? depthAt : at, heightAt,
+              across ? span : depth, across ? depth : span, height, material, .001);
+            // Channel clearance and metal thickness illustrate the recessed section, not a fabrication specification.
+            const gap=.04, metal=.002, channelDepth=.03;
+            let heightAt=base;
+            for (const [row,rowHeight] of f.drawerRows.entries()) {
+              let at=runStart;
+              const bottomGap=row ? gap/2 : .005;
+              const topGap=row<f.drawerRows.length-1 ? gap/2 : .005;
+              for (const [column,width] of modules.entries()) {
+                faceBox(`${prefix}_front_${face}_${column}_${row}`,at+.005,width-.01,
+                  heightAt+bottomGap,rowHeight-bottomGap-topGap,edge+(outward<0?-.012:-.006),.018,frontMat);
+                if (interior !== carc) faceBox(`${prefix}_inner_front_${face}_${column}_${row}`,at+.005,width-.01,
+                  heightAt+bottomGap,rowHeight-bottomGap-topGap,edge+(outward<0?.006:-.0065),.0005,interior);
+                at+=width;
+              }
+              heightAt+=rowHeight;
+              if (row<f.drawerRows.length-1) {
+                const endInset=panel+(interior!==carc?.0005:0);
+                const span=(across?w:d)-2*endInset, depthAt=outward<0?edge+.006:edge-.006-channelDepth;
+                const backAt=outward<0?depthAt+channelDepth-metal:depthAt;
+                faceBox(`${prefix}_golaC_${face}_${row}_back`,runStart+endInset,span,heightAt-gap/2,gap,backAt,metal,'whiteBoard');
+                for (const [name,level] of [['bottom',heightAt-gap/2],['top',heightAt+gap/2-metal]])
+                  faceBox(`${prefix}_golaC_${face}_${row}_${name}`,runStart+endInset,span,level,metal,depthAt,channelDepth,'whiteBoard');
+              }
+            }
+            continue;
+          }
           const golaGap = f.handle === 'gola' ? Math.min(0.04, bodyH * 0.12) : 0;
           const bottomGrip = f.golaEdge === 'bottom';
           if (golaGap) {
