@@ -20,6 +20,7 @@ const checks=[
   'verify-house-roof.mjs',
   'verify-house-wall-backing.mjs',
   'verify-house-wall-layers.mjs',
+  'verify-nightstands.mjs',
   'verify-fixtures.mjs',
   'verify-public-runtime.mjs',
   'verify-interior-data.mjs house-interior.js',

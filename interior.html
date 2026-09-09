@@ -108,7 +108,7 @@
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=7a1a0df35192"></script>
 <script src="vehicle-model.js"></script>
-<script src="house-interior.js?v=475c121d387d"></script>
+<script src="house-interior.js?v=3d7c3de9174c"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -172,7 +172,7 @@ if (hasHouse) {
     document.getElementById('fitoutStatus').textContent = `Office fit-out unavailable: ${error.message}`;
   }
   try {
-    livingIntegration = await import('./docs/living-interior.js?v=eac030111e30');
+    livingIntegration = await import('./docs/living-interior.js?v=547023f987ee');
     const {createBathroomFinishes}=await import('./docs/bathroom-finishes.js');
     bathroomFinishes=createBathroomFinishes(THREE,HOUSE_INTERIOR);
     utilityIntegration=await import('./docs/utility-equipment.js');
