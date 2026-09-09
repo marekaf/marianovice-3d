@@ -178,11 +178,12 @@ for (const [key, spec] of Object.entries(HOUSE_OPENINGS)) {
 
 HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false, specification = null } = {}) {
   const internalDoors = { 'W12:0':'D09', 'W13:0':'D11', 'W14:0':'D10', 'W15:0':'D08', 'W21:0':'D07',
-    'W27:0':'D03', 'W27:1':'D02', 'W27:2':'D01', 'P10:0':'loft-D01' };
+    'W24:0':'D05', 'W27:0':'D03', 'W27:1':'D02', 'W27:2':'D01', 'P10:0':'loft-D01' };
   const key = `${wall.id}:${index}`, doorId = internalDoors[key];
   const fallback = doorId ? { kind:'door', doorId, width:opening.w, height:opening.h,
     leafWidth:opening.w-.1, leafHeight:opening.h-.1,
     hinge:wall.b[0]-wall.a[0]>wall.b[1]-wall.a[1]?'west':'north',
+    pocket:['W15:0','W24:0'].includes(key),pocketDirection:key==='W15:0'?-1:1,
     provisional:true, bottomGap:key==='W27:2'?.002:.01, acousticThreshold:key==='W27:2',
     doorModel:key==='W27:2'?'Superior M10':'Elegant Komfort M10' } : null;
   const spec = specification||HOUSE_OPENINGS[key]||fallback;
@@ -288,6 +289,10 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     if (spec.acousticThreshold) rail('drop_seal', leafStart+.004, leafEnd-.004, 0, bottom, 'seal', .035, depth, true);
     const hinge = hingeAtStart ? leafStart : leafEnd;
     doorMotion={pivot:alongX?[hinge,0,depth]:[depth,0,hinge],angle:(alongX?1:-1)*(hingeAtStart?1:-1)*Math.PI/2,movingParts};
+    if(spec.pocket){
+      const travel=spec.pocketDirection*(spec.width-doorEdge);
+      doorMotion={kind:'slide',pivot:[0,0,0],offset:alongX?[travel,0,0]:[0,0,travel],movingParts};
+    }
     if (entrance) for (const [j, y] of [0.2, 1.05, 1.94].entries())
       addBox(`door_hinge_${j}`, depth - 0.025, hinge, y, 0.023, 0.025, 0.075, 'metal');
     if (!entrance) {
@@ -296,9 +301,13 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
       rail('edge_top', leafStart + 0.003, leafEnd - 0.003, leafHeight + bottom-.003, leafHeight + bottom, 'frame', 0.043, depth, true);
       rail('edge_bottom', leafStart + 0.003, leafEnd - 0.003, bottom, bottom+.003, 'frame', 0.043, depth, true);
     }
-    const latch = hingeAtStart ? leafEnd - 0.055 : leafStart + 0.055;
+    const latch = (spec.pocket?spec.pocketDirection<0:hingeAtStart) ? leafEnd - 0.055 : leafStart + 0.055;
     for (const side of [-1, 1]) {
       const surface = entrance ? 0.044 : 0.027;
+      if(spec.pocket){
+        addBox(`flush_pull_${side}`,depth+side*.021,latch,1.03,.001,.04,.10,'metal',true);
+        continue;
+      }
       if (entrance && side === 1) {
         for (const [j, y] of [0.89, 1.39].entries())
           addBox(`pull_mount_${j}`, depth + surface + 0.025, latch, y, 0.06, 0.025, 0.025, 'metal', true);
@@ -315,7 +324,7 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
   return { name: prefix, floorHeight: 0, materials, parts, lights: [], ...(doorMotion?{doorMotion}:{}),
     opening: { ...spec, x: alongX?center:depth, z: alongX?depth:center, axis:alongX?'x':'z', center, sill, leafWidth, leafHeight, doorOpen: spec.kind !== 'window' && doorOpen,
       notes: ['Frame profiles and hardware dimensions are visualization approximations.',
-        ...(spec.provisional ? ['Measured wall openings are preserved. Leaf size, hinge hand and hinged versus pocket assignment await the door schedule; the displayed leaf and optional swing are visualization assumptions, not a fabrication specification.'] : []),
+        ...(spec.provisional ? [spec.pocket?'Pocket-door operation is confirmed; leaf and frame dimensions remain provisional within the measured opening, not a fabrication specification.':'Measured wall openings are preserved. Leaf size, hinge hand and hinged versus pocket assignment await the door schedule; the displayed leaf and optional swing are visualization assumptions, not a fabrication specification.'] : []),
         ...(spec.kind === 'window' ? ['Pane divisions are approximate proportions read from the interior-view supplier drawings.'] : []),
         ...(spec.kind === 'entrance' ? ['Sidelight division is approximately 28%; its exact width is not dimensioned.'] : [])] } };
 };

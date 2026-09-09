@@ -194,12 +194,12 @@ import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 import { createWalkInteriorLoader } from './walk-interior-loading.js';
 import { createHouseChimney } from './house-chimney.js';
 import { moveWalker } from './walk-movement.js';
-import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=aace74e64910';
+import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=60ccca69a4cf';
 
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=12a8e8491ad1';
+  script.src = './house-interior.js?v=b1b1e91e5be5';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
@@ -2346,8 +2346,8 @@ function updateDoorPrompt(){
   doorPrompt.hidden=!group;
   if(group){
     const door=group.userData.walkDoor;
-    const label=door.opening.sliding?'sliding portal':'door';
-    doorPrompt.textContent=group===blockedDoor&&performance.now()<blockedDoorUntil?'Step clear of the door before moving it':`E · ${door.open?'Close':'Open'} ${label}${door.opening.provisional?' · provisional swing':''}`;
+    const label=door.opening.pocket?'pocket door':door.opening.sliding?'sliding portal':'door';
+    doorPrompt.textContent=group===blockedDoor&&performance.now()<blockedDoorUntil?'Step clear of the door before moving it':`E · ${door.open?'Close':'Open'} ${label}${door.opening.provisional?(door.opening.pocket?' · provisional dimensions':' · provisional swing'):''}`;
   }
 }
 document.addEventListener('keydown',event=>{

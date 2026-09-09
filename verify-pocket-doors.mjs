@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import * as THREE from 'three';
+import {buildModel} from './model3d.js';
+import {buildWalkingDoor,createWalkDoors} from './walk-doors.js';
+const {HOUSE_INTERIOR:data}=createRequire(import.meta.url)('./house-interior.js');
+globalThis.document={createElement(){return{getContext(){return{createImageData(w,h){return{data:new Uint8ClampedArray(w*h*4)};},putImageData(){}};}};}};
+for(const [id,sign,approach]of [['W15',-1,1],['W24',1,-1]]){
+  const wall=data.intWalls.find(w=>w.id===id),opening=wall.openings[0];
+  assert.deepEqual([wall.a,wall.b,opening.at,opening.w,opening.h],id==='W15'?[[3.4,3.45],[5.7,3.55],1.35,.9,2.1]:[[4.7,12.8],[5.7,13.05],0,1,2.2]);
+  const model=data.buildOpening(wall,opening,0);
+  assert(model?.opening.pocket,`${id}: hallway passage is a pocket door`);
+  assert.equal(model.doorMotion.kind,'slide');
+  assert.equal(Math.sign(model.doorMotion.offset[0]),sign);
+  assert(!model.parts.some(p=>/lever|hinge|keyhole/.test(p.name)),'Pocket doors use flush pulls, not hinged hardware');
+  assert(model.parts.some(p=>p.name.includes('flush_pull')));
+  const leaf=model.parts.find(p=>p.name===`${model.name}_leaf`),pulls=model.parts.filter(p=>p.name.includes('flush_pull'));
+  const pullX=leaf.position[0]+(sign<0?1:-1)*(leaf.size[0]/2-.055);
+  assert(pulls.every(p=>Math.abs(p.position[0]-pullX)<1e-9),'Flush pulls stay on the trailing edge of the sliding leaf');
+  const group=buildWalkingDoor(THREE,model,buildModel);group.position.set(data.originPlot.x,2.465,data.originPlot.z);
+  group.updateWorldMatrix(true,true);
+  const controller=createWalkDoors(THREE,{data,doors:[group],floorY:2.465});
+  const panel=group.userData.walkDoor.panel,p=panel.position;
+  const center=group.localToWorld(new THREE.Vector3(p[0],1.7,p[1]));
+  const camera=new THREE.PerspectiveCamera();camera.position.copy(center);camera.position.z+=approach*1.2;
+  camera.lookAt(center);camera.updateMatrixWorld(true);
+  assert.equal(controller.aimedDoor(camera),group);
+  const fixed=new THREE.Box3().setFromObject(group.userData.categories.openings);
+  assert(!controller.canStandAt(center.x,center.z));
+  assert(controller.toggle(group,camera));
+  assert.equal(group.userData.walkDoor.pivot.rotation.y,0);
+  assert.deepEqual(new THREE.Box3().setFromObject(group.userData.categories.openings),fixed);
+  assert(controller.canStandAt(center.x,center.z),'The pocket clears the passage');
+  assert.equal(controller.aimedDoor(camera),group,'The open doorway remains an E target after the leaf disappears into its pocket');
+  camera.position.z=center.z+approach*2.4;camera.lookAt(center);camera.updateMatrixWorld(true);
+  assert.equal(controller.aimedDoor(camera),null,'The hidden-leaf target preserves the two-metre interaction range');
+  camera.position.z=center.z-approach*.8;camera.lookAt(center);camera.updateMatrixWorld(true);
+  assert(controller.aimedDoor(camera)===group,`${id}: the hidden leaf is reachable from the other side`);
+  for(const side of [-1,1]){
+    const walker=center.clone();walker.z+=side*.8;
+    controller.constrain(walker,center.x,center.z-side*.8);
+    assert(Math.abs(walker.z-center.z-side*.8)<1e-6,'Passage works in both directions');
+  }
+  camera.position.copy(center);
+  assert(!controller.toggle(group,camera),'Closing cannot move through the walker');
+  camera.position.z+=approach*1.2;
+  assert(controller.toggle(group,camera));
+  assert(!controller.canStandAt(center.x,center.z));
+}
+console.log('Living pocket doors: fixed apertures, flush pulls, sliding pockets, passage and reachable closing pass');
