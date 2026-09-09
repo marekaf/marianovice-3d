@@ -39,7 +39,7 @@ const GARDEN = {
     {id:"Productive access",points:[[9.98,13],[9.1,13],[4.7,13]],width:1},
     {id:"Bed access",points:[[4.7,13],[6.7,13],[6.7,9.8]],width:1},
     {id:"Greenhouse access",points:[[4.7,13],[4.7,11.8],[3.2,11.8]],width:1},
-    {id:"Daily dining",points:[[23,12],[24.2,12],[24.2,11.4],[27,11.2]],width:1.2},
+    {id:"Daily dining",points:[[23,12],[24.2,12],[24.7,12.9],[25.2,14.2],[26.1,15.2],[27.3,15.4],[28.5,15],[29,14],[28.8,12.8],[28,11.8],[27,10.6]],width:1.2},
     {id:"Quiet garden approach",points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
     {id:"Gathering connection",points:[[30.5,10.6],[30.5,11.8],[31.8,11.8],[31.8,9.6],[32.6,8.0]],width:1.2},
     {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[31.7,9.3],[31.4,9.3]],width:1.2},
@@ -71,7 +71,7 @@ const GARDEN = {
     {"id":"productiveBorder","name":"Productive court border","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[2.1,8.8],[5,8.5],[9,8.8],[9,9.5],[5.2,9.4],[2.1,9.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"quietGardenBorder","name":"Quiet garden enclosure","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[1.5,16.3],[3.3,16.3],[6.6,16.6],[8.1,17.4],[7.7,17.8],[6.2,17.3],[3.5,17.2],[2.3,18],[2.5,20.5],[5,21.3],[7,20.8],[8.2,21.5],[6,22],[1.5,21.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"eastGatheringBorder","name":"Gathering room and pond planting","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[36.8,0.3],[37.4,6.5],[41.6,6.5],[42.3,17.7],[37.7,18.5],[34.8,18.2],[31.7,18.7],[27.8,18.5],[26.8,17.2],[31,16.7],[31.6,14],[30.8,11.9],[32.4,10.8],[32.4,5.2],[28,5],[24,6],[22.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
-    {"id":"terraceFrontage","name":"Low terrace foreground","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[25,11.8],[25.6,12.8],[25.6,15.8],[25,16.6],[24.6,16],[24.6,12.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"terraceFrontage","name":"Low terrace foreground","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[25,11.8],[25.6,12.8],[25.6,15.8],[25,16.6],[24.6,16],[24.6,12.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1},{"kind":"polygon","points":[[25.6,12.4],[26.1,12.2],[27,12.3],[27.8,13],[28.1,13.8],[27.8,14.3],[27,14.6],[26.3,14.4],[25.9,13.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {
       id: "house",
       name: "House 10.8 × 19.25 m",

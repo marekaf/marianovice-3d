@@ -17,7 +17,7 @@ const SiteTerrain = (() => {
     for(const route of court.routes)distance=Math.min(distance,Math.max(0,routeSample(route,x,z).distance-route.width/2));
     return (1-smoothstep(distance/court.blend))*(1-smoothstep((x-court.x1)/court.eastBlend));
   }
-  function routeSample(route,x,z) {
+  function routeSample(route,x,z,bank=false) {
     const samples=[];
     for(let i=1;i<route.points.length;i++) {
       const a=route.points[i-1],b=route.points[i],dx=b[0]-a[0],dz=b[1]-a[1];
@@ -26,15 +26,20 @@ const SiteTerrain = (() => {
       samples.push({distance,level:route.levels[i-1]+(route.levels[i]-route.levels[i-1])*t});
     }
     const distance=Math.min(...samples.map(s=>s.distance));
-    let weighted=0,total=0;
+    let weighted=0,total=0,bankWeighted=0,bankTotal=0;
     for(const sample of samples) {
-      const weight=smoothstep(1-(sample.distance-distance)/.2)/(sample.distance**2+1e-12);
+      const weight=smoothstep(1-(sample.distance-distance)/(route.approachBank?2:.2))/(sample.distance**2+1e-12);
       weighted+=sample.level*weight;total+=weight;
+      if(bank&&route.approachBank){const w=1/(sample.distance**2+1e-12);bankWeighted+=sample.level*w;bankTotal+=w;}
     }
     let level=weighted/total;
+    if(bankTotal)level+=(bankWeighted/bankTotal-level)*smoothstep((distance-route.width/2)/.3);
     if(route.endCircle){const p=route.endCircle,d=Math.max(0,Math.hypot(x-p.cx,z-p.cz)-p.radius);level=route.levels.at(-1)+(level-route.levels.at(-1))*smoothstep(d/.6);}
     if(route.startRect){const d=rectDistance(route.startRect,x,z);level=route.levels[0]+(level-route.levels[0])*smoothstep(d/.6);}
     return {distance,level};
+  }
+  function routeBankClearance(route,x,z) {
+    return Math.min(Infinity,...(route.bankAvoidRoutes??[]).map(other=>Math.max(0,routeSample(other,x,z).distance-other.width/2)));
   }
   function polygonDistance(points, x, z) {
     let inside=false,distance=Infinity;
@@ -115,16 +120,22 @@ const SiteTerrain = (() => {
       if(total)h+=(level/total-h)*strength;
     }
     for(const route of (spec.routeProfiles??[]).filter(route=>route.bankApron)) {
-      const sample=routeSample(route,x,z),distance=Math.max(0,sample.distance-route.width/2);
+      if(route.bankBounds&&rectDistance(route.bankBounds,x,z)>0)continue;
+      const sample=routeSample(route,x,z,true),distance=Math.max(0,sample.distance-route.width/2);
       const clear=Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d),spec.houseExcavation?polygonDistance(spec.houseExcavation.points,x,z):Infinity);
-      const influence=(1-smoothstep(distance/route.bankApron.blend))*smoothstep(clear/route.bankApron.clearBlend);
+      const influence=(1-smoothstep(distance/route.bankApron.blend))*smoothstep(clear/route.bankApron.clearBlend)*smoothstep(routeBankClearance(route,x,z)/.6);
       h+=(sample.level-(route.bedding??.04)-h)*influence;
     }
     for(const route of spec.routeProfiles??[]) {
-      const sample=routeSample(route,x,z),distance=Math.max(0,sample.distance-route.width/2);
+      if(route.bankBounds&&rectDistance(route.bankBounds,x,z)>0)continue;
+      const sample=routeSample(route,x,z,true),distance=Math.max(0,sample.distance-route.width/2);
       const bedding=route.bedding??.04;
       const blend=route.bankBlend??.5;
-      if(distance<blend)h=sample.level-bedding+(h-sample.level+bedding)*smoothstep(distance/blend);
+      if(distance<blend) {
+        const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d)):Infinity;
+        const influence=(1-smoothstep(distance/blend))*(route.approachBank?smoothstep(clear/1.2):1)*smoothstep(routeBankClearance(route,x,z)/.6);
+        h+=(sample.level-bedding-h)*influence;
+      }
     }
     const pondOuter=spec.continuousGrading&&z<pond.cz?1.3+((pond.northBankOuter??1.3)-1.3)*Math.max(0,(pond.cz-z)/(pond.rz*prr||1))**16:1.3;
     if(spec.continuousGrading&&prr<pondOuter) {
@@ -220,7 +231,7 @@ const SiteTerrain = (() => {
       spec.bankReview = [
         {id:'productive-west',label:'Productive court planted banks',bounds:[0,9.48,7.5,18.5],status:'Sloping walking approach with level crossfall aisles. Surrounding banks remain steep and provisional; retaining, drainage and soil stability require engineering review.'},
         {id:'south-house',label:'Southwest house bank',bounds:[8.3,17,27.43,30.5],status:'Broader planted transition; remaining steep sections require soil stability and drainage review.'},
-        {id:'dining-corner',label:'East terrace / daily dining corner',bounds:[23,25.5,10.8,12.4],status:'The lowered pergola steepens the unchanged terrace approach and its soil banks. This is a level study, not an approved access gradient. Resolve the path alignment, retaining or planted-bank geometry and surface-water interception before construction.'},
+        {id:'dining-corner',label:'Terrace-to-pergola planted approach bank',bounds:[23.58,31,10.8,17.1],status:'Longer sloping approach with level landings and a blended planted bank. The retained destination heights still require steep local shoulders; confirm retaining, soil stability and surface-water interception before construction.'},
       ];
       spec.finishPads = garden.elements.filter(e => ['eastTerrace', 'westTerrace', 'sauna', 'saunaShelter', 'saunaPath'].includes(e.id))
         .flatMap(e => e.parts.filter(p => p.kind === 'rect').map(p => ({
@@ -245,9 +256,22 @@ const SiteTerrain = (() => {
       for(const [route,start,end]of [[dining,options.houseFFL,gathering.level+.1],[gatheringLink,gathering.level+.1,fireFinished]])if(route) {
         const lengths=[0];
         for(let i=1;i<route.points.length;i++)lengths.push(lengths[i-1]+Math.hypot(route.points[i][0]-route.points[i-1][0],route.points[i][1]-route.points[i-1][1]));
-        spec.routeProfiles.push({...route,bedding:.1,levels:lengths.map(s=>start+(end-start)*s/lengths.at(-1)),
+        let points=route.points,levels=lengths.map(s=>start+(end-start)*s/lengths.at(-1));
+        if(route===dining) {
+          const startLanding=1.2,endLanding=1.1,transitionLength=.8,active=lengths.at(-1)-startLanding-endLanding;
+          const distances=[...lengths,startLanding,lengths.at(-1)-endLanding].sort((a,b)=>a-b).filter((s,i,a)=>i===0||s-a[i-1]>1e-6);
+          points=distances.map(s=>{const i=Math.max(1,lengths.findIndex(v=>v>=s)),t=(s-lengths[i-1])/(lengths[i]-lengths[i-1]);return route.points[i-1].map((v,k)=>v+t*(route.points[i][k]-v));});
+          levels=distances.map(s=>{const u=Math.max(0,Math.min(active,s-startLanding)),area=v=>v/2-transitionLength*Math.sin(Math.PI*v/transitionLength)/(2*Math.PI);
+            const progress=u<transitionLength?area(u):u>active-transitionLength?active-transitionLength-area(active-u):u-transitionLength/2;
+            return start+(end-start)*progress/(active-transitionLength);});
+        }
+        spec.routeProfiles.push({...route,points,bedding:.1,levels,
           ...(route===gatheringLink?{bankBlend:1.8}:{}),
-          ...(route===dining?{bankApron:{blend:1.8,clearBlend:.6}}:{}),
+          ...(route===dining?{approachBank:true,bankBlend:1.3,bankApron:{blend:2.4,clearBlend:1.2},
+            startRect:patchRect(garden.elements.find(e=>e.id==='eastTerrace').parts.find(p=>p.kind==='rect')),
+            endCircle:{cx:route.points.at(-1)[0],cz:route.points.at(-1)[1],radius:route.width/2},
+            bankAvoidRoutes:(garden.gardenRoutes??[]).filter(r=>r.id==='Pond walk').map(r=>({...r,levels:r.points.map(()=>0)})),
+            bankBounds:{x0:Math.min(...points.map(p=>p[0]))-3,x1:Math.max(...points.map(p=>p[0]))+3,z0:Math.min(...points.map(p=>p[1]))-3,z1:Math.max(...points.map(p=>p[1]))+3}}:{}),
           ...(route===gatheringLink?{startRect:patchRect(gathering),endCircle:{cx:fire.cx,cz:fire.cy,radius:fire.r}}:{})});
       }
       const driveway = garden.elements.find(e => e.id === 'driveway').parts.find(p => p.kind === 'polygon');
@@ -287,7 +311,7 @@ const SiteTerrain = (() => {
             result+=(finish/total-result)*strength;
           }
         }
-        for(const route of spec.routeProfiles){const sample=routeSample(route,x,z),d=Math.max(0,sample.distance-route.width/2-.02);if(d<.5)result=sample.level+(result-sample.level)*smoothstep(d/.5);}
+        for(const route of spec.routeProfiles){if(route.bankBounds&&rectDistance(route.bankBounds,x,z)>0)continue;const sample=routeSample(route,x,z),d=Math.max(0,sample.distance-route.width/2-.02);if(d<.5)result=sample.level+(result-sample.level)*smoothstep(d/.5);}
         const influence=productiveInfluence(spec.productiveCourt,x,z);
         result+=(productiveFinish(spec.productiveCourt,x)-result)*influence;
         return result;
