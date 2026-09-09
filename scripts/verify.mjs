@@ -12,6 +12,13 @@ function run(command,args,stdio='inherit') {
 const checks=[
   'validate-layout.js',
   'verify-exterior.mjs',
+  'verify-exterior-furniture.mjs',
+  'verify-room-layout.mjs',
+  'verify-room-a-grading.mjs',
+  'verify-planting-profiles.mjs',
+  'verify-privacy-screens.mjs',
+  'verify-portal-drain.mjs',
+  'verify-climber-model.mjs',
   'verify-sauna.mjs',
   'verify-pergola.mjs',
   'verify-pergola-approach.mjs',
