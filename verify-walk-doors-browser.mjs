@@ -11,6 +11,7 @@ const server=createServer(async(req,res)=>{
     if(!file.startsWith(root))throw new Error('Invalid path');
     let body=await readFile(file);
     if(pathname==='/index.html')body=body.toString().replace('ViewerLoading.finish();',`window.doorReview={THREE,scene,camera,fpState,loadWalkInterior,get doors(){return walkDoors;},aim(group,side=1){const b=new THREE.Box3().setFromObject(group.userData.walkDoor.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x+side*1.4,houseTerrainY+1.7,c.z);fpYaw=side*Math.PI/2;fpPitch=0;fpUpdate(0);requestRender();},aimPocket(group,side){const p=group.userData.walkDoor.panel.position,c=group.localToWorld(new THREE.Vector3(p[0],1.7,p[1]));camera.position.copy(c);camera.position.z+=side*.8;fpYaw=side===1?0:Math.PI;fpPitch=0;fpUpdate(0);requestRender();},update(){fpUpdate(0);requestRender();},tick(dt){fpUpdate(dt);requestRender();}};ViewerLoading.finish();`);
+    if(pathname==='/index.html')body=body.replace('ViewerLoading.finish();',`doorReview.aimWindow=function(group){const door=group.userData.walkDoor,b=new THREE.Box3().setFromObject(door.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x,houseTerrainY+1.7,c.z+(door.opening.hinge==='north'?1:-1)*.9);fpYaw=door.opening.hinge==='north'?0:Math.PI;fpPitch=0;fpUpdate(0);requestRender();};ViewerLoading.finish();`);
     res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(body);
   }catch{res.writeHead(404).end();}
 });
@@ -73,6 +74,26 @@ try{
     assert(passage.x<passage.center,`${name}: walk through the open portal`);assert(passage.valid);
     await page.evaluate(name=>{const r=doorReview,g=r.doors.doors.find(g=>g.name===name);r.aim(g,-1);},name);
     await page.waitForFunction(()=>document.querySelector('#walkDoorPrompt').textContent.includes('Close sliding portal'));
+    await page.keyboard.press('e');
+    assert.equal(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name),false);
+  }
+  for(const name of ['opening_W3_0','opening_W3_1','opening_W4_0','opening_W4_1']){
+    await page.evaluate(name=>{const r=doorReview;r.aim(r.doors.doors.find(g=>g.name===name));},name);
+    await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Open hinged window'));
+    await page.keyboard.press('e');
+    assert(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name));
+    if(process.env.WINDOW_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.WINDOW_SCREENSHOT_DIR,`${name}-open.png`)});
+    const passage=await page.evaluate(name=>{
+      const r=doorReview,g=r.doors.doors.find(g=>g.name===name),door=g.userData.walkDoor;
+      const p=door.model.parts.find(p=>p.name===`${name}_${door.opening.movingHalf}_glass`).position;
+      const center=g.localToWorld(new r.THREE.Vector3(p[0],1.7,p[1]));
+      r.camera.position.copy(center).add(new r.THREE.Vector3(.8,0,0));
+      r.fpState.keys={w:true};for(let frame=0;frame<90;frame++)r.tick(1/60);r.fpState.keys={};
+      return{x:r.camera.position.x,center:center.x,valid:r.doors.canStandAt(r.camera.position.x,r.camera.position.z)};
+    },name);
+    assert(passage.x<passage.center,`${name}: walk through the open hinged sash`);assert(passage.valid);
+    await page.evaluate(name=>{const r=doorReview;r.aimWindow(r.doors.doors.find(g=>g.name===name));},name);
+    await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Close hinged window'));
     await page.keyboard.press('e');
     assert.equal(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name),false);
   }

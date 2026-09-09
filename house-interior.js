@@ -264,6 +264,12 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
         const travel=half==='north'?end-edge-b:start+edge-a;
         doorMotion={kind:'slide',pivot:[0,0,0],offset:alongX?[travel,0,0]:[0,0,travel],movingParts};
       }
+      if(spec.lowThreshold&&moving){
+        movingParts.push(...parts.slice(paneStart).map(part=>part.name));
+        const hinge=hingeAtStart?a+.012:b-.012,hingeDepth=depth+inward*.065;
+        doorMotion={pivot:alongX?[hinge,0,hingeDepth]:[hingeDepth,0,hinge],
+          angle:(alongX?-1:1)*inward*(hingeAtStart?1:-1)*Math.PI/2,movingParts};
+      }
     }
     if(spec.sliding)for(const offset of [-.035,.035])rail(`track_${offset}`,start+.025,end-.025,sill+.003,sill+.009,'metal',.012,depth+offset);
     else if(sill>0)rail('exterior_sill',start-.015,end+.015,sill-.025,sill-.006,'frame',.18,depth-.06);
