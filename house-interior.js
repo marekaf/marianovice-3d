@@ -138,7 +138,7 @@ const HOUSE_INTERIOR = {
     { kind: 'slab', room: '1.03', label: 'radiátor 1.03', mat: 'appliance', x0: 7.15, z0: 16.35, x1: 7.19, z1: 16.85, y0: 0.30, h: 1.20 },  // towel ladder north of the vanity
     { kind: 'cab', room: 'chod04', label: 'hosté L skříň — rameno na D', x0: 4.45, z0: 16.63, x1: 5.75, z1: 17.00, h: 2.50, front: 'N', modules: [0.65, 0.65], tags: ['d', 'd'], handle: 'push' },
     { kind: 'cab', room: '1.04', label: 'hosté L skříň — rameno na E', x0: 3.85, z0: 16.63, x1: 4.45, z1: 18.80, h: 2.50, front: 'W', modules: [0.5425, 0.5425, 0.5425, 0.5425], tags: ['d', 'd', 'd', 'd'], handle: 'push' },  // extends to the bar's face — the two legs share a full edge, one continuous L
-    { kind: 'bed', room: '1.04', label: 'postel hosté 1800', x0: 1.10, z0: 16.75, x1: 2.90, z1: 18.75, h: 0.45, head: 'S' },
+    { kind: 'bed', room: '1.04', label: 'postel hosté 1800', x0: 1.10, z0: 16.75, x1: 2.90, z1: 18.75, h: 0.75, head: 'S' },
     { kind: 'slab', room: '1.04', label: 'noční stolek hosté W', mat: 'wood', x0: 0.70, z0: 18.45, x1: 1.10, z1: 18.75, y0: 0.15, h: 0.35, front: 'N' },
     { kind: 'slab', room: '1.04', label: 'noční stolek hosté E', mat: 'wood', x0: 2.90, z0: 18.45, x1: 3.30, z1: 18.75, y0: 0.15, h: 0.35, front: 'N' },
     { kind: 'slab', room: '1.04', label: 'TV sideboard hosté', mat: 'appliance', x0: 1.20, z0: 15.80, x1: 2.40, z1: 16.25, h: 0.45 },
