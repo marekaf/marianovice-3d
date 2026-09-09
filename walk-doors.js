@@ -24,7 +24,7 @@ export function createWalkDoors(THREE,{data,doors,floorY}) {
   const raycaster=new THREE.Raycaster();raycaster.far=2;
   const walls=[...data.extWalls,...data.intWalls].map(wall=>({...wall,passages:wall.openings.filter((opening,index)=>{
     const model=data.buildOpening(wall,opening,index);
-    return !opening.sill&&opening.h>=1.9&&(!model||model.opening.kind!=='window'||model.opening.sliding);
+    return !opening.sill&&opening.h>=1.9&&(!model||model.opening.kind!=='window'||model.doorMotion);
   })}));
   const overlap=(x,z,x0,z0,x1,z1)=>Math.hypot(x-Math.max(x0,Math.min(x1,x)),z-Math.max(z0,Math.min(z1,z)))<radius-1e-7;
   function partBlocks(part,x,z){
@@ -42,7 +42,7 @@ export function createWalkDoors(THREE,{data,doors,floorY}) {
     if(motion.kind==='slide')return door.movingPanels.some(part=>partBlocks(part,localX-motion.offset[0]*progress,localZ-motion.offset[2]*progress));
     const angle=motion.angle*progress;
     const pivot=door.model.doorMotion.pivot,dx=localX-pivot[0],dz=localZ-pivot[2];
-    return partBlocks(door.panel,pivot[0]+Math.cos(angle)*dx-Math.sin(angle)*dz,pivot[2]+Math.sin(angle)*dx+Math.cos(angle)*dz);
+    return door.movingPanels.some(part=>partBlocks(part,pivot[0]+Math.cos(angle)*dx-Math.sin(angle)*dz,pivot[2]+Math.sin(angle)*dx+Math.cos(angle)*dz));
   }
   function canStandAt(x,z,y=floorY+1.7){
     if(y<floorY+.12||y>floorY+3.5)return true;
