@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
+import { runPythonJson } from './scripts/python-json.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { runInNewContext } from 'node:vm';
@@ -86,10 +87,9 @@ assert.equal(site.height(...anchors.pondCenter), site.spec.pond.edge - 0.55, 'Po
 const serialized = JSON.parse(JSON.stringify(site.spec));
 assert.deepEqual(points.map(point => SiteTerrain.height(serialized, ...point)), heights,
   'Serialized recipe must preserve browser grading');
-const python = execFileSync('python3', ['-c',
-  'import json,sys; from blender.site_terrain import height; data=json.load(sys.stdin); print(json.dumps([height(data["spec"], *p) for p in data["points"]]))'],
-{ cwd: new URL('.', import.meta.url), input: JSON.stringify({ spec: serialized, points }), encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
-const pythonHeights = JSON.parse(python);
+const pythonHeights = runPythonJson(
+  'import json,sys; from blender.site_terrain import height; data=json.load(sys.stdin); print(json.dumps([height(data["spec"], *p) for p in data["points"]]))',
+  { spec: serialized, points }, { cwd: new URL('.', import.meta.url), maxBuffer: 4 * 1024 * 1024 });
 assert.equal(pythonHeights.length, points.length);
 let maxError = 0;
 for (let i = 0; i < points.length; i++) {
@@ -257,8 +257,8 @@ for(let t=runback.from;t<=runback.to;t+=.05)for(const inset of [.05,.18,.75]){
   checks.push([x,z]);
 }
 console.log(JSON.stringify({gateRunbackWidth:runback.width,runbackMaxFill,runbackMaxCut}));
-const surveyPython=JSON.parse(execFileSync('python3',['-c','import json,sys; from blender.site_terrain import height; d=json.load(sys.stdin); print(json.dumps([height(d["spec"], *p) for p in d["points"]]))'],
-  {cwd:new URL('.',import.meta.url),input:JSON.stringify({spec:surveyed.spec,points:checks}),encoding:'utf8',maxBuffer:8*1024*1024}));
+const surveyPython=runPythonJson('import json,sys; from blender.site_terrain import height; d=json.load(sys.stdin); print(json.dumps([height(d["spec"], *p) for p in d["points"]]))',
+  {spec:surveyed.spec,points:checks},{cwd:new URL('.',import.meta.url)});
 let surveyMaxError=0;
 checks.forEach(([x,z],i)=>{const error=Math.abs(surveyPython[i]-surveyed.height(x,z));surveyMaxError=Math.max(surveyMaxError,error);assert.ok(error<1e-10);});
 console.log(`Survey grading: ${checks.length} samples; fixed house datum; continuous pads and banks; Python max error ${surveyMaxError} m`);
