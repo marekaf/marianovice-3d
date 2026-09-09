@@ -1,8 +1,8 @@
 const RaisedBedsModel = (() => {
-  function build(garden) {
+  function build(garden, options = {}) {
     const rectOf = id => garden.elements.find(e=>e.id===id).parts.find(p=>p.kind==='rect');
     const pad=rectOf('raisedBedsPad'),grading=garden.elements.find(e=>e.id==='raisedBedsPad').meta.grading;
-    const floorHeight=grading.level+.06,soilHeight=0.53,height=0.6;
+    const floorHeight=options.surfaceHeight?.(pad.x+pad.w/2,pad.y+pad.d/2)??grading.level+.06,soilHeight=0.53,height=0.6;
     const materials={
       gravel:{color:'#b9b0a0',roughness:0.98},
       gravelLight:{color:'#c9c0ae',roughness:0.98},
@@ -72,19 +72,50 @@ const RaisedBedsModel = (() => {
       for(let i=0;i<boundary.length;i++){const a=boundary[i],b=boundary[(i+1)%boundary.length];faces.push([a,a+count,b+count,b]);}
       parts.push({name,type:'mesh',vertices,faces,smooth:true,material,category:'furniture'});
     };
-    box('raised_beds_gravel',pad.x,pad.y,-0.06,pad.w,pad.d,0.06,'gravel','structure',0.002);
     const bedIds=['raisedBed1','raisedBed2','raisedBed3','raisedBed4'];
     const bedRects=bedIds.map(rectOf);
+    let surfaceFootprint={kind:'rect',...pad};
+    if(options.court) {
+      const c=options.court;
+      surfaceFootprint={kind:'rect',x:c.x0,y:c.z0,w:c.x1-c.x0,d:c.z1-c.z0};
+      const greenhouse=rectOf('greenhouse'),compost=rectOf('compost');
+      const exclusions=[...bedRects,greenhouse,compost,{x:greenhouse.x+greenhouse.w/2-.57,y:greenhouse.y-.38,w:1.14,d:.38}];
+      const axis=(start,end,edges)=>[...new Set([start,end,...edges.filter(v=>v>start&&v<end),...Array.from({length:Math.ceil((end-start)/.1)},(_,i)=>Math.min(end,start+i*.1))])].sort((a,b)=>a-b);
+      const xs=axis(c.x0,c.x1,[...c.aisles.flat(),...exclusions.flatMap(r=>[r.x,r.x+r.w])]);
+      const ys=axis(c.z0,c.z1,exclusions.flatMap(r=>[r.y,r.y+r.d]));
+      const vertices=[],faces=[],edges=new Map();
+      for(let i=1;i<xs.length;i++)for(let j=1;j<ys.length;j++) {
+        const x0=xs[i-1],x1=xs[i],y0=ys[j-1],y1=ys[j],cx=(x0+x1)/2,cy=(y0+y1)/2;
+        if(x1-x0<1e-8||y1-y0<1e-8||exclusions.some(r=>cx>r.x&&cx<r.x+r.w&&cy>r.y&&cy<r.y+r.d))continue;
+        const at=vertices.length;
+        for(const [x,y]of [[x0,y0],[x1,y0],[x1,y1],[x0,y1]])vertices.push([x,y,options.surfaceHeight(x,y)-floorHeight]);
+        faces.push([at,at+1,at+2],[at,at+2,at+3]);
+        for(let k=0;k<4;k++) {
+          const a=vertices[at+k],b=vertices[at+(k+1)%4],key=[a.slice(0,2).join(','),b.slice(0,2).join(',')].sort().join('|');
+          if(edges.has(key))edges.delete(key);else edges.set(key,[a,b]);
+        }
+      }
+      for(const [a,b]of edges.values()) {
+        const at=vertices.length;
+        vertices.push(a,b,[b[0],b[1],options.groundHeight(b[0],b[1])-floorHeight-.005],[a[0],a[1],options.groundHeight(a[0],a[1])-floorHeight-.005]);
+        faces.push([at,at+2,at+1],[at,at+3,at+2]);
+      }
+      parts.push({name:'raised_beds_gravel',type:'mesh',vertices,faces,material:'gravel',category:'ground'});
+    } else box('raised_beds_gravel',pad.x,pad.y,-0.06,pad.w,pad.d,0.06,'gravel','structure',0.002);
     for(let candidate=0,placed=0;candidate<2000&&placed<160;candidate++) {
       const seed=candidate*19,radius=0.012+random(seed+3)*0.016;
       const x=pad.x+radius+random(seed)*(pad.w-2*radius),y=pad.y+radius+random(seed+1)*(pad.d-2*radius);
       if(bedRects.some(r=>x>r.x-radius&&x<r.x+r.w+radius&&y>r.y-radius&&y<r.y+r.d+radius)) continue;
-      pebble(`gravel_piece_${placed++}`,x,y,0,radius,seed,['gravel','gravelLight','gravelDark'][candidate%3]);
+      pebble(`gravel_piece_${placed++}`,x,y,options.surfaceHeight?options.surfaceHeight(x,y)-floorHeight:0,radius,seed,['gravel','gravelLight','gravelDark'][candidate%3]);
     }
     for(const [bedIndex,id] of bedIds.entries()) {
       const rect=rectOf(id),{x,y,w,d}=rect,wall=0.04,liner=0.003;
+      const partStart=parts.length,plantStart=plants.length;
+      const bedFloor=options.surfaceHeight?Math.max(...[x,x+w].flatMap(px=>[y,y+d].map(py=>options.surfaceHeight(px,py)))):floorHeight;
+      const bedOffset=bedFloor-floorHeight;
+      const bottomAt=(px,py)=>options.groundHeight?options.groundHeight(px,py)-bedFloor-.025:0;
       const crop=['lettuce','herbs','kale','tomatoes'][bedIndex];
-      beds.push({id,rect,height,soilHeight,crop});
+      beds.push({id,rect,height,soilHeight,crop,...(options.surfaceHeight?{floorHeight:bedFloor}: {})});
       for(let course=0;course<3;course++) {
         const base=course*0.2,bh=0.196;
         for(const [side,px] of [['W',x],['E',x+w-wall]]) box(`${id}_wall_${side}_${course}`,
@@ -166,9 +197,27 @@ const RaisedBedsModel = (() => {
           }
         }
       }
+      if(options.surfaceHeight) {
+        for(const part of parts.slice(partStart)) {
+          if(part.type==='box'&&(/_wall_[WENS]_0$/.test(part.name))) {
+            const [cx,cy,cz]=part.position,[pw,pd,ph]=part.size,top=cz+ph/2;
+            const corners=[[cx-pw/2,cy-pd/2],[cx+pw/2,cy-pd/2],[cx+pw/2,cy+pd/2],[cx-pw/2,cy+pd/2]];
+            part.type='mesh';part.vertices=[...corners.map(([px,py])=>[px,py,bottomAt(px,py)]),...corners.map(([px,py])=>[px,py,top])];
+            part.faces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
+            delete part.position;delete part.size;delete part.bevel;
+          } else if(part.type==='box'&&(/_corner_\d$/.test(part.name)||part.name===`${id}_soil`||part.name.includes('_liner_'))) {
+            const [cx,cy,cz]=part.position,[pw,pd,ph]=part.size,top=cz+ph/2;
+            const bottom=Math.min(...[cx-pw/2,cx+pw/2].flatMap(px=>[cy-pd/2,cy+pd/2].map(py=>bottomAt(px,py))));
+            part.position[2]=(top+bottom)/2;part.size[2]=top-bottom;
+          }
+          for(const key of ['position','start','end'])if(part[key])part[key]=[part[key][0],part[key][1],part[key][2]+bedOffset];
+          if(part.vertices)part.vertices=part.vertices.map(([px,py,pz])=>[px,py,pz+bedOffset]);
+        }
+        for(const plant of plants.slice(plantStart))plant.root=[plant.root[0],plant.root[1],plant.root[2]+bedOffset];
+      }
     }
     return {name:'Raised beds',materials,parts,lights:[],floorHeight,beds,plants,
-      groundPatch:{x:pad.x,y:pad.y,w:pad.w,d:pad.d,...grading},plantingClearances:[{x:pad.x,y:pad.y,w:pad.w,d:pad.d}]};
+      groundPatch:{x:pad.x,y:pad.y,w:pad.w,d:pad.d,...grading,...(options.surfaceHeight?{level:floorHeight-.06,graded:true}:{})},surfaceFootprint,plantingClearances:[{x:surfaceFootprint.x,y:surfaceFootprint.y,w:surfaceFootprint.w,d:surfaceFootprint.d}]};
   }
   return {build};
 })();

@@ -155,4 +155,18 @@ def height(spec, x, y):
         distance = math.hypot(max(pad['x0']-x, 0, x-pad['x1'])/pad['blend'], max(pad['z0']-y, 0)/pad['blend'], max(y-pad['z1'], 0)/pad['southBlend'])
         if distance < 1:
             h = pad['level']+(h-pad['level'])*smoothstep(distance)
+    if spec.get('productiveCourt'):
+        court = spec['productiveCourt']
+        distance = rect_distance(court, x, y)
+        for route in court['routes']:
+            distance = min(distance, max(0, route_sample(route, x, y)[0]-route['width']/2))
+        weight = (1-smoothstep(distance/court['blend']))*(1-smoothstep((x-court['x1'])/court['eastBlend']))
+        if weight:
+            run = court['x1']-court['runStart']
+            flat = sum(b-a for a, b in court['aisles'])
+            progress = max(0, min(run, x-court['runStart']))-sum(max(0, min(b-a, x-a)) for a, b in court['aisles'])
+            finish = court['greenhouseFinish']+(court['houseFinish']-court['greenhouseFinish'])*progress/(run-flat)
+            greenhouse_weight = 1-smoothstep(rect_distance(court['greenhouse'], x, y)/.3)
+            bedding = .06-.02*greenhouse_weight+.06*smoothstep((x-(court['x1']-.68))/.68)
+            h += (finish-bedding-h)*weight
     return h

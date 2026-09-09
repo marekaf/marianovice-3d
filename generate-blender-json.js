@@ -15,7 +15,7 @@ const { GreenhouseModel } = require("./greenhouse-model.js");
 const { RaisedBedsModel } = require("./raised-beds-model.js");
 const { FirepitModel } = require("./firepit-model.js");
 const { HiddenBenchModel } = require("./hidden-bench-model.js");
-const { SiteTerrain } = require("./site-terrain.js");
+const { GradingSite } = require("./grading-site.js");
 const { SurveySurface } = require("./survey-surface.js");
 const VehicleModel = require("./vehicle-model.js");
 const { ExteriorFurnitureModel } = require("./exterior-furniture-model.js");
@@ -28,11 +28,9 @@ const existingGround = surveySurface ? surveySurface.height : TERRAIN.basePlaneH
 
 const pergolaModel = PergolaModel.build(GARDEN);
 const garageModel = GarageModel.build(GARDEN, TERRAIN.houseFFLInternal - 0.5);
-const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround);
-const raisedBedsModel = RaisedBedsModel.build(GARDEN);
-const siteTerrain = SiteTerrain.create(GARDEN, TERRAIN.plane, { garage: garageModel.groundPatch,
-  pergola: pergolaModel.groundPatch, greenhouse: greenhouseModel.groundPatch, raisedBeds: raisedBedsModel.groundPatch },
-  { surveySurface: surveySurface?.data, houseFFL: TERRAIN.houseFFLInternal });
+const {site:siteTerrain} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:surveySurface});
+const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround,{floorHeight:siteTerrain.spec.productiveCourt.greenhouseFinish});
+const raisedBedsModel = RaisedBedsModel.build(GARDEN,{surfaceHeight:siteTerrain.routeHeight,groundHeight:siteTerrain.height,court:siteTerrain.spec.productiveCourt});
 
 const out = path.join(__dirname, "blender", "garden.json");
 if (surveySurface) {

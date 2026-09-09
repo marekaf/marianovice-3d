@@ -4,6 +4,19 @@ const SiteTerrain = (() => {
   const naturalHeight = (spec, x, z) => spec.surveySurface ? surveySampler().height(spec.surveySurface, x, z) : baseHeight(spec.plane, x, z);
   const smoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
   const rectDistance = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
+  function productiveFinish(court,x) {
+    const clamp=(value,max)=>Math.max(0,Math.min(max,value));
+    const run=court.x1-court.runStart;
+    const flat=court.aisles.reduce((sum,[a,b])=>sum+b-a,0);
+    const progress=clamp(x-court.runStart,run)-court.aisles.reduce((sum,[a,b])=>sum+clamp(x-a,b-a),0);
+    return court.greenhouseFinish+(court.houseFinish-court.greenhouseFinish)*progress/(run-flat);
+  }
+  function productiveInfluence(court,x,z) {
+    if(x<court.x0-court.blend||x>court.x1+court.eastBlend||z<court.z0-court.blend-1||z>court.z1+court.blend)return 0;
+    let distance=rectDistance(court,x,z);
+    for(const route of court.routes)distance=Math.min(distance,Math.max(0,routeSample(route,x,z).distance-route.width/2));
+    return (1-smoothstep(distance/court.blend))*(1-smoothstep((x-court.x1)/court.eastBlend));
+  }
   function routeSample(route,x,z) {
     const samples=[];
     for(let i=1;i<route.points.length;i++) {
@@ -121,6 +134,14 @@ const SiteTerrain = (() => {
     if(spec.gateRunback){const p=spec.gateRunback,d=polygonDistance(p.points,x,z);if(d<p.blend)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
     if(spec.wicketLanding){const p=spec.wicketLanding,d=polygonDistance(p.points,x,z);if(d<p.blend&&polygonDistance(p.boundary,x,z)<1e-9)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
     if(spec.benchPad){const p=spec.benchPad,d=Math.hypot(Math.max(p.x0-x,0,x-p.x1)/p.blend,Math.max(p.z0-z,0)/p.blend,Math.max(z-p.z1,0)/p.southBlend);if(d<1)h=p.level+(h-p.level)*smoothstep(d);}
+    if(spec.productiveCourt) {
+      const p=spec.productiveCourt,weight=productiveInfluence(p,x,z);
+      if(weight) {
+        const greenhouseWeight=1-smoothstep(rectDistance(p.greenhouse,x,z)/.3);
+        const bedding=.06-.02*greenhouseWeight+.06*smoothstep((x-(p.x1-.68))/.68);
+        h+=(productiveFinish(p,x)-bedding-h)*weight;
+      }
+    }
     return h;
   }
 
@@ -190,14 +211,14 @@ const SiteTerrain = (() => {
       spec.houseExcavation = { points: garden.elements.find(e => e.id === 'house').parts.find(p => p.kind === 'polygon').points.map(p => p.slice()),
         level: options.houseFFL - .2, blend: .2 };
       spec.fillPads = [];
-      spec.levelPads = [groundPatches.garage, groundPatches.greenhouse, groundPatches.raisedBeds]
+      spec.levelPads = [groundPatches.garage]
         .map(p => ({ ...patchRect(p), blend: Math.max(p.blend ?? 2, 2.4) }));
       spec.cutRects = cutRects.map(p => ({ ...p, level: Math.min(p.level, spec.finishedSoil) }));
       spec.cutRects[0].blend = 4;
       Object.assign(spec.postCuts[1], { z1:27.43, blend:2.4 });
       Object.assign(spec.postCuts[2], { z1:29, blend:3 });
       spec.bankReview = [
-        {id:'productive-west',label:'Greenhouse / raised beds / west terrace',bounds:[4.2,9.48,10.5,15.5],status:'Fixed levels leave narrow height transitions. Retaining details or a future layout/level decision are required before construction.'},
+        {id:'productive-west',label:'Productive court planted banks',bounds:[0,9.48,7.5,18.5],status:'Sloping walking approach with level crossfall aisles. Surrounding banks remain steep and provisional; retaining, drainage and soil stability require engineering review.'},
         {id:'south-house',label:'Southwest house bank',bounds:[8.3,17,27.43,30.5],status:'Broader planted transition; remaining steep sections require soil stability and drainage review.'},
         {id:'dining-corner',label:'East terrace / daily dining corner',bounds:[23,25,10.8,12.4],status:'Broad shoulders ease the route edge, but the constrained terrace corner still needs retaining or a coordinated level transition. Confirm surface-water interception.'},
       ];
@@ -206,7 +227,10 @@ const SiteTerrain = (() => {
           x0: p.x, z0: p.y, x1: p.x + p.w, z1: p.y + p.d, blend: 3,
         })));
       spec.protectedPads = [{ ...patchRect(groundPatches.garage), blend: .2 }];
-      spec.protectedPads.push(...[groundPatches.greenhouse,groundPatches.raisedBeds].map(p=>({...patchRect(p),blend:.3})));
+      const greenhouse=patchRect(groundPatches.greenhouse),beds=patchRect(groundPatches.raisedBeds);
+      spec.productiveCourt={x0:greenhouse.x0,x1:9.48,z0:beds.z0,z1:beds.z1,runStart:greenhouse.x1,
+        greenhouseFinish:2.725,houseFinish:options.houseFFL,aisles:[[4.2,5.2],[6.2,7.2]],blend:2.4,eastBlend:.4,greenhouse,
+        routes:(garden.gardenRoutes??[]).filter(r=>['Productive access','Bed access','Greenhouse access'].includes(r.id)).map(r=>({...r,levels:r.points.map(()=>0)}))};
       const fireElement=garden.elements.find(e=>e.id==='firePit');
       const fire=fireElement.parts.find(p=>p.kind==='circle');
       const gathering=groundPatches.pergola;
@@ -264,6 +288,8 @@ const SiteTerrain = (() => {
           }
         }
         for(const route of spec.routeProfiles){const sample=routeSample(route,x,z),d=Math.max(0,sample.distance-route.width/2-.02);if(d<.5)result=sample.level+(result-sample.level)*smoothstep(d/.5);}
+        const influence=productiveInfluence(spec.productiveCourt,x,z);
+        result+=(productiveFinish(spec.productiveCourt,x)-result)*influence;
         return result;
       };
       return { spec, height: (x, z) => height(spec, x, z), routeHeight, baseHeight: (x, z) => naturalHeight(spec, x, z) };
@@ -283,6 +309,6 @@ const SiteTerrain = (() => {
     return { spec, height: (x, z) => height(spec, x, z), baseHeight: (x, z) => baseHeight(plane, x, z) };
   }
 
-  return { create, height };
+  return { create, height, productiveFinish };
 })();
 if (typeof module !== 'undefined') module.exports = { SiteTerrain };

@@ -88,7 +88,7 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
   const greenhouse=points.find(p=>p.id==='greenhouse');
   if(greenhouse)greenhouse.finished=site.routeHeight(greenhouse.x,greenhouse.z);
   const bedCentre=centre(rect('raisedBedsPad'));
-  if(bedCentre)point('raisedBeds','Raised-bed platform',bedCentre,site.routeHeight(...bedCentre));
+  if(bedCentre)point('raisedBeds','Raised-bed central aisle reference',bedCentre,site.routeHeight(...bedCentre));
   const fire = element('firePit')?.parts.find(p => p.kind === 'circle');
   const pond = element('pond')?.parts.find(p => p.kind === 'ellipse');
   if (fire) point('firePit', 'Fire pit apron', [fire.cx, fire.cy]);
@@ -113,7 +113,7 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
   if (bench) section('bench', 'Red bench pad west–east', [[bench.x0 - 1, (bench.z0 + bench.z1) / 2], [bench.x1 + 1, (bench.z0 + bench.z1) / 2]]);
   if(site.spec?.bankReview) {
     section('south-bank', 'Southwest house bank', [[10.75,26.6],[10.75,31]]);
-    section('productive-gap', 'Greenhouse to west terrace: constrained levels', [[3.2,13.5],[9.98,13.5]]);
+    section('productive-gap', site.spec.productiveCourt?'Productive court: sloped approach and flat aisles':'Greenhouse to west terrace: constrained levels', [[3.2,13.5],[9.98,13.5]]);
     section('gathering-bank', 'Gathering route shoulder', [[31.8,12.1],[35,12.1]]);
     section('dining-bank', 'Daily dining route shoulder', [[26.4,11.2],[26.4,14]]);
   }

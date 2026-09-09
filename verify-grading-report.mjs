@@ -13,8 +13,8 @@ const viewer=SiteTerrain.create(GARDEN,TERRAIN.plane,groundPatches,{surveySurfac
 const data=createGradingData({garden:GARDEN,terrain:TERRAIN,site,survey});
 for(const id of ['Productive access','Greenhouse access','Bed access'])assert(data.sections.some(s=>s.id===id&&s.samples.every(p=>Number.isFinite(p.finished))));
 for(const section of data.sections.filter(s=>Number.isFinite(s.maxFinishSlope)))for(const sample of section.samples)assert.equal(sample.finished,viewer.routeHeight(sample.x,sample.z));
-const greenhouse=require('./greenhouse-model.js').GreenhouseModel.build(GARDEN,survey.height);
-const beds=require('./raised-beds-model.js').RaisedBedsModel.build(GARDEN);
+const greenhouse=require('./greenhouse-model.js').GreenhouseModel.build(GARDEN,survey.height,{floorHeight:site.spec.productiveCourt.greenhouseFinish});
+const beds=require('./raised-beds-model.js').RaisedBedsModel.build(GARDEN,{surfaceHeight:site.routeHeight,groundHeight:site.height,court:site.spec.productiveCourt});
 assert.equal(data.points.find(p=>p.id==='greenhouse').finished,greenhouse.floorHeight);
 assert.equal(data.points.find(p=>p.id==='raisedBeds').finished,beds.floorHeight);
 for(const cell of data.cells)assert.equal(cell.proposed,viewer.height(cell.x,cell.z));
@@ -22,7 +22,7 @@ const result=GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,dat
 assert(result.html.includes('Purple: modeled walking finish'));
 assert(result.html.includes('Highest sampled walking-finish grade'));
 assert(result.html.includes('Greenhouse model floor'));
-assert(result.html.includes('Raised-bed gravel platform'));
+assert(result.html.includes('Raised-bed central aisle finish'));
 assert(result.html.includes('Not an accessibility assessment'));
 assert.equal((result.html.match(/class="section-card"/g)||[]).length,data.sections.length);
 assert.equal((result.html.match(/class="sheet"/g)||[]).length,3+Math.ceil(data.sections.length/4));
@@ -36,6 +36,8 @@ assert(result.html.includes('NOT order quantities'));
 assert(result.html.includes('397.000'));
 assert(result.mapSVG.includes('viewBox="0 0 900 650"'));
 assert(result.html.includes('1 m wicket opening'));
+assert(result.html.includes('The productive court is lowered and regraded'));
+assert(!result.html.includes('Greenhouse and raised-bed platforms, bench position and platform.'));
 assert(readFileSync('index.html','utf8').includes('GradingSite.create'));
 assert(!readFileSync('index.html','utf8').includes('zahrada-flat-plan'));
 assert(!readFileSync('.github/workflows/validate.yml','utf8').includes('generate-flat-plan'));

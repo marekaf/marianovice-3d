@@ -104,36 +104,38 @@ const syntheticSurvey = [[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5],[18,17,2.7]
 const surveySurface = SurveySurface.create(syntheticSurvey,TERRAIN.plane).data;
 const surveyed = SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{surveySurface,houseFFL:TERRAIN.houseFFLInternal});
 const fixedFallback = SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{houseFFL:TERRAIN.houseFFLInternal});
-assert.equal(fixedFallback.routeHeight(4.6,13),patches.raisedBeds.level+.06,'Greenhouse blend must not override the raised-bed pad finish at its west edge');
-function verifyProductiveFinishes(sample,groundPatches){
-  const productive=[{...groundPatches.raisedBeds,finish:groundPatches.raisedBeds.level+.06},
-    {...groundPatches.greenhouse,finish:groundPatches.greenhouse.level+.04}];
+assert.equal(fixedFallback.routeHeight(4.6,13),2.725,'Greenhouse aisle retains its chosen finish without a survey');
+function verifyProductiveFinishes(sample){
+  const court=sample.spec.productiveCourt;
   const snapshot=JSON.stringify(sample.spec);
-  for(const pad of productive){
-    for(let ix=0;ix<=8;ix++)for(let iz=0;iz<=8;iz++){
-      const x=pad.x+pad.w*ix/8,z=pad.y+pad.d*iz/8;
-      assert(Math.abs(sample.routeHeight(x,z)-pad.finish)<1e-10,'Each productive pad owns its fixed finished surface throughout its core');
-    }
-    for(const x of [pad.x-.6,pad.x,pad.x+pad.w,pad.x+pad.w+.6])for(const z of [pad.y-.6,pad.y,pad.y+pad.d/2,pad.y+pad.d,pad.y+pad.d+.6]){
-      const height=sample.routeHeight(x,z);
-      for(const [dx,dz]of [[1e-6,0],[-1e-6,0],[0,1e-6],[0,-1e-6]])assert(Math.abs(sample.routeHeight(x+dx,z+dz)-height)<1e-5,'Productive route finish must approach pad cores and blend boundaries continuously');
-    }
+  assert(court,'Fixed-datum terrain uses the coordinated court');
+  for(let ix=0;ix<=40;ix++)for(let iz=0;iz<=16;iz++){
+    const x=court.x0+(court.x1-court.x0)*ix/40,z=court.z0+(court.z1-court.z0)*iz/16;
+    assert(Math.abs(sample.routeHeight(x,z)-SiteTerrain.productiveFinish(court,x))<1e-10,'Court core follows its shared sloping finish and level aisles');
   }
+  for(const x of [court.x0-court.blend,court.x0,...court.aisles.flat(),court.x1,court.x1+court.eastBlend])
+    for(const z of [court.z0-court.blend-.6,court.z0,court.z1,court.z1+court.blend]){
+      const height=sample.routeHeight(x,z);
+      for(const [dx,dz]of [[1e-6,0],[-1e-6,0],[0,1e-6],[0,-1e-6]])assert(Math.abs(sample.routeHeight(x+dx,z+dz)-height)<1e-5,'Productive finish remains continuous across court and influence boundaries');
+    }
   const {GardenRouteModel}=require('./garden-route-model.js');
-  const geometry=GardenRouteModel.geometry(GARDEN.gardenRoutes,sample.routeHeight,.12,GardenRouteModel.surfaceExclusions(GARDEN));
-  let bedEdgeVertices=0;
-  const bed=productive[0];
+  const beds=RaisedBedsModel.build(GARDEN,{surfaceHeight:sample.routeHeight,groundHeight:sample.height,court});
+  const geometry=GardenRouteModel.geometry(GARDEN.gardenRoutes,sample.routeHeight,.12,[...GardenRouteModel.surfaceExclusions(GARDEN),beds.surfaceFootprint]);
+  let northJoinVertices=0;
   for(let i=0;i<geometry.positions.length;i+=3){
     const [x,y,z]=geometry.positions.slice(i,i+3);
-    if(Math.abs(x-bed.x)<1e-8&&z>12.5&&z<13.5){
-      bedEdgeVertices++;assert(Math.abs(y-bed.finish)<1e-10,'Actual clipped route triangles must meet the raised-bed pad at its finish');
+    if(Math.abs(z-court.z0)<1e-8&&x>6.2&&x<7.2){
+      northJoinVertices++;assert(Math.abs(y-2.645731707317073)<1e-10,'Clipped northern route triangles meet the level bed aisle');
     }
   }
-  assert(bedEdgeVertices>10,'Regression covers the visible productive-route/pad join');
+  assert(northJoinVertices>10,'Regression covers visible route/court join');
+  const gravel=beds.parts.find(p=>p.name==='raised_beds_gravel');
+  const houseEdge=gravel.vertices.filter(([x,z,y])=>Math.abs(x-court.x1)<1e-8&&z>12.5&&z<13.5&&Math.abs(y+beds.floorHeight-court.houseFinish)<1e-8);
+  assert(houseEdge.length>10,'Court triangles meet the fixed house terrace finish');
   assert.equal(JSON.stringify(sample.spec),snapshot,'Sampling productive finishes must not alter the shared grading specification');
 }
-verifyProductiveFinishes(fixedFallback,patches);
-verifyProductiveFinishes(surveyed,patches);
+verifyProductiveFinishes(fixedFallback);
+verifyProductiveFinishes(surveyed);
 assert.equal(fixedFallback.spec.deckTop,TERRAIN.houseFFLInternal);
 assert.equal(fixedFallback.spec.continuousGrading,true);
 assert.equal(fixedFallback.baseHeight(8,12),TERRAIN.basePlaneHeight(8,12));
@@ -141,6 +143,8 @@ assert.equal(surveyed.spec.houseBaseY,TERRAIN.houseFFLInternal);
 assert.equal(surveyed.spec.deckTop,TERRAIN.houseFFLInternal);
 for(const [x,z,h] of syntheticSurvey)assert.ok(Math.abs(surveyed.baseHeight(x,z)-h)<1e-10);
 const checks = [...points];
+for(const x of [-.2,2.2,4.2,5.2,6.2,7.2,8.8,9.48,9.88])for(let z=6.9;z<=18.5;z+=.2)
+  for(const offset of [-1e-6,0,1e-6])checks.push([x+offset,z]);
 function insideHouse(x,z) {
   const points=surveyed.spec.houseExcavation.points;
   let inside=false;
@@ -208,7 +212,7 @@ verifyDriveway(fixedFallback);
 if(existsSync(new URL('./docs/survey-terrain.js',import.meta.url))) {
   const {SURVEY_TERRAIN}=require('./docs/survey-terrain.js');
   const productiveSite=require('./grading-site.js').GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:SURVEY_TERRAIN});
-  verifyProductiveFinishes(productiveSite.site,productiveSite.groundPatches);
+  verifyProductiveFinishes(productiveSite.site);
   const actual=SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{surveySurface:SurveySurface.create(SURVEY_TERRAIN.points,TERRAIN.plane).data,houseFFL:TERRAIN.houseFFLInternal});
   verifyDriveway(actual);
   for(const vehicle of GARDEN.vehicles)for(const side of [-1,1])for(const axle of [.2,.8])assert.ok(Math.abs(actual.height(vehicle.cx+side*vehicle.w*.4,vehicle.noseZ+vehicle.l*axle)-patches.garage.level)<1e-10);
