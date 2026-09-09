@@ -9,6 +9,14 @@ assert(Math.abs(island.h+island.worktop.th-.910)<1e-9,'Island finished top must 
 assert(Math.abs(island.worktop.x1-island.worktop.x0-2)<1e-9,'Island finished top must be 2000 mm long');
 assert.equal(island.worktop.x0,island.x0,'Island top must be flush with its left side panel');
 assert.equal(island.worktop.x1,island.x1,'Island top must be flush with its right side panel');
+assert.equal(island.worktop.z0,island.z0,'Island top must be flush with the work-side cabinet edge');
+assert(Math.abs(island.worktop.z1-island.worktop.z0-.9)<1e-9,'Island finished depth must be 900 mm');
+assert(Math.abs(island.worktop.z1-island.z1-.3)<1e-9,'Seating overhang must remain 300 mm');
+assert.equal(island.worktop.z1,6.85,'Seating edge must not move');
+const {FurnitureModel}=require('../furniture-model.js');
+const top=FurnitureModel.build([island]).parts.find(part=>part.name.endsWith('_worktop'));
+assert(Math.abs(top.size[1]-.9)<1e-9,'Built worktop must retain the specified 900 mm depth');
+assert(Math.abs(top.position[1]-top.size[1]/2-5.95)<1e-9,'Built work-side finish must be at 5.95 m');
 for(const f of data.furniture.filter(f=>f.kind==='cab'&&['1.06','nika'].includes(f.room)&&!f.y0&&!f.label.startsWith('TV'))){
   assert.equal(f.plinth,.125,`${f.label}: kitchen plinth must be 125 mm`);
   if(!f.label.startsWith('ostrov'))assert.equal(f.h,HOUSE_INTERIOR.furniture.find(source=>source.label===f.label).h,'Other counter and cabinet heights stay unchanged');
@@ -27,10 +35,15 @@ if(process.env.PLAYWRIGHT_MODULE){
       const meshes=[];DEBUG.livingFitout.group.traverse(o=>{if(o.isMesh)meshes.push(o);});
       const color=name=>meshes.find(o=>o.material.name===DEBUG.livingFitout.parts.find(p=>p.name===name)?.material)?.material.color.getHexString();
       const led=DEBUG.hou.root.getObjectByName('Island overhang strip');
-      return {tap:color('tap_riser'),sink:color('sink_bottom'),ledY:led.children[0].position.y};
+      const stools=DEBUG.livingFitout.parts.filter(p=>/^bar_stool_\d_seat$/.test(p.name));
+      return {tap:color('tap_riser'),sink:color('sink_bottom'),ledY:led.children[0].position.y,ledZ:led.children[0].position.z,
+        stoolFronts:stools.map(p=>p.position[1]-p.size[1]/2)};
     });
     assert.equal(actual.tap,'404746');assert.equal(actual.sink,'827565');
     assert(Math.abs(actual.ledY-.868)<1e-9,'Island LED must follow lowered underside');
+    assert(Math.abs(actual.ledZ-6.805)<1e-9,'Island LED must stay attached to the unchanged seating edge');
+    assert.equal(actual.stoolFronts.length,3);
+    assert(actual.stoolFronts.every(z=>Math.abs(z-6.855)<1e-9),'Bar seating must stay in place');
     assert.deepEqual(errors,[]);console.log('Live kitchen: graphite tap, tartufo-like sink, lowered island LED; no browser errors.');
   }finally{await browser.close();}
 }

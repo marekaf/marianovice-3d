@@ -54,7 +54,7 @@ export function prepareLivingData(data) {
     const next={...f,cmat:'green',handle:f.label.startsWith('ostrov')?'push':'gola'};
     if(f.label.startsWith('ostrov')){
       next.h=.910-f.worktop.th;
-      next.worktop={...f.worktop,x0:f.x0,x1:f.x1};
+      next.worktop={...f.worktop,x0:f.x0,x1:f.x1,z0:f.z0};
     }
     if(typeof f.worktop==='number')next.wmat='stone';
     if(f.y0>0)next.golaEdge='bottom';
