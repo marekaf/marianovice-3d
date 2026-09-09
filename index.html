@@ -168,7 +168,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="sauna-model.js?v=5d9cb500c019"></script>
 <script src="pergola-model.js?v=aa2ee0f82530"></script>
 <script src="garage-model.js?v=cdb29f4bf771"></script>
-<script src="furniture-model.js?v=6c32ded6b6ca"></script>
+<script src="furniture-model.js?v=26476df75f18"></script>
 <script src="greenhouse-model.js?v=51fb1ff1098f"></script>
 <script src="raised-beds-model.js?v=d60bbe249234"></script>
 <script src="firepit-model.js?v=13aeea817164"></script>
@@ -192,7 +192,7 @@ import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=d982f196640c';
+  script.src = './house-interior.js?v=47cc9f4df890';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);

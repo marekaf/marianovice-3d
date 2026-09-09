@@ -40,6 +40,7 @@ const checks=[
   'verify-viewer-loading.mjs',
   'verify-render-scheduler.mjs',
   'verify-bathroom-fixtures.mjs',
+  'verify-bathroom-vanities.mjs',
   'docs/verify-utility-joinery.mjs',
   'docs/verify-kitchen-spec.mjs',
   'docs/verify-shower-fittings.mjs',

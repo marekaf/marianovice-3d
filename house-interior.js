@@ -126,11 +126,11 @@ const HOUSE_INTERIOR = {
     { kind: 'glass', room: '1.10', label: 'walk-in 980 (1.10)', x0: 0.60, z0: 1.43, x1: 1.58, z1: 1.47, h: 2.00 },  // E–W on the shower's south line, anchored to the předstěna; entry from the east
     { kind: 'fix', type: 'bath', room: '1.10', label: 'vana Ravak FREEDOM W', x0: 2.35, z0: 0.55, x1: 3.15, z1: 2.21, h: 0.58 },
     { kind: 'fix', type: 'wc', room: '1.10', label: 'WC 1.10', x0: 0.90, z0: 3.42, x1: 1.27, z1: 3.95, y0: 0.25, h: 0.17 },
-    { kind: 'cab', room: '1.10', label: 'umyvadlová skříň 1650', x0: 1.35, z0: 3.47, x1: 3.00, z1: 3.95, y0: 0.30, h: 0.48, front: 'N', modules: [0.825, 0.825], tags: ['d', 'd'], worktop: 0.038 },
+    { kind: 'cab', room: '1.10', label: 'umyvadlová skříň 1650', x0: 1.35, z0: 3.47, x1: 3.00, z1: 3.95, y0: 0.30, h: 0.50, front: 'N', modules: [0.825, 0.825], tags: ['d', 'd'], drawerRows: [.25, .25], handle: 'gola-c', worktop: 0.038 },
     { kind: 'fix', type: 'basin', room: '1.10', label: 'umyvadlo Vitra Geo', x0: 1.90, z0: 3.50, x1: 2.45, z1: 3.90, y0: 0.838, h: 0.13, tap: {mount:'wall',wall:'S',wallAt:3.95,height:1.05,reach:.23} },
     { kind: 'slab', room: '1.10', label: 'zrcadlo 1.10', mat: 'mirror', x0: 1.375, z0: 3.92, x1: 2.975, z1: 3.94, y0: 1.20, h: 0.80 },
     { kind: 'glass', room: 'sprcha', label: 'walk-in 800 (sprcha)', x0: 5.86, z0: 17.85, x1: 5.90, z1: 18.65, h: 2.00 },  // across the niche mouth, anchored to W32; entry from the north
-    { kind: 'cab', room: '1.03', label: 'umyvadlová skříň', x0: 6.70, z0: 17.175, x1: 7.20, z1: 17.90, y0: 0.30, h: 0.48, front: 'W', modules: [0.363, 0.362], tags: ['d', 'd'], worktop: 0.038 },
+    { kind: 'cab', room: '1.03', label: 'umyvadlová skříň', x0: 6.70, z0: 17.025, x1: 7.20, z1: 18.025, y0: 0.30, h: 0.50, front: 'W', modules: [1], tags: ['d'], drawerRows: [.25, .25], handle: 'gola-c', worktop: 0.038 },
     { kind: 'fix', type: 'basin', room: '1.03', label: 'umyvadlo 1.03', x0: 6.75, z0: 17.25, x1: 7.15, z1: 17.80, y0: 0.838, h: 0.13, tap: {mount:'wall',wall:'E',wallAt:7.20,height:1.05,reach:.23} },
     { kind: 'fix', type: 'wc', room: '1.03', label: 'WC 1.03', x0: 6.67, z0: 18.165, x1: 7.20, z1: 18.535, y0: 0.25, h: 0.17 },
     { kind: 'slab', room: '1.03', label: 'zrcadlo 1.03', mat: 'mirror', x0: 7.16, z0: 17.025, x1: 7.18, z1: 18.025, y0: 1.20, h: 0.80 },
