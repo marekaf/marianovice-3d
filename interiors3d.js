@@ -75,6 +75,10 @@ const INTERIORS3D = (() => {
   // openings[{at (m from wall min-corner along its axis), w, h, sill?}], stairs, clearH.
   // Returns groups parented under `root`, positioned at data.originPlot in plot coordinates.
   function buildHouse(THREE, data, opts = {}) {
+    const layers=typeof module!=='undefined'?require('./house-wall-layers.js').HouseWallLayers:HouseWallLayers;
+    const sectionMaterials=Object.fromEntries(Object.entries(layers.materials).map(([key,spec])=>{
+      const material=new THREE.MeshStandardMaterial(spec);material.name=key;return[key,material];
+    }));
     const floorY = opts.floorY ?? 0;
     const H = (data.clearH ?? 2.52) + 0.2;
     const wallMat = new THREE.MeshStandardMaterial({ color: opts.finishColors?.wall ?? 0xe8e5df, roughness: 0.9 });
@@ -165,9 +169,13 @@ const INTERIORS3D = (() => {
           if (reveals.some(o => Math.abs((a + b) / 2 - o.at - o.w / 2) < o.reveal.width / 2 &&
             (c + d) / 2 > o.reveal.depth0 && (c + d) / 2 < o.reveal.depth1 &&
             (bottom + top) / 2 > floorY + (o.sill || 0) && (bottom + top) / 2 < floorY + (o.sill || 0) + o.h)) continue;
-          if (alongX) mkB(target, ax + a, bottom, c, ax + b, top, d, wallMat);
-          else mkB(target, c, bottom, az + a, d, top, az + b, wallMat);
-          opts.decorateWallMesh?.(target.children[target.children.length - 1], w);
+          const rect=alongX?{x0:ax+a,x1:ax+b,z0:c,z1:d,y0:bottom,y1:top}:{x0:c,x1:d,z0:az+a,z1:az+b,y0:bottom,y1:top};
+          for(const cell of layers.split(data,w,rect)){
+            const material=cell.layer&&Math.abs(top-floorY-wh)<1e-8?[wallMat,wallMat,sectionMaterials[cell.layer==='eps'?'wallEPS':'wallMasonry'],wallMat,wallMat,wallMat]:wallMat;
+            const mesh=mkB(target,cell.x0,cell.y0,cell.z0,cell.x1,cell.y1,cell.z1,material);
+            mesh.userData.wallLayer=cell.layer;
+            opts.decorateWallMesh?.(mesh,w);
+          }
         }
       };
       let cur = 0;
