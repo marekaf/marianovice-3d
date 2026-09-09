@@ -11,7 +11,9 @@ const GateModel = (() => {
     const beam=(name,a,b,width=.06,depth=.06,material='gatePaint',category='structure')=>parts.push({name,type:'beam',start:point(a),end:point(b),width,depth,material,category});
     const shift=-4.10*open,railY=.18,bottom=.035,top=1.50,frame=.06;
     function infill(name,x0,x1,z0,z1,transform,category) {
-      const vertices=[],faces=[],pitchX=.042,pitchZ=.012,strand=.003,thickness=.002;
+      const groups=new Map(),pitchX=.042,pitchZ=.012,strand=.003,thickness=.002;
+      const faces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]].map(face=>face.toReversed());
+      let strands=0;
       const add=(a,b,row,za)=>{
         const dx=b[0]-a[0],dz=b[1]-a[1],distance=Math.hypot(dx,dz),sx=-dz/distance*strand/2,sz=dx/distance*strand/2;
         const polygon=[[a[0]+sx,a[1]+sz],[a[0]-sx,a[1]-sz],[b[0]-sx,b[1]-sz],[b[0]+sx,b[1]+sz]];
@@ -19,12 +21,16 @@ const GateModel = (() => {
           polygon[i][0]=Math.max(x0,Math.min(x1,polygon[i][0]));
           polygon[i][1]=Math.max(z0,Math.min(z1,polygon[i][1]));
         }
-        const offset=vertices.length;
+        const vertices=[];
         for(const side of [-1,1])for(const [x,z] of polygon){
           const raised=.0015*(row%2?-1:1)*(1-2*(z-za)/(pitchZ/2));
           vertices.push(point(transform(x,raised+side*thickness/2,z)));
         }
-        for(const face of [[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]])faces.push(face.toReversed().map(i=>i+offset));
+        const position=vertices[0],relative=vertices.map(vertex=>vertex.map((v,i)=>v-position[i]));
+        const key=relative.flat().map(v=>Math.round(v*1e8)).join(',');
+        if(!groups.has(key))groups.set(key,{vertices:relative,faces,positions:[]});
+        groups.get(key).positions.push(position);
+        strands++;
       };
       for(let row=0;row*pitchZ/2<z1-z0;row++){
         const za=z0+row*pitchZ/2,zb=Math.min(z1,za+pitchZ/2),offset=(row%2)*pitchX/2;
@@ -40,8 +46,8 @@ const GateModel = (() => {
           }
         }
       }
-      parts.push({name,type:'mesh',vertices,faces,material:'gateMesh',category});
-      return {pitch:[pitchX,pitchZ],strand,thickness,vertices:vertices.length,triangles:faces.length*2};
+      parts.push({name,type:'repeatedMesh',groups:[...groups.values()],material:'gateMesh',category});
+      return {pitch:[pitchX,pitchZ],strand,thickness,vertices:strands*8,triangles:strands*12};
     }
     const slide=(x,y,z)=>[x+shift,railY+y,z];
     function leaf(name,x0,x1,transform,category){

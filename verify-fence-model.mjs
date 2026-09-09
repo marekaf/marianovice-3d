@@ -11,8 +11,11 @@ assert.equal(model.parts.filter(p=>p.name.startsWith('chain_link_mesh_')).length
 for(const b of model.dims.bays){assert(b.to-b.from<=2.5);assert(b.samples.every(h=>b.bottom<h));}
 for(const p of model.parts){
   assert(model.materials[p.material],p.name);
-  assert((p.vertices??p.position??[...p.start,...p.end]).flat().every(Number.isFinite),p.name);
-  if(p.faces)assert(p.faces.flat().every(i=>i>=0&&i<p.vertices.length),p.name);
+  for(const group of p.groups??[p]){
+    assert((group.vertices??group.position??[...group.start,...group.end]).flat().every(Number.isFinite),p.name);
+    if(group.faces)assert(group.faces.flat().every(i=>i>=0&&i<group.vertices.length),p.name);
+    if(group.positions)assert(group.positions.flat().every(Number.isFinite),p.name);
+  }
 }
 const reversed=FenceModel.build({start:[7,0],end:[0,0],heightAt:x=>.08*x});
 assert.equal(reversed.dims.bays.length,3);

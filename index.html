@@ -173,8 +173,8 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="raised-beds-model.js?v=d60bbe249234"></script>
 <script src="firepit-model.js?v=13aeea817164"></script>
 <script src="hidden-bench-model.js?v=cd83b90f23d3"></script>
-<script src="gate-model.js"></script>
-<script src="fence-model.js"></script>
+<script src="gate-model.js?v=6ab2796976ec"></script>
+<script src="fence-model.js?v=dbf171c13753"></script>
 <script src="utility-pillar-model.js"></script>
 <script src="site-terrain.js?v=275cbcb1ed2e"></script>
 <script src="survey-surface.js"></script>
@@ -183,7 +183,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=bbc15acd4fb9';
+import { buildModel } from './model3d.js?v=c01f6fdccf42';
 import { GroundSurfaceModel } from './ground-surface-model.js';
 import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
@@ -2086,7 +2086,7 @@ let entranceGate=buildModel(THREE,entranceGateModel),entranceGateOpen=true;scene
 window.toggleEntranceGate=(open=!entranceGateOpen)=>{
   if(open===entranceGateOpen)return;
   const materials=new Set();
-  entranceGate.traverse(object=>{if(object.isMesh){object.geometry.dispose();materials.add(object.material);}});
+  entranceGate.traverse(object=>{if(object.isMesh){if(object.isInstancedMesh)object.dispose();object.geometry.dispose();materials.add(object.material);}});
   for(const material of materials)material.dispose();
   scene.remove(entranceGate);entranceGateOpen=open;
   entranceGate=buildModel(THREE,GateModel.build({openingStart:gateT,direction:[gux,guz],fixedPanelLength:entranceFixedLength,floorHeight:entranceGateModel.floorHeight,open:entranceGateOpen?1:0,wicketOpen:entranceGateOpen?1:0}));
