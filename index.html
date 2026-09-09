@@ -186,6 +186,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=bbc15acd4fb9';
 import { GroundSurfaceModel } from './ground-surface-model.js';
 import { ShrubModel } from './shrub-model.js';
+import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
@@ -267,7 +268,11 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // smoke particles cast none. Re-rendering a 4096² map every frame is pure waste, so the map is
 // redrawn only when the sun moves or something is shown or hidden.
 renderer.shadowMap.autoUpdate = false;
-const invalidateShadows = () => { renderer.shadowMap.needsUpdate = true; };
+let renderScheduler;
+const requestRender = () => renderScheduler?.invalidate();
+const invalidateShadows = () => { renderer.shadowMap.needsUpdate = true; requestRender(); };
+THREE.DefaultLoadingManager.onLoad = requestRender;
+THREE.DefaultLoadingManager.onProgress = requestRender;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 document.body.appendChild(renderer.domElement);
@@ -277,6 +282,7 @@ controls.target.set(22, 0, 17);
 controls.maxPolarAngle = Math.PI / 2 - 0.05;
 controls.minDistance = 3;
 controls.maxDistance = 200;
+controls.addEventListener('change',requestRender);
 
 // ───────────────────────── SKY DOME (procedural gradient) ─────────────────────────
 const skyGeom = new THREE.SphereGeometry(400, 32, 16);
@@ -2086,6 +2092,7 @@ window.toggleEntranceGate=(open=!entranceGateOpen)=>{
   entranceGate=buildModel(THREE,GateModel.build({openingStart:gateT,direction:[gux,guz],fixedPanelLength:entranceFixedLength,floorHeight:entranceGateModel.floorHeight,open:entranceGateOpen?1:0,wicketOpen:entranceGateOpen?1:0}));
   scene.add(entranceGate);
   document.getElementById('toggleEntranceGate').checked=entranceGateOpen;
+  invalidateShadows();
 };
 const gateNotes=document.createElement('details');gateNotes.hidden=true;
 const gateSummary=document.createElement('summary');gateSummary.textContent='Gate specification and fit';
@@ -2398,14 +2405,16 @@ document.addEventListener('pointerlockchange', () => {
   cb.dispatchEvent(new Event('change'));
 });
 
-document.addEventListener('keydown', e => { fpState.keys[e.key.toLowerCase()] = true; });
-document.addEventListener('keyup', e => { fpState.keys[e.key.toLowerCase()] = false; });
+document.addEventListener('keydown', e => { fpState.keys[e.key.toLowerCase()] = true; if(fpState.active)requestRender(); });
+document.addEventListener('keyup', e => { fpState.keys[e.key.toLowerCase()] = false; if(fpState.active)requestRender(); });
+window.addEventListener('blur',()=>{fpState.keys={};});
 
 document.addEventListener('mousemove', e => {
   if (!fpState.active || document.pointerLockElement !== renderer.domElement) return;
   fpYaw -= e.movementX * 0.002;
   fpPitch -= e.movementY * 0.002;
   fpPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, fpPitch));
+  requestRender();
 });
 
 // Per-frame scratch vectors — avoid allocating in the render loop
@@ -2438,6 +2447,7 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio, mobileRendering ? 1 : 2));
+  requestRender();
 });
 
 // ───────────────────────── WALKING TOUR (POV walkthrough) ─────────────────────────
@@ -2474,16 +2484,17 @@ window.startTour = function() {
   if (tourActive) return;
   tourActive = true;
   tourIndex = 0;
-  tourStart = clock.getElapsedTime();
+  tourStart = animationTime;
   controls.enabled = false;
   document.getElementById('toggleFP').checked = false;
   fpState.active = false;
+  requestRender();
 };
 
 function tourUpdate() {
   if (!tourActive) return;
   const n = tourPath.length;
-  const elapsed = clock.getElapsedTime() - tourStart;
+  const elapsed = animationTime - tourStart;
   if (elapsed >= tourCurves.cum[n - 1]) {
     tourActive = false;
     document.dispatchEvent(new Event('viewer-tour-ended'));
@@ -2511,13 +2522,10 @@ function tourUpdate() {
 }
 
 // ───────────────────────── ANIMATE ─────────────────────────
-const clock = new THREE.Clock();
-// Derived from getElapsedTime, not clock.getDelta() — getElapsedTime() consumes the delta
-// internally, so a second getDelta() call here would rob the smoke and water of their time.
-let fpPrevT = 0;
-function animate() {
-  requestAnimationFrame(animate);
-  const t = clock.getElapsedTime();
+let animationTime=0;
+function animate(dt=0) {
+  animationTime+=dt;
+  const t = animationTime;
   // Smoke particles rising and fading
   const smokeBaseY = terrainHeight(FPC.cx, FPC.cy);
   for (const p of smokeParticles) {
@@ -2531,13 +2539,13 @@ function animate() {
   // Pond water ripple drift
   waterNormal.offset.x = t * 0.008;
   waterNormal.offset.y = t * 0.005;
-  if (fpState.active) fpUpdate(Math.min(t - fpPrevT, 0.1));   // clamp: a backgrounded tab resumes with a huge gap
-  fpPrevT = t;
+  if (fpState.active) fpUpdate(dt);
   tourUpdate();
   // Skip controls.update() during tour/FP — OrbitControls.update() calls camera.lookAt(target)
   // which would override our custom lookAt and point camera at controls.target (house center)
   if (!tourActive && !fpState.active) controls.update();
   renderer.render(scene, camera);
+  return tourActive||(fpState.active&&['w','a','s','d'].some(key=>fpState.keys[key]));
 }
 await ViewerLoading.stage('Preparing the first view…');
 const { mountViewerUI } = await import('./viewer-ui.js');
@@ -2547,7 +2555,18 @@ mountViewerUI({ stopTour() {
   controls.target.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(20));
   controls.enabled = true;
   tourLabel.style.opacity = 0;
+  requestRender();
 } });
+renderScheduler=createRenderScheduler({render:animate});
+for(const event of ['input','change','click','toggle'])document.addEventListener(event,requestRender,true);
+document.addEventListener('visibilitychange',()=>{
+  fpState.keys={};
+  renderScheduler.setVisible(!document.hidden);
+});
+renderer.domElement.addEventListener('webglcontextrestored',invalidateShadows);
+window.addEventListener('pagehide',()=>renderScheduler.setVisible(false));
+window.addEventListener('pageshow',()=>renderScheduler.setVisible(!document.hidden));
+renderScheduler.setVisible(!document.hidden);
 animate();
 ViewerLoading.finish();
 </script>
