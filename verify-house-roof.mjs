@@ -46,7 +46,8 @@ for(const z of[7.2,10,15.9,19.3,25])for(let x=13.3;x<14.2;x+=.04){
 for(const [x,z]of[[9.7,10],[10,16],[14,17],[21.5,10],[21,17],[16,7.08]]){
   const hits=hitsAt(soffits,x,z);
   assert(hits.length>0,'Every exposed overhang has a finished underside');
-  assert(hits.every(hit=>Math.abs(hit.point.y-(d.heightAt(x,z)-.04))<1e-5));
+  if(x>13)assert(hits.every(hit=>Math.abs((d.heightAt(x,z)-hit.point.y)*Math.SQRT1_2-.25)<1e-5),'Main overhang has 250mm depth normal to its 45-degree roof skin');
+  else assert(hits.every(hit=>Math.abs(hit.point.y-(d.heightAt(x,z)-.04))<1e-5),'Unconfirmed shallow-wing build-down remains unchanged');
 }
 for(const [x,z]of[[11,10],[18,10],[19,17],[15.5,23]])assert.equal(hitsAt(soffits,x,z).length,0,'Soffits do not create timber ceilings over occupied interior rooms');
 assert.equal(gutters.length,4,'Separate continuous gutters serve the eastern, two western and atrium eaves');
@@ -57,5 +58,47 @@ for(const gutter of gutters){
   const midZ=(bounds.min.z+bounds.max.z)/2;
   assert(d.heightAt(g.edgeX,midZ)-bounds.max.y>.034,'Gutter lip remains below the metal drip edge');
 }
-assert(d.heightAt(10.48,10)-d.soffitDrop>3.07,'Western soffit clears the existing finished wall top');
+assert(d.undersideHeightAt(10.48,10)>3.07,'Western soffit clears the existing finished wall top');
+assert.equal(d.westWing.depthStatus,'unconfirmed');
+for(const [x,z]of[[14,17],[21.5,10],[16,7.08]])assert(Math.abs(d.heightAt(x,z)-d.undersideHeightAt(x,z)-.3535533905932738)<1e-9,'Infill API uses the main roof normal build-up');
+for(const z of[7.1,26.5,16,19.1]){
+  const hits=new THREE.Raycaster(new THREE.Vector3(13.6,3.2,z),new THREE.Vector3(1,0,0),0,.3).intersectObject(roof,true);
+  assert(hits.length>0,'Roof depth transition is closed across every exposed overhang strip');
+  assert(Math.abs(hits[0].point.x-13.740904105095847)<1e-5,'Closure joins the wing and main undersides');
+}
+for(const [z,direction]of[[16.105,-1],[19.005,1]]){
+  const hits=new THREE.Raycaster(new THREE.Vector3(13.5,3.1,z-direction*.1),new THREE.Vector3(0,0,direction),0,.2).intersectObject(roof,true);
+  assert(hits.some(hit=>Math.abs(hit.point.z-z)<1e-5),'Atrium return encloses the deeper roof body');
+}
+for(const [name,bodyX]of[['East',21.60],['Atrium',13.36]]){
+  const fascia=roof.getObjectByName(`${name} eave fascia`),gutter=roof.getObjectByName(`${name} half-round gutter`);
+  const bodyBounds=new THREE.Box3().setFromObject(fascia),gutterBounds=new THREE.Box3().setFromObject(gutter);
+  assert(Math.abs(bodyBounds.min.x-bodyX)<1e-5&&Math.abs(bodyBounds.max.x-bodyX)<1e-5,'Main fascia sits behind the unchanged gutter');
+  assert(name==='East'?gutterBounds.min.x-bodyBounds.max.x>.007:bodyBounds.min.x-gutterBounds.max.x>.007,'Thick fascia cannot intersect the gutter bowl');
+  assert(Math.abs((bodyBounds.max.y-bodyBounds.min.y)*Math.SQRT1_2-.25)<1e-5,'Main fascia encloses the complete roof depth');
+  const lip=roof.getObjectByName(`${name} metal drip underside`);
+  assert(lip,'The metal projection beyond the body has a closed underside');
+  const bounds=new THREE.Box3().setFromObject(lip);
+  assert(Math.abs(bounds.max.x-bounds.min.x-.03)<1e-5,'Thin drip projection does not move the roof skin edge');
+}
+for(const name of['North atrium junction closure','South atrium junction closure']){
+  const geometry=roof.getObjectByName(name).geometry,position=geometry.attributes.position,index=geometry.index;
+  const polygon=Array.from({length:position.count},(_,i)=>[position.getX(i),position.getY(i)]);
+  const contains=([x,y])=>{
+    let inside=false;
+    for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+      const [ax,ay]=polygon[i],[bx,by]=polygon[j];
+      if((ay>y)!==(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
+    }
+    return inside;
+  };
+  const area=points=>Math.abs(points.reduce((sum,[x,y],i)=>{const next=points[(i+1)%points.length];return sum+x*next[1]-next[0]*y;},0))/2;
+  let trianglesArea=0;
+  for(let i=0;i<index.count;i+=3){
+    const triangle=[0,1,2].map(j=>polygon[index.getX(i+j)]);
+    assert(contains([triangle.reduce((s,p)=>s+p[0],0)/3,triangle.reduce((s,p)=>s+p[1],0)/3]),'Stepped closure triangles remain inside their outline');
+    trianglesArea+=area(triangle);
+  }
+  assert(Math.abs(trianglesArea-area(polygon))<1e-8,'Stepped closure triangles cover the outline without overlap');
+}
 console.log('House roof skin, junctions, enclosed overhangs and gutter clearances verified');
