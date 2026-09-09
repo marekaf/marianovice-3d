@@ -17,8 +17,8 @@ function contains(part, x, z) {
 }
 
 function createGradingData({ garden, terrain, site, survey, baseline }) {
-  if (!garden?.plot?.vertices?.length || !site?.height || !survey?.height || !survey.data?.hullEdges?.length || !Number.isFinite(terrain?.houseFFLInternal)) throw new Error('Grading data requires plot, model terrain, datum and triangulated survey');
-  const step = .5, sectionStep = .25;
+  if (!garden?.plot?.vertices?.length || !site?.height || !site?.routeHeight || !survey?.height || !survey.data?.hullEdges?.length || !Number.isFinite(terrain?.houseFFLInternal)) throw new Error('Grading data requires plot, model ground and walking finish, datum and triangulated survey');
+  const step = .5, sectionStep = .25, routeSectionStep = .05;
   const previousHeight = baseline ? (typeof module !== 'undefined' ? require('./site-terrain.js').SiteTerrain : SiteTerrain).height : null;
   const polygon = garden.plot.vertices;
   const exclusions = garden.elements.filter(e => EXCLUSIONS.includes(e.id));
@@ -61,24 +61,34 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
   const point = (id, label, location, finished) => {
     if (location) points.push({ id, label, ...sample(...location), ...(Number.isFinite(finished) ? { finished } : {}) });
   };
-  const section = (id, label, vertices) => {
+  const section = (id, label, vertices, walking = false) => {
     if (vertices.length < 2) return;
-    const samples = []; let distance = 0, maxSlope = 0;
+    const samples = []; let distance = 0, maxSlope = 0, maxFinishSlope = 0;
+    const sampleStep = walking ? routeSectionStep : sectionStep;
     for (let i = 1; i < vertices.length; i++) {
       const a = vertices[i - 1], b = vertices[i], length = Math.hypot(b[0] - a[0], b[1] - a[1]);
       if (!length) continue;
-      const count = Math.ceil(length / sectionStep);
+      const count = Math.ceil(length / sampleStep);
       for (let j = i === 1 ? 0 : 1; j <= count; j++) {
         const t = j / count, value = { ...sample(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t), distance: distance + length * t };
+        if(walking){
+          value.finished=site.routeHeight(value.x,value.z);
+          if(!Number.isFinite(value.finished))throw new Error('Non-finite walking finish');
+        }
         const previous = samples.at(-1);
         if (previous && !previous.excluded && !value.excluded) maxSlope = Math.max(maxSlope, Math.abs(value.proposed - previous.proposed) / (value.distance - previous.distance) * 100);
+        if(previous&&walking)maxFinishSlope=Math.max(maxFinishSlope,Math.abs(value.finished-previous.finished)/(value.distance-previous.distance)*100);
         samples.push(value);
       }
       distance += length;
     }
-    if (samples.length) sections.push({ id, label, vertices, samples, maxSlope, length: distance });
+    if (samples.length) sections.push({ id, label, vertices, samples, maxSlope, sampleStep, ...(walking?{maxFinishSlope}:{}), length: distance });
   };
   for (const [id, label] of [['eastTerrace', 'East terrace'], ['westTerrace', 'West terrace'], ['pergola', 'Pergola'], ['sauna', 'Sauna'], ['greenhouse', 'Greenhouse'], ['zasivarna', 'Red bench']]) point(id, label, centre(rect(id)));
+  const greenhouse=points.find(p=>p.id==='greenhouse');
+  if(greenhouse)greenhouse.finished=site.routeHeight(greenhouse.x,greenhouse.z);
+  const bedCentre=centre(rect('raisedBedsPad'));
+  if(bedCentre)point('raisedBeds','Raised-bed platform',bedCentre,site.routeHeight(...bedCentre));
   const fire = element('firePit')?.parts.find(p => p.kind === 'circle');
   const pond = element('pond')?.parts.find(p => p.kind === 'ellipse');
   if (fire) point('firePit', 'Fire pit apron', [fire.cx, fire.cy]);
@@ -86,9 +96,9 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
     point('pondBasin', 'Pond basin', [pond.cx, pond.cy]);
     point('pondEdge', 'Pond east bank', [pond.cx + pond.rx, pond.cy]);
   }
-  for (const [id, label] of [['Daily dining', 'East terrace to pergola'], ['Gathering connection', 'Pergola to fire pit'], ['Wellness access', 'West house approach to sauna']]) {
+  for (const [id, label] of [['Daily dining', 'East terrace to pergola'], ['Gathering connection', 'Pergola to fire pit'], ['Wellness access', 'West house approach to sauna'], ['Productive access','Productive access'], ['Greenhouse access','Greenhouse access'], ['Bed access','Bed access']]) {
     const route = garden.gardenRoutes?.find(r => r.id === id);
-    if (route) section(id, label, route.points.map(p => p.slice()));
+    if (route) section(id, label, route.points.map(p => p.slice()), true);
   }
   if (fire && pond) section('fire-pond', 'Fire pit to pond basin', [[fire.cx, fire.cy], [pond.cx, pond.cy]]);
   const driveway = site.spec?.drivewayProfile;
@@ -109,7 +119,7 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
   }
   const wicket = site.spec?.wicketLanding;
   if (wicket?.points) point('wicket', 'Wicket threshold', [0, 1].map(axis => wicket.points.reduce((sum, p) => sum + p[axis], 0) / wicket.points.length), wicket.finishedLevel);
-  return { cells, totals, points, sections, metadata: { step, sectionStep, exclusions: EXCLUSIONS.slice(), volumeMethod: 'Midpoint grid approximation; boundary cells selected by centre; no stripping, bulking, compaction or foundations allowance', totalsScope: 'Only non-building sample cells within survey convex hull', heightSurface: 'Model graded ground, not paving or finished floor', slopeMethod: 'Central differences across 0.5 m, percent; not compliance assessment' } };
+  return { cells, totals, points, sections, metadata: { step, sectionStep, routeSectionStep, exclusions: EXCLUSIONS.slice(), volumeMethod: 'Midpoint grid approximation; boundary cells selected by centre; no stripping, bulking, compaction or foundations allowance', totalsScope: 'Only non-building sample cells within survey convex hull', heightSurface: 'Model graded ground, not paving or finished floor', slopeMethod: 'Central differences across 0.5 m, percent; not compliance assessment', routeSlopeMethod:'Maximum absolute change in modeled walking finish between centreline samples at most 0.05 m apart; computed, not designed grades. Narrower features may be missed. Not an accessibility assessment or setting-out instruction.' } };
 }
 
 return { createGradingData };
