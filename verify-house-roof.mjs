@@ -47,7 +47,7 @@ for(const [x,z]of[[9.7,10],[10,16],[14,17],[21.5,10],[21,17],[16,7.08]]){
   const hits=hitsAt(soffits,x,z);
   assert(hits.length>0,'Every exposed overhang has a finished underside');
   if(x>13)assert(hits.every(hit=>Math.abs((d.heightAt(x,z)-hit.point.y)*Math.SQRT1_2-.25)<1e-5),'Main overhang has 250mm depth normal to its 45-degree roof skin');
-  else assert(hits.every(hit=>Math.abs(hit.point.y-(d.heightAt(x,z)-.04))<1e-5),'Unconfirmed shallow-wing build-down remains unchanged');
+  else assert(hits.every(hit=>Math.abs((d.heightAt(x,z)-hit.point.y)*Math.cos(5*Math.PI/180)-.227)<1e-5),'Western overhang encloses the 227mm normal roof build-up');
 }
 for(const [x,z]of[[11,10],[18,10],[19,17],[15.5,23]])assert.equal(hitsAt(soffits,x,z).length,0,'Soffits do not create timber ceilings over occupied interior rooms');
 assert.equal(gutters.length,4,'Separate continuous gutters serve the eastern, two western and atrium eaves');
@@ -58,11 +58,13 @@ for(const gutter of gutters){
   const midZ=(bounds.min.z+bounds.max.z)/2;
   assert(d.heightAt(g.edgeX,midZ)-bounds.max.y>.034,'Gutter lip remains below the metal drip edge');
 }
-assert(d.undersideHeightAt(10.48,10)>3.07,'Western soffit clears the existing finished wall top');
-assert.equal(d.westWing.depthStatus,'unconfirmed');
+assert(d.undersideHeightAt(10.48,10)>2.27,'Western soffit clears the west-window heads');
+assert.equal(d.westWing.normalThickness,.227);
+assert.equal(d.westWing.depthStatus,'documented build-up; finish thickness unconfirmed');
 for(const [x,z]of[[14,17],[21.5,10],[16,7.08]])assert(Math.abs(d.heightAt(x,z)-d.undersideHeightAt(x,z)-.3535533905932738)<1e-9,'Infill API uses the main roof normal build-up');
 for(const z of[7.1,26.5,16,19.1]){
-  const hits=new THREE.Raycaster(new THREE.Vector3(13.6,3.2,z),new THREE.Vector3(1,0,0),0,.3).intersectObject(roof,true);
+  const seamY=(d.mainWest.undersideHeightAt(d.intersectionX)+d.westWing.undersideHeightAt(d.intersectionX))/2;
+  const hits=new THREE.Raycaster(new THREE.Vector3(13.6,seamY,z),new THREE.Vector3(1,0,0),0,.3).intersectObject(roof,true);
   assert(hits.length>0,'Roof depth transition is closed across every exposed overhang strip');
   assert(Math.abs(hits[0].point.x-13.740904105095847)<1e-5,'Closure joins the wing and main undersides');
 }
@@ -70,18 +72,35 @@ for(const [z,direction]of[[16.105,-1],[19.005,1]]){
   const hits=new THREE.Raycaster(new THREE.Vector3(13.5,3.1,z-direction*.1),new THREE.Vector3(0,0,direction),0,.2).intersectObject(roof,true);
   assert(hits.some(hit=>Math.abs(hit.point.z-z)<1e-5),'Atrium return encloses the deeper roof body');
 }
-for(const [name,bodyX]of[['East',21.60],['Atrium',13.36]]){
+for(const [name,bodyX,normalDepth,cosPitch]of[['East',21.60,.25,Math.SQRT1_2],['Atrium',13.36,.25,Math.SQRT1_2],
+  ['West north',9.36,.227,Math.cos(5*Math.PI/180)],['West south',9.36,.227,Math.cos(5*Math.PI/180)]]){
   const fascia=roof.getObjectByName(`${name} eave fascia`),gutter=roof.getObjectByName(`${name} half-round gutter`);
   const bodyBounds=new THREE.Box3().setFromObject(fascia),gutterBounds=new THREE.Box3().setFromObject(gutter);
-  assert(Math.abs(bodyBounds.min.x-bodyX)<1e-5&&Math.abs(bodyBounds.max.x-bodyX)<1e-5,'Main fascia sits behind the unchanged gutter');
+  assert(Math.abs(bodyBounds.min.x-bodyX)<1e-5&&Math.abs(bodyBounds.max.x-bodyX)<1e-5,'Fascia sits behind the unchanged gutter');
   assert(name==='East'?gutterBounds.min.x-bodyBounds.max.x>.007:bodyBounds.min.x-gutterBounds.max.x>.007,'Thick fascia cannot intersect the gutter bowl');
-  assert(Math.abs((bodyBounds.max.y-bodyBounds.min.y)*Math.SQRT1_2-.25)<1e-5,'Main fascia encloses the complete roof depth');
+  assert(Math.abs((bodyBounds.max.y-bodyBounds.min.y)*cosPitch-normalDepth)<1e-5,'Fascia encloses the complete roof depth');
   const lip=roof.getObjectByName(`${name} metal drip underside`);
   assert(lip,'The metal projection beyond the body has a closed underside');
   const bounds=new THREE.Box3().setFromObject(lip);
   assert(Math.abs(bounds.max.x-bounds.min.x-.03)<1e-5,'Thin drip projection does not move the roof skin edge');
 }
-for(const name of['North atrium junction closure','South atrium junction closure']){
+for(const [z,direction]of[[d.northZ,1],[d.southZ,-1],[d.atriumNorthZ,-1],[d.atriumSouthZ,1]]){
+  const x=d.westX+.015,y=d.westWing.heightAt(x)-.001;
+  assert(new THREE.Raycaster(new THREE.Vector3(x,y,z-direction*.01),new THREE.Vector3(0,0,direction),0,.02).intersectObject(roof,true).length,'Thin drip is closed at every west barge corner');
+  const bodyX=d.westX+.031;
+  for(let fraction=.05;fraction<1;fraction+=.05){
+    const height=d.westWing.heightAt(bodyX)-d.westWing.verticalDrop*fraction;
+    const hits=new THREE.Raycaster(new THREE.Vector3(bodyX,height,z-direction*.01),new THREE.Vector3(0,0,direction),0,.02).intersectObject(roof,true);
+    assert(hits.length,'Deep west barge remains closed down to the soffit');
+  }
+  const insetZ=z+direction*.001;
+  for(const probeX of[d.westX+.015,d.westX+.031]){
+    const expected=d.westWing.heightAt(probeX)-(probeX<d.westX+.03?.002:d.westWing.verticalDrop);
+    const hits=new THREE.Raycaster(new THREE.Vector3(probeX,expected-.01,insetZ),new THREE.Vector3(0,1,0),0,.02).intersectObject(roof,true);
+    assert(hits.length,'West corner underside joins the setback fascia and drip without gaps');
+  }
+}
+for(const name of['North atrium junction closure','South atrium junction closure','North wing barge','South wing barge','North atrium return','South atrium return']){
   const geometry=roof.getObjectByName(name).geometry,position=geometry.attributes.position,index=geometry.index;
   const polygon=Array.from({length:position.count},(_,i)=>[position.getX(i),position.getY(i)]);
   const contains=([x,y])=>{

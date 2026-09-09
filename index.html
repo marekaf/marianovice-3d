@@ -170,7 +170,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="sauna-model.js?v=5d9cb500c019"></script>
 <script src="pergola-model.js?v=aa2ee0f82530"></script>
 <script src="garage-model.js?v=cdb29f4bf771"></script>
-<script src="house-roof.js?v=98db4e5c78a6"></script>
+<script src="house-roof.js?v=4ddba03ad9f4"></script>
 <script src="furniture-model.js?v=26476df75f18"></script>
 <script src="greenhouse-model.js?v=71dd86bbbd29"></script>
 <script src="raised-beds-model.js?v=17f54a471ed2"></script>
@@ -193,6 +193,7 @@ import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 import { createWalkInteriorLoader } from './walk-interior-loading.js';
 import { createHouseChimney } from './house-chimney.js';
+import { capRoofWall } from './docs/roof-wall-cap.js?v=0ed105086bfd';
 import { moveWalker } from './walk-movement.js';
 import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=60ccca69a4cf';
 
@@ -950,6 +951,8 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
 
 const houseRoof = HouseRoof.create(THREE, {bbox: HB, atrium: HA, gable: GABLE, baseY: houseTerrainY, eNotch: EL.house.meta.eNotch});
 const houseRoofSpec = houseRoof.userData.description;
+const roofWallProfile={slope:houseRoofSpec.westWing.heightAt(1)-houseRoofSpec.westWing.heightAt(0),intercept:houseRoofSpec.westWing.undersideHeightAt(0),maxHeight:houseTerrainY+wallH};
+capRoofWall(THREE,houseMesh,roofWallProfile);
 roofGroup.add(houseRoof);
 const roofWindowRun = (GABLE[1] - GABLE[0]) / 2 + 0.45;
 
@@ -1630,10 +1633,13 @@ const exteriorWalkingDoors=[];
     }
     const interior = localHouseData.exteriorInterior?.(wallH);
     if (interior) {
-      const group = buildModel(THREE, { ...interior, floorHeight: ty });
+      const exteriorPrefixes=localHouseData.extWalls.map(wall=>`backing_${wall.id}_`);
+      const parts=interior.parts.map(part=>exteriorPrefixes.some(prefix=>part.name.startsWith(prefix))?{...part,category:'exteriorBacking'}:part);
+      const group = buildModel(THREE, { ...interior, parts, floorHeight: ty });
       houseInteriorBacking=group;
       group.position.x = origin.x;
       group.position.z = origin.z;
+      group.userData.categories.exteriorBacking.traverse(mesh=>{if(mesh.isMesh)capRoofWall(THREE,mesh,roofWallProfile);});
       scene.add(group);
       const terrainCutouts = interior.terrainCutouts.map(cutout => ({ min: toWorld(cutout.min), max: toWorld(cutout.max) }));
       terrainCutouts.push(...cutouts.map(cutout => ({ min: new THREE.Vector3(cutout.min.x, ty - 1, cutout.min.z), max: cutout.max })));
@@ -2362,8 +2368,8 @@ document.addEventListener('keydown',event=>{
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
     if(!localHouseData)throw new Error('House drawings unavailable');
-    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=8ae63603de1f');
-    return buildWalkInterior(THREE,localHouseData,{buildModel:(three,model)=>buildWalkingDoor(three,model,buildModel),renderer,floorY:houseTerrainY,exteriorWallHeight:wallH});
+    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=79e755639fc3');
+    return buildWalkInterior(THREE,localHouseData,{buildModel:(three,model)=>buildWalkingDoor(three,model,buildModel),renderer,floorY:houseTerrainY,exteriorWallHeight:wallH,roofWallProfile});
   },
   install:house=>{
     walkHouse=house;

@@ -30,7 +30,8 @@ function insetFacade(mesh,wall,outline) {
   mesh.geometry.computeBoundingSphere();
 }
 
-export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,exteriorWallHeight=data.clearH}) {
+export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,exteriorWallHeight=data.clearH,roofWallProfile}) {
+  const {capRoofWall}=await import('./roof-wall-cap.js?v=0ed105086bfd');
   const [officeModule,living,bathroom,utility,stairs,led,entrance,kitchen,cathedral,electrical,records,electricalView,{RoomEnvironment}]=await Promise.all([
     import('./office-integration.js'),import('./living-interior.js?v=df360e65df66'),import('./bathroom-finishes.js'),
     import('./utility-equipment.js'),import('./stair-finishes.js'),import('./interior-led.js'),
@@ -61,7 +62,10 @@ export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,e
         builtRoots.push(mesh);
         offices.decorateWallMesh(THREE,mesh,wall,data);
         bathroomFinishes.decorateWallMesh(mesh,wall);
-        if(exteriorIds.has(wall.id))insetFacade(mesh,wall,data.outline);
+        if(exteriorIds.has(wall.id)){
+          insetFacade(mesh,wall,data.outline);
+          if(roofWallProfile)capRoofWall(THREE,mesh,roofWallProfile,{offset:[data.originPlot.x,floorY,data.originPlot.z]});
+        }
       },
     });
     builtRoots.push(house.root);
