@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const html = await readFile(new URL('./index.html', import.meta.url), 'utf8');
 const roofBlock = html.slice(html.indexOf('// Garage pult roof'), html.indexOf('// Carport plate'));
-const helper = html.slice(html.indexOf('function makePultRoofWE('), html.indexOf('// MAIN CORE'));
+const helper = html.slice(html.indexOf('function makePultRoofWE('), html.indexOf('const houseRoof ='));
 const importMap = html.match(/<script type="importmap">[\s\S]*?<\/script>/)[0];
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const browser = await chromium.launch({ channel:'chrome', headless:true });

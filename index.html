@@ -168,6 +168,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="sauna-model.js?v=5d9cb500c019"></script>
 <script src="pergola-model.js?v=aa2ee0f82530"></script>
 <script src="garage-model.js?v=cdb29f4bf771"></script>
+<script src="house-roof.js?v=89087081424c"></script>
 <script src="furniture-model.js?v=26476df75f18"></script>
 <script src="greenhouse-model.js?v=71dd86bbbd29"></script>
 <script src="raised-beds-model.js?v=17f54a471ed2"></script>
@@ -903,30 +904,6 @@ const GABLE = [13.68, 21.28]; // 45° gable x-range; west of it is a 5° lean-to
 const HOUSE_RENDER = 0xcfc8ba;
 const { mesh: houseMesh, baseY: houseBaseY } = addExtrudedPoly(houseVerts, wallH, HOUSE_RENDER, siteTerrain.spec.houseBaseY);
 
-// Sedlová střecha (sedlový štít na S a J — ridge running E-W is wrong; per studie štít na south, takže ridge S-N or E-W?)
-// Studie: "Dominantní sedlový štít" v jižním pohledu = gable at south face. Ridge runs perpendicular to gable face, tj. ridge S-N.
-// Roof over house bounding box: x = 10.48..21.28, z = 7.18..26.43. Ridge centered along x (peak runs N-S along z).
-function makeGableRoof(xMin, xMax, zMin, zMax, wallTop, peakHeight) {
-  const xMid = (xMin + xMax) / 2;
-  const peakY = wallTop + peakHeight;
-  const verts = [
-    xMin, wallTop, zMin, // 0
-    xMax, wallTop, zMin, // 1
-    xMid, peakY,  zMin,  // 2
-    xMin, wallTop, zMax, // 3
-    xMax, wallTop, zMax, // 4
-    xMid, peakY,  zMax,  // 5
-  ];
-  const indices = [
-    0,3,5, 0,5,2, // left slope — gable ends (štít) are facade, drawn separately
-    1,2,5, 1,5,4, // right slope
-  ];
-  const geom = new THREE.BufferGeometry();
-  geom.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  geom.setIndex(indices);
-  geom.computeVertexNormals();
-  return geom;
-}
 
 // Roof setup — roofs share the walls' base so eaves sit exactly on wall tops
 const houseTerrainY = houseBaseY;
@@ -965,71 +942,46 @@ function makePultRoofWE(xMin, xMax, zMin, zMax, lowY, highY) {
   return geom;
 }
 
-// MAIN CORE — single gable roof, 0.45 m eave overhang on all sides
-// Eave overhang continues the štít pitch: eave drops below wall top by overhang × slope
-const gableSlope = roofRise / ((GABLE[1] - GABLE[0]) / 2);  // 3.8/3.8 = 1 → 45°
-const eaveDrop = 0.45 * gableSlope;
-const mainGableGeom = makeGableRoof(GABLE[0] - 0.45, GABLE[1] + 0.45, HB[1], HB[3], houseTerrainY + wallH + KNEE - eaveDrop, roofRise + eaveDrop);
-const mainGableMesh = new THREE.Mesh(mainGableGeom, roofMat);
-mainGableMesh.castShadow = true;
-roofGroup.add(mainGableMesh);
+const houseRoof = HouseRoof.create(THREE, {bbox: HB, atrium: HA, gable: GABLE, baseY: houseTerrainY, eNotch: EL.house.meta.eNotch});
+const houseRoofSpec = houseRoof.userData.description;
+roofGroup.add(houseRoof);
+const roofWindowRun = (GABLE[1] - GABLE[0]) / 2 + 0.45;
 
-// West lean-to (5°) SPLIT around the open atrium — the office roof is two pieces (N and S)
-for (const [wz0, wz1] of [[HB[1], HA[1]], [HA[3], HB[3]]]) {
-  const g = makePultRoofWE(HB[0] - 0.45, GABLE[0], wz0, wz1, houseTerrainY + wallH, houseTerrainY + wallH + KNEE);
-  const m = new THREE.Mesh(g, roofMat);
-  m.castShadow = true;
-  roofGroup.add(m);
-}
-
-// Wing roof fills — close the triangular gaps under the shed roofs (like the garage)
 const gableFillMeshes=[];
 {
   const wallTopY = houseTerrainY + wallH;
-  // Gable ends (štít) + wing infill = white render matching the facade (per user)
-  const renderFillMat = new THREE.MeshStandardMaterial({ color: HOUSE_RENDER, roughness: 0.85, side: THREE.DoubleSide });
-  const tri = (mat, ax, ay, az, bx, by, bz, cx2, cy2, cz2) => {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute([ax, ay, az, bx, by, bz, cx2, cy2, cz2], 3));
-    g.computeVertexNormals();
-    const m = new THREE.Mesh(g, mat);
-    m.castShadow = true;
-    scene.add(m);
-    gableFillMeshes.push(m);
+  const material = new THREE.MeshStandardMaterial({color: HOUSE_RENDER, roughness: .85, side: THREE.DoubleSide});
+  const fill = (a, b, topA, topB) => {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute([
+      a[0], wallTopY, a[1], b[0], wallTopY, b[1], b[0], topB, b[1], a[0], topA, a[1]
+    ], 3));
+    geometry.setIndex([0, 1, 2, 0, 2, 3]);
+    geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = 'Roof facade infill';
+    mesh.castShadow = mesh.receiveShadow = true;
+    scene.add(mesh);
+    gableFillMeshes.push(mesh);
   };
-  const springY = wallTopY + KNEE;  // gable pozednice, 0.28 above the general walls
-  const gmidX = (GABLE[0] + GABLE[1]) / 2;
-  // Gable ends (štít) from the knee up to the ridge
-  tri(renderFillMat, GABLE[0], springY, HB[1], GABLE[1], springY, HB[1], gmidX, springY + roofRise, HB[1]);
-  tri(renderFillMat, GABLE[0], springY, HB[3], GABLE[1], springY, HB[3], gmidX, springY + roofRise, HB[3]);
-  // Knee strips closing the 0.28 gap between the general wall top and the gable spring.
-  // The box is centred on (kx,kz), so its outer face must be nudged inward by half its 0.05 m
-  // half-thickness or the strip stands 5 cm proud of the flush gable facade below it.
-  const knee = (w, d, kx, kz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, KNEE, d), renderFillMat); m.position.set(kx, wallTopY + KNEE / 2, kz); m.castShadow = true; scene.add(m); };
-  knee(0.1, HB[3] - HB[1], GABLE[1] - 0.05, (HB[1] + HB[3]) / 2);  // east gable wall
-  knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[1] + 0.05);             // north gable end
-  knee(GABLE[1] - GABLE[0], 0.1, gmidX, HB[3] - 0.05);             // south gable end
-  // West lean-to end gaps at all four edges (incl. the open-atrium sides)
-  for (const z of [HB[1], HA[1], HA[3], HB[3]]) {
-    tri(renderFillMat, HB[0], wallTopY, z, GABLE[0], wallTopY, z, GABLE[0], springY, z);
+  const d = houseRoofSpec, underside = x => d.heightAt(x, HB[1]) - d.soffitDrop;
+  for (const z of [HB[1], HB[3]]) {
+    const xs = [HB[0], d.intersectionX, d.ridgeX, HB[2]];
+    for (let i = 1; i < xs.length; i++) fill([xs[i-1], z], [xs[i], z], underside(xs[i-1]), underside(xs[i]));
   }
+  for (const z of [HA[1], HA[3]]) {
+    const xs = [HB[0], d.intersectionX, HA[2]];
+    for (let i = 1; i < xs.length; i++) fill([xs[i-1], z], [xs[i], z], underside(xs[i-1]), underside(xs[i]));
+  }
+  fill([HA[2], HA[1]], [HA[2], HA[3]], d.mainWest.heightAt(HA[2]) - d.soffitDrop, d.mainWest.heightAt(HA[2]) - d.soffitDrop);
+  const notch = EL.house.meta.eNotch;
+  for (const [x,z0,z1] of [[HB[2],HB[1],notch[1]],[notch[0],notch[1],notch[3]],[HB[2],notch[3],HB[3]]]) {
+    const top = d.mainEast.heightAt(x) - d.soffitDrop;
+    fill([x,z0], [x,z1], top, top);
+  }
+  for (const z of [notch[1],notch[3]]) fill([notch[0],z], [notch[2],z], underside(notch[0]), underside(notch[2]));
 }
 
-// Standing-seam stripes on both wing shed roofs (same style as the main roof)
-{
-  const stripeMatW = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
-  const wallTopY = houseTerrainY + wallH;
-  const xMin = HB[0] - 0.45, xMax = GABLE[0];
-  const len = Math.hypot(xMax - xMin, KNEE);
-  const ang = Math.atan2(KNEE, xMax - xMin);
-  for (let zs = HB[1] + 0.2; zs < HB[3]; zs += 0.4) {
-    if (zs > HA[1] && zs < HA[3]) continue;  // skip the open atrium
-    const st = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), stripeMatW);
-    st.position.set((xMin + xMax) / 2, wallTopY + KNEE / 2 + 0.03, zs);
-    st.rotation.z = ang;
-    roofGroup.add(st);
-  }
-}
 
 // Atrium — no roof (open)
 
@@ -1758,34 +1710,11 @@ let applyOpeningCutouts;
   scene.add(cap);
 }
 
-// ───────────────────────── STANDING SEAM METAL ROOF — main core gable ─────────────────────────
-{
-  const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
-  const wallTopY = houseTerrainY + wallH + KNEE - eaveDrop;
-  const ridgeY = houseTerrainY + wallH + KNEE + roofRise;
-  // Same extended eave bounds and pitch as the gable geometry so stripes lie on the roof planes
-  const xMin = GABLE[0] - 0.45, xMax = GABLE[1] + 0.45, xMid = (xMin + xMax) / 2;
-  const rise = roofRise + eaveDrop;
-  const slopeLen = Math.sqrt((xMid - xMin) ** 2 + rise ** 2);
-  const slopeAngle = Math.atan2(rise, xMid - xMin);
-  const zMin = HB[1], zMax = HB[3];
-
-  for (let zs = zMin + 0.2; zs < zMax; zs += 0.4) {
-    const left = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.06, 0.04), stripeMat);
-    left.position.set((xMin + xMid) / 2, (wallTopY + ridgeY) / 2 + 0.03, zs);
-    left.rotation.z = slopeAngle;
-    roofGroup.add(left);
-    const right = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.06, 0.04), stripeMat);
-    right.position.set((xMid + xMax) / 2, (wallTopY + ridgeY) / 2 + 0.03, zs);
-    right.rotation.z = -slopeAngle;
-    roofGroup.add(right);
-  }
-}
 
 // VELUX roof windows over the southern attic room + štít window in the north gable
 {
   if(window.RoofWindows&&localHouseData&&applyOpeningCutouts){
-    const model=window.RoofWindows.build({gable:GABLE,ridgeY:houseTerrainY+wallH+KNEE+roofRise,eaveY:houseTerrainY+wallH+KNEE-eaveDrop});
+    const model=window.RoofWindows.build({gable:GABLE,ridgeY:houseRoofSpec.ridgeY,eaveY:houseRoofSpec.ridgeY-roofWindowRun});
     const volumes=model.cutouts.map(c=>({min:new THREE.Vector3(c.x0,0,c.z0),max:new THREE.Vector3(c.x1,20,c.z1)}));
     const flashingVolumes=model.cutouts.map(c=>({min:new THREE.Vector3(c.x0-.18*Math.abs(c.slopeAxis[0]),0,c.z0-.12),
       max:new THREE.Vector3(c.x1+.18*Math.abs(c.slopeAxis[0]),20,c.z1+.12)}));
@@ -1813,8 +1742,8 @@ let applyOpeningCutouts;
   const roofGlass = new THREE.MeshStandardMaterial({ color: 0x2a3540, roughness: 0.15, metalness: 0.6 });
   const veluxFrame = new THREE.MeshStandardMaterial({ color: 0x2b2d30, roughness: 0.5 });
   const rxMid = (GABLE[0] + GABLE[1]) / 2;
-  const ridgeYAbs = houseTerrainY + wallH + KNEE + roofRise;
-  const rise2 = roofRise + eaveDrop;
+  const ridgeYAbs = houseRoofSpec.ridgeY;
+  const rise2 = roofWindowRun;
   const placeRoofWin = (side, zPos, wAcross) => {
     const ex = side === 'e' ? GABLE[1] + 0.45 : GABLE[0] - 0.45;
     const t = 0.45;
