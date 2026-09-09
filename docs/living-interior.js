@@ -2,7 +2,7 @@ import {buildHoxterH60} from '../hoxter-stove-model.js';
 import {buildRavakFreedomWall} from '../ravak-freedom-model.js';
 import {buildStairFlight} from '../stair-flight-model.js';
 import {attachHouseFlooring} from './house-flooring.js';
-import {buildNightstands} from './nightstand-model.js';
+import {buildNightstands} from './nightstand-model.js?v=54a7475cad4e';
 import {buildCoronaBed} from '../corona-bed-model.js';
 import {buildDressingRoom} from './dressing-model.js';
 import {prepareUtilityJoinery} from './utility-joinery.js';
