@@ -2362,7 +2362,7 @@ document.addEventListener('keydown',event=>{
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
     if(!localHouseData)throw new Error('House drawings unavailable');
-    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=2ac87c7ac4ac');
+    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=8ae63603de1f');
     return buildWalkInterior(THREE,localHouseData,{buildModel:(three,model)=>buildWalkingDoor(three,model,buildModel),renderer,floorY:houseTerrainY,exteriorWallHeight:wallH});
   },
   install:house=>{

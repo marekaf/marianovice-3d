@@ -44,15 +44,40 @@ try{
   assert.deepEqual(hallwayHits,[],'The entrance hallway passage must not contain an exterior chimney');
   const metrics=await page.evaluate(()=>{
     const r=walkReview,house=r.scene.getObjectByName('garden-walk-interior');
-    let meshes=0,lights=0,bytes=0;const geometries=new Set();
+    let meshes=0,lights=0,bytes=0;const geometries=new Set(),floors=[];
     house.traverse(o=>{if(o.isMesh)meshes++;if(o.isLight&&o.visible)lights++;if(o.geometry)geometries.add(o.geometry);});
+    house.traverse(o=>{if(o.isMesh&&o.material.name==='floorWood')floors.push({name:o.name,
+      color:o.material.color.getHexString(),map:o.material.map?.name,
+      roomEnvironment:!!o.material.envMap&&o.material.envMap!==r.scene.environment});});
     for(const g of geometries)for(const a of Object.values(g.attributes))bytes+=a.array.byteLength;
-    return {meshes,lights,geometryMB:bytes/1024/1024,position:house.position.toArray(),floorY:r.houseTerrainY,backingVisible:r.houseInteriorBacking.visible};
+    return {meshes,lights,geometryMB:bytes/1024/1024,position:house.position.toArray(),floorY:r.houseTerrainY,backingVisible:r.houseInteriorBacking.visible,floors};
   });
   assert(metrics.meshes>100);assert.equal(metrics.backingVisible,false);assert.equal(metrics.position[1],metrics.floorY);
+  assert.equal(metrics.floors.length,3);
+  for(const floor of metrics.floors){
+    assert.equal(floor.color,'ffffff');assert.equal(floor.map,'Procedural pale oak floor');
+    assert(floor.roomEnvironment,`${floor.name}: enclosed flooring must use a room environment, not outdoor sky`);
+  }
   assert.equal(await page.evaluate(()=>walkReview.house.furniture.visible),false);
   await page.locator('#toggleFurniture').evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change'));});
   assert.equal(await page.evaluate(()=>walkReview.house.furniture.visible),true);
+  await page.locator('#toggleFurniture').evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change'));});
+  const floorPixel=await page.evaluate(async()=>{
+    const THREE=await import('three'),r=walkReview;
+    r.aim(12,22.3,0,-.7);
+    const ray=new THREE.Raycaster(new THREE.Vector3(12,r.houseTerrainY+.4,21),new THREE.Vector3(0,-1,0));
+    const meshes=[];r.house.floor.traverse(o=>{if(o.isMesh)meshes.push(o);});
+    const hit=ray.intersectObjects(meshes,false)[0];
+    r.renderer.render(r.scene,r.camera);
+    const point=hit.point.clone().project(r.camera),size=r.renderer.getDrawingBufferSize(new THREE.Vector2());
+    const pixel=new Uint8Array(4),gl=r.renderer.getContext();
+    gl.readPixels(Math.floor((point.x+1)*size.x/2),Math.floor((point.y+1)*size.y/2),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+    return{material:hit.object.material.name,height:hit.point.y-r.houseTerrainY,rgb:[...pixel.slice(0,3)],projected:point.toArray()};
+  });
+  assert.equal(floorPixel.material,'floorWood');
+  assert(Math.abs(floorPixel.height-.003)<1e-7);
+  assert(floorPixel.rgb[0]>floorPixel.rgb[2],`Champagne vinyl must render warm, not with the outdoor cyan cast: ${JSON.stringify(floorPixel)}`);
+  await page.locator('#toggleFurniture').evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change'));});
   for(const [name,x,z,yaw,pitch] of [['living',17.5,18,0,0],['office',13,22.3,0,-.2],['bedroom',18.5,10.3,0,-.2]]){
     await page.evaluate(([x,z,yaw,pitch])=>walkReview.aim(x,z,yaw,pitch),[x,z,yaw,pitch]);
     await page.waitForTimeout(350);
@@ -76,5 +101,17 @@ try{
   });
   for(const [i,expected]of [1.4,3,1.4].entries())assert(Math.abs(distances[i]-expected)<1e-8);
   assert.equal(await page.evaluate(()=>walkReview.scene.children.filter(o=>o.name==='garden-walk-interior').length),1);
-  console.log(JSON.stringify({metrics,errors},null,2));assert.deepEqual(errors,[]);
+  const environmentLifecycle=await page.evaluate(()=>{
+    const r=walkReview;let material;r.house.floor.traverse(o=>{if(o.material?.name==='floorWood')material=o.material;});
+    const roomEnvironment=material.envMap,skyEnvironment=r.scene.environment;
+    const slider=document.getElementById('timeSlider');slider.value=0;slider.dispatchEvent(new Event('input'));
+    const independent=material.envMap===roomEnvironment&&r.scene.environment!==skyEnvironment;
+    r.renderer.render(r.scene,r.camera);const before=r.renderer.info.memory.textures;
+    r.house.root.removeFromParent();r.house.dispose();
+    r.renderer.render(r.scene,r.camera);const after=r.renderer.info.memory.textures;
+    return{independent,before,after};
+  });
+  assert(environmentLifecycle.independent,'Outdoor time changes must not replace the enclosed room environment');
+  assert(environmentLifecycle.after<environmentLifecycle.before,'Disposing the interior releases its GPU textures');
+  console.log(JSON.stringify({metrics,floorPixel,environmentLifecycle,errors},null,2));assert.deepEqual(errors,[]);
 }finally{await browser?.close();await new Promise(done=>server.close(done));}
