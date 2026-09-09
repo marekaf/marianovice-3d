@@ -25,6 +25,7 @@ const checks=[
   'verify-perennial-sharing.mjs',
   'verify-garage.mjs',
   'verify-house-roof.mjs',
+  'verify-house-chimney.mjs',
   'verify-house-wall-backing.mjs',
   'verify-walk-doors.mjs',
   'verify-walk-portals.mjs',

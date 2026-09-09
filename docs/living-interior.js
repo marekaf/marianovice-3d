@@ -1,4 +1,5 @@
 import {buildHoxterH60} from '../hoxter-stove-model.js';
+import {houseFlue} from '../house-chimney.js';
 import {buildRavakFreedomWall} from '../ravak-freedom-model.js';
 import {buildStairFlight} from '../stair-flight-model.js';
 import {attachHouseFlooring} from './house-flooring.js';
@@ -29,10 +30,10 @@ export function prepareLivingData(data) {
     if(!data.furniture.some(f=>f.label.startsWith(label)))throw new Error(`Missing kitchen fixture: ${label}`);
   }
   return {...data,bedroomBed:data.furniture.find(f=>f.kind==='bed'&&f.room==='1.12'),buildStairs:()=>buildStairFlight(data.stairs),buildFireplace:()=>{
-    const model=buildHoxterH60(),f=data.fireplace,cx=(f.x0+f.x1)/2;
+    const model=buildHoxterH60(),f=data.fireplace,flue=houseFlue(data),cx=flue.x;
     const place=([x,z,y])=>[x+cx,z+f.z1-.65,y+.007];
     const chimney=[
-      {name:'visible_flue',type:'cylinder',position:[cx,f.z1-.21,(1.975+6.95)/2],radiusTop:.09,radiusBottom:.09,height:6.95-1.975,axis:'z',segments:48,material:'steel',category:'structure'},
+      {name:'visible_flue',type:'cylinder',position:[cx,flue.z,(flue.bottom+flue.interiorTop)/2],radiusTop:flue.radius,radiusBottom:flue.radius,height:flue.interiorTop-flue.bottom,axis:'z',segments:48,material:'steel',category:'structure'},
       {name:'flue_collar',type:'cylinder',position:[cx,f.z1-.21,1.990],radiusTop:.099,radiusBottom:.099,height:.03,axis:'z',segments:48,material:'steel',category:'structure'},
     ];
     return {...model,parts:[...model.parts.map(p=>{

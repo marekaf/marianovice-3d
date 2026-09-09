@@ -31,7 +31,7 @@ function insetFacade(mesh,wall,outline) {
 
 export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,exteriorWallHeight=data.clearH}) {
   const [officeModule,living,bathroom,utility,stairs,led,entrance,kitchen,cathedral,electrical,records,electricalView]=await Promise.all([
-    import('./office-integration.js'),import('./living-interior.js'),import('./bathroom-finishes.js'),
+    import('./office-integration.js'),import('./living-interior.js?v=df360e65df66'),import('./bathroom-finishes.js'),
     import('./utility-equipment.js'),import('./stair-finishes.js'),import('./interior-led.js'),
     import('./entrance-interior.js'),import('./kitchen-window-worktop.js'),import('./cathedral-interior.js'),
     import('./electrical-model.js'),import('./electrical-points.js'),import('./electrical-view.js'),
