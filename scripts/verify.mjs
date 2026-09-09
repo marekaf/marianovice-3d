@@ -18,6 +18,7 @@ const checks=[
   'verify-perennial-sharing.mjs',
   'verify-garage.mjs',
   'verify-house-roof.mjs',
+  'verify-house-wall-backing.mjs',
   'verify-fixtures.mjs',
   'verify-public-runtime.mjs',
   'verify-interior-data.mjs house-interior.js',

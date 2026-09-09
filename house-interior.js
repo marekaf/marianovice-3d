@@ -324,7 +324,7 @@ HOUSE_INTERIOR.exteriorOpenings = function () {
   }));
 };
 
-HOUSE_INTERIOR.exteriorInterior = function () {
+HOUSE_INTERIOR.exteriorInterior = function (exteriorWallHeight = this.clearH) {
   const parts = [], terrainCutouts = [], materials = {
     wall: { color: '#dedbd3', roughness: 0.9 }, floor: { color: '#b29470', roughness: 0.7 },
     ceiling: { color: '#DED3C8', roughness: 0.95 },
@@ -348,22 +348,31 @@ HOUSE_INTERIOR.exteriorInterior = function () {
       terrainCutouts.push({ min: [x0, z0, -1], max: [x1, z1, this.clearH] });
     }
   }
-  const ids = ['W5','W6',...this.intWalls.map(w=>w.id)];
-  for (const wall of [...this.extWalls, ...this.intWalls].filter(w => ids.includes(w.id))) {
+  for (const wall of [...this.extWalls, ...this.intWalls]) {
+    const height=this.extWalls.includes(wall)?exteriorWallHeight:this.clearH;
     const alongX = wall.b[0] - wall.a[0] > wall.b[1] - wall.a[1];
     const axis = alongX ? 0 : 1, length = wall.b[axis] - wall.a[axis];
+    const min=wall.a.slice(),max=wall.b.slice();
+    if(this.extWalls.includes(wall)){
+      for(let i=0;i<this.outline.length;i++){
+        const a=this.outline[i],b=this.outline[(i+1)%this.outline.length],cross=a[0]===b[0]?0:1,along=1-cross;
+        if(Math.min(max[along],Math.max(a[along],b[along]))<=Math.max(min[along],Math.min(a[along],b[along])))continue;
+        if(Math.abs(wall.a[cross]-a[cross])<1e-6)min[cross]+=.002;
+        if(Math.abs(wall.b[cross]-a[cross])<1e-6)max[cross]-=.002;
+      }
+    }
     let cursor = 0, serial = 0;
     const segment = (a, b, y0, y1) => box(`backing_${wall.id}_${serial++}`,
-      alongX ? wall.a[0] + a : wall.a[0], alongX ? wall.a[1] : wall.a[1] + a, y0,
-      alongX ? wall.a[0] + b : wall.b[0], alongX ? wall.b[1] : wall.a[1] + b, y1, 'wall');
+      alongX ? Math.max(min[0],wall.a[0]+a) : min[0], alongX ? min[1] : Math.max(min[1],wall.a[1]+a), y0,
+      alongX ? Math.min(max[0],wall.a[0]+b) : max[0], alongX ? max[1] : Math.min(max[1],wall.a[1]+b), y1, 'wall');
     for (const o of wall.openings) {
       const width = o.reveal?.width || o.w, a = o.at + (o.w - width) / 2;
-      segment(cursor, a, 0, this.clearH);
+      segment(cursor, a, 0, height);
       segment(a, a + width, 0, o.sill || 0);
-      segment(a, a + width, (o.sill || 0) + o.h, this.clearH);
+      segment(a, a + width, (o.sill || 0) + o.h, height);
       cursor = a + width;
     }
-    segment(cursor, length, 0, this.clearH);
+    segment(cursor, length, 0, height);
   }
   for (const [id, index] of [['W3', 1], ['W4', 0], ['W22', 0], ['W26', 0]]) {
     const wall = [...this.extWalls, ...this.intWalls].find(w => w.id === id), o = wall.openings[index];

@@ -193,7 +193,7 @@ import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=47cc9f4df890';
+  script.src = './house-interior.js?v=d68ec8434c95';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
@@ -1618,7 +1618,7 @@ let applyOpeningCutouts;
       group.position.z = origin.z;
       scene.add(group);
     }
-    const interior = localHouseData.exteriorInterior?.();
+    const interior = localHouseData.exteriorInterior?.(wallH);
     if (interior) {
       const group = buildModel(THREE, { ...interior, floorHeight: ty });
       group.position.x = origin.x;
