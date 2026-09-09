@@ -46,7 +46,12 @@ export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,e
     },
   };
   const builtRoots=[];
-  const trackedBuild=(...args)=>{const root=buildModel(...args);builtRoots.push(root);return root;};
+  const doors=[];
+  const trackedBuild=(three,model)=>{
+    const root=buildModel(three,model);
+    if(root.userData.walkDoor)doors.push(root);
+    builtRoots.push(root);return root;
+  };
   let house;
   try {
     house=INTERIORS3D.buildHouse(THREE,shellData,{floorY:0,buildModel:trackedBuild,finishColors:living.finishColors,
@@ -83,6 +88,7 @@ export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,e
     house.root.traverse(object=>{if(object.isLight){object.intensity=0;object.visible=false;}});
     house.root.position.y=floorY;
     house.root.userData.furnishedGroundFloor=true;
+    house.doors=doors;
     house.dispose=()=>disposeRoots([house.root]);
     return house;
   } catch(error) {

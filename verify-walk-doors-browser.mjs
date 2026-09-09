@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {resolve,extname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+const root=fileURLToPath(new URL('.',import.meta.url));
+const server=createServer(async(req,res)=>{
+  try{
+    const pathname=new URL(req.url,'http://localhost').pathname,file=resolve(root,'.'+pathname);
+    if(!file.startsWith(root))throw new Error('Invalid path');
+    let body=await readFile(file);
+    if(pathname==='/index.html')body=body.toString().replace('ViewerLoading.finish();',`window.doorReview={THREE,scene,camera,fpState,loadWalkInterior,get doors(){return walkDoors;},aim(group,side=1){const b=new THREE.Box3().setFromObject(group.userData.walkDoor.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x+side*1.4,houseTerrainY+1.7,c.z);fpYaw=side*Math.PI/2;fpPitch=0;fpUpdate(0);requestRender();},update(){fpUpdate(0);requestRender();},tick(dt){fpUpdate(dt);requestRender();}};ViewerLoading.finish();`);
+    res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(body);
+  }catch{res.writeHead(404).end();}
+});
+await new Promise(done=>server.listen(0,'127.0.0.1',done));
+let browser;
+try{
+  browser=await chromium.launch({channel:'chrome',headless:true});
+  const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+  await page.waitForFunction(()=>window.doorReview,null,{timeout:120000});
+  await page.locator('#walkButton').click();
+  await page.waitForFunction(()=>document.querySelector('#walkInteriorStatus').dataset.state==='ready',null,{timeout:120000});
+  assert(await page.locator('#toggleFP').isChecked());
+  const spawn=await page.evaluate(()=>{const r=doorReview;return r.doors.canStandAt(r.camera.position.x,r.camera.position.z,r.camera.position.y);});
+  assert(spawn,'Lazy completion leaves the walker at a valid position');
+  const before=await page.evaluate(()=>{
+    const r=doorReview,g=r.doors.doors.find(group=>group.name==='opening_W22_0');r.aim(g);
+    return{frame:new r.THREE.Box3().setFromObject(g.userData.categories.openings),count:r.doors.doors.length};
+  });
+  await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden);
+  assert.match(await page.locator('#walkDoorPrompt').textContent(),/E · Open/);
+  await page.keyboard.press('e');
+  const opened=await page.evaluate(()=>{
+    const r=doorReview,g=r.doors.doors.find(group=>group.name==='opening_W22_0');
+    return{open:g.userData.walkDoor.open,angle:g.userData.walkDoor.pivot.rotation.y,frame:new r.THREE.Box3().setFromObject(g.userData.categories.openings)};
+  });
+  assert(opened.open);assert.equal(opened.angle,-Math.PI/2);assert.deepEqual(opened.frame,before.frame);
+  await page.screenshot({path:process.env.DOOR_SCREENSHOT||'/tmp/garden-door-open.png'});
+  const passage=await page.evaluate(()=>{
+    const r=doorReview,g=r.doors.doors.find(group=>group.name==='opening_W22_0'),p=g.userData.walkDoor.panel.position;
+    const center=g.localToWorld(new r.THREE.Vector3(p[0],1.7,p[1]));
+    r.camera.position.copy(center).add(new r.THREE.Vector3(.9,0,0));
+    r.fpState.keys={w:true};for(let frame=0;frame<90;frame++)r.tick(1/60);r.fpState.keys={};
+    return{x:r.camera.position.x,center:center.x,valid:r.doors.canStandAt(r.camera.position.x,r.camera.position.z)};
+  });
+  assert(passage.x<passage.center);assert(passage.valid);
+  const closing=await page.evaluate(()=>{
+    const r=doorReview,g=r.doors.doors.find(group=>group.name==='opening_W22_0'),p=g.userData.walkDoor.panel.position;
+    r.camera.position.copy(g.localToWorld(new r.THREE.Vector3(p[0],1.7,p[1])));
+    return{allowed:r.doors.toggle(g,r.camera),open:g.userData.walkDoor.open};
+  });
+  assert(!closing.allowed);assert(closing.open);
+  const entrance=await page.evaluate(()=>{const g=doorReview.doors.doors.find(group=>group.name==='opening_W9_2');return{y:g.position.y,hinge:g.userData.walkDoor.opening.hinge};});
+  assert.equal(entrance.y,2.465);assert.equal(entrance.hinge,'south');
+  assert.deepEqual(errors,[]);
+  console.log(JSON.stringify({doors:before.count,passage,entrance,errors}));
+}finally{await browser?.close();await new Promise(done=>server.close(done));}

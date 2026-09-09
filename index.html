@@ -193,11 +193,12 @@ import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 import { createWalkInteriorLoader } from './walk-interior-loading.js';
 import { moveWalker } from './walk-movement.js';
+import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=ddc653513acb';
 
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=3d7c3de9174c';
+  script.src = './house-interior.js?v=361eac204bf7';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
@@ -1586,6 +1587,7 @@ treesGroup.add(pondModel.plantingGroup);
 let applyOpeningCutouts;
 let houseInteriorBacking;
 let walkHouse;
+const exteriorWalkingDoors=[];
 {
   const ty = houseTerrainY;
   const exteriorOpenings = localHouseData?.exteriorOpenings?.() ?? [];
@@ -1619,7 +1621,8 @@ let walkHouse;
     cutOpenings(houseMesh.customDepthMaterial);
     cutOpenings(houseMesh.customDistanceMaterial);
     for (const { model } of exteriorOpenings) {
-      const group = buildModel(THREE, { ...model, floorHeight: ty });
+      const group = buildWalkingDoor(THREE, { ...model, floorHeight: ty },buildModel);
+      if(group.userData.walkDoor)exteriorWalkingDoors.push(group);
       group.position.x = origin.x;
       group.position.z = origin.z;
       scene.add(group);
@@ -2348,18 +2351,42 @@ window.addEventListener('mousemove', e => {
 const fpState = { active: false, keys: {} };
 const fpCamera = camera;
 let fpYaw = 0, fpPitch = 0;
+let walkDoors;
+const doorPrompt=document.createElement('div');
+doorPrompt.id='walkDoorPrompt';doorPrompt.hidden=true;doorPrompt.setAttribute('role','status');
+doorPrompt.style.cssText='position:fixed;left:50%;top:60%;transform:translateX(-50%);z-index:120;background:#f5f4ec;color:#303e36;padding:10px 16px;border-radius:8px;pointer-events:none;font:14px system-ui;max-width:80vw;text-align:center';
+document.body.append(doorPrompt);
+let blockedDoor=null,blockedDoorUntil=0;
+function updateDoorPrompt(){
+  const group=fpState.active&&walkDoors?.aimedDoor(camera);
+  doorPrompt.hidden=!group;
+  if(group){
+    const door=group.userData.walkDoor;
+    doorPrompt.textContent=group===blockedDoor&&performance.now()<blockedDoorUntil?'Step back to swing the door':`E · ${door.open?'Close':'Open'} door${door.opening.provisional?' · provisional swing':''}`;
+  }
+}
+document.addEventListener('keydown',event=>{
+  if(!fpState.active||event.code!=='KeyE'||event.repeat||event.target.closest?.('input,select,textarea'))return;
+  const group=walkDoors?.aimedDoor(camera);
+  if(!group)return;
+  event.preventDefault();
+  if(walkDoors.toggle(group,camera)){blockedDoor=null;invalidateShadows();updateDoorPrompt();}
+  else{blockedDoor=group;blockedDoorUntil=performance.now()+2000;updateDoorPrompt();requestRender();setTimeout(requestRender,2000);}
+});
 
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
     if(!localHouseData)throw new Error('House drawings unavailable');
-    const {buildWalkInterior}=await import('./docs/walk-interior.js');
-    return buildWalkInterior(THREE,localHouseData,{buildModel,renderer,floorY:houseTerrainY,exteriorWallHeight:wallH});
+    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=334bf2795b5a');
+    return buildWalkInterior(THREE,localHouseData,{buildModel:(three,model)=>buildWalkingDoor(three,model,buildModel),renderer,floorY:houseTerrainY,exteriorWallHeight:wallH});
   },
   install:house=>{
     walkHouse=house;
     house.furniture.visible=document.getElementById('toggleFurniture').checked;
     scene.add(house.root);
     if(houseInteriorBacking)houseInteriorBacking.visible=false;
+    walkDoors=createWalkDoors(THREE,{data:localHouseData,doors:[...exteriorWalkingDoors,...house.doors],floorY:houseTerrainY});
+    if(fpState.active)walkDoors.recover(camera.position);
     invalidateShadows();
   },
   status:(state,error)=>{
@@ -2381,8 +2408,10 @@ document.getElementById('toggleFP').addEventListener('change', e => {
     void loadWalkInterior();
     controls.enabled = false;
     fpCamera.position.set(20, walkingHeight(20, 20) + 1.7, 20);
+    walkDoors?.recover(fpCamera.position);
     lockPointer();
   } else {
+    doorPrompt.hidden=true;
     controls.enabled = true;
     document.exitPointerLock();
     setPreset('iso');
@@ -2415,7 +2444,9 @@ const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vecto
 
 function fpUpdate(dt) {
   if (!fpState.active) return;
+  const previousX=fpCamera.position.x,previousZ=fpCamera.position.z;
   moveWalker(fpCamera.position,fpYaw,fpState.keys,dt);
+  walkDoors?.constrain(fpCamera.position,previousX,previousZ);
   // Stay above terrain
   const tY = walkingHeight(fpCamera.position.x, fpCamera.position.z);
   fpCamera.position.y = tY + 1.7;
@@ -2426,6 +2457,7 @@ function fpUpdate(dt) {
     fpCamera.position.z - Math.cos(fpYaw) * Math.cos(fpPitch)
   );
   fpCamera.lookAt(lookAt);
+  updateDoorPrompt();
 }
 
 // ───────────────────────── RESIZE ─────────────────────────
@@ -2475,6 +2507,7 @@ window.startTour = function() {
   controls.enabled = false;
   document.getElementById('toggleFP').checked = false;
   fpState.active = false;
+  doorPrompt.hidden=true;
   requestRender();
 };
 
