@@ -17,6 +17,7 @@ const checks=[
   'verify-pergola-approach.mjs',
   'verify-perennial-sharing.mjs',
   'verify-garage.mjs',
+  'verify-house-roof.mjs',
   'verify-fixtures.mjs',
   'verify-public-runtime.mjs',
   'verify-interior-data.mjs house-interior.js',
