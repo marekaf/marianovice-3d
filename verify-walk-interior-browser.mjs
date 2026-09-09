@@ -23,10 +23,25 @@ try{
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
   await page.waitForFunction(()=>window.walkReview,null,{timeout:120000});
   assert(!requests.some(url=>url.includes('/docs/walk-interior.js')),'Initial garden must not request interiors');
+  assert.equal(await page.evaluate(()=>walkReview.scene.getObjectByName('Roof flue before furnished interior')?.visible),true,'Initial garden retains the roof chimney without loading interiors');
   await page.locator('#toggleFurniture').evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change'));});
   await page.locator('#toggleFP').evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change'));});
   await page.waitForFunction(()=>['ready','error'].includes(document.querySelector('#walkInteriorStatus').dataset.state),null,{timeout:120000});
   assert.equal(await page.locator('#walkInteriorStatus').getAttribute('data-state'),'ready',await page.locator('#walkInteriorStatus').textContent());
+  assert.equal(await page.evaluate(()=>walkReview.scene.getObjectByName('Roof flue before furnished interior').visible),false,'Furnished flue replaces the overlapping initial roof segment');
+  assert.equal(await page.evaluate(()=>walkReview.scene.getObjectByName('Roof flue terminal').visible),true,'The roof terminal remains visible after interiors load');
+  const hallwayHits=await page.evaluate(async()=>{
+    const THREE=await import('three'),r=walkReview;
+    r.scene.updateMatrixWorld(true);
+    const ray=new THREE.Raycaster(new THREE.Vector3(18.6,r.houseTerrainY+1.7,22),new THREE.Vector3(-1,0,0),0,2.2);
+    ray.camera=r.camera;
+    return ray.intersectObjects(r.scene.children,true).filter(hit=>{
+      if(!hit.object.isMesh)return false;
+      for(let o=hit.object;o;o=o.parent)if(!o.visible)return false;
+      return true;
+    }).map(hit=>({name:hit.object.name,point:hit.point.toArray()}));
+  });
+  assert.deepEqual(hallwayHits,[],'The entrance hallway passage must not contain an exterior chimney');
   const metrics=await page.evaluate(()=>{
     const r=walkReview,house=r.scene.getObjectByName('garden-walk-interior');
     let meshes=0,lights=0,bytes=0;const geometries=new Set();

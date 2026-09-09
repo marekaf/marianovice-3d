@@ -192,6 +192,7 @@ import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping
 import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 import { createWalkInteriorLoader } from './walk-interior-loading.js';
+import { createHouseChimney } from './house-chimney.js';
 import { moveWalker } from './walk-movement.js';
 import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=aace74e64910';
 
@@ -1716,25 +1717,8 @@ const exteriorWalkingDoors=[];
   }
 }
 
-// ───────────────────────── CHIMNEY (inside house footprint, NOT in atrium, south side) ─────────────────────────
-{
-  // Atrium: x=10.48-14.93, z=15.93-19.18. Chimney in south part (living room)
-  const cx = 17, cz = 22, ch = wallH + roofRise + 1.0;  // peak + 1 m above
-  const baseY = houseTerrainY;
-  const chimney = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6, ch, 0.6),
-    new THREE.MeshStandardMaterial({ color: 0xb8a98a, roughness: 0.85 })
-  );
-  chimney.position.set(cx, baseY + ch/2, cz);
-  chimney.castShadow = true;
-  scene.add(chimney);
-  const cap = new THREE.Mesh(
-    new THREE.BoxGeometry(0.7, 0.1, 0.7),
-    new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4, metalness: 0.6 })
-  );
-  cap.position.set(cx, baseY + ch + 0.05, cz);
-  scene.add(cap);
-}
+const houseChimney=localHouseData?createHouseChimney(THREE,localHouseData,{floorY:houseTerrainY,roofHeight:houseRoofSpec.heightAt}):null;
+if(houseChimney)scene.add(houseChimney.root);
 
 
 // VELUX roof windows over the southern attic room + štít window in the north gable
@@ -2378,7 +2362,7 @@ document.addEventListener('keydown',event=>{
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
     if(!localHouseData)throw new Error('House drawings unavailable');
-    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=334bf2795b5a');
+    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=2ac87c7ac4ac');
     return buildWalkInterior(THREE,localHouseData,{buildModel:(three,model)=>buildWalkingDoor(three,model,buildModel),renderer,floorY:houseTerrainY,exteriorWallHeight:wallH});
   },
   install:house=>{
@@ -2386,6 +2370,7 @@ const loadWalkInterior=createWalkInteriorLoader({
     house.furniture.visible=document.getElementById('toggleFurniture').checked;
     scene.add(house.root);
     if(houseInteriorBacking)houseInteriorBacking.visible=false;
+    if(houseChimney)houseChimney.interiorOverlap.visible=false;
     walkDoors=createWalkDoors(THREE,{data:localHouseData,doors:[...exteriorWalkingDoors,...house.doors],floorY:houseTerrainY});
     if(fpState.active)walkDoors.recover(camera.position);
     invalidateShadows();
