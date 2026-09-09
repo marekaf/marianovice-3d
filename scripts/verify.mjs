@@ -31,6 +31,8 @@ const checks=[
   'verify-grading-data.mjs',
   'verify-grading-report.mjs',
   'verify-terrain-banks.mjs',
+  'verify-garden-routes.mjs',
+  'verify-route-ground-clipping.mjs',
   'verify-fence-model.mjs',
   'verify-gate-model.mjs',
   'verify-boundary-memory.mjs',
