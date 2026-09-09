@@ -4,6 +4,7 @@
 // Walls: a/b are the wall rectangle's min/max corners (x0,z0)-(x1,z1).
 // Openings: at = metres from the wall's min corner along its axis; no sill = floor-to-lintel.
 const HOUSE_INTERIOR = {
+  wallLayerModel:'project250-200',
   originPlot: { x: 10.48, z: 7.18 },
   clearH: 2.52,
   outline: [[0, 0], [10.8, 0], [10.8, 4.4], [10.1, 4.4], [10.1, 15.35], [10.8, 15.35], [10.8, 19.25], [0, 19.25], [0, 11.99], [4.45, 11.99], [4.45, 8.75], [0, 8.75]],
@@ -325,7 +326,9 @@ HOUSE_INTERIOR.exteriorOpenings = function () {
 };
 
 HOUSE_INTERIOR.exteriorInterior = function (exteriorWallHeight = this.clearH) {
+  const layers=typeof module!=='undefined'?require('./house-wall-layers.js').HouseWallLayers:HouseWallLayers;
   const parts = [], terrainCutouts = [], materials = {
+    ...layers.materials,
     wall: { color: '#dedbd3', roughness: 0.9 }, floor: { color: '#b29470', roughness: 0.7 },
     ceiling: { color: '#DED3C8', roughness: 0.95 },
   };
@@ -362,9 +365,16 @@ HOUSE_INTERIOR.exteriorInterior = function (exteriorWallHeight = this.clearH) {
       }
     }
     let cursor = 0, serial = 0;
-    const segment = (a, b, y0, y1) => box(`backing_${wall.id}_${serial++}`,
-      alongX ? Math.max(min[0],wall.a[0]+a) : min[0], alongX ? min[1] : Math.max(min[1],wall.a[1]+a), y0,
-      alongX ? Math.min(max[0],wall.a[0]+b) : max[0], alongX ? max[1] : Math.min(max[1],wall.a[1]+b), y1, 'wall');
+    const segment = (a, b, y0, y1) => {
+      const name=`backing_${wall.id}_${serial++}`,rect={
+        x0:alongX?Math.max(min[0],wall.a[0]+a):min[0],z0:alongX?min[1]:Math.max(min[1],wall.a[1]+a),y0,
+        x1:alongX?Math.min(max[0],wall.a[0]+b):max[0],z1:alongX?max[1]:Math.min(max[1],wall.a[1]+b),y1};
+      if(rect.x1<=rect.x0||rect.z1<=rect.z0||y1<=y0)return;
+      for(const [i,cell]of layers.split(this,wall,rect).entries()){
+        if(cell.layer)parts.push(...layers.modelParts(`${name}_${cell.layer}_${i}`,cell,Math.abs(y1-height)<1e-8));
+        else box(name,cell.x0,cell.z0,y0,cell.x1,cell.z1,y1,'wall');
+      }
+    };
     for (const o of wall.openings) {
       const width = o.reveal?.width || o.w, a = o.at + (o.w - width) / 2;
       segment(cursor, a, 0, height);

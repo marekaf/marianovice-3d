@@ -105,9 +105,10 @@
 <script src="furniture-model.js?v=26476df75f18"></script>
 <script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=5d9cb500c019"></script>
-<script src="interiors3d.js?v=3816e2229931"></script>
+<script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
+<script src="interiors3d.js?v=7a1a0df35192"></script>
 <script src="vehicle-model.js"></script>
-<script src="house-interior.js?v=d68ec8434c95"></script>
+<script src="house-interior.js?v=475c121d387d"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -199,6 +200,11 @@ if (hasHouse) {
       bathroomFinishes?.decorateWallMesh(mesh,wall);
     } });
   scene.add(hou.root);
+  const wallNotes=document.createElement('details');
+  wallNotes.id='wallLayerNotes';
+  const wallSummary=document.createElement('summary');wallSummary.textContent='Nominal wall sections';
+  const wallNote=document.createElement('p');wallNote.textContent=HouseWallLayers.basis.note;
+  wallNotes.append(wallSummary,wallNote);document.getElementById('info').append(wallNotes);
   document.getElementById('houseBtn').style.display = '';
 }
 const hasLoft = typeof HOUSE_LOFT !== 'undefined';
