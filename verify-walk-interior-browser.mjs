@@ -9,7 +9,7 @@ const server=createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://localhost').pathname;
   const file=resolve(root,'.'+path);
   let data=await readFile(file);
-  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,loadWalkInterior,houseInteriorBacking,houseTerrainY,get house(){return walkHouse;},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
+  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,fpUpdate,loadWalkInterior,houseInteriorBacking,houseTerrainY,get house(){return walkHouse;},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
   res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(data);
 }catch{res.writeHead(404).end();}});
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -48,6 +48,18 @@ try{
   await page.waitForTimeout(150);
   const movement=await page.evaluate(()=>{walkReview.fpState.keys={};return walkReview.camera.position.toArray();});
   assert(movement[2]<19,'W moves through the furnished house');
+  const distances=await page.evaluate(()=>{
+    const distances=[];
+    for(const keys of [['w'],['w','Shift'],['w','d']]){
+      walkReview.aim(17.5,19,0);
+      for(const key of keys)document.dispatchEvent(new KeyboardEvent('keydown',{key}));
+      for(let frame=0;frame<60;frame++)walkReview.fpUpdate(1/60);
+      for(const key of keys)document.dispatchEvent(new KeyboardEvent('keyup',{key}));
+      distances.push(Math.hypot(walkReview.camera.position.x-17.5,walkReview.camera.position.z-19));
+    }
+    return distances;
+  });
+  for(const [i,expected]of [1.4,3,1.4].entries())assert(Math.abs(distances[i]-expected)<1e-8);
   assert.equal(await page.evaluate(()=>walkReview.scene.children.filter(o=>o.name==='garden-walk-interior').length),1);
   console.log(JSON.stringify({metrics,errors},null,2));assert.deepEqual(errors,[]);
 }finally{await browser?.close();await new Promise(done=>server.close(done));}

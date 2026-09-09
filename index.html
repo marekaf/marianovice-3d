@@ -192,6 +192,7 @@ import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping
 import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 import { createWalkInteriorLoader } from './walk-interior-loading.js';
+import { moveWalker } from './walk-movement.js';
 
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
@@ -2347,7 +2348,6 @@ window.addEventListener('mousemove', e => {
 const fpState = { active: false, keys: {} };
 const fpCamera = camera;
 let fpYaw = 0, fpPitch = 0;
-const fpSpeed = 10.8;   // metres per second
 
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
@@ -2375,6 +2375,7 @@ function lockPointer() {
 }
 
 document.getElementById('toggleFP').addEventListener('change', e => {
+  fpState.keys={};
   fpState.active = e.target.checked;
   if (fpState.active) {
     void loadWalkInterior();
@@ -2414,13 +2415,7 @@ const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vecto
 
 function fpUpdate(dt) {
   if (!fpState.active) return;
-  const step = fpSpeed * dt;
-  const fwd = _v.set(Math.sin(fpYaw), 0, Math.cos(fpYaw));
-  const right = _v2.set(Math.cos(fpYaw), 0, -Math.sin(fpYaw));
-  if (fpState.keys['w']) fpCamera.position.addScaledVector(fwd, -step);
-  if (fpState.keys['s']) fpCamera.position.addScaledVector(fwd, step);
-  if (fpState.keys['a']) fpCamera.position.addScaledVector(right, -step);
-  if (fpState.keys['d']) fpCamera.position.addScaledVector(right, step);
+  moveWalker(fpCamera.position,fpYaw,fpState.keys,dt);
   // Stay above terrain
   const tY = walkingHeight(fpCamera.position.x, fpCamera.position.z);
   fpCamera.position.y = tY + 1.7;
