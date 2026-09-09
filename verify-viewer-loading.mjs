@@ -6,6 +6,12 @@ const source=readFileSync(new URL('./viewer-loading.js',import.meta.url),'utf8')
 assert(html.indexOf('id="viewerLoading"')<html.indexOf('src="terrain.js'));
 assert(html.indexOf('src="viewer-loading.js?v=')<html.indexOf('src="terrain.js'));
 assert(html.includes('animate();\nViewerLoading.finish();'));
+const loadingNavigation=html.match(/<nav aria-label="Other views">([\s\S]*?)<\/nav>/)?.[1];
+assert(loadingNavigation,'Loading and failure screens must offer navigation before the model starts');
+for(const [href,label] of [['interior.html','Interiors'],['zahrada-plan.svg','Garden plan'],['grading.html','Terrain plan']]){
+  assert(loadingNavigation.includes(`<a href="${href}">${label}</a>`));
+  assert(readFileSync(new URL(href,import.meta.url)).length>0);
+}
 function fixture(){
   const nodes=new Map(),events=new Map(),frames=[],timers=[];
   const node=id=>{if(!nodes.has(id))nodes.set(id,{dataset:{},hidden:true,textContent:'',classList:{add(){},remove(){}},addEventListener(){},remove(){this.removed=true;}});return nodes.get(id);};

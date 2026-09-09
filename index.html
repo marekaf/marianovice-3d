@@ -7,7 +7,7 @@
 <style>
 html { background: #eeeee7; }
 body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { visibility: hidden; }
-#viewerLoading { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 28px; box-sizing: border-box; background: radial-gradient(ellipse at 75% 20%, #dce4d5, transparent 60%), #eeeee7; color: #303e36; transition: opacity .35s ease; }
+#viewerLoading { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: safe center; overflow-y: auto; padding: 28px; box-sizing: border-box; background: radial-gradient(ellipse at 75% 20%, #dce4d5, transparent 60%), #eeeee7; color: #303e36; transition: opacity .35s ease; }
 #viewerLoading.leaving { opacity: 0; pointer-events: none; }
 .loading-card { width: min(100%, 390px); }
 .loading-kicker { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #667768; }
@@ -19,6 +19,10 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 #loadingHint { font-size: 12px; line-height: 1.6; color: #697367; min-height: 3.2em; margin-top: 14px; }
 #loadingRetry { border: 1px solid #526e58; border-radius: 5px; color: #fff; background: #526e58; padding: 10px 16px; cursor: pointer; font: inherit; }
 #loadingRetry:focus-visible { outline: 3px solid #a4b69e; outline-offset: 3px; }
+.loading-card nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #cdd4c7; }
+.loading-card nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; box-sizing: border-box; border: 1px solid #9cae99; border-radius: 5px; color: #303e36; font-size: 13px; text-decoration: none; }
+.loading-card nav a:hover { background: #dce4d5; }
+.loading-card nav a:focus-visible { outline: 3px solid #526e58; outline-offset: 3px; }
 #viewerLoading[data-state="error"] .loading-line::after { animation: none; width: 100%; background: #a0604d; }
 @keyframes loading-drift { from { transform: translateX(-105%); } to { transform: translateX(365%); } }
 @media (prefers-reduced-motion: reduce) { #viewerLoading { transition: none; } .loading-line::after { animation: none; width: 100%; opacity: .6; } }
@@ -55,6 +59,11 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
     <p id="loadingStage" role="status" aria-live="polite">Connecting to the viewer…</p>
     <p id="loadingHint">Detailed planting and materials can take a moment to load.</p>
     <button id="loadingRetry" type="button" hidden>Try again</button>
+    <nav aria-label="Other views">
+      <a href="interior.html">Interiors</a>
+      <a href="zahrada-plan.svg">Garden plan</a>
+      <a href="grading.html">Terrain plan</a>
+    </nav>
     <noscript>This 3D viewer needs JavaScript enabled.</noscript>
   </div>
 </section>
