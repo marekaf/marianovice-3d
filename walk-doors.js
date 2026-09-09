@@ -11,6 +11,10 @@ export function buildWalkingDoor(THREE,model,buildModel) {
   const panel=model.parts.find(part=>part.name===`${model.name}_leaf`);
   const movingPanels=model.parts.filter(part=>moving.has(part.name));
   group.userData.walkDoor={id:model.name,opening:model.opening,pivot,leaf,model,fixed,panel,movingPanels,open:false};
+  if(model.opening.pocket){
+    const [x,z,y]=panel.position,[w,d,h]=panel.size;
+    group.userData.walkDoor.closedBounds=new THREE.Box3(new THREE.Vector3(x-w/2,y-h/2,z-d/2),new THREE.Vector3(x+w/2,y+h/2,z+d/2));
+  }
   return group;
 }
 
@@ -57,7 +61,15 @@ export function createWalkDoors(THREE,{data,doors,floorY}) {
     let closest=null,distance=Infinity;
     for(const group of doors){
       group.updateWorldMatrix(true,true);
-      const hit=raycaster.intersectObject(group.userData.walkDoor.leaf,true)[0];
+      const door=group.userData.walkDoor;
+      let hit=raycaster.intersectObject(door.leaf,true)[0];
+      if(door.opening.pocket&&door.open){
+        const point=raycaster.ray.clone().applyMatrix4(inverse.copy(group.matrixWorld).invert()).intersectBox(door.closedBounds,scratch);
+        if(point){
+          const targetDistance=point.applyMatrix4(group.matrixWorld).distanceTo(camera.position);
+          if(targetDistance<=raycaster.far&&(!hit||targetDistance<hit.distance))hit={distance:targetDistance};
+        }
+      }
       if(hit&&hit.distance<distance){closest=group;distance=hit.distance;}
     }
     if(!closest)return null;

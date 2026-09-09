@@ -10,7 +10,7 @@ const server=createServer(async(req,res)=>{
     const pathname=new URL(req.url,'http://localhost').pathname,file=resolve(root,'.'+pathname);
     if(!file.startsWith(root))throw new Error('Invalid path');
     let body=await readFile(file);
-    if(pathname==='/index.html')body=body.toString().replace('ViewerLoading.finish();',`window.doorReview={THREE,scene,camera,fpState,loadWalkInterior,get doors(){return walkDoors;},aim(group,side=1){const b=new THREE.Box3().setFromObject(group.userData.walkDoor.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x+side*1.4,houseTerrainY+1.7,c.z);fpYaw=side*Math.PI/2;fpPitch=0;fpUpdate(0);requestRender();},update(){fpUpdate(0);requestRender();},tick(dt){fpUpdate(dt);requestRender();}};ViewerLoading.finish();`);
+    if(pathname==='/index.html')body=body.toString().replace('ViewerLoading.finish();',`window.doorReview={THREE,scene,camera,fpState,loadWalkInterior,get doors(){return walkDoors;},aim(group,side=1){const b=new THREE.Box3().setFromObject(group.userData.walkDoor.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x+side*1.4,houseTerrainY+1.7,c.z);fpYaw=side*Math.PI/2;fpPitch=0;fpUpdate(0);requestRender();},aimPocket(group,side){const p=group.userData.walkDoor.panel.position,c=group.localToWorld(new THREE.Vector3(p[0],1.7,p[1]));camera.position.copy(c);camera.position.z+=side*.8;fpYaw=side===1?0:Math.PI;fpPitch=0;fpUpdate(0);requestRender();},update(){fpUpdate(0);requestRender();},tick(dt){fpUpdate(dt);requestRender();}};ViewerLoading.finish();`);
     res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(body);
   }catch{res.writeHead(404).end();}
 });
@@ -73,6 +73,29 @@ try{
     assert(passage.x<passage.center,`${name}: walk through the open portal`);assert(passage.valid);
     await page.evaluate(name=>{const r=doorReview,g=r.doors.doors.find(g=>g.name===name);r.aim(g,-1);},name);
     await page.waitForFunction(()=>document.querySelector('#walkDoorPrompt').textContent.includes('Close sliding portal'));
+    await page.keyboard.press('e');
+    assert.equal(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name),false);
+  }
+  for(const [name,approach]of [['opening_W15_0',1],['opening_W24_0',-1]]){
+    await page.evaluate(([name,side])=>{const r=doorReview;r.aimPocket(r.doors.doors.find(g=>g.name===name),side);},[name,approach]);
+    await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Open pocket door'));
+    if(process.env.POCKET_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.POCKET_SCREENSHOT_DIR,`${name}-closed.png`)});
+    await page.keyboard.press('e');
+    assert(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name));
+    if(process.env.POCKET_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.POCKET_SCREENSHOT_DIR,`${name}-open.png`)});
+    for(const side of [approach,-approach]){
+      const passage=await page.evaluate(([name,side])=>{
+        const r=doorReview,g=r.doors.doors.find(g=>g.name===name),p=g.userData.walkDoor.panel.position;
+        const center=g.localToWorld(new r.THREE.Vector3(p[0],1.7,p[1]));
+        r.aimPocket(g,side);r.camera.position.z=center.z+side*.8;
+        r.fpState.keys={w:true};for(let frame=0;frame<70;frame++)r.tick(1/60);r.fpState.keys={};
+        return{z:r.camera.position.z,center:center.z,valid:r.doors.canStandAt(r.camera.position.x,r.camera.position.z)};
+      },[name,side]);
+      assert((passage.z-passage.center)*side<0,`${name}: pocket passage works from side ${side}`);assert(passage.valid);
+    }
+    await page.evaluate(([name,side])=>{const r=doorReview;r.aimPocket(r.doors.doors.find(g=>g.name===name),side);},[name,-approach]);
+    await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Close pocket door'));
+    assert.match(await page.locator('#walkDoorPrompt').textContent(),/provisional dimensions/);
     await page.keyboard.press('e');
     assert.equal(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name),false);
   }

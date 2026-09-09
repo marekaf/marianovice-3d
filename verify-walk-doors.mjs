@@ -56,7 +56,7 @@ const allDoors=[...data.extWalls,...data.intWalls].flatMap(wall=>wall.openings.f
   const group=buildWalkingDoor(THREE,model,buildModel);
   group.position.set(data.originPlot.x,2.465,data.originPlot.z);return[group];
 }));
-assert.equal(allDoors.length,11);
+assert.equal(allDoors.length,10);
 const allController=createWalkDoors(THREE,{data,doors:allDoors,floorY:2.465});
 for(const door of allDoors){
   const {panel,opening}=door.userData.walkDoor;

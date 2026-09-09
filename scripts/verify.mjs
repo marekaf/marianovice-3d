@@ -29,6 +29,7 @@ const checks=[
   'verify-house-wall-backing.mjs',
   'verify-walk-doors.mjs',
   'verify-walk-portals.mjs',
+  'verify-pocket-doors.mjs',
   'verify-house-wall-layers.mjs',
   'verify-nightstands.mjs',
   'verify-fixtures.mjs',
