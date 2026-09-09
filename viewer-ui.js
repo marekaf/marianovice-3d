@@ -127,6 +127,7 @@ export function mountViewerUI({ stopTour }) {
   const status = document.createElement('div');
   status.id = 'walkStatus'; status.className = 'viewer-ui'; status.hidden = true;
   status.innerHTML = '<span role="status">WASD to move · Mouse to look · Esc to exit</span><button>Exit walk</button>';
+  status.append(document.getElementById('walkInteriorStatus'));
   document.body.append(status);
   const walkButton = document.getElementById('walkButton');
   const touchWalk = matchMedia('(pointer:coarse)').matches;

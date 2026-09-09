@@ -114,6 +114,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
   <label><input type="checkbox" id="toggleFurniture" checked> Furniture</label>
   <label><input type="checkbox" id="toggleAxes"> XYZ axes</label>
   <label><input type="checkbox" id="toggleFP"> First-person (WASD)</label>
+  <small id="walkInteriorStatus" role="status" aria-live="polite"></small>
 </div>
 
 <div id="timeBar">
@@ -190,6 +191,7 @@ import { GroundSurfaceModel } from './ground-surface-model.js';
 import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=2df965840e8d';
 import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
+import { createWalkInteriorLoader } from './walk-interior-loading.js';
 
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
@@ -1581,6 +1583,8 @@ treesGroup.add(pondModel.plantingGroup);
 
 // ───────────────────────── HOUSE WINDOWS / HS DOORS ─────────────────────────
 let applyOpeningCutouts;
+let houseInteriorBacking;
+let walkHouse;
 {
   const ty = houseTerrainY;
   const exteriorOpenings = localHouseData?.exteriorOpenings?.() ?? [];
@@ -1622,6 +1626,7 @@ let applyOpeningCutouts;
     const interior = localHouseData.exteriorInterior?.(wallH);
     if (interior) {
       const group = buildModel(THREE, { ...interior, floorHeight: ty });
+      houseInteriorBacking=group;
       group.position.x = origin.x;
       group.position.z = origin.z;
       scene.add(group);
@@ -2182,6 +2187,7 @@ document.getElementById('toggleGate').addEventListener('change', e => {
   garageGateClosed.visible = !e.target.checked;
 });
 document.getElementById('toggleFurniture').addEventListener('change', e => {
+  if(walkHouse)walkHouse.furniture.visible=e.target.checked;
   furnitureGroup.visible = e.target.checked;
   pergolaGroup.userData.categories.furniture.visible = e.target.checked;
   greenhouseGroup.userData.categories.furniture.visible = e.target.checked;
@@ -2343,6 +2349,27 @@ const fpCamera = camera;
 let fpYaw = 0, fpPitch = 0;
 const fpSpeed = 10.8;   // metres per second
 
+const loadWalkInterior=createWalkInteriorLoader({
+  build:async()=>{
+    if(!localHouseData)throw new Error('House drawings unavailable');
+    const {buildWalkInterior}=await import('./docs/walk-interior.js');
+    return buildWalkInterior(THREE,localHouseData,{buildModel,renderer,floorY:houseTerrainY,exteriorWallHeight:wallH});
+  },
+  install:house=>{
+    walkHouse=house;
+    house.furniture.visible=document.getElementById('toggleFurniture').checked;
+    scene.add(house.root);
+    if(houseInteriorBacking)houseInteriorBacking.visible=false;
+    invalidateShadows();
+  },
+  status:(state,error)=>{
+    const status=document.getElementById('walkInteriorStatus');
+    status.dataset.state=state;
+    status.textContent=state==='loading'?'Loading furnished interiors…':state==='ready'?'Furnished interiors ready.':`Interiors unavailable: ${error.message}. Turn Walk off and on to retry.`;
+    requestRender();
+  },
+});
+
 function lockPointer() {
   renderer.domElement.requestPointerLock();
 }
@@ -2350,6 +2377,7 @@ function lockPointer() {
 document.getElementById('toggleFP').addEventListener('change', e => {
   fpState.active = e.target.checked;
   if (fpState.active) {
+    void loadWalkInterior();
     controls.enabled = false;
     fpCamera.position.set(20, walkingHeight(20, 20) + 1.7, 20);
     lockPointer();
