@@ -4,18 +4,21 @@ const HouseRoof = (() => {
     const westX=bbox[0]-1.15,eastX=bbox[2]+.35,northZ=bbox[1]-.175,southZ=bbox[3]+.175;
     const wingSlope=Math.tan(5*Math.PI/180),wingEaveY=baseY+3.025;
     const intersectionX=(wingEaveY-wingSlope*westX-ridgeY+ridgeX)/(1-wingSlope);
-    const mainWest={heightAt:x=>ridgeY-(ridgeX-x)};
-    const mainEast={heightAt:x=>ridgeY-(x-ridgeX)};
-    const westWing={heightAt:x=>wingEaveY+(x-westX)*wingSlope};
+    const mainWest={heightAt:x=>ridgeY-(ridgeX-x),normalThickness:.25,verticalDrop:.25*Math.SQRT2};
+    const mainEast={heightAt:x=>ridgeY-(x-ridgeX),normalThickness:.25,verticalDrop:.25*Math.SQRT2};
+    const westWing={heightAt:x=>wingEaveY+(x-westX)*wingSlope,normalThickness:.04*Math.cos(5*Math.PI/180),verticalDrop:.04,depthStatus:'unconfirmed'};
+    for(const plane of[mainWest,mainEast,westWing])plane.undersideHeightAt=x=>plane.heightAt(x)-plane.verticalDrop;
     const atriumWestX=atrium[2]-1.6,atriumNorthZ=atrium[1]+.175,atriumSouthZ=atrium[3]-.175;
-    function heightAt(x,z) {
+    function planeAt(x,z) {
       if(z<northZ||z>southZ||x>eastX)return null;
       const wing=z<=atriumNorthZ||z>=atriumSouthZ;
       if(x<(wing?westX:atriumWestX))return null;
-      return x>=ridgeX?mainEast.heightAt(x):wing&&x<intersectionX?westWing.heightAt(x):mainWest.heightAt(x);
+      return x>=ridgeX?mainEast:wing&&x<intersectionX?westWing:mainWest;
     }
-    return {bbox,atrium,eNotch,ridgeX,ridgeY,westX,eastX,northZ,southZ,intersectionX,mainWest,mainEast,westWing,heightAt,
-      atriumWestX,atriumNorthZ,atriumSouthZ,soffitDrop:.04};
+    const heightAt=(x,z)=>planeAt(x,z)?.heightAt(x)??null;
+    const undersideHeightAt=(x,z)=>planeAt(x,z)?.undersideHeightAt(x)??null;
+    return {bbox,atrium,eNotch,ridgeX,ridgeY,westX,eastX,northZ,southZ,intersectionX,mainWest,mainEast,westWing,heightAt,undersideHeightAt,
+      atriumWestX,atriumNorthZ,atriumSouthZ};
   }
   function create(THREE,options) {
     const d=describe(options),group=new THREE.Group();
@@ -32,12 +35,13 @@ const HouseRoof = (() => {
     grainTexture.wrapS=grainTexture.wrapT=THREE.RepeatWrapping;grainTexture.colorSpace=THREE.SRGBColorSpace;grainTexture.needsUpdate=true;
     const timber=new THREE.MeshStandardMaterial({color:0xb6a083,roughness:.87,side:THREE.DoubleSide,map:grainTexture});
     const unitBox=new THREE.BoxGeometry(1,1,1),unitCylinder=new THREE.CylinderGeometry(1,1,1,8);
-    function surface(name,points,material,roofSurface=false) {
+    function surface(name,points,material,roofSurface=false,triangles) {
       const geometry=new THREE.BufferGeometry();
       geometry.setAttribute('position',new THREE.Float32BufferAttribute(points.flat(),3));
       geometry.setAttribute('uv',new THREE.Float32BufferAttribute(points.flatMap(([x,,z])=>[x/.6,z/2.4]),2));
       const indices=[];
-      for(let i=1;i<points.length-1;i++)indices.push(0,i,i+1);
+      if(triangles)indices.push(...triangles);
+      else for(let i=1;i<points.length-1;i++)indices.push(0,i,i+1);
       geometry.setIndex(indices);geometry.computeVertexNormals();
       const mesh=new THREE.Mesh(geometry,material);mesh.name=name;mesh.userData.roofSurface=roofSurface;
       mesh.castShadow=mesh.receiveShadow=true;group.add(mesh);return mesh;
@@ -70,7 +74,9 @@ const HouseRoof = (() => {
       }
     }
     function soffit(name,x0,x1,z0,z1,plane) {
-      if(x1>x0&&z1>z0)panel(`${name} bioboard soffit`,x0,x1,z0,z1,plane,timber,d.soffitDrop);
+      if(plane===d.mainEast)x1=Math.min(x1,d.eastX-.03);
+      if(plane===d.mainWest&&x0===d.atriumWestX)x0+=.03;
+      if(x1>x0&&z1>z0)panel(`${name} bioboard soffit`,x0,x1,z0,z1,plane,timber,plane.verticalDrop);
     }
     for(const p of planes) {
       if(p.z0<d.bbox[1])soffit(`${p.name} north`,p.x0,p.x1,p.z0,d.bbox[1],p.plane);
@@ -85,25 +91,44 @@ const HouseRoof = (() => {
       soffit(`Atrium ${name} main return`,d.intersectionX,d.atrium[2],z0,z1,d.mainWest);
     }
     soffit('Atrium main eave',d.atriumWestX,d.atrium[2],d.atriumNorthZ,d.atriumSouthZ,d.mainWest);
-    function fascia(name,a,b) {
-      surface(name,[a,b,[b[0],b[1]-d.soffitDrop,b[2]],[a[0],a[1]-d.soffitDrop,a[2]]],trim);
+    for(const [name,z0,z1]of[['North',d.northZ,d.bbox[1]],['South',d.bbox[3],d.southZ],
+      ['Atrium north',d.atrium[1],d.atriumNorthZ],['Atrium south',d.atriumSouthZ,d.atrium[3]]]){
+      const x=d.intersectionX,upper=d.westWing.undersideHeightAt(x),lower=d.mainWest.undersideHeightAt(x);
+      surface(`${name} underside junction closure`,[[x,lower,z0],[x,upper,z0],[x,upper,z1],[x,lower,z1]],timber);
+    }
+    function fascia(name,a,b,plane) {
+      surface(name,[a,b,[b[0],b[1]-plane.verticalDrop,b[2]],[a[0],a[1]-plane.verticalDrop,a[2]]],trim);
       beam(`${name} drip`,[a[0],a[1]-.002,a[2]],[b[0],b[1]-.002,b[2]],.008,.008);
     }
     for(const [name,z]of[['North',d.northZ],['South',d.southZ]]){
-      fascia(`${name} wing barge`,[d.westX,d.westWing.heightAt(d.westX),z],[d.intersectionX,d.westWing.heightAt(d.intersectionX),z]);
-      fascia(`${name} west barge`,[d.intersectionX,d.mainWest.heightAt(d.intersectionX),z],[d.ridgeX,d.ridgeY,z]);
-      fascia(`${name} east barge`,[d.ridgeX,d.ridgeY,z],[d.eastX,d.mainEast.heightAt(d.eastX),z]);
+      fascia(`${name} wing barge`,[d.westX,d.westWing.heightAt(d.westX),z],[d.intersectionX,d.westWing.heightAt(d.intersectionX),z],d.westWing);
+      fascia(`${name} west barge`,[d.intersectionX,d.mainWest.heightAt(d.intersectionX),z],[d.ridgeX,d.ridgeY,z],d.mainWest);
+      const bodyX=d.eastX-.03;
+      surface(`${name} east barge`,[[d.ridgeX,d.ridgeY,z],[d.eastX,d.mainEast.heightAt(d.eastX),z],
+        [d.eastX,d.mainEast.heightAt(d.eastX)-.002,z],[bodyX,d.mainEast.heightAt(bodyX)-.002,z],
+        [bodyX,d.mainEast.undersideHeightAt(bodyX),z],[d.ridgeX,d.mainEast.undersideHeightAt(d.ridgeX),z]],trim);
+      beam(`${name} east barge drip`,[d.ridgeX,d.ridgeY-.002,z],[d.eastX,d.mainEast.heightAt(d.eastX)-.002,z],.008,.008);
     }
     for(const [name,z]of[['North',d.atriumNorthZ],['South',d.atriumSouthZ]]){
-      fascia(`${name} atrium return`,[d.westX,d.westWing.heightAt(d.westX),z],[d.atriumWestX,d.westWing.heightAt(d.atriumWestX),z]);
-      surface(`${name} atrium junction closure`,[[d.atriumWestX,d.mainWest.heightAt(d.atriumWestX)-d.soffitDrop,z],
-        [d.atriumWestX,d.westWing.heightAt(d.atriumWestX),z],[d.intersectionX,d.westWing.heightAt(d.intersectionX),z]],trim);
+      fascia(`${name} atrium return`,[d.westX,d.westWing.heightAt(d.westX),z],[d.atriumWestX,d.westWing.heightAt(d.atriumWestX),z],d.westWing);
+      const bodyX=d.atriumWestX+.03;
+      const closure=[[d.atriumWestX,d.mainWest.heightAt(d.atriumWestX)-.002,z],
+        [d.atriumWestX,d.westWing.heightAt(d.atriumWestX),z],[d.intersectionX,d.westWing.heightAt(d.intersectionX),z],
+        [d.intersectionX,d.mainWest.undersideHeightAt(d.intersectionX),z],[bodyX,d.mainWest.undersideHeightAt(bodyX),z],
+        [bodyX,d.mainWest.heightAt(bodyX)-.002,z]];
+      const triangles=THREE.ShapeUtils.triangulateShape(closure.map(([x,y])=>new THREE.Vector2(x,y)),[]).flat();
+      surface(`${name} atrium junction closure`,closure,trim,false,triangles);
     }
     const eaves=[['East',d.eastX,d.northZ,d.southZ,d.mainEast,1],
       ['West north',d.westX,d.northZ,d.atriumNorthZ,d.westWing,-1],['West south',d.westX,d.atriumSouthZ,d.southZ,d.westWing,-1],
       ['Atrium',d.atriumWestX,d.atriumNorthZ,d.atriumSouthZ,d.mainWest,-1]];
     for(const [name,x,z0,z1,plane,side]of eaves){
-      const y=plane.heightAt(x);fascia(`${name} eave fascia`,[x,y,z0],[x,y,z1]);
+      const y=plane.heightAt(x),bodyX=plane===d.westWing?x:x-side*.03;
+      fascia(`${name} eave fascia`,[bodyX,plane.heightAt(bodyX),z0],[bodyX,plane.heightAt(bodyX),z1],plane);
+      if(bodyX!==x){
+        panel(`${name} metal drip underside`,Math.min(x,bodyX),Math.max(x,bodyX),z0,z1,plane,trim,.002);
+        surface(`${name} metal drip edge`,[[x,y,z0],[x,y,z1],[x,y-.002,z1],[x,y-.002,z0]],trim);
+      }
       const radius=.065,cx=x+side*.043,cy=y-.035,vertices=[],indices=[];
       for(let i=0;i<=12;i++){
         const angle=Math.PI*i/12,px=cx+radius*Math.cos(angle),py=cy-radius*Math.sin(angle);
