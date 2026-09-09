@@ -101,6 +101,7 @@
     </g>
     <g class="el" data-id="terraceFrontage"><title>Low terrace foreground</title>
       <polygon points="450,212.4 460.8,230.4 460.8,284.4 450,298.8 442.8,288 442.8,225" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
+      <polygon points="460.8,223.2 469.8,219.6 486,221.4 500.4,234 505.8,248.4 500.4,257.4 486,262.8 473.4,259.2 466.2,246.6" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
     </g>
     <g class="el" data-id="orchardMeadow"><title>Orchard meadow</title>
       <polygon points="27,414 156.6,414 156.6,532.8 57.6,532.8 57.6,495 27,495" fill="#b5c98a" opacity="0.35"/>
@@ -114,7 +115,7 @@
 <polyline data-route="Productive access" points="179.64,234 163.8,234 84.6,234" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Productive access</title></polyline>
 <polyline data-route="Bed access" points="84.6,234 120.6,234 120.6,176.4" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Bed access</title></polyline>
 <polyline data-route="Greenhouse access" points="84.6,234 84.6,212.4 57.6,212.4" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Greenhouse access</title></polyline>
-<polyline data-route="Daily dining" points="414,216 435.6,216 435.6,205.2 486,201.6" fill="none" stroke="#c8bea5" stroke-width="21.6" stroke-linecap="round" stroke-linejoin="round"><title>Daily dining</title></polyline>
+<polyline data-route="Daily dining" points="414,216 435.6,216 444.6,232.2 453.6,255.6 469.8,273.6 491.4,277.2 513,270 522,252 518.4,230.4 504,212.4 486,190.8" fill="none" stroke="#c8bea5" stroke-width="21.6" stroke-linecap="round" stroke-linejoin="round"><title>Daily dining</title></polyline>
 <polyline data-route="Quiet garden approach" points="179.64,334.8 144,334.8 122.4,342" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Quiet garden approach</title></polyline>
 <polyline data-route="Gathering connection" points="549,190.8 549,212.4 572.4,212.4 572.4,172.8 586.8,144" fill="none" stroke="#c8bea5" stroke-width="21.6" stroke-linecap="round" stroke-linejoin="round"><title>Gathering connection</title></polyline>
 <polyline data-route="Pond walk" points="435.6,320.4 504,320.4 576,320.4 696.6,320.4 712.8,243 698.4,203.4 570.6,203.4 570.6,167.4 565.2,167.4" fill="none" stroke="#c8bea5" stroke-width="21.6" stroke-linecap="round" stroke-linejoin="round"><title>Pond walk</title></polyline>
@@ -325,7 +326,7 @@
     <text x="0" y="114">Productive court bor</text><text x="88" y="114">6.9 × 1</text><text x="170" y="114" text-anchor="end">5.52</text><text x="193" y="114" text-anchor="end">2e</text>
     <text x="0" y="126">Quiet garden enclosu</text><text x="88" y="126">6.7 × 5.7</text><text x="170" y="126" text-anchor="end">14.53</text><text x="193" y="126" text-anchor="end">1i</text>
     <text x="0" y="138">Gathering room and p</text><text x="88" y="138">19.8 × 18.4</text><text x="170" y="138" text-anchor="end">201.86</text><text x="193" y="138" text-anchor="end">12a</text>
-    <text x="0" y="150">Low terrace foregrou</text><text x="88" y="150">1 × 4.8</text><text x="170" y="150" text-anchor="end">4</text><text x="193" y="150" text-anchor="end">13f</text>
+    <text x="0" y="150">Low terrace foregrou</text><text x="88" y="150">1 × 4.8 +1</text><text x="170" y="150" text-anchor="end">8.14</text><text x="193" y="150" text-anchor="end">13f</text>
     <text x="0" y="162">House</text><text x="88" y="162">10.8 × 19.25</text><text x="170" y="162" text-anchor="end">185.77</text><text x="193" y="162" text-anchor="end">6d</text>
     <text x="0" y="174">West terrace</text><text x="88" y="174">1 × 19.25 +1</text><text x="170" y="174" text-anchor="end">33.71</text><text x="193" y="174" text-anchor="end">5d</text>
     <text x="0" y="186">East terrace</text><text x="88" y="186">3 × 7.82</text><text x="170" y="186" text-anchor="end">23.46</text><text x="193" y="186" text-anchor="end">11f</text>

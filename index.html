@@ -151,7 +151,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=6ab04c8fa943"></script>
+<script src="layout.js?v=1a46a61d1c46"></script>
 <script src="garden-route-model.js"></script>
 <script src="interiors3d.js?v=3816e2229931"></script>
 <script src="vehicle-model.js"></script>
@@ -176,7 +176,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="gate-model.js?v=6ab2796976ec"></script>
 <script src="fence-model.js?v=dbf171c13753"></script>
 <script src="utility-pillar-model.js"></script>
-<script src="site-terrain.js?v=95297d08f715"></script>
+<script src="site-terrain.js?v=79131309754a"></script>
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=f0c11f8a0a27"></script>
 <script src="terrain-preview.js"></script>
@@ -1921,11 +1921,11 @@ for (const v of GARDEN.vehicles) {
   for (const el of GARDEN.elements.filter(e => e.meta && e.meta.plant)) {
     const random = zoneRandom(el.id);
     const rects = el.parts.filter(p => p.kind === 'rect');
-    const poly = el.parts.find(p => p.kind === 'polygon');
+    const polygons = el.parts.filter(p => p.kind === 'polygon');
     const ell = el.parts.find(p => p.kind === 'ellipse');
     const zoneCircles = el.parts.filter(p => p.kind === 'circle');
     const excl = el.meta.exclude ? EL[el.meta.exclude].parts.find(p => p.kind === 'ellipse') : null;
-    if (zoneCircles.length && !rects.length && !poly && !ell) {
+    if (zoneCircles.length && !rects.length && !polygons.length && !ell) {
       zoneCircles.forEach(c => addBush(c.cx, c.cy, Math.max(0.35, c.r), 0x5f8452,el.meta.leafHabit??'deciduous'));
       continue;
     }
@@ -1937,18 +1937,32 @@ for (const v of GARDEN.vehicles) {
         for (const q of rects) { if (t < q.w * q.d) { r = q; break; } t -= q.w * q.d; }
         return [r.x + random() * r.w, r.y + random() * r.d];
       };
-    } else if (poly) {
-      const xs = poly.points.map(p => p[0]), zs = poly.points.map(p => p[1]);
-      const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
-      for (let i = 0; i < poly.points.length; i++) {
-        const [ax, az] = poly.points[i], [bx, bz] = poly.points[(i + 1) % poly.points.length];
-        area += ax * bz - bx * az;
-      }
-      area = Math.abs(area) / 2;
+    } else if (polygons.length) {
+      const regions = polygons.map(poly => {
+        const xs = poly.points.map(p => p[0]), zs = poly.points.map(p => p[1]);
+        let signedArea = 0;
+        for (let i = 0; i < poly.points.length; i++) {
+          const [ax, az] = poly.points[i], [bx, bz] = poly.points[(i + 1) % poly.points.length];
+          signedArea += ax * bz - bx * az;
+        }
+        return {points: poly.points, area: Math.abs(signedArea) / 2,
+          x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs)};
+      });
+      area = regions.reduce((sum, region) => sum + region.area, 0);
       sample = () => {
+        let region = regions[0];
+        if (regions.length > 1) {
+          let remaining = random() * area;
+          region = regions[regions.length - 1];
+          for (const candidate of regions) {
+            if (remaining < candidate.area) { region = candidate; break; }
+            remaining -= candidate.area;
+          }
+        }
+        const {points, x0, x1, z0, z1} = region;
         for (let k = 0; k < 30; k++) {
           const x = x0 + random() * (x1 - x0), z = z0 + random() * (z1 - z0);
-          if (inPoly(poly.points, x, z)) return [x, z];
+          if (inPoly(points, x, z)) return [x, z];
         }
         return null;
       };

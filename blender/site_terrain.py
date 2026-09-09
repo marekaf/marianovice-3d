@@ -28,7 +28,7 @@ def polygon_distance(points, x, y):
     return 0 if inside else distance
 
 
-def route_sample(route, x, y):
+def route_sample(route, x, y, bank=False):
     samples = []
     for i in range(1, len(route['points'])):
         a, b = route['points'][i - 1], route['points'][i]
@@ -37,12 +37,18 @@ def route_sample(route, x, y):
         d = math.hypot(x - a[0] - t * dx, y - a[1] - t * dy)
         samples.append((d, route['levels'][i - 1] + (route['levels'][i] - route['levels'][i - 1]) * t))
     distance = min(sample[0] for sample in samples)
-    weighted, total = 0, 0
+    weighted, total, bank_weighted, bank_total = 0, 0, 0, 0
     for d, value in samples:
-        weight = smoothstep(1 - (d - distance) / .2)/(d*d+1e-12)
+        weight = smoothstep(1 - (d - distance) / (2 if route.get('approachBank') else .2))/(d*d+1e-12)
         weighted += value * weight
         total += weight
+        if bank and route.get('approachBank'):
+            bank_weight = 1/(d*d+1e-12)
+            bank_weighted += value * bank_weight
+            bank_total += bank_weight
     level = weighted / total
+    if bank_total:
+        level += (bank_weighted/bank_total-level)*smoothstep((distance-route['width']/2)/.3)
     if route.get('endCircle'):
         circle = route['endCircle']
         d = max(0, math.hypot(x-circle['cx'], y-circle['cz'])-circle['radius'])
@@ -51,6 +57,10 @@ def route_sample(route, x, y):
         d = rect_distance(route['startRect'], x, y)
         level = route['levels'][0]+(level-route['levels'][0])*smoothstep(d/.6)
     return distance, level
+
+
+def route_bank_clearance(route, x, y):
+    return min((max(0, route_sample(other, x, y)[0]-other['width']/2) for other in route.get('bankAvoidRoutes', [])), default=math.inf)
 
 
 def height(spec, x, y):
@@ -124,17 +134,23 @@ def height(spec, x, y):
         if total:
             h += (level/total-h)*strength
     for route in [r for r in spec.get('routeProfiles', []) if r.get('bankApron')]:
-        nearest, level = route_sample(route, x, y)
+        if route.get('bankBounds') and rect_distance(route['bankBounds'], x, y) > 0:
+            continue
+        nearest, level = route_sample(route, x, y, True)
         clear = min([rect_distance(p, x, y) for p in spec.get('finishPads', [])+spec.get('protectedPads', [])]+[d for _, d in gathering_samples]+[polygon_distance(spec['houseExcavation']['points'], x, y) if spec.get('houseExcavation') else math.inf])
-        influence = (1-smoothstep(max(0, nearest-route['width']/2)/route['bankApron']['blend']))*smoothstep(clear/route['bankApron']['clearBlend'])
+        influence = (1-smoothstep(max(0, nearest-route['width']/2)/route['bankApron']['blend']))*smoothstep(clear/route['bankApron']['clearBlend'])*smoothstep(route_bank_clearance(route, x, y)/.6)
         h += (level-route.get('bedding', .04)-h)*influence
     for route in spec.get('routeProfiles', []):
-        distance, level = route_sample(route, x, y)
+        if route.get('bankBounds') and rect_distance(route['bankBounds'], x, y) > 0:
+            continue
+        distance, level = route_sample(route, x, y, True)
         distance = max(0, distance - route['width'] / 2)
         blend = route.get('bankBlend', .5)
         if distance < blend:
             bedding = route.get('bedding', .04)
-            h = level - bedding + (h - level + bedding) * smoothstep(distance / blend)
+            clear = min([rect_distance(p, x, y) for p in spec.get('finishPads', [])+spec.get('protectedPads', [])]+[d for _, d in gathering_samples]) if route.get('approachBank') else math.inf
+            influence = (1-smoothstep(distance/blend))*(smoothstep(clear/1.2) if route.get('approachBank') else 1)*smoothstep(route_bank_clearance(route, x, y)/.6)
+            h += (level-bedding-h)*influence
     pond_outer = 1.3+(pond.get('northBankOuter', 1.3)-1.3)*max(0, (pond['cz']-y)/(pond['rz']*radius or 1))**16 if continuous and y < pond['cz'] else 1.3
     if continuous and radius <= 1:
         h = min(h, pond['edge'] - pond['depth'] * .5 * (1 + math.cos(radius * math.pi)))
