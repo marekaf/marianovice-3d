@@ -235,10 +235,11 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     const edge=spec.sliding?.025:.06,divider=start+spec.width*(spec.split??.5),mullion=spec.sliding?.0125:.03;
     const bottomEdge=spec.lowThreshold?.02:edge;
     perimeter('frame', start, end, sill, sill + spec.height, edge, 'frame', spec.sliding?.14:.08,depth,bottomEdge);
-    if(!spec.single)rail('mullion', divider-mullion, divider+mullion, sill+edge, sill+spec.height-edge, 'frame',spec.sliding?.12:.08);
+    if(!spec.single&&!spec.sliding)rail('mullion', divider-mullion, divider+mullion, sill+edge, sill+spec.height-edge, 'frame',.08);
     const innerEdge=spec.sliding?-mullion:mullion;
     const panes=spec.single?[['single',start+edge,end-edge]]:[['north',start+edge,divider-innerEdge],['south',divider+innerEdge,end-edge]];
     for (const [half, a, b] of panes) {
+      const paneStart=parts.length;
       const moving = half === spec.movingHalf;
       const border = spec.sliding?.009:moving ? 0.035 : 0.018;
       const paneDepth=depth+(spec.sliding?(moving?.035:-.025):.01);
@@ -256,6 +257,11 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
         addBox('handle_grip',depth+.114,latch,sill+handleHeight-.043,.016,.016,spec.sliding?.22:.1,'frame');
         if(!spec.concealedHinges&&!spec.sliding)for (const [j, y] of [0.18,spec.height-.19].entries())
           addBox(`sash_hinge_${j}`, depth + 0.065, hinge, sill + y, 0.025, 0.028, 0.07, 'metal');
+      }
+      if(spec.sliding&&moving){
+        movingParts.push(...parts.slice(paneStart).map(part=>part.name));
+        const travel=half==='north'?end-edge-b:start+edge-a;
+        doorMotion={kind:'slide',pivot:[0,0,0],offset:alongX?[travel,0,0]:[0,0,travel],movingParts};
       }
     }
     if(spec.sliding)for(const offset of [-.035,.035])rail(`track_${offset}`,start+.025,end-.025,sill+.003,sill+.009,'metal',.012,depth+offset);

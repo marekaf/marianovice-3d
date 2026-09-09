@@ -52,7 +52,7 @@ assert(!controller.toggle(group,camera),'Door cannot close through the walker');
 assert.equal(group.userData.walkDoor.open,true);
 const allDoors=[...data.extWalls,...data.intWalls].flatMap(wall=>wall.openings.flatMap((opening,index)=>{
   const model=data.buildOpening(wall,opening,index);
-  if(!model?.doorMotion)return[];
+  if(!model?.doorMotion||model.doorMotion.kind==='slide')return[];
   const group=buildWalkingDoor(THREE,model,buildModel);
   group.position.set(data.originPlot.x,2.465,data.originPlot.z);return[group];
 }));

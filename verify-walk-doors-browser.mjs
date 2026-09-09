@@ -56,6 +56,26 @@ try{
   assert(!closing.allowed);assert(closing.open);
   const entrance=await page.evaluate(()=>{const g=doorReview.doors.doors.find(group=>group.name==='opening_W9_2');return{y:g.position.y,hinge:g.userData.walkDoor.opening.hinge};});
   assert.equal(entrance.y,2.465);assert.equal(entrance.hinge,'south');
+  for(const name of ['opening_W7_0','opening_W9_1']){
+    await page.evaluate(name=>{const r=doorReview,g=r.doors.doors.find(g=>g.name===name);r.aim(g);},name);
+    await page.waitForFunction(()=>document.querySelector('#walkDoorPrompt').textContent.includes('Open sliding portal'));
+    await page.keyboard.press('e');
+    assert.equal(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name),true);
+    if(process.env.PORTAL_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.PORTAL_SCREENSHOT_DIR,`${name}-open.png`)});
+    const passage=await page.evaluate(name=>{
+      const r=doorReview,g=r.doors.doors.find(g=>g.name===name);
+      const p=g.userData.walkDoor.model.parts.find(p=>p.name===`${name}_north_glass`).position;
+      const center=g.localToWorld(new r.THREE.Vector3(p[0],1.7,p[1]));
+      r.camera.position.copy(center).add(new r.THREE.Vector3(.8,0,0));
+      r.fpState.keys={w:true};for(let frame=0;frame<90;frame++)r.tick(1/60);r.fpState.keys={};
+      return{x:r.camera.position.x,center:center.x,valid:r.doors.canStandAt(r.camera.position.x,r.camera.position.z)};
+    },name);
+    assert(passage.x<passage.center,`${name}: walk through the open portal`);assert(passage.valid);
+    await page.evaluate(name=>{const r=doorReview,g=r.doors.doors.find(g=>g.name===name);r.aim(g,-1);},name);
+    await page.waitForFunction(()=>document.querySelector('#walkDoorPrompt').textContent.includes('Close sliding portal'));
+    await page.keyboard.press('e');
+    assert.equal(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name),false);
+  }
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({doors:before.count,passage,entrance,errors}));
 }finally{await browser?.close();await new Promise(done=>server.close(done));}
