@@ -6,7 +6,7 @@ const HouseRoof = (() => {
     const intersectionX=(wingEaveY-wingSlope*westX-ridgeY+ridgeX)/(1-wingSlope);
     const mainWest={heightAt:x=>ridgeY-(ridgeX-x),normalThickness:.25,verticalDrop:.25*Math.SQRT2};
     const mainEast={heightAt:x=>ridgeY-(x-ridgeX),normalThickness:.25,verticalDrop:.25*Math.SQRT2};
-    const westWing={heightAt:x=>wingEaveY+(x-westX)*wingSlope,normalThickness:.04*Math.cos(5*Math.PI/180),verticalDrop:.04,depthStatus:'unconfirmed'};
+    const westWing={heightAt:x=>wingEaveY+(x-westX)*wingSlope,normalThickness:.227,verticalDrop:.227/Math.cos(5*Math.PI/180),depthStatus:'documented build-up; finish thickness unconfirmed'};
     for(const plane of[mainWest,mainEast,westWing])plane.undersideHeightAt=x=>plane.heightAt(x)-plane.verticalDrop;
     const atriumWestX=atrium[2]-1.6,atriumNorthZ=atrium[1]+.175,atriumSouthZ=atrium[3]-.175;
     function planeAt(x,z) {
@@ -76,6 +76,7 @@ const HouseRoof = (() => {
     function soffit(name,x0,x1,z0,z1,plane) {
       if(plane===d.mainEast)x1=Math.min(x1,d.eastX-.03);
       if(plane===d.mainWest&&x0===d.atriumWestX)x0+=.03;
+      if(plane===d.westWing)x0=Math.max(x0,d.westX+.03);
       if(x1>x0&&z1>z0)panel(`${name} bioboard soffit`,x0,x1,z0,z1,plane,timber,plane.verticalDrop);
     }
     for(const p of planes) {
@@ -100,8 +101,16 @@ const HouseRoof = (() => {
       surface(name,[a,b,[b[0],b[1]-plane.verticalDrop,b[2]],[a[0],a[1]-plane.verticalDrop,a[2]]],trim);
       beam(`${name} drip`,[a[0],a[1]-.002,a[2]],[b[0],b[1]-.002,b[2]],.008,.008);
     }
+    function westBarge(name,z,endX){
+      const plane=d.westWing,x=d.westX,bodyX=x+.03;
+      const points=[[endX,plane.heightAt(endX),z],[x,plane.heightAt(x),z],[x,plane.heightAt(x)-.002,z],
+        [bodyX,plane.heightAt(bodyX)-.002,z],[bodyX,plane.undersideHeightAt(bodyX),z],[endX,plane.undersideHeightAt(endX),z]];
+      const triangles=THREE.ShapeUtils.triangulateShape(points.map(([x,y])=>new THREE.Vector2(x,y)),[]).flat();
+      surface(name,points,trim,false,triangles);
+      beam(`${name} drip`,[x,plane.heightAt(x)-.002,z],[endX,plane.heightAt(endX)-.002,z],.008,.008);
+    }
     for(const [name,z]of[['North',d.northZ],['South',d.southZ]]){
-      fascia(`${name} wing barge`,[d.westX,d.westWing.heightAt(d.westX),z],[d.intersectionX,d.westWing.heightAt(d.intersectionX),z],d.westWing);
+      westBarge(`${name} wing barge`,z,d.intersectionX);
       fascia(`${name} west barge`,[d.intersectionX,d.mainWest.heightAt(d.intersectionX),z],[d.ridgeX,d.ridgeY,z],d.mainWest);
       const bodyX=d.eastX-.03;
       surface(`${name} east barge`,[[d.ridgeX,d.ridgeY,z],[d.eastX,d.mainEast.heightAt(d.eastX),z],
@@ -110,7 +119,7 @@ const HouseRoof = (() => {
       beam(`${name} east barge drip`,[d.ridgeX,d.ridgeY-.002,z],[d.eastX,d.mainEast.heightAt(d.eastX)-.002,z],.008,.008);
     }
     for(const [name,z]of[['North',d.atriumNorthZ],['South',d.atriumSouthZ]]){
-      fascia(`${name} atrium return`,[d.westX,d.westWing.heightAt(d.westX),z],[d.atriumWestX,d.westWing.heightAt(d.atriumWestX),z],d.westWing);
+      westBarge(`${name} atrium return`,z,d.atriumWestX);
       const bodyX=d.atriumWestX+.03;
       const closure=[[d.atriumWestX,d.mainWest.heightAt(d.atriumWestX)-.002,z],
         [d.atriumWestX,d.westWing.heightAt(d.atriumWestX),z],[d.intersectionX,d.westWing.heightAt(d.intersectionX),z],
@@ -123,7 +132,7 @@ const HouseRoof = (() => {
       ['West north',d.westX,d.northZ,d.atriumNorthZ,d.westWing,-1],['West south',d.westX,d.atriumSouthZ,d.southZ,d.westWing,-1],
       ['Atrium',d.atriumWestX,d.atriumNorthZ,d.atriumSouthZ,d.mainWest,-1]];
     for(const [name,x,z0,z1,plane,side]of eaves){
-      const y=plane.heightAt(x),bodyX=plane===d.westWing?x:x-side*.03;
+      const y=plane.heightAt(x),bodyX=x-side*.03;
       fascia(`${name} eave fascia`,[bodyX,plane.heightAt(bodyX),z0],[bodyX,plane.heightAt(bodyX),z1],plane);
       if(bodyX!==x){
         panel(`${name} metal drip underside`,Math.min(x,bodyX),Math.max(x,bodyX),z0,z1,plane,trim,.002);
