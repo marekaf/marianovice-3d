@@ -26,6 +26,7 @@ const checks=[
   'verify-garage.mjs',
   'verify-house-roof.mjs',
   'verify-house-wall-backing.mjs',
+  'verify-walk-doors.mjs',
   'verify-house-wall-layers.mjs',
   'verify-nightstands.mjs',
   'verify-fixtures.mjs',

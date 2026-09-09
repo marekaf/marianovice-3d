@@ -188,7 +188,7 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
   const spec = specification||HOUSE_OPENINGS[key]||fallback;
   if (!spec) return null;
   if (spec.provisional) doorOpen = false;
-  const parts = [], materials = {
+  const parts = [], movingParts = [], materials = {
     frame: { color: spec.provisional ? '#202526' : '#45494a', roughness: 0.38, metalness: 0.16 },
     seal: { color: '#202526', roughness: 0.82 },
     glass: { color: '#dce9e8', roughness: 0.015, transmission: 1 },
@@ -220,6 +220,7 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     }
     if (spec.kind !== 'window' && alongX) { position = [position[1], position[0], y]; size = [size[1], size[0], h]; }
     parts.push({ name: `${prefix}_${name}`, type: 'box', position, size, material, category: 'openings', bevel: 0.0015 });
+    if(moving)movingParts.push(`${prefix}_${name}`);
   };
   const rail = (name, a, b, bottom, top, material, thickness = 0.075, x = depth, moving = false) =>
     addBox(name, x, (a + b) / 2, (bottom + top) / 2, thickness, b - a, top - bottom, material, moving);
@@ -229,7 +230,7 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     rail(`${name}_head`, a + edge, b - edge, top - edge, top, material, thickness, x);
     rail(`${name}_sill`, a + edge, b - edge, bottom, bottom + sillEdge, material, thickness, x);
   };
-  let leafWidth = spec.leafWidth, leafHeight = spec.leafHeight;
+  let leafWidth = spec.leafWidth, leafHeight = spec.leafHeight, doorMotion;
   if (spec.kind === 'window') {
     const edge=spec.sliding?.025:.06,divider=start+spec.width*(spec.split??.5),mullion=spec.sliding?.0125:.03;
     const bottomEdge=spec.lowThreshold?.02:edge;
@@ -280,6 +281,7 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     rail('leaf', leafStart, leafEnd, bottom, bottom + leafHeight, 'door', entrance ? 0.075 : 0.042, depth, true);
     if (spec.acousticThreshold) rail('drop_seal', leafStart+.004, leafEnd-.004, 0, bottom, 'seal', .035, depth, true);
     const hinge = hingeAtStart ? leafStart : leafEnd;
+    doorMotion={pivot:alongX?[hinge,0,depth]:[depth,0,hinge],angle:(alongX?1:-1)*(hingeAtStart?1:-1)*Math.PI/2,movingParts};
     if (entrance) for (const [j, y] of [0.2, 1.05, 1.94].entries())
       addBox(`door_hinge_${j}`, depth - 0.025, hinge, y, 0.023, 0.025, 0.075, 'metal');
     if (!entrance) {
@@ -304,10 +306,10 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
       addBox(`keyhole_${side}`, depth + side * surface, latch, 0.94, 0.01, 0.027, 0.037, 'metal', true);
     }
   }
-  return { name: prefix, floorHeight: 0, materials, parts, lights: [],
+  return { name: prefix, floorHeight: 0, materials, parts, lights: [], ...(doorMotion?{doorMotion}:{}),
     opening: { ...spec, x: alongX?center:depth, z: alongX?depth:center, axis:alongX?'x':'z', center, sill, leafWidth, leafHeight, doorOpen: spec.kind !== 'window' && doorOpen,
       notes: ['Frame profiles and hardware dimensions are visualization approximations.',
-        ...(spec.provisional ? ['Measured wall openings are preserved. Leaf size, hinge hand and hinged versus pocket assignment await the door schedule; this is a closed-door visualization, not a fabrication specification.'] : []),
+        ...(spec.provisional ? ['Measured wall openings are preserved. Leaf size, hinge hand and hinged versus pocket assignment await the door schedule; the displayed leaf and optional swing are visualization assumptions, not a fabrication specification.'] : []),
         ...(spec.kind === 'window' ? ['Pane divisions are approximate proportions read from the interior-view supplier drawings.'] : []),
         ...(spec.kind === 'entrance' ? ['Sidelight division is approximately 28%; its exact width is not dimensioned.'] : [])] } };
 };
