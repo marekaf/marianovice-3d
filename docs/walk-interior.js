@@ -1,13 +1,14 @@
-function disposeRoots(roots) {
+function disposeRoots(roots,environment) {
   const geometries=new Set(),materials=new Set(),textures=new Set();
   for(const root of roots)root.traverse(object=>{
     if(object.geometry)geometries.add(object.geometry);
     for(const material of [object.material].flat().filter(Boolean)){
       materials.add(material);
-      for(const value of Object.values(material))if(value?.isTexture)textures.add(value);
+      for(const value of Object.values(material))if(value?.isTexture&&value!==environment?.texture)textures.add(value);
     }
   });
   for(const resource of [...geometries,...materials,...textures])resource.dispose();
+  environment?.dispose();
 }
 
 function insetFacade(mesh,wall,outline) {
@@ -30,11 +31,12 @@ function insetFacade(mesh,wall,outline) {
 }
 
 export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,exteriorWallHeight=data.clearH}) {
-  const [officeModule,living,bathroom,utility,stairs,led,entrance,kitchen,cathedral,electrical,records,electricalView]=await Promise.all([
+  const [officeModule,living,bathroom,utility,stairs,led,entrance,kitchen,cathedral,electrical,records,electricalView,{RoomEnvironment}]=await Promise.all([
     import('./office-integration.js'),import('./living-interior.js?v=df360e65df66'),import('./bathroom-finishes.js'),
     import('./utility-equipment.js'),import('./stair-finishes.js'),import('./interior-led.js'),
     import('./entrance-interior.js'),import('./kitchen-window-worktop.js'),import('./cathedral-interior.js'),
     import('./electrical-model.js'),import('./electrical-points.js'),import('./electrical-view.js'),
+    import('three/addons/environments/RoomEnvironment.js'),
   ]);
   const offices=await officeModule.loadOfficeIntegration();
   const bathroomFinishes=bathroom.createBathroomFinishes(THREE,data);
@@ -52,7 +54,7 @@ export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,e
     if(root.userData.walkDoor)doors.push(root);
     builtRoots.push(root);return root;
   };
-  let house;
+  let house,environment;
   try {
     house=INTERIORS3D.buildHouse(THREE,shellData,{floorY:0,buildModel:trackedBuild,finishColors:living.finishColors,
       decorateWallMesh(mesh,wall){
@@ -89,10 +91,18 @@ export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,e
     house.root.position.y=floorY;
     house.root.userData.furnishedGroundFloor=true;
     house.doors=doors;
-    house.dispose=()=>disposeRoots([house.root]);
+    const reflectionRoom=new RoomEnvironment(),reflectionGenerator=new THREE.PMREMGenerator(renderer);
+    try{environment=reflectionGenerator.fromScene(reflectionRoom,.04);}
+    finally{reflectionRoom.dispose();reflectionGenerator.dispose();}
+    house.root.traverse(object=>{
+      for(const material of [object.material].flat().filter(Boolean))if(material.isMeshStandardMaterial){
+        material.envMap=environment.texture;material.envMapIntensity=.65;material.needsUpdate=true;
+      }
+    });
+    house.dispose=()=>disposeRoots([house.root],environment);
     return house;
   } catch(error) {
-    disposeRoots(builtRoots);
+    disposeRoots(builtRoots,environment);
     throw error;
   }
 }
