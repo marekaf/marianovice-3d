@@ -37,6 +37,8 @@ assert(result.html.includes('397.000'));
 assert(result.mapSVG.includes('viewBox="0 0 900 650"'));
 assert(result.html.includes('1 m wicket opening'));
 assert(result.html.includes('The productive court is lowered and regraded'));
+assert(result.html.includes('The pergola floor is 0.75 m below the house'));
+assert(result.html.includes('Lowering alone does not guarantee bedroom privacy'));
 assert(!result.html.includes('Greenhouse and raised-bed platforms, bench position and platform.'));
 assert(readFileSync('index.html','utf8').includes('GradingSite.create'));
 assert(!readFileSync('index.html','utf8').includes('zahrada-flat-plan'));

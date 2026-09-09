@@ -220,7 +220,7 @@ const SiteTerrain = (() => {
       spec.bankReview = [
         {id:'productive-west',label:'Productive court planted banks',bounds:[0,9.48,7.5,18.5],status:'Sloping walking approach with level crossfall aisles. Surrounding banks remain steep and provisional; retaining, drainage and soil stability require engineering review.'},
         {id:'south-house',label:'Southwest house bank',bounds:[8.3,17,27.43,30.5],status:'Broader planted transition; remaining steep sections require soil stability and drainage review.'},
-        {id:'dining-corner',label:'East terrace / daily dining corner',bounds:[23,25,10.8,12.4],status:'Broad shoulders ease the route edge, but the constrained terrace corner still needs retaining or a coordinated level transition. Confirm surface-water interception.'},
+        {id:'dining-corner',label:'East terrace / daily dining corner',bounds:[23,25.5,10.8,12.4],status:'The lowered pergola steepens the unchanged terrace approach and its soil banks. This is a level study, not an approved access gradient. Resolve the path alignment, retaining or planted-bank geometry and surface-water interception before construction.'},
       ];
       spec.finishPads = garden.elements.filter(e => ['eastTerrace', 'westTerrace', 'sauna', 'saunaShelter', 'saunaPath'].includes(e.id))
         .flatMap(e => e.parts.filter(p => p.kind === 'rect').map(p => ({
