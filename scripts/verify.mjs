@@ -51,6 +51,7 @@ const checks=[
   'docs/verify-electrical-points.mjs',
   'verify-greenhouse.mjs',
   'verify-raised-beds.mjs',
+  'verify-productive-court.mjs',
   'verify-firepit.mjs',
   'verify-hidden-bench.mjs',
   'verify-site-terrain.mjs',

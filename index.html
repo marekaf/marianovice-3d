@@ -169,16 +169,16 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="pergola-model.js?v=aa2ee0f82530"></script>
 <script src="garage-model.js?v=cdb29f4bf771"></script>
 <script src="furniture-model.js?v=26476df75f18"></script>
-<script src="greenhouse-model.js?v=51fb1ff1098f"></script>
-<script src="raised-beds-model.js?v=d60bbe249234"></script>
+<script src="greenhouse-model.js?v=71dd86bbbd29"></script>
+<script src="raised-beds-model.js?v=17f54a471ed2"></script>
 <script src="firepit-model.js?v=13aeea817164"></script>
 <script src="hidden-bench-model.js?v=cd83b90f23d3"></script>
 <script src="gate-model.js?v=6ab2796976ec"></script>
 <script src="fence-model.js?v=dbf171c13753"></script>
 <script src="utility-pillar-model.js"></script>
-<script src="site-terrain.js?v=f1a1cf39fbf8"></script>
+<script src="site-terrain.js?v=757f9d01562e"></script>
 <script src="survey-surface.js"></script>
-<script src="grading-site.js"></script>
+<script src="grading-site.js?v=f0c11f8a0a27"></script>
 <script src="terrain-preview.js"></script>
 <script type="module">
 import * as THREE from 'three';
@@ -224,11 +224,10 @@ const rectOf = id => EL[id].parts.find(p => p.kind === 'rect');
 const circlesOf = id => EL[id].parts.filter(p => p.kind === 'circle');
 const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r.x, r.y + r.d]];
 const pergolaModel = PergolaModel.build(GARDEN);
-const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround);
-const raisedBedsModel = RaisedBedsModel.build(GARDEN);
 const garageGround = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
-const {site:siteTerrain} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:surveySurface,
-  groundPatches:{garage:garageGround,pergola:pergolaModel.groundPatch,greenhouse:greenhouseModel.groundPatch,raisedBeds:raisedBedsModel.groundPatch}});
+const {site:siteTerrain} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:surveySurface});
+const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround,{floorHeight:siteTerrain.spec.productiveCourt.greenhouseFinish});
+const raisedBedsModel = RaisedBedsModel.build(GARDEN,{surfaceHeight:siteTerrain.routeHeight,groundHeight:siteTerrain.height,court:siteTerrain.spec.productiveCourt});
 const firepitModel = FirepitModel.build(GARDEN, siteTerrain.height);
 const hiddenBenchModel = HiddenBenchModel.build(GARDEN, siteTerrain.height);
 const outdoorLoungeModel = ExteriorFurnitureModel.build(GARDEN, siteTerrain.spec.deckTop);
@@ -1525,8 +1524,6 @@ scene.add(driveway);
   }
 }
 
-// ───────────────────────── RAISED BEDS (4 pcs on one flat pad) ─────────────────────────
-// Flat gravel pad (terrain cut to level under it) containing all four beds
 const raisedBedsGroup = buildModel(THREE, raisedBedsModel);
 scene.add(raisedBedsGroup);
 
@@ -1849,7 +1846,7 @@ let applyOpeningCutouts;
 const outdoorLoungeGroup = buildModel(THREE, outdoorLoungeModel);
 furnitureGroup.add(outdoorLoungeGroup);
 
-const gardenRoutes=GardenRouteModel.create(THREE,{routes:GARDEN.gardenRoutes,height:siteTerrain.routeHeight,garden:GARDEN,exclusions:[{kind:'rect',...hiddenBenchModel.groundPatch}]});
+const gardenRoutes=GardenRouteModel.create(THREE,{routes:GARDEN.gardenRoutes,height:siteTerrain.routeHeight,garden:GARDEN,exclusions:[{kind:'rect',...hiddenBenchModel.groundPatch},raisedBedsModel.surfaceFootprint]});
 scene.add(gardenRoutes);
 await ViewerLoading.stage('Joining garden paths to the ground…');
 ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry);
@@ -1861,7 +1858,8 @@ groundGeom.dispose();
 const hiddenBenchGroup = buildModel(THREE, hiddenBenchModel);
 scene.add(hiddenBenchGroup);
 hiddenBenchGroup.updateMatrixWorld(true);
-hiddenBenchGroup.userData.categories.ground.traverse(mesh => {
+raisedBedsGroup.updateMatrixWorld(true);
+for(const ground of [hiddenBenchGroup.userData.categories.ground,raisedBedsGroup.userData.categories.ground])ground.traverse(mesh => {
   if (!mesh.isMesh) return;
   const positions = mesh.geometry.attributes.position, uv = [], point = new THREE.Vector3();
   for (let i = 0; i < positions.count; i++) {
