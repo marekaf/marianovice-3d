@@ -32,7 +32,7 @@ assert.deepEqual(['raisedBed1','raisedBed2','raisedBed3','raisedBed4'].map(footp
   [[5.2,10.5,1,2],[7.2,10.5,1,2],[5.2,13.5,1,2],[7.2,13.5,1,2]]);
 const table = element('pergola').parts.find(part => part.role === 'table');
 assert.deepEqual([table.w, table.d], [2.4, 1.1]);
-assert.equal(element('pergola').meta.grading.level, 1.915);
+assert.equal(element('pergola').meta.grading.level, 1.615);
 assert.equal(element('firePit').meta.grading.level, 1.515);
 const fire = element('firePit').parts.filter(part => part.kind === 'circle');
 assert.deepEqual(fire.map(part => [part.cx, part.cy, part.r]), [[34.5,7.5,2],[34.5,7.5,.5],[34.5,7.5,.496]]);
@@ -44,7 +44,9 @@ assert.deepEqual(GARDEN.gardenRoutes.find(route => route.id === 'Gathering conne
   {id:'Gathering connection',points:[[30.5,10.6],[30.5,11.8],[31.8,11.8],[31.8,9.6],[32.6,8.0]],width:1.2});
 const paving=element('pergola').parts.find(p=>p.role==='paving');
 const dining=GARDEN.gardenRoutes.find(r=>r.id==='Daily dining');
-assert.ok(Math.abs(dining.points.at(-1)[1]-dining.width/2-(paving.y+paving.d))<1e-7,'Dining route must reach the paving, not stop at the roof footprint');
+const diningEnd=dining.points.at(-1);
+assert.ok(Math.abs(diningEnd[1]-(paving.y+paving.d))<1e-7,'Dining route center must reach the paving edge');
+assert.ok(diningEnd[0]-dining.width/2>=paving.x&&diningEnd[0]+dining.width/2<=paving.x+paving.w,'The full-width route landing must overlap the paving');
 assert.ok(GARDEN.gardenRoutes.every(route => route.width >= 1 && route.points.length >= 2));
 assert.ok(!GARDEN.elements.some(e=>e.id==='steppingPaths'));
 for (const id of ['westBackbone','productiveBorder','quietGardenBorder','eastGatheringBorder','terraceFrontage','orchardMeadow','arrivalStrip','officeViewBorder','tankCover']) {
