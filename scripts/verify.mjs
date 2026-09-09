@@ -51,6 +51,7 @@ const checks=[
   'verify-utility-pillar.mjs',
   'verify-viewer-loading.mjs',
   'verify-walk-interior-loading.mjs',
+  'verify-walk-movement.mjs',
   'verify-render-scheduler.mjs',
   'verify-bathroom-fixtures.mjs',
   'verify-bathroom-vanities.mjs',

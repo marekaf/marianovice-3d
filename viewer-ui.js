@@ -126,7 +126,7 @@ export function mountViewerUI({ stopTour }) {
   fp.closest('label').hidden = true;
   const status = document.createElement('div');
   status.id = 'walkStatus'; status.className = 'viewer-ui'; status.hidden = true;
-  status.innerHTML = '<span role="status">WASD to move · Mouse to look · Esc to exit</span><button>Exit walk</button>';
+  status.innerHTML = '<span role="status">WASD to move · Shift to hurry · Mouse to look · Esc to exit</span><button>Exit walk</button>';
   status.append(document.getElementById('walkInteriorStatus'));
   document.body.append(status);
   const walkButton = document.getElementById('walkButton');
@@ -149,7 +149,7 @@ export function mountViewerUI({ stopTour }) {
   function endTour() { stopTour(); touring = false; updateWalk(); }
   function updateWalk() {
     status.hidden = !fp.checked && !touring;
-    status.querySelector('span').textContent = touring ? 'Guided garden walk' : 'WASD to move · Mouse to look · Esc to exit';
+    status.querySelector('span').textContent = touring ? 'Guided garden walk' : 'WASD to move · Shift to hurry · Mouse to look · Esc to exit';
     walkButton.textContent = fp.checked || touring ? 'Exit walk' : 'Walk around';
     walkButton.setAttribute('aria-pressed', String(fp.checked || touring));
   }
