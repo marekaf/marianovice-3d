@@ -18,6 +18,8 @@ This runs the same checks as CI and regenerates the two SVG drawings. It fails i
 
 After changing an asset referenced with `?v=`, run `yarn assets:version` and commit the updated viewer pages. These URLs use content hashes so returning browsers fetch changed scripts. `yarn verify` rejects stale hashes.
 
+With Playwright and Chrome available, run `yarn verify:visual` for a local screenshot gallery of furnished rooms, dressing joinery, roofs and operable doors. Set `PLAYWRIGHT_MODULE` to an installed Playwright module path if it is not available by name. The command prints the gallery path and saves full-size PNGs beside it in a temporary directory. It runs browser checks sequentially, closes each browser afterwards, and returns a nonzero exit code with a partial gallery if a check fails. It does not start Unreal or use private finish photos. Passing checks still require visual review of the images.
+
 ## Contents
 
 - [`layout.js`](layout.js) — single source of truth for the garden layout (all coordinates in meters); consumed by the 3D viewer, the 2D editor and the SVG generator
@@ -53,7 +55,7 @@ After changing an asset referenced with `?v=`, run `yarn assets:version` and com
 
 The house roof uses a 250 mm normal depth for the main overhangs and a 227 mm normal build-up for the western wing: 160 mm rafters plus 67 mm of roof layers. The western enclosed finish is illustrative; its additional lining thickness is not confirmed. Roof elevations and window positions remain fixed. Exterior wall tops follow the western underside in both garden and walk views.
 
-Run `node verify-house-roof.mjs` and `node verify-roof-wall-cap.mjs` to check depths, closed junctions, gutter clearance and wall caps. With Playwright and Chrome available, `node verify-roof-browser.mjs` checks the rendered garden and furnished walk geometry. Set `PLAYWRIGHT_MODULE` to a local Playwright module path if needed, and `ROOF_SCREENSHOT_DIR` to an existing directory to save four exterior views.
+Run `node verify-house-roof.mjs` and `node verify-roof-wall-cap.mjs` to check depths, closed junctions, gutter clearance and wall caps. With Playwright and Chrome available, `node verify-roof-browser.mjs` checks the rendered garden and furnished walk geometry. Set `PLAYWRIGHT_MODULE` to a local Playwright module path if needed, and `ROOF_SCREENSHOT_DIR` to an existing directory to save six exterior views.
 
 The browser's **Sauna and spa** view is also available at `#sauna`. The model includes timber cladding, framed openings, benches, heater, standing-seam roof, shelter framing, a hollow tub and a raised entrance landing. Door placement and architectural details are a design proposal, not construction drawings.
 

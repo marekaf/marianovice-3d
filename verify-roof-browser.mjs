@@ -45,6 +45,8 @@ try{
     ['north',[14,4.3,4.5],[14,5.7,8]],
     ['atrium',[9,4.2,17.5],[13.5,5.65,17.5]],
     ['east',[25,4.3,9],[21.3,5.5,9]],
+    ['garage-south',[36,7.5,31],[30.8,5,23]],
+    ['garage-north',[36,7.5,15],[30.8,5,22]],
   ]){
     await page.evaluate(({position,target})=>{
       const r=roofReview;r.controls.enableDamping=false;r.controls.maxPolarAngle=Math.PI;
