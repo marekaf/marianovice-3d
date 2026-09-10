@@ -198,6 +198,7 @@ import { createWalkHouseNavigation } from './docs/walk-house-navigation.js';
 import { createHouseChimney } from './house-chimney.js';
 import { capRoofWall } from './docs/roof-wall-cap.js?v=0ed105086bfd';
 import { moveWalker } from './walk-movement.js';
+import { stepSupportHeight } from './walk-step-support.js';
 import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=17bbd6cc230d';
 
 await ViewerLoading.stage('Reading the house and garden drawings…');
@@ -1030,6 +1031,7 @@ furnitureGroup.add(gar.furniture);
 roofGroup.add(gar.ceiling);
 const garageGateClosed = gar.gateClosed, garageGateOpen = gar.gateOpen;
 // Interior floors override terrain in first-person mode (indoors = flat slab, not graded terrain)
+const entranceWalkSurfaces=[];
 const walkSurfaces = [
   { x0: GA.x, z0: GA.y, x1: GA.x + GA.w, z1: GA.y + GA.d, y: garageFloorY },
   ...['eastTerrace','westTerrace'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.deckTop}))),
@@ -1046,6 +1048,8 @@ function insidePolygon(points,x,z){
   return inside;
 }
 function walkingHeight(x,z){
+  const stepHeight=stepSupportHeight(entranceWalkSurfaces,x,z);
+  if(Number.isFinite(stepHeight))return stepHeight;
   if(GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<=0)return siteTerrain.routeHeight(x,z);
   const surface=walkSurfaces.find(s=>x>=s.x0&&x<=s.x1&&z>=s.z0&&z<=s.z1);
   if(surface)return surface.y;
@@ -1720,6 +1724,7 @@ const exteriorWalkingDoors=[];
   const groundY = terrainHeight(HB[2] + 0.7, doorZ);   // carport slab (−0.50)
   const rise = Math.max(0.3, ty - groundY), nSteps = 3, tread = 0.34;
   const stairN = 19.4, stairS = 22.6, stepW = stairS - stairN, zc = (stairN + stairS) / 2; // wide enough to touch the terrace deck (its S edge is z=19.4)
+  entranceWalkSurfaces.push({x0:EN[0]-.45,x1:EN[0],z0:stairN,z1:stairS,y:ty});
   let x0 = EN[0];
   for (let i = 1; i <= nSteps; i++) {
     const depth = i === 1 ? tread * 2 : tread;   // top tread doubled — a comfortable landing at the door
@@ -1728,6 +1733,7 @@ const exteriorWalkingDoors=[];
     st.position.set(x0 + depth / 2, top - h / 2, zc);
     st.receiveShadow = true; st.castShadow = true;
     scene.add(st);
+    entranceWalkSurfaces.push({x0,x1:x0+depth,z0:stairN,z1:stairS,y:top});
     x0 += depth;
   }
 }

@@ -43,6 +43,7 @@ const checks=[
   'verify-walk-door-visibility.mjs',
   'verify-walk-collision-height.mjs',
   'verify-walk-levels.mjs',
+  'verify-walk-step-support.mjs',
   'verify-walk-portals.mjs',
   'verify-walk-windows.mjs',
   'verify-pocket-doors.mjs',
