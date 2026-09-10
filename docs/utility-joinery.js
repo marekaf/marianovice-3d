@@ -1,7 +1,7 @@
 export function prepareUtilityJoinery(f) {
   if (f.room !== '1.02' || f.kind !== 'cab') return f;
   const finish = { cmat: 'greenMatt', fmat: 'greenMatt', imat: 'whiteBoard', wmat: 'cashmereTop' };
-  if (!f.worktop) return { ...f, ...finish, handleHeight: 1.05 };
+  if (!f.worktop) return { ...f, ...finish, handle: 'push' };
   return { ...f, ...finish, kind: 'utilityJoinery', h: .862, worktop: .038,
     modules: [.628, .628, .4, .4], tags: ['a', 'a', 'd', 'd'] };
 }
