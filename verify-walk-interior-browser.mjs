@@ -9,7 +9,7 @@ const server=createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://localhost').pathname;
   const file=resolve(root,'.'+path);
   let data=await readFile(file);
-  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,fpUpdate,loadWalkInterior,houseInteriorBacking,houseTerrainY,get house(){return walkHouse;},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
+  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,fpUpdate,loadWalkInterior,houseInteriorBacking,houseTerrainY,get navigation(){return walkNavigation;},get house(){return walkHouse;},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);walkNavigation?.reset(camera.position);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
   res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(data);
 }catch{res.writeHead(404).end();}});
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -42,6 +42,17 @@ try{
     }).map(hit=>({name:hit.object.name,point:hit.point.toArray()}));
   });
   assert.deepEqual(hallwayHits,[],'The entrance hallway passage must not contain an exterior chimney');
+  const showerRevealHits=await page.evaluate(async()=>{
+    const THREE=await import('three'),r=walkReview;
+    const ray=new THREE.Raycaster(new THREE.Vector3(16.28,r.houseTerrainY+1.7,25.18),new THREE.Vector3(0,0,1),0,.79);
+    ray.camera=r.camera;
+    return ray.intersectObjects(r.scene.children,true).filter(hit=>{
+      if(!hit.object.isMesh)return false;
+      for(let o=hit.object;o;o=o.parent)if(!o.visible)return false;
+      return true;
+    }).map(hit=>({name:hit.object.name,point:hit.point.toArray()}));
+  });
+  assert.deepEqual(showerRevealHits,[],'Shower backing must not block the window reveal at eye height');
   const metrics=await page.evaluate(()=>{
     const r=walkReview,house=r.scene.getObjectByName('garden-walk-interior');
     let meshes=0,lights=0,bytes=0;const geometries=new Set(),floors=[];
@@ -53,14 +64,36 @@ try{
     return {meshes,lights,geometryMB:bytes/1024/1024,position:house.position.toArray(),floorY:r.houseTerrainY,backingVisible:r.houseInteriorBacking.visible,floors};
   });
   assert(metrics.meshes>100);assert.equal(metrics.backingVisible,false);assert.equal(metrics.position[1],metrics.floorY);
-  assert.equal(metrics.floors.length,3);
+  assert.equal(metrics.floors.length,4);
+  const loftFloor=await page.evaluate(async()=>{
+    const THREE=await import('three'),r=walkReview,meshes=[];
+    r.scene.updateMatrixWorld(true);
+    r.scene.traverse(mesh=>{if(mesh.isMesh){let visible=true;for(let p=mesh;p;p=p.parent)visible&&=p.visible;if(visible)meshes.push(mesh);}});
+    const hit=new THREE.Raycaster(new THREE.Vector3(18.88,r.houseTerrainY+4.5,21.98),new THREE.Vector3(0,-1,0)).intersectObjects(meshes,false)[0];
+    return {material:hit.object.material.name,height:hit.point.y-r.houseTerrainY};
+  });
+  assert.equal(loftFloor.material,'floorWood','The exterior placeholder lid must not hide the loft vinyl');
+  assert(Math.abs(loftFloor.height-2.92375)<1e-6);
+  const stairWalk=await page.evaluate(()=>{
+    const r=walkReview;r.aim(15.78,20.68,-Math.PI/2);
+    const move=(x,z)=>{const oldX=r.camera.position.x,oldZ=r.camera.position.z;r.camera.position.x=x;r.camera.position.z=z;r.navigation.constrain(r.camera.position,oldX,oldZ);};
+    move(19.28,20.68);const upstairs={position:r.camera.position.toArray(),state:r.navigation.levels.state};
+    move(18.98,20.68);move(18.98,21.78);const landing=r.camera.position.toArray();
+    move(18.98,20.68);move(15.78,20.68);const downstairs={position:r.camera.position.toArray(),state:r.navigation.levels.state};
+    return {upstairs,landing,downstairs};
+  });
+  assert.equal(stairWalk.upstairs.state.surface,'loft');assert(Math.abs(stairWalk.upstairs.position[1]-metrics.floorY-4.62375)<1e-6);
+  assert(Math.abs(stairWalk.landing[2]-21.78)<1e-6);
+  assert.equal(stairWalk.downstairs.state.surface,'ground');assert(Math.abs(stairWalk.downstairs.position[1]-metrics.floorY-1.7)<1e-6);
   for(const floor of metrics.floors){
     assert.equal(floor.color,'ffffff');assert.equal(floor.map,'Procedural pale oak floor');
     assert(floor.roomEnvironment,`${floor.name}: enclosed flooring must use a room environment, not outdoor sky`);
   }
   assert.equal(await page.evaluate(()=>walkReview.house.furniture.visible),false);
+  assert.equal(await page.evaluate(()=>walkReview.house.loft.furniture.visible),false);
   await page.locator('#toggleFurniture').evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change'));});
   assert.equal(await page.evaluate(()=>walkReview.house.furniture.visible),true);
+  assert.equal(await page.evaluate(()=>walkReview.house.loft.furniture.visible),true);
   await page.locator('#toggleFurniture').evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change'));});
   const floorPixel=await page.evaluate(async()=>{
     const THREE=await import('three'),r=walkReview;

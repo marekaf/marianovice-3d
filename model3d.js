@@ -1,5 +1,6 @@
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
 
 function timberTexture(THREE) {
   const canvas = document.createElement('canvas');
@@ -80,13 +81,14 @@ export function buildModel(THREE, model) {
   }));
   const wood = timberTexture(THREE);
   const materials = new Map(Object.entries(model.materials).map(([name, spec]) => {
+    if (spec.finish === 'marmolit') return [name, createMarmolitMaterial(THREE)];
     const finishMap=spec.finish==='corten'?cortenTexture(THREE):null;
     const material = new THREE.MeshPhysicalMaterial({
       color: spec.color,
       roughness: spec.roughness,
       metalness: spec.metalness || 0,
       transmission: spec.transmission || 0,
-      thickness: spec.transmission ? 0.035 : 0,
+      thickness: spec.transmission ? (spec.thickness ?? 0.035) : 0,
       ior: name.toLowerCase().includes('water') ? 1.333 : 1.5,
       emissive: spec.emissive || '#000000',
       emissiveIntensity: spec.emissiveIntensity || 0,
@@ -179,6 +181,7 @@ export function buildModel(THREE, model) {
       throw new Error(`Unsupported model geometry: ${part.type}`);
     }
     const material = materials.get(part.material);
+    if (model.materials[part.material].finish === 'marmolit') marmolitUVs(geometry);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.name = part.name;
     if (part.position) mesh.position.set(part.position[0], part.position[2], part.position[1]);

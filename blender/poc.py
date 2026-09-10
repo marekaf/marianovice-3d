@@ -1081,11 +1081,14 @@ GF = GARDEN["garageModel"]["floorHeight"]
 g_wall_top = GARDEN["garageModel"]["dims"]["wallTop"]
 g_roof_high = GARDEN["garageModel"]["dims"]["roofHigh"]
 g_pitch = GARDEN["garageModel"]["dims"]["pitch"]
+g_roof_end_overhang = GARDEN["garageModel"]["dims"]["roofEndOverhang"]
+g_roof_east_overhang = GARDEN["garageModel"]["dims"]["roofEastOverhang"]
+g_ridge_x = gx0 + GARDEN["garageModel"]["dims"]["roofRidgeOffset"]
 build_model(GARDEN["garageModel"])
-sloped_slab("garage_roof", gx0 - 0.3, gx1 + 0.3, g_roof_high + 0.3 * g_pitch,
-            g_wall_top - 0.3 * g_pitch, gy0, gy1, 0.12, MAT["roof"])
-roof_seams("gar", gx1 + 0.3, g_wall_top - 0.3 * g_pitch + 0.12,
-           gx0 - 0.3, g_roof_high + 0.3 * g_pitch + 0.12, gy0, gy1, MAT["roof"])
+sloped_slab("garage_roof", g_ridge_x, gx1 + g_roof_east_overhang, g_roof_high,
+            g_wall_top - g_roof_east_overhang * g_pitch, gy0 - g_roof_end_overhang, gy1 + g_roof_end_overhang, 0.001, MAT["roof"])
+roof_seams("gar", gx1 + g_roof_east_overhang, g_wall_top - g_roof_east_overhang * g_pitch + 0.001,
+           g_ridge_x, g_roof_high + 0.001, gy0, gy1, MAT["roof"])
 
 def car(name, cx, cy, paint, along="y", z=None, cabin_bias=1, dimensions=None):
     if z is None:
@@ -1189,21 +1192,22 @@ if "facadeClimbers" in els:
 
 # ---------------- carport (thin plate falling west from the garage junction) ----------------
 c = first_rect(els["carport"])
-cp_east = g_roof_high  # at garage junction x=27.63
-cp_west = g_wall_top + 0.5  # clears the entrance door top
+cp_east = g_roof_high
+cp_roof_width = g_ridge_x - c["x"]
+cp_west = cp_east - cp_roof_width * GARDEN["garageModel"]["dims"]["carportPitch"]
 
 
 def cp_z(px):
-    return cp_west + (px - c["x"]) * (cp_east - cp_west) / c["w"]
+    return cp_west + (px - c["x"]) * (cp_east - cp_west) / cp_roof_width
 
 
 for i, (px, py) in enumerate([(c["x"] + 0.3, c["y"] + 0.3), (c["x"] + c["w"] - 0.3, c["y"] + 0.3),
                               (c["x"] + 0.3, c["y"] + c["d"] - 0.3),
                               (c["x"] + c["w"] - 0.3, c["y"] + c["d"] - 0.3)]):
-    post("carport_post%d" % i, px, py, ground_h(px, py) - 0.2, cp_z(px) - 0.02, MAT["wood"], half=0.07)
-sloped_slab("carport_roof", c["x"], c["x"] + c["w"], cp_west, cp_east,
-            c["y"], c["y"] + c["d"], 0.08, MAT["roof"])
-roof_seams("cp", c["x"], cp_west + 0.08, c["x"] + c["w"], cp_east + 0.08,
+    post("carport_post%d" % i, px, py, ground_h(px, py) - 0.2, cp_z(px) - 0.08, MAT["wood"], half=0.07)
+sloped_slab("carport_roof", c["x"], g_ridge_x, cp_west - 0.08, cp_east - 0.08,
+            c["y"] - g_roof_end_overhang, c["y"] + c["d"] + g_roof_end_overhang, 0.081, MAT["roof"])
+roof_seams("cp", c["x"], cp_west + 0.001, g_ridge_x, cp_east + 0.001,
            c["y"], c["y"] + c["d"], MAT["roof"])
 
 # Terraces and house-level stepping slabs.

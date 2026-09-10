@@ -4,6 +4,14 @@ import {prepareLivingData} from './living-interior.js';
 
 const require=createRequire(import.meta.url),{HOUSE_INTERIOR}=require('../house-interior.js');
 const before=JSON.stringify(HOUSE_INTERIOR),data=prepareLivingData(HOUSE_INTERIOR);
+const niche=data.furniture.find(f=>f.label==='nika base');
+assert(Math.abs(niche.h+niche.worktop-.91)<1e-9,'Coffee niche finished worktop includes its 38 mm top');
+assert.equal(data.coffeeNicheUpper.y0,1.46);
+assert(!data.furniture.some(f=>f.label==='nika uppers'),'Custom niche upper must not overlap a generic cabinet');
+const base=data.furniture.find(f=>f.label.startsWith('kuchyň base run'));
+const sinkCenter=base.x0+base.modules[0]+base.modules[1]/2;
+const cut=base.worktop.cutouts[0];
+assert(Math.abs((cut.x0+cut.x1)/2-sinkCenter)<1e-9,'Sink opening follows the waste cabinet rather than a fixed scene coordinate');
 const island=data.furniture.find(f=>f.label.startsWith('ostrov'));
 assert(Math.abs(island.h+island.worktop.th-.910)<1e-9,'Island finished top must be 910 mm');
 assert(Math.abs(island.worktop.x1-island.worktop.x0-2)<1e-9,'Island finished top must be 2000 mm long');
@@ -19,7 +27,10 @@ assert(Math.abs(top.size[1]-.9)<1e-9,'Built worktop must retain the specified 90
 assert(Math.abs(top.position[1]-top.size[1]/2-5.95)<1e-9,'Built work-side finish must be at 5.95 m');
 for(const f of data.furniture.filter(f=>f.kind==='cab'&&['1.06','nika'].includes(f.room)&&!f.y0&&!f.label.startsWith('TV'))){
   assert.equal(f.plinth,.125,`${f.label}: kitchen plinth must be 125 mm`);
-  if(!f.label.startsWith('ostrov'))assert.equal(f.h,HOUSE_INTERIOR.furniture.find(source=>source.label===f.label).h,'Other counter and cabinet heights stay unchanged');
+  if(f.label.startsWith('kuchyň base run')||f.label.startsWith('kuchyň L-leg'))assert(Math.abs(f.h+f.worktop.th-.91)<1e-9,'Main run and window counter finished top are 910 mm');
+  else if(f.label.startsWith('kuchyň roh filler'))assert(Math.abs(f.h-.872)<1e-9,'Corner fillers finish below the 38 mm worktop');
+  else if(f.label==='nika base')assert(Math.abs(f.h+f.worktop-.91)<1e-9);
+  else if(!f.label.startsWith('ostrov'))assert.equal(f.h,HOUSE_INTERIOR.furniture.find(source=>source.label===f.label).h,'Other counter and cabinet heights stay unchanged');
 }
 assert.equal(JSON.stringify(HOUSE_INTERIOR),before,'Preparation must not mutate source geometry');
 console.log('Kitchen specification: 910 mm finished island top; source data preserved.');

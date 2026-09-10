@@ -41,10 +41,10 @@ for(const part of model.parts.filter(part=>addedIds.has(part.name.match(/^backin
     assert(Math.abs(min[cross]-a[cross])>.001&&Math.abs(max[cross]-a[cross])>.001,'Added backing does not z-fight with the exterior shell');
   }
 }
-const originalParts=model.parts.filter(part=>!addedIds.has(part.name.match(/^backing_(W\d+)_/)?.[1]));
+const originalParts=model.parts.filter(part=>!addedIds.has(part.name.match(/^backing_(W\d+)_/)?.[1])&&!/^backing_W(18|28)_/.test(part.name));
 const originalModel={...model,parts:originalParts};
 originalModel.materials={...model.materials};delete originalModel.materials.wallEPS;delete originalModel.materials.wallMasonry;
-assert.equal(createHash('sha256').update(JSON.stringify(originalModel)).digest('hex'),'1eedd69b81acd57ba3fb584c74f650135b88799347ce59e23f2374462235c837','Existing internal walls, reveals, doors, floors, ceilings and terrain cutouts remain unchanged');
+assert.equal(createHash('sha256').update(JSON.stringify(originalModel)).digest('hex'),'b0e752312da26db8195ad4c1e8a6488ade26cba196c9311a2df9e432392ad9fd','Internal walls outside the entrance corner and kitchen stub, reveals, doors, floors, ceilings and terrain cutouts remain unchanged');
 const gardenModel=data.exteriorInterior(3.07);
 for(const id of ['W5','W6','W7','W9']){
   const wall=data.extWalls.find(w=>w.id===id),meshes=gardenModel.parts.filter(p=>p.name.startsWith(`backing_${id}_`)).map(meshFor);

@@ -1,4 +1,5 @@
 import { houseFlooringModel } from './house-flooring.js';
+import { HOUSE_FLUE_INTERIOR_TOP } from '../house-chimney.js';
 
 export const finishColors = { wall: '#ddd1be', ceiling: '#ddd1be' };
 
@@ -18,8 +19,9 @@ export function loftInteriorModel(data) {
   const box = (name, x, z, y, w, d, h, material, category = 'furniture') => parts.push({ name, type: 'box',
     position: [x + w / 2, z + d / 2, y + h / 2], size: [w, d, h], material, category,
     bevel: category === 'floorFinish' ? 0 : material === 'upholstery' ? .03 : .003 });
-  parts.push({ name: 'loft_black_flue', type: 'cylinder', position: [6.225, 12.59, 4.23 / 2],
-    radiusTop: .09, radiusBottom: .09, height: 4.23, axis: 'z', segments: 40, material: 'flue', category: 'structure' });
+  const flueHeight = HOUSE_FLUE_INTERIOR_TOP - data.floorY;
+  parts.push({ name: 'loft_black_flue', type: 'cylinder', position: [6.225, 12.59, flueHeight / 2],
+    radiusTop: .09, radiusBottom: .09, height: flueHeight, axis: 'z', segments: 40, material: 'flue', category: 'structure' });
   const cylinder = (name, position, radius, height, material = 'equipment', axis = 'z') => parts.push({ name, type: 'cylinder', position,
     radiusTop: radius, radiusBottom: radius, height, axis, segments: 28, material, category: 'furniture' });
   const beam = (name, start, end, width, depth, material = 'equipment') => parts.push({ name, type: 'beam', start, end, width, depth, material, category: 'furniture' });

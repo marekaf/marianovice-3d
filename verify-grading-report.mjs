@@ -11,6 +11,16 @@ const points=[[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5]];
 const {site,survey,groundPatches}=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:{points}});
 const viewer=SiteTerrain.create(GARDEN,TERRAIN.plane,groundPatches,{surveySurface:survey.data,houseFFL:TERRAIN.houseFFLInternal});
 const data=createGradingData({garden:GARDEN,terrain:TERRAIN,site,survey});
+assert.equal(data.reviews?.length,site.spec.bankReview.length,'Each review region needs a measured model-grade summary');
+for(const review of data.reviews){
+  const bounds=site.spec.bankReview.find(r=>r.id===review.id).bounds;
+  const eligible=data.cells.filter(c=>c.slopeSupported&&c.x>=bounds[0]&&c.x<=bounds[1]&&c.z>=bounds[2]&&c.z<=bounds[3]);
+  assert.equal(review.samples,eligible.length);
+  if(eligible.length){
+    assert.equal(review.peak.slope,Math.max(...eligible.map(c=>c.slope)));
+    assert(eligible.some(c=>c.x===review.peak.x&&c.z===review.peak.z));
+  }else assert.equal(review.peak,null);
+}
 for(const id of ['Productive access','Greenhouse access','Bed access'])assert(data.sections.some(s=>s.id===id&&s.samples.every(p=>Number.isFinite(p.finished))));
 for(const section of data.sections.filter(s=>Number.isFinite(s.maxFinishSlope)))for(const sample of section.samples)assert.equal(sample.finished,viewer.routeHeight(sample.x,sample.z));
 const greenhouse=require('./greenhouse-model.js').GreenhouseModel.build(GARDEN,survey.height,{floorHeight:site.spec.productiveCourt.greenhouseFinish});
@@ -20,13 +30,17 @@ assert.equal(data.points.find(p=>p.id==='raisedBeds').finished,beds.floorHeight)
 for(const cell of data.cells)assert.equal(cell.proposed,viewer.height(cell.x,cell.z));
 const result=GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data});
 assert(result.html.includes('Purple: modeled walking finish'));
+assert(result.html.includes('Highest supported model-ground grade'));
+const unsupported=structuredClone(data);
+unsupported.reviews[0]={...unsupported.reviews[0],samples:0,peak:null};
+assert(GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data:unsupported}).html.includes('No fully supported grade samples in this review area'));
 assert(result.html.includes('Highest sampled walking-finish grade'));
 assert(result.html.includes('Greenhouse model floor'));
 assert(result.html.includes('Raised-bed central aisle finish'));
 assert(result.html.includes('Not an accessibility assessment'));
 assert(result.html.includes('Inner bends and crossfalls can be steeper than the centreline'));
 assert.equal((result.html.match(/class="section-card"/g)||[]).length,data.sections.length);
-assert.equal((result.html.match(/class="sheet"/g)||[]).length,3+Math.ceil(data.sections.length/4));
+assert.equal((result.html.match(/class="sheet"/g)||[]).length,4+Math.ceil(data.sections.length/4));
 const changedFinish=structuredClone(data);
 changedFinish.sections.find(s=>Number.isFinite(s.maxFinishSlope)).samples[0].finished+=.01;
 assert.notEqual(result.revision,GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data:changedFinish}).revision,'A changed walking sampler must produce a different report revision even with the same grading spec');

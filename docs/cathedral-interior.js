@@ -1,7 +1,7 @@
 export function cathedralGeometry(data) {
   const room = data.rooms.find(room => room.id === '1.06');
   const voidBounds = data.lid.holes.find(hole => hole.x0 === room.x0 && hole.x1 === room.x1 && hole.z1 === room.z1);
-  const ridgeX = 6.95, ridgeY = 7.15 - .292 * Math.SQRT2;
+  const ridgeX = 7.00, ridgeY = 7.15 - .292 * Math.SQRT2;
   return { ...voidBounds, ridgeX, ridgeY, baseY: data.clearH,
     westY: ridgeY - (ridgeX - voidBounds.x0), eastY: ridgeY - (voidBounds.x1 - ridgeX) };
 }
@@ -64,7 +64,7 @@ export function attachCathedralInterior(THREE, house, data) {
       rafters.push(mesh);
     }
   }
-  const notes = 'Cathedral volume is provisional: 45° roof, bioboard underside peak approximately 6.74 m inferred from the roof build-up, ridge position scaled from the plan. Rafter spacing is illustrative; as-built heights and structural details need confirmation.';
+  const notes = 'Cathedral lining follows the 292 mm nominal ST03 roof build-up, including its visible bioboard. Its ridge aligns with the exterior model; rafter spacing remains illustrative, not an as-built structural survey.';
   return { group: roof, geometry, surfaces, rafters, notes, presets: {
     cathedral: { position: [5.55, 1.6, 11.7], target: [7.15, 4.15, 8.9], cut: false, description: notes },
   } };

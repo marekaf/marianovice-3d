@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import {removeFacadeLid} from './docs/walk-facade.js';
+import {capRoofWall} from './docs/roof-wall-cap.js';
+const shape=new THREE.Shape();shape.moveTo(0,0);shape.lineTo(4,0);shape.lineTo(4,-4);shape.lineTo(0,-4);shape.closePath();
+const geometry=new THREE.ExtrudeGeometry(shape,{depth:3.07,bevelEnabled:false});geometry.rotateX(-Math.PI/2);
+const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial());
+capRoofWall(THREE,mesh,{slope:.1,intercept:2.9,maxHeight:3.07});mesh.updateMatrixWorld(true);
+const hits=(p,d)=>new THREE.Raycaster(new THREE.Vector3(...p),new THREE.Vector3(...d)).intersectObject(mesh);
+assert(hits([2,4,2],[0,-1,0]).length);
+removeFacadeLid(mesh.geometry);
+assert.equal(hits([2,4,2],[0,-1,0]).length,0,'The exterior placeholder lid must not cover the loft floor');
+assert.equal(hits([.5,4,2],[0,-1,0]).length,0,'Sloping placeholder lid is also removed');
+assert(hits([5,1,2],[-1,0,0]).length,'Exterior facade remains solid');
+assert(hits([2,-1,2],[0,1,0]).length,'Building underside is retained');
+const before=Array.from(mesh.geometry.index.array);removeFacadeLid(mesh.geometry);assert.deepEqual(Array.from(mesh.geometry.index.array),before);
+console.log('Furnished house replaces the placeholder facade lid without removing exterior walls');

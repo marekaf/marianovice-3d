@@ -7,7 +7,8 @@ const require = createRequire(import.meta.url);
 const { GateModel } = require('./gate-model.js');
 const { FenceModel } = require('./fence-model.js');
 const source = (await readFile(new URL('./model3d.js', import.meta.url), 'utf8'))
-  .replaceAll("'three/addons/", "'" + new URL('./node_modules/three/examples/jsm/', import.meta.url).href);
+  .replaceAll("'three/addons/", "'" + new URL('./node_modules/three/examples/jsm/', import.meta.url).href)
+  .replaceAll("'./marmolit-material.js'", JSON.stringify(new URL('./marmolit-material.js', import.meta.url).href));
 const { buildModel } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 globalThis.document = { createElement: () => ({ getContext: () => ({
   createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),

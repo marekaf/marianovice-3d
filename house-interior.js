@@ -3,6 +3,7 @@
 // Coordinates: house-local meters. Origin = NW EXTERIOR corner (plot 10.48, 7.18).
 // Walls: a/b are the wall rectangle's min/max corners (x0,z0)-(x1,z1).
 // Openings: at = metres from the wall's min corner along its axis; no sill = floor-to-lintel.
+const HOUSE_LOFT_FLOOR = 2.92;
 const HOUSE_INTERIOR = {
   wallLayerModel:'project250-200',
   originPlot: { x: 10.48, z: 7.18 },
@@ -24,7 +25,7 @@ const HOUSE_INTERIOR = {
     { id: 'nook', name: '', x0: 4.70, z0: 3.55, x1: 5.70, z1: 4.20, noLabel: true },
     { id: 'nika', name: '', x0: 4.10, z0: 7.10, x1: 4.70, z1: 8.30, noLabel: true },  // coffee-nika pocket in 1.08, open to 1.06
     { id: 'chod04', name: '', x0: 4.45, z0: 15.80, x1: 5.75, z1: 17.00, noLabel: true },
-    { id: 'sprcha', name: '', x0: 4.70, z0: 17.15, x1: 5.90, z1: 18.65, noLabel: true },
+    { id: 'sprcha', name: '', x0: 4.70, z0: 17.15, x1: 5.90, z1: 18.80, noLabel: true },
   ],
   extWalls: [
     { id: 'W1', face: 'N', a: [0, 0],      b: [10.8, 0.45],
@@ -57,7 +58,7 @@ const HOUSE_INTERIOR = {
     { id: 'W15', a: [3.40, 3.45], b: [5.70, 3.55], openings: [{ at: 1.35, w: 0.90, h: 2.10 }] },   // 1.09 south, D08 x 4.75–5.65
     { id: 'W16', a: [0.45, 3.95], b: [3.25, 4.30], openings: [] },                                  // row wall west (350)
     { id: 'W17', a: [5.85, 3.95], b: [10.10, 4.20], openings: [] },                                  // kitchen back wall (250)
-    { id: 'W18', a: [5.70, 4.20], b: [5.85, 4.80], block: true, openings: [] },                       // pillar stub at the kitchen run's west end
+    { id: 'W18', a: [5.70, 4.20], b: [5.75, 4.80], block: true, openings: [] },                       // pillar stub at the kitchen run's west end
     { id: 'W19', a: [3.25, 3.95], b: [3.40, 5.50], openings: [] },                                  // spíž west
     { id: 'W20', a: [3.40, 5.35], b: [4.45, 5.50], openings: [] },                                  // spíž south
     { id: 'W21', a: [4.45, 3.55], b: [4.70, 5.675], openings: [{ at: 0.50, w: 0.80, h: 2.10 }] },  // spíž east, D07 z 4.05–4.85
@@ -73,38 +74,34 @@ const HOUSE_INTERIOR = {
     { id: 'W29', a: [4.45, 17.00], b: [4.70, 18.80], openings: [] },
     { id: 'W30', a: [5.75, 15.80], b: [5.90, 17.15], openings: [] },                                // corridor | 1.03
     { id: 'W31', a: [4.70, 17.00], b: [5.75, 17.15], openings: [] },                                // shower niche north wall
-    { id: 'W32', a: [4.70, 18.65], b: [5.90, 18.80], openings: [] },                                // shower niche south wall (předstěna)
+    { id: 'W32', a: [4.70, 18.65], b: [5.708, 18.80], openings: [] },                                // shower niche south wall (předstěna)
     { id: 'W33', a: [0.45, 0.45], b: [0.60, 1.45], block: true, openings: [] },                                  // 1.10 installation wall (předstěna)
     { id: 'W34', a: [7.20, 15.80], b: [7.35, 18.80], openings: [] },                                // 1.03 | 1.02
   ],
   fireplace: { x0: 5.80, z0: 12.20, x1: 6.65, z1: 12.80 },  // Hoxter BLOX H60 insert + chimney casing
-  stairs: { x0: 5.70, z0: 13.05, x1: 8.43, z1: 13.95, steps: 13, rise: 0.19429, toward: 'E' },  // 14 stupňů (DWG label) → rise 2.72/14; the 14th rise is the loft floor edge
+  stairs: { x0: 5.70, z0: 13.05, x1: 8.43, z1: 13.95, steps: 13, rise: HOUSE_LOFT_FLOOR / 14, toward: 'E' },  // The 14th rise is the loft floor edge, not another tread.
   // Ceiling = one continuous lid (the loft floor plate) RESTING ON the walls — walls stop at
   // clearH, the plate spans the whole outline above them. Holes: stairwell, V1 vlez (chodba,
   // A-NADREZ rectangle), and the cathedral over the living + kitchen.
-  lid: { holes: [
+  lid: { top: HOUSE_LOFT_FLOOR - .15, holes: [
     { x0: 5.70, z0: 12.88, x1: 8.43, z1: 13.95 },  // stairwell — opening runs to the gallery wall
     { x0: 4.10, z0: 2.45, x1: 5.10, z1: 3.15 },    // V1 půdní vlez 1000×700
     { x0: 4.70, z0: 7.00, x1: 9.65, z1: 12.80 },   // cathedral — 2.03 attic floor ends at z 7.00, kitchen is under it
   ] },
   hatch: { x0: 4.10, z0: 2.45, x1: 5.10, z1: 3.15 },  // vlez lid with the loft ladder
   furniture: [
-    //    Run anchored W18 east face x5.85 → W9 face x9.65 (3.80 real vs 4000 drawn; carcase
-    //    3708 + the drawing's ±100 'prazdne' absorbs it).
-    { kind: 'cab', room: '1.06', label: 'kuchyň tall lednice/mrazák 19+670', x0: 5.85, z0: 4.20, x1: 6.539, z1: 4.80, h: 2.50, plinth: 0.10, front: 'S', modules: [0.019, 0.67], tags: ['f', 'd'], fmat: 'green' },
-    { kind: 'cab', room: '1.06', label: 'kuchyň base run 5×600 (úložný/odpad/myčka/trouba/úložný)', x0: 6.539, z0: 4.20, x1: 9.558, z1: 4.80, h: 0.91, plinth: 0.10, front: 'S', modules: [0.6, 0.6, 0.6, 0.6, 0.6, 0.019], tags: ['d', 'd', 'd', 'd', 'd', 'f'], fmat: 'green', wmat: 'stone', worktop: { th: 0.038, x0: 6.539, z0: 4.20, x1: 9.65, z1: 4.84 } },  // worktop wall-to-wall over the 92 mm void (stavební výstupek zone)
-    { kind: 'cab', room: '1.06', label: 'kuchyň uppers 1050', x0: 6.539, z0: 4.20, x1: 9.65, z1: 4.55, y0: 1.45, h: 1.05, front: 'S', modules: [0.622, 0.622, 0.622, 0.622, 0.623], tags: ['d', 'd', 'd', 'd', 'd'], fmat: 'green' },  // digestor hides behind a green front (vestavěný)
-    { kind: 'slab', room: '1.06', label: 'dřez Blanco PLEON 5', mat: 'appliance', x0: 7.18, z0: 4.35, x1: 7.70, z1: 4.72, y0: 0.948, h: 0.005 },
-    { kind: 'slab', room: '1.06', label: 'varná deska Siemens', mat: 'appliance', x0: 8.36, z0: 4.32, x1: 8.92, z1: 4.75, y0: 0.948, h: 0.005 },
+    { kind: 'cab', room: '1.06', label: 'kuchyň tall lednice/mrazák 19+670+19', x0: 5.75, z0: 4.20, x1: 6.458, z1: 4.80, h: 2.50, plinth: 0.10, front: 'S', modules: [0.019, 0.67, 0.019], tags: ['f', 'd', 'f'], fmat: 'green' },
+    { kind: 'cab', room: '1.06', label: 'kuchyň base run 4×600+262 (úložný/odpad/myčka/trouba/úložný)', x0: 6.458, z0: 4.20, x1: 9.12, z1: 4.80, h: 0.91, plinth: 0.10, front: 'S', modules: [0.6, 0.6, 0.6, 0.6, 0.262], tags: ['d', 'd', 'd', 'd', 'd'], fmat: 'green', wmat: 'stone', worktop: { th: 0.038, x0: 6.458, z0: 4.20, x1: 9.65, z1: 4.84 } },
+    { kind: 'cab', room: '1.06', label: 'kuchyň uppers 1050', x0: 6.458, z0: 4.20, x1: 9.458, z1: 4.55, y0: 1.45, h: 1.05, front: 'S', modules: [0.6, 0.6, 0.6, 0.6, 0.6], tags: ['d', 'd', 'd', 'd', 'd'], fmat: 'green' },  // digestor hides behind a green front (vestavěný)
+    { kind: 'slab', room: '1.06', label: 'dřez Blanco PLEON 5', mat: 'appliance', x0: 7.098, z0: 4.35, x1: 7.618, z1: 4.72, y0: 0.948, h: 0.005 },
+    { kind: 'slab', room: '1.06', label: 'varná deska Siemens', mat: 'appliance', x0: 8.278, z0: 4.32, x1: 8.838, z1: 4.75, y0: 0.948, h: 0.005 },
     { kind: 'cab', room: '1.06', label: 'kuchyň L-leg 2×960 (W9)', x0: 9.05, z0: 4.88, x1: 9.65, z1: 6.80, h: 0.91, plinth: 0.10, front: 'W', modules: [0.96, 0.96], tags: ['d', 'd'], fmat: 'green', wmat: 'stone', worktop: { th: 0.038, x0: 9.03, z0: 4.84, x1: 9.65, z1: 6.82 } },
-    // Corner fillers at the O5 window: the drawing's 'prazdne' zones (92 mm run-end void +
-    //    80 mm L-leg filler) are closed with panels IRL — no open slits under the worktop
-    { kind: 'cab', room: '1.06', label: 'kuchyň roh filler E', x0: 9.558, z0: 4.20, x1: 9.65, z1: 4.80, h: 0.91, plinth: 0.10, front: 'S', modules: [0.092], tags: ['f'], cmat: 'green' },
+    { kind: 'cab', room: '1.06', label: 'kuchyň roh filler E', x0: 9.12, z0: 4.20, x1: 9.15, z1: 4.80, h: 0.91, plinth: 0.10, front: 'S', modules: [0.03], tags: ['f'], cmat: 'green' },
     { kind: 'cab', room: '1.06', label: 'kuchyň roh filler S', x0: 9.05, z0: 4.80, x1: 9.65, z1: 4.88, h: 0.91, plinth: 0.10, front: 'W', modules: [0.08], tags: ['f'], cmat: 'green' },
     { kind: 'cab', room: '1.06', label: 'ostrov 2×960', x0: 6.01, z0: 5.95, x1: 8.01, z1: 6.55, h: 0.91, plinth: 0.10, front: 'N', modules: [0.02, 0.96, 0.96, 0.06], tags: ['f', 'd', 'd', 'f'], fmat: 'green', wmat: 'stone', cmat: 'green', worktop: { th: 0.038, x0: 5.99, z0: 5.93, x1: 8.03, z1: 6.85 } },
     { kind: 'cab', room: 'nika', label: 'nika base', x0: 4.10, z0: 7.10, x1: 4.70, z1: 8.30, h: 0.91, plinth: 0.10, front: 'E', modules: [0.6, 0.6], tags: ['d', 'd'], fmat: 'green', wmat: 'stone', worktop: 0.038 },
     { kind: 'slab', room: 'nika', label: 'nika back panel', mat: 'carc', x0: 4.10, z0: 7.10, x1: 4.125, z1: 8.30, y0: 0.948, h: 0.54 },
-    { kind: 'cab', room: 'nika', label: 'nika uppers', x0: 4.10, z0: 7.10, x1: 4.70, z1: 8.30, y0: 1.488, h: 1.012, front: 'E', modules: [0.6, 0.6], tags: ['d', 'd'], fmat: 'green' },
+    { kind: 'cab', room: 'nika', label: 'nika uppers', x0: 4.10, z0: 7.10, x1: 4.70, z1: 8.30, y0: 1.460, h: 1.040, front: 'E', modules: [0.6, 0.6], tags: ['d', 'd'], fmat: 'green' },
     { kind: 'cab', room: '1.06', label: 'TV stolek 4×650', x0: 7.05, z0: 12.38, x1: 9.65, z1: 12.80, h: 0.42, front: 'N', modules: [0.65, 0.65, 0.65, 0.65], tags: ['d', 'd', 'd', 'd'] },
     { kind: 'slab', room: '1.06', label: 'TV', mat: 'appliance', x0: 7.62, z0: 12.75, x1: 9.08, z1: 12.80, y0: 0.72, h: 0.82 },
     { kind: 'bed', room: '1.12', label: 'CORONA 2100×2130', x0: 6.47, z0: 0.45, x1: 8.57, z1: 2.58, h: 0.68 },
@@ -124,13 +121,13 @@ const HOUSE_INTERIOR = {
     { kind: 'slab', room: '1.01', label: 'vstup front vysoký', mat: 'front', x0: 7.60, z0: 13.95, x1: 8.43, z1: 13.97, h: 1.70 },
     { kind: 'cab', room: '1.01', label: 'vstup skříň 470+750', x0: 8.43, z0: 13.05, x1: 9.65, z1: 13.65, h: 2.50, front: 'S', modules: [0.47, 0.75], tags: ['d', 'd'] },
     { kind: 'slab', room: '1.01', label: 'zrcadlo vstup', mat: 'mirror', x0: 8.95, z0: 13.663, x1: 9.55, z1: 13.683, y0: 0.40, h: 1.50 },
-    { kind: 'glass', room: '1.10', label: 'walk-in 980 (1.10)', x0: 0.60, z0: 1.43, x1: 1.58, z1: 1.47, h: 2.00 },  // E–W on the shower's south line, anchored to the předstěna; entry from the east
+    { kind: 'glass', room: '1.10', label: 'walk-in 980 (1.10)', x0: 0.60, z0: 1.45, x1: 1.58, z1: 1.458, h: 2.00 },  // E–W on the shower's south line, anchored to the předstěna; entry from the east
     { kind: 'fix', type: 'bath', room: '1.10', label: 'vana Ravak FREEDOM W', x0: 2.35, z0: 0.55, x1: 3.15, z1: 2.21, h: 0.58 },
     { kind: 'fix', type: 'wc', room: '1.10', label: 'WC 1.10', x0: 0.90, z0: 3.42, x1: 1.27, z1: 3.95, y0: 0.25, h: 0.17 },
     { kind: 'cab', room: '1.10', label: 'umyvadlová skříň 1650', x0: 1.35, z0: 3.47, x1: 3.00, z1: 3.95, y0: 0.30, h: 0.50, front: 'N', modules: [0.825, 0.825], tags: ['d', 'd'], drawerRows: [.25, .25], handle: 'gola-c', worktop: 0.038 },
     { kind: 'fix', type: 'basin', room: '1.10', label: 'umyvadlo Vitra Geo', x0: 1.90, z0: 3.50, x1: 2.45, z1: 3.90, y0: 0.838, h: 0.13, tap: {mount:'wall',wall:'S',wallAt:3.95,height:1.05,reach:.23} },
     { kind: 'slab', room: '1.10', label: 'zrcadlo 1.10', mat: 'mirror', x0: 1.375, z0: 3.92, x1: 2.975, z1: 3.94, y0: 1.20, h: 0.80 },
-    { kind: 'glass', room: 'sprcha', label: 'walk-in 800 (sprcha)', x0: 5.86, z0: 17.85, x1: 5.90, z1: 18.65, h: 2.00 },  // across the niche mouth, anchored to W32; entry from the north
+    { kind: 'glass', room: 'sprcha', label: 'walk-in 800 (sprcha)', x0: 5.70, z0: 17.85, x1: 5.708, z1: 18.65, h: 2.00 },  // across the niche mouth, anchored to W32; entry from the north
     { kind: 'cab', room: '1.03', label: 'umyvadlová skříň', x0: 6.70, z0: 17.025, x1: 7.20, z1: 18.025, y0: 0.30, h: 0.50, front: 'W', modules: [1], tags: ['d'], drawerRows: [.25, .25], handle: 'gola-c', worktop: 0.038 },
     { kind: 'fix', type: 'basin', room: '1.03', label: 'umyvadlo 1.03', x0: 6.75, z0: 17.25, x1: 7.15, z1: 17.80, y0: 0.838, h: 0.13, tap: {mount:'wall',wall:'E',wallAt:7.20,height:1.05,reach:.23} },
     { kind: 'fix', type: 'wc', room: '1.03', label: 'WC 1.03', x0: 6.67, z0: 18.165, x1: 7.20, z1: 18.535, y0: 0.25, h: 0.17 },
@@ -348,6 +345,34 @@ HOUSE_INTERIOR.exteriorOpenings = function () {
   }));
 };
 
+HOUSE_INTERIOR.wallRecesses = function (wall) {
+  return this.extWalls.filter(host=>host.id!==wall.id).flatMap(host=>host.openings.flatMap((opening,index)=>{
+    if(HOUSE_OPENINGS[`${host.id}:${index}`]?.kind!=='entrance'||!opening.reveal)return [];
+    const axis=host.b[0]-host.a[0]>host.b[1]-host.a[1]?0:1;
+    const center=host.a[axis]+opening.at+opening.w/2;
+    const min=[],max=[];
+    min[axis]=center-opening.reveal.width/2;max[axis]=center+opening.reveal.width/2;
+    min[1-axis]=opening.reveal.depth0;max[1-axis]=opening.reveal.depth1;
+    if(min[0]>=wall.b[0]||max[0]<=wall.a[0]||min[1]>=wall.b[1]||max[1]<=wall.a[1])return [];
+    return [{x0:min[0],x1:max[0],z0:min[1],z1:max[1],y0:opening.sill||0,y1:(opening.sill||0)+opening.h}];
+  }));
+};
+
+HOUSE_INTERIOR.subtractWallRecesses = function (rect, recesses) {
+  let cells=[rect];
+  for(const cut of recesses)cells=cells.flatMap(cell=>{
+    if(['x','y','z'].some(axis=>cut[`${axis}0`]>=cell[`${axis}1`]||cut[`${axis}1`]<=cell[`${axis}0`]))return [cell];
+    const rest={...cell},pieces=[];
+    for(const axis of ['x','y','z']){
+      const lo=`${axis}0`,hi=`${axis}1`;
+      if(cut[lo]>rest[lo]){pieces.push({...rest,[hi]:cut[lo]});rest[lo]=cut[lo];}
+      if(cut[hi]<rest[hi]){pieces.push({...rest,[lo]:cut[hi]});rest[hi]=cut[hi];}
+    }
+    return pieces;
+  });
+  return cells;
+};
+
 HOUSE_INTERIOR.exteriorInterior = function (exteriorWallHeight = this.clearH) {
   const layers=typeof module!=='undefined'?require('./house-wall-layers.js').HouseWallLayers:HouseWallLayers;
   const parts = [], terrainCutouts = [], materials = {
@@ -375,6 +400,7 @@ HOUSE_INTERIOR.exteriorInterior = function (exteriorWallHeight = this.clearH) {
     }
   }
   for (const wall of [...this.extWalls, ...this.intWalls]) {
+    const recesses=this.wallRecesses(wall);
     const height=this.extWalls.includes(wall)?exteriorWallHeight:this.clearH;
     const alongX = wall.b[0] - wall.a[0] > wall.b[1] - wall.a[1];
     const axis = alongX ? 0 : 1, length = wall.b[axis] - wall.a[axis];
@@ -393,9 +419,10 @@ HOUSE_INTERIOR.exteriorInterior = function (exteriorWallHeight = this.clearH) {
         x0:alongX?Math.max(min[0],wall.a[0]+a):min[0],z0:alongX?min[1]:Math.max(min[1],wall.a[1]+a),y0,
         x1:alongX?Math.min(max[0],wall.a[0]+b):max[0],z1:alongX?max[1]:Math.min(max[1],wall.a[1]+b),y1};
       if(rect.x1<=rect.x0||rect.z1<=rect.z0||y1<=y0)return;
-      for(const [i,cell]of layers.split(this,wall,rect).entries()){
-        if(cell.layer)parts.push(...layers.modelParts(`${name}_${cell.layer}_${i}`,cell,Math.abs(y1-height)<1e-8));
-        else box(name,cell.x0,cell.z0,y0,cell.x1,cell.z1,y1,'wall');
+      const cells=this.subtractWallRecesses(rect,recesses).flatMap(cell=>layers.split(this,wall,cell));
+      for(const [i,cell]of cells.entries()){
+        if(cell.layer)parts.push(...layers.modelParts(`${name}_${cell.layer}_${i}`,cell,Math.abs(cell.y1-height)<1e-8));
+        else box(name,cell.x0,cell.z0,cell.y0,cell.x1,cell.z1,cell.y1,'wall');
       }
     };
     for (const o of wall.openings) {
@@ -442,7 +469,7 @@ HOUSE_INTERIOR.exteriorInterior = function (exteriorWallHeight = this.clearH) {
   }
   return { name: 'opening-room-backing', floorHeight: 0, materials, parts, lights: [], terrainCutouts };
 };
-HOUSE_INTERIOR.gableOpening = function (floor=2.72) {
+HOUSE_INTERIOR.gableOpening = function (floor=HOUSE_LOFT_FLOOR) {
   const wall={id:'gable',face:'N',a:[6.55,0],b:[7.3,.45]};
   const opening={at:0,w:.75,h:1,sill:floor+1.1};
   const model=this.buildOpening(wall,opening,0,{specification:{kind:'window',width:.75,height:1,single:true,movingHalf:'single',hinge:'east',concealedHinges:true}});
@@ -455,6 +482,8 @@ HOUSE_INTERIOR.gableOpening = function (floor=2.72) {
 HOUSE_INTERIOR.roofWindowModelUrl='./docs/house-roof-windows.js';
 
 const HOUSE_LOFT = {
+  floorY: HOUSE_LOFT_FLOOR,
+  floorDepth: .15,
   originPlot: { x: 10.48, z: 7.18 },
   clearH: 2.27,
   outline: [[0, 0], [10.8, 0], [10.8, 4.4], [10.1, 4.4], [10.1, 15.35], [10.8, 15.35], [10.8, 19.25], [0, 19.25], [0, 11.99], [4.45, 11.99], [4.45, 8.75], [0, 8.75]],
@@ -506,8 +535,9 @@ const HOUSE_LOFT = {
   ceilings: [
     { x0: 5.59, z0: 0.45, x1: 9.51, z1: 6.75 },   // flat SDK over 2.03
     { x0: 5.59, z0: 12.88, x1: 7.65, z1: 18.80 }, // flat SDK west of the hala partition
+    { x0: 7.65, z0: 12.88, x1: 7.80, z1: 13.95 },
     { x0: 7.80, z0: 12.88, x1: 9.51, z1: 15.50 }, // flat SDK over 2.01
-    { x0: 7.80, z0: 15.65, x1: 9.51, z1: 18.80 }, // flat SDK over 2.02 SE part
+    { x0: 7.65, z0: 15.65, x1: 9.51, z1: 18.80 }, // flat SDK over 2.02 SE part
   ],
 };
 HOUSE_LOFT.buildOpening=function(wall,opening,index,options){return wall.id==='P1'?HOUSE_INTERIOR.gableOpening(0):HOUSE_INTERIOR.buildOpening(wall,opening,index,options);};

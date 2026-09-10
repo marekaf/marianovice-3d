@@ -8,8 +8,15 @@ import {buildCoronaBed} from '../corona-bed-model.js';
 import {buildDressingRoom} from './dressing-model.js';
 import {prepareUtilityJoinery} from './utility-joinery.js';
 import {buildShowerFittings} from './shower-fittings.js';
+import {buildCoffeeNicheUpper} from './coffee-niche.js';
 
 export const finishColors={wall:'#ddd1be',ceiling:'#ddd1be'};
+
+function kitchenRun(data) {
+  const base=data.furniture.find(f=>f.label.startsWith('kuchyň base run'));
+  const center=index=>base.x0+base.modules.slice(0,index).reduce((sum,width)=>sum+width,0)+base.modules[index]/2;
+  return {base,sinkX:center(1),hobX:center(3)};
+}
 
 function joineryFinish(f) {
   if(f.kind==='slab'&&f.mat==='mirror'&&f.room==='1.10')return {...f,z0:f.z0-.025,z1:f.z1-.025,ledStandOff:.025};
@@ -29,7 +36,7 @@ export function prepareLivingData(data) {
   for(const label of ['kuchyň base run','dřez Blanco PLEON 5','varná deska Siemens']){
     if(!data.furniture.some(f=>f.label.startsWith(label)))throw new Error(`Missing kitchen fixture: ${label}`);
   }
-  return {...data,bedroomBed:data.furniture.find(f=>f.kind==='bed'&&f.room==='1.12'),buildStairs:()=>buildStairFlight(data.stairs),buildFireplace:()=>{
+  return {...data,coffeeNicheUpper:data.furniture.find(f=>f.label==='nika uppers'),bedroomBed:data.furniture.find(f=>f.kind==='bed'&&f.room==='1.12'),buildStairs:()=>buildStairFlight(data.stairs),buildFireplace:()=>{
     const model=buildHoxterH60(),f=data.fireplace,flue=houseFlue(data),cx=flue.x;
     const place=([x,z,y])=>[x+cx,z+f.z1-.65,y+.007];
     const chimney=[
@@ -49,10 +56,13 @@ export function prepareLivingData(data) {
     if(f.type==='bath'&&f.room==='1.10')return [];
     if(f.room!=='1.06'&&f.room!=='nika')return [f];
     if(f.kind==='cab'&&f.label.startsWith('TV stolek'))return [{...f,fmat:'green',cmat:'green',wmat:'green',handle:'push'}];
-    if(f.room==='nika'&&f.label==='nika back panel')return [];
+    if(f.room==='nika'&&['nika back panel','nika uppers'].includes(f.label))return [];
     if(f.label==='dřez Blanco PLEON 5'||f.label==='varná deska Siemens')return [];
+    if(f.kind==='cab'&&f.label.startsWith('kuchyň roh filler'))return [{...f,h:.872}];
     if(f.kind!=='cab'||f.fmat!=='green')return [f];
     const next={...f,cmat:'green',handle:f.label.startsWith('ostrov')?'push':'gola'};
+    if(f.label==='nika base')next.h=.910-f.worktop;
+    if(f.label.startsWith('kuchyň base run')||f.label.startsWith('kuchyň L-leg'))next.h=.910-f.worktop.th;
     if(f.label.startsWith('ostrov')){
       next.h=.910-f.worktop.th;
       next.worktop={...f.worktop,x0:f.x0,x1:f.x1,z0:f.z0};
@@ -62,7 +72,8 @@ export function prepareLivingData(data) {
     if(f.label.startsWith('kuchyň base run')){
       next.tags=[...f.tags];next.tags[1]='s';next.tags[3]='a';
       next.appliances=f.modules.map((_,i)=>i===3?'oven':null);
-      next.worktop={...f.worktop,cutouts:[{x0:7.19,z0:4.34,x1:7.70,z1:4.73}]};
+      const {sinkX}=kitchenRun(data);
+      next.worktop={...f.worktop,cutouts:[{x0:sinkX-.255,z0:4.34,x1:sinkX+.255,z1:4.73}]};
     }
     return [next];
   }).map(f=>f.kind==='cab'&&['1.06','nika'].includes(f.room)&&!f.y0&&!f.label.startsWith('TV')?{...f,plinth:.125}:f).map(prepareUtilityJoinery).map(joineryFinish)};
@@ -126,34 +137,37 @@ export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagne
     }
   }
 
-  box('kitchen_white_glass_backsplash',6.539,4.200,.948,3.111,.006,.502,'whiteGlass',.001);
-  box('niche_white_glass_backsplash',4.10,7.10,.948,.025,1.20,.54,'whiteGlass',.001);
-  box('sink_bottom',7.21,4.36,.746,.47,.35,.018,'sink');
-  box('sink_north',7.19,4.34,.746,.51,.02,.20,'sink');
-  box('sink_south',7.19,4.71,.746,.51,.02,.20,'sink');
-  box('sink_west',7.19,4.36,.746,.02,.35,.20,'sink');
-  box('sink_east',7.68,4.36,.746,.02,.35,.20,'sink');
-  cylinder('sink_drain',7.445,4.535,.766,.039,.004,'metal');
-  cylinder('sink_drain_dark',7.445,4.535,.769,.027,.003,'dark');
-  cylinder('tap_foot',7.445,4.265,.954,.025,.017,'tapGraphite');
-  cylinder('tap_riser',7.445,4.265,1.09,.014,.26,'tapGraphite');
-  cylinder('tap_spout',7.445,4.375,1.22,.014,.22,'tapGraphite','y');
-  cylinder('tap_outlet',7.445,4.48,1.202,.016,.04,'tapGraphite');
-  cylinder('tap_lever',7.49,4.265,1.06,.008,.07,'tapGraphite');
-  box('hob_glass',8.36,4.32,.949,.56,.43,.009,'glass',.006);
-  for(const[i,x]of[8.49,8.78].entries())for(const[j,z]of[4.43,4.64].entries()){
-    cylinder(`hob_ring_${i}_${j}`,x,z,.959,.080,.001,'metal');
-    cylinder(`hob_zone_${i}_${j}`,x,z,.960,.078,.001,'glass');
+  const {base,sinkX,hobX}=kitchenRun(data);
+  box('kitchen_white_glass_backsplash',base.worktop.x0,4.200,.910,base.worktop.x1-base.worktop.x0,.006,.540,'whiteGlass',.001);
+  box('niche_white_glass_backsplash',4.10,7.10,.910,.025,1.20,.550,'whiteGlass',.001);
+  box('sink_bottom',sinkX-.235,4.36,.708,.47,.35,.018,'sink');
+  box('sink_north',sinkX-.255,4.34,.708,.51,.02,.20,'sink');
+  box('sink_south',sinkX-.255,4.71,.708,.51,.02,.20,'sink');
+  box('sink_west',sinkX-.255,4.36,.708,.02,.35,.20,'sink');
+  box('sink_east',sinkX+.235,4.36,.708,.02,.35,.20,'sink');
+  cylinder('sink_drain',sinkX,4.535,.728,.039,.004,'metal');
+  cylinder('sink_drain_dark',sinkX,4.535,.731,.027,.003,'dark');
+  cylinder('tap_foot',sinkX,4.265,.916,.025,.017,'tapGraphite');
+  cylinder('tap_riser',sinkX,4.265,1.052,.014,.26,'tapGraphite');
+  cylinder('tap_spout',sinkX,4.375,1.182,.014,.22,'tapGraphite','y');
+  cylinder('tap_outlet',sinkX,4.48,1.164,.016,.04,'tapGraphite');
+  cylinder('tap_lever',sinkX+.045,4.265,1.022,.008,.07,'tapGraphite');
+  box('hob_glass',hobX-.28,4.32,.911,.56,.43,.009,'glass',.006);
+  for(const[i,x]of[hobX-.145,hobX+.145].entries())for(const[j,z]of[4.43,4.64].entries()){
+    cylinder(`hob_ring_${i}_${j}`,x,z,.921,.080,.001,'metal');
+    cylinder(`hob_zone_${i}_${j}`,x,z,.922,.078,.001,'glass');
   }
-  for(let i=0;i<5;i++)box(`hob_touch_${i}`,8.51+i*.045,4.727,.961,.016,.006,.001,'metal',0);
-  box('coffee_machine_body',4.23,7.27,.948,.31,.26,.34,'dark',.024);
-  box('coffee_machine_front',4.53,7.28,.969,.012,.24,.27,'metal',.008);
-  box('coffee_machine_tray',4.52,7.285,.965,.10,.23,.012,'dark',.007);
-  cylinder('coffee_cup',4.575,7.40,1.015,.031,.075,'ceramic');
-  box('coffee_machine_screen',4.544,7.32,1.19,.005,.10,.039,'glass');
+  for(let i=0;i<5;i++)box(`hob_touch_${i}`,hobX-.13+i*.045,4.727,.923,.016,.006,.001,'metal',0);
+  box('coffee_machine_body',4.23,7.27,.910,.31,.26,.34,'dark',.024);
+  box('coffee_machine_front',4.53,7.28,.931,.012,.24,.27,'metal',.008);
+  box('coffee_machine_tray',4.52,7.285,.927,.10,.23,.012,'dark',.007);
+  cylinder('coffee_cup',4.575,7.40,.977,.031,.075,'ceramic');
+  box('coffee_machine_screen',4.544,7.32,1.152,.005,.10,.039,'glass');
 
   const group=buildModel(THREE,{name:'Living and kitchen detail',floorHeight:house.dims.floorY,materials,parts,lights:[]});
   house.furniture.add(group);
+  const coffeeNicheModel=buildCoffeeNicheUpper(data),coffeeNiche=buildModel(THREE,{...coffeeNicheModel,floorHeight:house.dims.floorY});
+  house.furniture.add(coffeeNiche);
   const nightstandModel=buildNightstands(data),nightstands=buildModel(THREE,{...nightstandModel,floorHeight:house.dims.floorY});
   house.furniture.add(nightstands);
   const bedData=data.furniture.find(f=>f.kind==='bed'&&f.room==='1.12');
@@ -201,7 +215,7 @@ export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagne
   const livingRoom=data.rooms.find(r=>r.id==='1.06');
   for(let z=livingRoom.z0;z<7;z+=.625)panel(livingRoom.x0,livingRoom.x1,z,Math.min(z+.623,7),2.515,2.515);
   ceilingFinish.position.y=house.dims.floorY;house.ceiling.add(ceilingFinish);
-  return {group,flooring,parts,bathtub,bathModel,hearth,nightstands,nightstandModel,showers,showerModel,proposal:group.userData.proposal,presets:{
+  return {group,flooring,parts,bathtub,bathModel,hearth,nightstands,nightstandModel,showers,showerModel,coffeeNiche,coffeeNicheModel,proposal:group.userData.proposal,presets:{
     ...showerModel.presets,
     overview:{position:[5.05,2.3,8.9],target:[7.35,.75,10.9]},
     living:{position:[7.55+seatingShift,1.12,9.94],target:[8.35,1.05,12.72]},

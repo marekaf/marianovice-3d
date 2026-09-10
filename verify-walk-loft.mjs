@@ -1,0 +1,88 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import * as THREE from 'three';
+import {buildModel} from './model3d.js';
+import {attachWalkLoft} from './docs/walk-loft.js';
+import {createWalkHouseNavigation} from './docs/walk-house-navigation.js';
+import {buildWalkingDoor} from './walk-doors.js';
+const require=createRequire(import.meta.url),{HOUSE_LOFT:data}=require('./house-interior.js');
+globalThis.INTERIORS3D=require('./interiors3d.js').INTERIORS3D;
+globalThis.document={createElement(){return{getContext(){return{fillRect(){},fillText(){},createImageData(w,h){return{data:new Uint8ClampedArray(w*h*4)};},putImageData(){}};}};}};
+const {HouseRoof}=require('./house-roof.js'),RoofWindows=require('./docs/house-roof-windows.js');
+const roof=HouseRoof.describe({bbox:[0,0,10.8,19.25],atrium:[0,8.75,4.45,12],gable:[3.2,10.8],baseY:0});
+const windowModel=RoofWindows.build({gable:[3.2,10.8],ridgeY:roof.ridgeY,eaveY:roof.ridgeY-4.25,windows:[
+  {side:'e',z:17.58,width:.66,height:1.4},{side:'e',z:13.6,width:.78,height:1.4},{side:'w',z:13.6,width:.78,height:1.4}]});
+const before=JSON.stringify(data),windowBefore=JSON.stringify(windowModel),models=[],doors=[];
+const house={root:new THREE.Group()};house.root.position.set(10.48,2.465,7.18);
+const result=await attachWalkLoft(THREE,house,data,{roof,windowModel,buildModel:(three,m)=>{
+  models.push(m);const root=buildWalkingDoor(three,m,buildModel);
+  if(root.userData.walkDoor)doors.push(root);
+  return root;
+},applyChampagneFloor(){}});
+house.root.updateMatrixWorld(true);
+assert.equal(result.loft.root.parent,house.root);
+assert.deepEqual(result.loft.root.position.toArray(),[0,0,0]);
+assert.equal(result.loft.dims.floorY,2.92);
+assert(!result.data.intWalls.some(w=>w.id==='P13'));
+assert(models.every(m=>!m.parts.some(p=>p.name==='loft_black_flue'||p.name.startsWith('roof_window_')||p.name.startsWith('gable_'))));
+assert(!result.loft.labels.visible&&!result.loft.wallIds.visible);
+assert(result.loft.ceiling.visible);
+for(const wall of result.data.extWalls.filter(w=>w.face==='N'||w.face==='S')){
+  assert(wall.a[1]>=.002&&wall.b[1]<=19.248,'Outer gable faces are inset without moving room faces');
+}
+const floorMeshes=[];result.loft.floor.traverse(o=>{if(o.isMesh)floorMeshes.push(o);});
+const hits=new THREE.Raycaster(new THREE.Vector3(10.48+8.4,6,7.18+14.8),new THREE.Vector3(0,-1,0)).intersectObjects(floorMeshes);
+assert(hits.length&&Math.abs(hits[0].point.y-(2.465+2.92+.00375))<1e-5,'Loft finish has exactly one floor and house-origin offset');
+for(const cut of result.data.roofWindowLining.cutouts){
+  const x=(cut.x0+cut.x1)/2,z=(cut.z0+cut.z1)/2;
+  const hits=new THREE.Raycaster(new THREE.Vector3(10.48+x,2.465+3.3,7.18+z),new THREE.Vector3(0,1,0)).intersectObject(result.roofFitout.lining,true);
+  assert.equal(hits.length,0,'All three roof apertures remain physically open to the existing garden windows');
+}
+assert.equal(JSON.stringify(data),before);assert.equal(JSON.stringify(windowModel),windowBefore);
+const ground=require('./house-interior.js').HOUSE_INTERIOR;
+const exteriorRoof=buildModel(THREE,windowModel);exteriorRoof.position.copy(house.root.position);exteriorRoof.updateMatrixWorld(true);
+house.loft=result.loft;house.loftFitout=result;house.doors=[];house.loft.doors=doors;
+assert.equal(doors.length,1,'The real loft partition contains one operable door');
+const navigation=createWalkHouseNavigation(THREE,{house,data:ground,exteriorDoors:[],floorY:2.465,groundHeight:()=>2.465,roof:exteriorRoof});
+const walker=new THREE.Vector3(10.48+5.3,4.165,7.18+13.5);navigation.reset(walker);
+function walk(x,z){const oldX=walker.x,oldZ=walker.z;walker.x=10.48+x;walker.z=7.18+z;navigation.constrain(walker,oldX,oldZ);}
+walk(8.8,13.5);assert.equal(navigation.levels.state.surface,'loft');assert(Math.abs(walker.y-7.08875)<1e-8,'Actual walls and roof-window headroom permit stair ascent');
+walk(8.5,13.5);walk(8.5,14.6);assert(Math.abs(walker.z-(7.18+14.6))<1e-8,'Landing route fits beneath the finished roof lining');
+const camera=new THREE.PerspectiveCamera(),door=doors[0];
+camera.position.copy(walker);camera.lookAt(10.48+7.725,walker.y,7.18+14.6);camera.updateMatrixWorld(true);
+assert(navigation.aimedDoor(camera)===door,'Loft eye-level aiming finds the actual door leaf');
+walk(7.2,14.6);
+assert(walker.x>10.48+7.8&&navigation.levels.state.surface==='loft','Closed loft door blocks entry to the room');
+walk(8.5,14.6);camera.position.copy(walker);camera.updateMatrixWorld(true);
+assert(navigation.toggle(door,camera),'Loft door opens without hitting the walker in the hall');
+assert(door.userData.walkDoor.open);
+walk(7.2,14.6);assert(Math.abs(walker.x-(10.48+7.2))<1e-8,'Open loft door admits the walker to the room');
+walk(8.5,14.6);assert(Math.abs(walker.x-(10.48+8.5))<1e-8,'The same opening admits the walker back into the hall');
+walk(6.7,14.6);camera.position.copy(walker);
+const obliqueTarget=new THREE.Box3().setFromObject(door.userData.walkDoor.leaf).getCenter(new THREE.Vector3());
+camera.lookAt(obliqueTarget.x,walker.y,obliqueTarget.z);camera.updateMatrixWorld(true);
+const sightRay=new THREE.Raycaster();sightRay.setFromCamera(new THREE.Vector2(),camera);
+assert(sightRay.intersectObject(door.userData.walkDoor.leaf,true).length>0,'Oblique eye-level ray reaches the actual open loft leaf');
+assert(navigation.aimedDoor(camera)===door,'Visible open loft door remains targetable from an oblique room-side approach');
+walk(7.375,14.6);walk(7.375,15.2);
+assert(Math.abs(walker.z-(7.18+15.2))<1e-8,'Room-side approach stays clear of the open leaf');
+camera.position.copy(walker);
+const openLeaf=new THREE.Box3().setFromObject(door.userData.walkDoor.leaf).getCenter(new THREE.Vector3());
+camera.lookAt(openLeaf);camera.updateMatrixWorld(true);
+assert(navigation.aimedDoor(camera)===door,'The opened leaf remains targetable at loft height');
+assert(navigation.toggle(door,camera));assert(!door.userData.walkDoor.open);
+walk(7.375,14.6);walk(8.5,14.6);assert(walker.x<10.48+7.65,'Closing the loft door restores its passage collision');
+walk(6.7,14.6);camera.position.copy(walker);camera.lookAt(10.48+7.725,walker.y,7.18+14.6);camera.updateMatrixWorld(true);
+assert(navigation.aimedDoor(camera)===door,'The closed door is targetable from the room too');
+assert(navigation.toggle(door,camera));
+walk(8.5,14.6);
+walk(8.5,13.5);walk(5.3,13.5);assert.equal(navigation.levels.state.surface,'ground');assert(Math.abs(walker.y-4.165)<1e-8,'Actual geometry permits descent to the original floor');
+walker.set(10.48+7,4.165,7.18+13.5);navigation.reset(walker);
+assert(walker.x<10.48+5.7&&navigation.levels.state.surface==='ground','Loading inside the stair footprint recovers to the bottom approach');
+walk(8.8,13.5);assert.equal(navigation.levels.state.surface,'loft','Recovered walker can enter and ascend the stairs');
+const failedHouse={root:new THREE.Group()};
+const badWindows={...windowModel,cutouts:windowModel.cutouts.map(c=>({...c,z0:c.z0+100,z1:c.z1+100}))};
+await assert.rejects(attachWalkLoft(THREE,failedHouse,data,{roof,windowModel:badWindows,buildModel,applyChampagneFloor(){}}),/has no lining surface/);
+const failedLoft=failedHouse.root.getObjectByName('garden-walk-loft');
+assert(failedLoft?.getObjectByName('Loft lining with physical roof apertures')?.children.length>0,'Partially built lining stays parented for caller disposal after an attachment failure');
+console.log('Garden loft geometry: correct floor datum, physical roof holes and no duplicate windows or flue');

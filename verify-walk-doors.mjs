@@ -33,6 +33,7 @@ camera.position.set(leafBounds.min.x+1.4,4.165,(leafBounds.min.z+leafBounds.max.
 camera.lookAt(leafBounds.getCenter(new THREE.Vector3()).setY(4.165));camera.updateMatrixWorld(true);
 assert.equal(controller.aimedDoor(camera),group,'Near aimed door is available');
 assert(!controller.canStandAt(leafBounds.getCenter(new THREE.Vector3()).x,leafBounds.getCenter(new THREE.Vector3()).z));
+assert(controller.canStandAt(leafBounds.getCenter(new THREE.Vector3()).x,leafBounds.getCenter(new THREE.Vector3()).z,2.465+2.92+1.7),'Ground door leaves do not block the floor above');
 assert(controller.toggle(group,camera),'Door opens from outside its swing');
 assert.deepEqual(new THREE.Box3().setFromObject(fixed),fixedBounds,'Frames stay fixed');
 assert.equal(group.userData.walkDoor.open,true);

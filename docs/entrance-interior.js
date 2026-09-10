@@ -46,21 +46,22 @@ export function buildEntranceInterior(data) {
   for(const[i,px]of[seat.x0+.015,seat.x1-.027].entries())box(`entrance_seat_drawer_side_${i}`,px,seat.z0+.02,.298,.012,seatDepth-.052,.084,'white');
   box('entrance_seat_top',seat.x0,seat.z0,.395,seatWidth,seatDepth,.025);
   box('entrance_seat_cushion',seat.x0+.012,seat.z0+.010,.420,seatWidth-.024,seatDepth-.022,.050,'cushion',.015);
-  const keyRail={x0:9.625,x1:9.644,z0:15.44,z1:15.51};
+  const controlWall=seat.x1,controlZ=seat.z1-.15;
+  const keyRail={x0:controlWall-.019,x1:controlWall,z0:controlZ-.035,z1:controlZ+.035};
   box('entrance_key_rail',keyRail.x0,keyRail.z0,1.04,.019,.07,.22,'metal',.004);
   for(let i=0;i<2;i++){
     const py=1.095+i*.115;
-    box(`entrance_key_hook_stem_${i}`,9.590,15.466,py,.035,.018,.018,'metal',.006);
-    box(`entrance_key_hook_tip_${i}`,9.581,15.466,py,.018,.018,.035,'metal',.006);
-    box(`entrance_key_bow_${i}`,9.576,15.464,py-.003,.004,.022,.016,'keyMetal',.006);
-    box(`entrance_key_blade_${i}`,9.576,15.472,py-.032,.004,.006,.03,'keyMetal',.001);
-    for(let j=0;j<2;j++)box(`entrance_key_tooth_${i}_${j}`,9.576,15.475,py-.028+j*.010,.004,.008,.004,'keyMetal',.001);
+    box(`entrance_key_hook_stem_${i}`,controlWall-.054,controlZ-.009,py,.035,.018,.018,'metal',.006);
+    box(`entrance_key_hook_tip_${i}`,controlWall-.063,controlZ-.009,py,.018,.018,.035,'metal',.006);
+    box(`entrance_key_bow_${i}`,controlWall-.068,controlZ-.011,py-.003,.004,.022,.016,'keyMetal',.006);
+    box(`entrance_key_blade_${i}`,controlWall-.068,controlZ-.003,py-.032,.004,.006,.03,'keyMetal',.001);
+    for(let j=0;j<2;j++)box(`entrance_key_tooth_${i}_${j}`,controlWall-.068,controlZ,py-.028+j*.010,.004,.008,.004,'keyMetal',.001);
   }
-  const intercom={width:.072,height:.135,depth:.0318,centerHeight:1.40,zCenter:15.50,provisional:true};
-  box('entrance_intercom_body',9.65-intercom.depth,15.464,1.3325,intercom.depth,.072,.135,'white',.006);
-  box('entrance_intercom_screen',9.6172,15.469,1.3425,.001,.062,.115,'screen',.002);
-  box('entrance_intercom_call_icon',9.6160,15.489,1.356,.001,.018,.007,'indicator',.003);
-  for(let i=0;i<3;i++)box(`entrance_intercom_status_${i}`,9.6160,15.479,1.418+i*.009,.001,.040-i*.007,.003,'white',.001);
+  const intercom={width:.072,height:.135,depth:.0318,centerHeight:1.40,zCenter:controlZ,provisional:true};
+  box('entrance_intercom_body',controlWall-intercom.depth,controlZ-.036,1.3325,intercom.depth,.072,.135,'white',.006);
+  box('entrance_intercom_screen',controlWall-.0328,controlZ-.031,1.3425,.001,.062,.115,'screen',.002);
+  box('entrance_intercom_call_icon',controlWall-.034,controlZ-.011,1.356,.001,.018,.007,'indicator',.003);
+  for(let i=0;i<3;i++)box(`entrance_intercom_status_${i}`,controlWall-.034,controlZ-.021,1.418+i*.009,.001,.040-i*.007,.003,'white',.001);
   box('entrance_coat_shelf',7.02,15.325,1.85,.82,.20,.025);
   box('entrance_coat_hook_panel',7.025,15.525,1.18,.81,.018,.67);
   for(let i=0;i<3;i++){
@@ -72,11 +73,11 @@ export function buildEntranceInterior(data) {
     notes:[
       'Cashmere U702 ST9 visible fronts and white internal boards follow the furniture schedule. Colours are indicative.',
       'Sloping closed fronts and shoe shelves follow the entrance drawing. Module widths are fitted to the current stair model, not a fabrication drawing.',
-      'The mirror is at the back of the bench niche, with a drawer directly below the seat and an open niche down to the continuous vinyl floor underneath. Drawer height is provisional. The compact key rail is on the solid entrance-door wall return.',
+      'The mirror is at the back of the bench niche, with a drawer directly below the seat and an open niche down to the continuous vinyl floor underneath. Drawer height is provisional. The key rail and intercom are on the right side panel inside this furniture niche, north of the entrance door.',
       'A shallow shelf and three coat hooks occupy the opposite wall between the bathroom and utility doors, without another bench. Their 820mm width, 200mm shelf depth and mounting heights are a layout proposal.',
-      'UniFi Intercom Viewer is shown as an option, not an ordered device: 135×72×31.8mm, centered at the documented 1400mm height and 150mm from the entrance jamb. Key hooks sit below it; final wall positions need coordination.',
+      'UniFi Intercom Viewer is shown as an option, not an ordered device: 135×72×31.8mm, centered at 1400mm height and 150mm behind the furniture front. Key hooks sit below it.',
       'The stair soffit ends below the 2500mm wardrobe top; this junction needs coordination with the joiner.',
-    ],presets:{entrance:{position:[6.60,1.63,15.20],target:[7.85,1.10,13.96]},entranceSeat:{position:[8.20,1.55,15.12],target:[9.15,1.04,13.53]},entranceCoats:{position:[5.45,1.63,14.55],target:[7.40,1.35,15.44]},entranceControls:{position:[9.02,1.43,15.12],target:[9.64,1.32,15.48]}}};
+    ],presets:{entrance:{position:[6.60,1.63,15.20],target:[7.85,1.10,13.96]},entranceSeat:{position:[8.20,1.55,15.12],target:[9.15,1.04,13.53]},entranceCoats:{position:[5.45,1.63,14.55],target:[7.40,1.35,15.44]},entranceControls:{position:[9.02,1.43,14.35],target:[controlWall,1.32,controlZ]}}};
 }
 
 export function attachEntranceInterior(THREE,house,data,{buildModel}) {

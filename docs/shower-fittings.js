@@ -75,7 +75,7 @@ export function buildShowerFittings(data) {
     drains.push({room:spec.room,length:1,width:depth,sideClearance:(available-1)/2});
   }
   notes.push('Shower mixers are at 1100 mm above finished floor. Hose outlet and handshower holder are 200 mm either side. Holder height and fitting shapes are illustrative; handshower diameter is 130 mm and hose length is 1750 mm.');
-  notes.push('Selected drains are black TECEdrainprofile 1000×55 mm. Floor falls and concealed traps are not modeled. Guest glass currently leaves 1160 mm instead of the 1000 mm shower width in the finish plan; its drain has 80 mm side margins.');
+  notes.push('Selected drains are black TECEdrainprofile 1000×55 mm. Floor falls and concealed traps are not modeled. Guest shower clear width is 1000 mm; the backing wall and screen clear the window reveal.');
   return {name:'Shower fittings',floorHeight:0,parts,materials,lights:[],showers,drains,notes,presets:{
     mainShower:{position:[1.90,1.55,1.15],target:[.65,.95,.93]},
     guestShower:{position:[5.50,1.55,17.25],target:[5.20,.95,18.60]},

@@ -155,7 +155,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="layout.js?v=1a46a61d1c46"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
-<script src="interiors3d.js?v=7a1a0df35192"></script>
+<script src="interiors3d.js?v=247b8a579711"></script>
 <script src="vehicle-model.js"></script>
 <script src="exterior-furniture-model.js"></script>
 <script src="portal-drain-model.js"></script>
@@ -169,9 +169,9 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=5d9cb500c019"></script>
 <script src="pergola-model.js?v=aa2ee0f82530"></script>
-<script src="garage-model.js?v=cdb29f4bf771"></script>
+<script src="garage-model.js?v=8116afc969bc"></script>
 <script src="house-roof.js?v=4ddba03ad9f4"></script>
-<script src="furniture-model.js?v=26476df75f18"></script>
+<script src="furniture-model.js?v=7466ac5d1a2f"></script>
 <script src="greenhouse-model.js?v=71dd86bbbd29"></script>
 <script src="raised-beds-model.js?v=17f54a471ed2"></script>
 <script src="firepit-model.js?v=13aeea817164"></script>
@@ -179,28 +179,31 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="gate-model.js?v=6ab2796976ec"></script>
 <script src="fence-model.js?v=dbf171c13753"></script>
 <script src="utility-pillar-model.js"></script>
-<script src="site-terrain.js?v=79131309754a"></script>
+<script src="site-terrain.js?v=2db3750da8d4"></script>
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=f0c11f8a0a27"></script>
 <script src="terrain-preview.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=c01f6fdccf42';
+import { buildModel } from './model3d.js?v=2271bf3f980e';
+import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
 import { GroundSurfaceModel } from './ground-surface-model.js';
 import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=2df965840e8d';
 import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 import { createWalkInteriorLoader } from './walk-interior-loading.js';
+import { removeFacadeLid } from './docs/walk-facade.js';
+import { createWalkHouseNavigation } from './docs/walk-house-navigation.js';
 import { createHouseChimney } from './house-chimney.js';
 import { capRoofWall } from './docs/roof-wall-cap.js?v=0ed105086bfd';
 import { moveWalker } from './walk-movement.js';
-import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=99f693de365d';
+import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=17bbd6cc230d';
 
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=9f05e1e1dd7f';
+  script.src = './house-interior.js?v=7f8e3e1eb260';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
@@ -908,7 +911,7 @@ const KNEE = 0.28;    // gable pozednice knee above the general walls → ridge 
 const roofRise = 3.8; // half the 7.6 m gable span → 45° main pitch (DPS)
 const GABLE = [13.68, 21.28]; // 45° gable x-range; west of it is a 5° lean-to
 // Facade: Weber mineral render HN3E, HBW 61.9 (light warm greige) — user's chosen colour
-const HOUSE_RENDER = 0xcfc8ba;
+const HOUSE_RENDER = GarageModel.facadeFinish.color;
 const { mesh: houseMesh, baseY: houseBaseY } = addExtrudedPoly(houseVerts, wallH, HOUSE_RENDER, siteTerrain.spec.houseBaseY);
 
 
@@ -1021,7 +1024,7 @@ const garageMinY = Math.min(...[[GA.x, GA.y], [GA.x + GA.w, GA.y], [GA.x, GA.y +
 // Garage interior (floor/walls/ceiling/gate/bench) — built by the shared interiors3d.js
 // so index.html and interior.html render the identical garage
 const gar = INTERIORS3D.buildGarage(THREE, GARDEN, { floorY: garageFloorY, plinthTo: garageMinY, buildModel });
-const { wallT: GAT, wallTop: garageWallTop, roofHigh: garageRoofHigh, pitch: garagePitch } = gar.dims;
+const { wallT: GAT, wallTop: garageWallTop, roofHigh: garageRoofHigh, pitch: garagePitch, roofRidgeOffset:garageRoofRidgeOffset, roofEndOverhang:garageRoofEndOverhang, roofEastOverhang:garageRoofEastOverhang, carportPitch } = gar.dims;
 for (const grp of [gar.walls.N, gar.walls.S, gar.walls.E, gar.walls.W, gar.floor, gar.gateClosed, gar.gateOpen, gar.light]) scene.add(grp);
 furnitureGroup.add(gar.furniture);
 roofGroup.add(gar.ceiling);
@@ -1050,12 +1053,13 @@ function walkingHeight(x,z){
   return terrainHeight(x,z)+(insidePolygon(EL.driveway.parts.find(p=>p.kind==='polygon').points,x,z)?.05:0);
 }
 
-// Garage pult roof — high at the carport junction (west), low at the east eave; no N/S overhang
+// Garage pult roof — high at the carport junction (west), low at the east eave
 const garageRoofSkin = 0.001;
+const garageRidgeX = GA.x + garageRoofRidgeOffset;
 {
   // makePultRoofWE args are y at xMin / y at xMax — here west is the high edge
-  const geom = makePultRoofWE(GA.x - 0.3, GA.x + GA.w + 0.3, GA.y, GA.y + GA.d,
-    garageRoofHigh + 0.3 * garagePitch, garageWallTop - 0.3 * garagePitch);
+  const geom = makePultRoofWE(garageRidgeX, GA.x + GA.w + garageRoofEastOverhang, GA.y - garageRoofEndOverhang, GA.y + GA.d + garageRoofEndOverhang,
+    garageRoofHigh, garageWallTop - garageRoofEastOverhang * garagePitch);
   const positions = Array.from(geom.attributes.position.array);
   positions.push(...positions.map((value, index) => index % 3 === 1 ? value + garageRoofSkin : value));
   geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -1070,13 +1074,17 @@ const garageRoofSkin = 0.001;
 }
 // Carport plate — thin, high at the garage junction, shallow fall west; west edge clears entry door top
 const carportEastY = garageRoofHigh;
-const carportWestY = garageWallTop + 0.5;
+const carportRoofWidth = garageRidgeX - CP.x;
+const carportWestY = carportEastY - carportRoofWidth * carportPitch;
 {
-  const drop = carportEastY - carportWestY;
-  const span = Math.hypot(CP.w, drop);
-  const plate = new THREE.Mesh(new THREE.BoxGeometry(span, 0.08, CP.d), roofMat);
-  plate.position.set(CP.x + CP.w / 2, (carportWestY + carportEastY) / 2, CP.y + CP.d / 2);
-  plate.rotation.z = Math.atan2(drop, CP.w);
+  const geom = makePultRoofWE(CP.x, garageRidgeX, CP.y - garageRoofEndOverhang, CP.y + CP.d + garageRoofEndOverhang,
+    carportWestY - .08, carportEastY - .08);
+  const positions = Array.from(geom.attributes.position.array);
+  positions.push(...positions.map((value,index)=>index%3===1?value+.08+garageRoofSkin:value));
+  geom.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geom.setIndex([0,1,2,0,2,3,4,6,5,4,7,6,0,4,5,0,5,1,1,5,6,1,6,2,2,6,7,2,7,3,3,7,4,3,4,0]);
+  const skin=geom.toNonIndexed();geom.dispose();skin.computeVertexNormals();
+  const plate = new THREE.Mesh(skin, roofMat);
   plate.castShadow = true;
   roofGroup.add(plate);
 }
@@ -1084,20 +1092,20 @@ const carportWestY = garageWallTop + 0.5;
 // Standing seam metal (falcovaný plech) on both pult planes
 {
   const stripeMat = new THREE.MeshStandardMaterial({ color: 0x707070, roughness: 0.3, metalness: 0.5 });
-  const gLen = (GA.w + 0.6) * Math.hypot(1, garagePitch);
-  const gAng = Math.atan2(1.2, GA.w);
+  const gLen = (GA.w - garageRoofRidgeOffset + garageRoofEastOverhang) * Math.hypot(1, garagePitch);
+  const gAng = Math.atan(garagePitch);
   for (let zs = GA.y + 0.2; zs < GA.y + GA.d; zs += 0.4) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(gLen, 0.06, 0.04), stripeMat);
-    s.position.set(GA.x + GA.w / 2, (garageRoofHigh + garageWallTop) / 2 + garageRoofSkin + 0.03, zs);
+    s.position.set((garageRidgeX + GA.x + GA.w + garageRoofEastOverhang) / 2, (garageRoofHigh + garageWallTop - garageRoofEastOverhang * garagePitch) / 2 + garageRoofSkin + 0.03, zs);
     s.rotation.z = -gAng;
     roofGroup.add(s);
   }
   const cDrop = carportEastY - carportWestY;
-  const cLen = Math.hypot(CP.w, cDrop);
-  const cAng = Math.atan2(cDrop, CP.w);
+  const cLen = Math.hypot(carportRoofWidth, cDrop);
+  const cAng = Math.atan2(cDrop, carportRoofWidth);
   for (let zs = CP.y + 0.2; zs < CP.y + CP.d; zs += 0.4) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(cLen, 0.06, 0.04), stripeMat);
-    s.position.set(CP.x + CP.w / 2, (carportWestY + carportEastY) / 2 + 0.07, zs);
+    s.position.set(CP.x + carportRoofWidth / 2, (carportWestY + carportEastY) / 2 + garageRoofSkin + 0.03, zs);
     s.rotation.z = cAng;
     roofGroup.add(s);
   }
@@ -1107,7 +1115,7 @@ const carportWestY = garageWallTop + 0.5;
 [[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
   const baseY = terrainHeight(px, pz);
   // Each post stretched from its local terrain to the plate's west edge
-  const ph = carportWestY - baseY;
+  const ph = carportWestY - .08 - baseY;
   const post = new THREE.Mesh(
     new THREE.BoxGeometry(0.15, ph, 0.15),
     new THREE.MeshStandardMaterial({ color: 0x5a3e25, roughness: 0.7 })
@@ -1413,7 +1421,7 @@ scene.add(driveway);
     fan.position.set(hx, by + 0.08 + 0.42, hz + 0.24); scene.add(fan);
   }
   // Marmolit sokl band — level top above floor, bottom follows the dug grade under the gravel
-  const soklMat = new THREE.MeshStandardMaterial({ color: 0x453f38, roughness: 0.95 }); // marmolit MAR2 M092, HBW 6
+  const soklMat = createMarmolitMaterial(THREE);
   const soklTop = houseBaseY + 0.25;
   const runs = [
     { a0: 10.48, a1: 21.28, c: 7.18, axis: 'x', dir: -1 },   // N wall
@@ -1439,6 +1447,7 @@ scene.add(driveway);
         soklTop - h / 2,
         r.axis === 'x' ? r.c + r.dir * 0.025 : mid
       );
+      marmolitUVs(seg.geometry);
       scene.add(seg);
     }
   }
@@ -1728,9 +1737,11 @@ if(houseChimney)scene.add(houseChimney.root);
 
 
 // VELUX roof windows over the southern attic room + štít window in the north gable
+let houseRoofWindowModel=null;
 {
   if(window.RoofWindows&&localHouseData&&applyOpeningCutouts){
     const model=window.RoofWindows.build({gable:GABLE,ridgeY:houseRoofSpec.ridgeY,eaveY:houseRoofSpec.ridgeY-roofWindowRun});
+    houseRoofWindowModel=model;
     const volumes=model.cutouts.map(c=>({min:new THREE.Vector3(c.x0,0,c.z0),max:new THREE.Vector3(c.x1,20,c.z1)}));
     const flashingVolumes=model.cutouts.map(c=>({min:new THREE.Vector3(c.x0-.18*Math.abs(c.slopeAxis[0]),0,c.z0-.12),
       max:new THREE.Vector3(c.x1+.18*Math.abs(c.slopeAxis[0]),20,c.z1+.12)}));
@@ -2144,6 +2155,7 @@ window.setPreset = function(name) {
   // and applyHashView() runs before the toggles and sliders are wired, so the throw would leave
   // the page with no working controls at all.
   if (!p || !t) return;
+  document.dispatchEvent(new Event('viewer-camera-preset'));
   // Eye level — adjust Y to actual terrain height + 1.7 m
   if (name === 'ground') {
     p[1] = walkingHeight(p[0], p[2]) + 1.7;
@@ -2161,6 +2173,7 @@ function applyHashView() {
   if (h.startsWith('cam=')) {
     const n = h.slice(4).split(',').map(Number);
     if (n.length === 6 && n.every(v => !isNaN(v))) {
+      document.dispatchEvent(new Event('viewer-camera-preset'));
       camera.position.set(n[0], n[1], n[2]); controls.target.set(n[3], n[4], n[5]); controls.update();
     }
   } else { setPreset(h); }
@@ -2182,6 +2195,7 @@ document.getElementById('toggleGate').addEventListener('change', e => {
 });
 document.getElementById('toggleFurniture').addEventListener('change', e => {
   if(walkHouse)walkHouse.furniture.visible=e.target.checked;
+  if(walkHouse?.loft)walkHouse.loft.furniture.visible=e.target.checked;
   furnitureGroup.visible = e.target.checked;
   pergolaGroup.userData.categories.furniture.visible = e.target.checked;
   greenhouseGroup.userData.categories.furniture.visible = e.target.checked;
@@ -2342,13 +2356,21 @@ const fpState = { active: false, keys: {} };
 const fpCamera = camera;
 let fpYaw = 0, fpPitch = 0;
 let walkDoors;
+let walkNavigation;
 const doorPrompt=document.createElement('div');
 doorPrompt.id='walkDoorPrompt';doorPrompt.hidden=true;doorPrompt.setAttribute('role','status');
 doorPrompt.style.cssText='position:fixed;left:50%;top:60%;transform:translateX(-50%);z-index:120;background:#f5f4ec;color:#303e36;padding:10px 16px;border-radius:8px;pointer-events:none;font:14px system-ui;max-width:80vw;text-align:center';
 document.body.append(doorPrompt);
+document.addEventListener('viewer-camera-preset',()=>{
+  if(!fpState.active)return;
+  fpState.active=false;fpState.keys={};
+  document.getElementById('toggleFP').checked=false;
+  doorPrompt.hidden=true;controls.enabled=true;
+  document.exitPointerLock();
+});
 let blockedDoor=null,blockedDoorUntil=0;
 function updateDoorPrompt(){
-  const group=fpState.active&&walkDoors?.aimedDoor(camera);
+  const group=fpState.active&&(walkNavigation??walkDoors)?.aimedDoor(camera);
   doorPrompt.hidden=!group;
   if(group){
     const door=group.userData.walkDoor;
@@ -2358,27 +2380,37 @@ function updateDoorPrompt(){
 }
 document.addEventListener('keydown',event=>{
   if(!fpState.active||event.code!=='KeyE'||event.repeat||event.target.closest?.('input,select,textarea'))return;
-  const group=walkDoors?.aimedDoor(camera);
+  const group=(walkNavigation??walkDoors)?.aimedDoor(camera);
   if(!group)return;
   event.preventDefault();
-  if(walkDoors.toggle(group,camera)){blockedDoor=null;invalidateShadows();updateDoorPrompt();}
+  if((walkNavigation??walkDoors).toggle(group,camera)){blockedDoor=null;invalidateShadows();updateDoorPrompt();}
   else{blockedDoor=group;blockedDoorUntil=performance.now()+2000;updateDoorPrompt();requestRender();setTimeout(requestRender,2000);}
 });
 
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
     if(!localHouseData)throw new Error('House drawings unavailable');
-    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=79e755639fc3');
-    return buildWalkInterior(THREE,localHouseData,{buildModel:(three,model)=>buildWalkingDoor(three,model,buildModel),renderer,floorY:houseTerrainY,exteriorWallHeight:wallH,roofWallProfile});
+    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=96b330e50e61');
+    const loftData=typeof HOUSE_LOFT==='undefined'?null:HOUSE_LOFT;
+    const o=localHouseData.originPlot,localRect=r=>[r[0]-o.x,r[1]-o.z,r[2]-o.x,r[3]-o.z],gable=GABLE.map(x=>x-o.x);
+    const loftRoof=loftData?HouseRoof.describe({bbox:localRect(HB),atrium:localRect(HA),gable}):null;
+    const loftWindows=loftData&&houseRoofWindowModel?RoofWindows.build({gable,ridgeY:loftRoof.ridgeY,eaveY:loftRoof.ridgeY-roofWindowRun,
+      windows:houseRoofWindowModel.cutouts.map(c=>({side:c.side,z:c.center[1]-o.z,width:c.width,height:c.height}))}):null;
+    if(loftData&&!loftWindows)throw new Error('Loft roof-window geometry unavailable');
+    return buildWalkInterior(THREE,localHouseData,{buildModel:(three,model)=>buildWalkingDoor(three,model,buildModel),renderer,floorY:houseTerrainY,exteriorWallHeight:wallH,roofWallProfile,loftData,loftRoof,loftWindows});
   },
   install:house=>{
     walkHouse=house;
+    if(house.loft)removeFacadeLid(houseMesh.geometry);
     house.furniture.visible=document.getElementById('toggleFurniture').checked;
+    if(house.loft)house.loft.furniture.visible=house.furniture.visible;
     scene.add(house.root);
     if(houseInteriorBacking)houseInteriorBacking.visible=false;
     if(houseChimney)houseChimney.interiorOverlap.visible=false;
     walkDoors=createWalkDoors(THREE,{data:localHouseData,doors:[...exteriorWalkingDoors,...house.doors],floorY:houseTerrainY});
-    if(fpState.active)walkDoors.recover(camera.position);
+    scene.updateMatrixWorld(true);
+    walkNavigation=house.loft?createWalkHouseNavigation(THREE,{house,data:localHouseData,exteriorDoors:exteriorWalkingDoors,floorY:houseTerrainY,groundHeight:walkingHeight,roof:roofGroup}):null;
+    if(fpState.active){if(walkNavigation)walkNavigation.reset(camera.position);else walkDoors.recover(camera.position);}
     invalidateShadows();
   },
   status:(state,error)=>{
@@ -2400,7 +2432,7 @@ document.getElementById('toggleFP').addEventListener('change', e => {
     void loadWalkInterior();
     controls.enabled = false;
     fpCamera.position.set(20, walkingHeight(20, 20) + 1.7, 20);
-    walkDoors?.recover(fpCamera.position);
+    if(walkNavigation)walkNavigation.reset(fpCamera.position);else walkDoors?.recover(fpCamera.position);
     lockPointer();
   } else {
     doorPrompt.hidden=true;
@@ -2438,10 +2470,11 @@ function fpUpdate(dt) {
   if (!fpState.active) return;
   const previousX=fpCamera.position.x,previousZ=fpCamera.position.z;
   moveWalker(fpCamera.position,fpYaw,fpState.keys,dt);
-  walkDoors?.constrain(fpCamera.position,previousX,previousZ);
-  // Stay above terrain
-  const tY = walkingHeight(fpCamera.position.x, fpCamera.position.z);
-  fpCamera.position.y = tY + 1.7;
+  if(walkNavigation)walkNavigation.constrain(fpCamera.position,previousX,previousZ);
+  else{
+    walkDoors?.constrain(fpCamera.position,previousX,previousZ);
+    fpCamera.position.y=walkingHeight(fpCamera.position.x,fpCamera.position.z)+1.7;
+  }
   // Apply look direction
   const lookAt = _v3.set(
     fpCamera.position.x - Math.sin(fpYaw) * Math.cos(fpPitch),

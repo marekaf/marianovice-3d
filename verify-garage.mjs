@@ -17,15 +17,47 @@ const bounds = part => part.vertices
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
 assert.deepEqual(model, GarageModel.build(GARDEN, floorHeight));
 assert.equal(model.categoryVisibility.gateOpen, false);
+assert.equal(model.materials.render.color, GarageModel.facadeFinish.color);
+assert.equal(GarageModel.facadeFinish.code, 'HN3E');
+assert.equal(GarageModel.facadeFinish.hbw, 61.9);
+assert.equal(model.materials.render.color, '#e2cec5');
+assert.equal(model.materials.foundation.finish, 'marmolit');
+for (const part of model.parts.filter(part => part.name.startsWith('wall_plinth_'))) {
+  near(part.position[2] + part.size[2] / 2, .25);
+  const side = part.name.split('_')[2], along = ['N', 'S'].includes(side) ? 0 : 1;
+  const [min, max] = bounds(part)[along];
+  for (const opening of element.meta.openings.filter(opening => opening.wall === side)) {
+    assert(Math.min(max, opening.from + opening.w) - Math.max(min, opening.from) < 1e-8, 'Plinth clears garage openings');
+  }
+}
 assert.equal(model.materials.gateLightGrey.color,'#c6c9c7');
 assert.match(model.gateFinish.note,/approximate/);
 assert.equal(parts.get('personnel_leaf').material,'charcoal');
 assert.deepEqual(model.groundPatch, GarageModel.groundPatch(GARDEN, floorHeight));
 near(model.floorHeight - model.groundPatch.level, 0.04);
+const sectionModel = GarageModel.build(GARDEN, -.5);
+const roofAt = x => x < 27.74 ? 3.5 + (x - 27.74) * Math.tan(2 * Math.PI / 180) : 3.5 - (x - 27.74) * .7 / 6.39;
+for (const side of ['W', 'E']) {
+  const wall = sectionModel.parts.find(part => part.name === `wall_${side}_0`);
+  const x = side === 'W' ? rect.x : rect.x + rect.w;
+  const edge = wall.vertices.slice(4).filter(vertex => Math.abs(vertex[0] - x) < 1e-8);
+  assert.equal(edge.length, 2);
+  for (const vertex of edge) near(vertex[2] + sectionModel.floorHeight, side === 'W' ? 3 - .11 * Math.tan(2 * Math.PI / 180) : 2.3);
+}
+for (const wall of model.parts.filter(part => /^wall_(?:lining_)?[NSEW]_/.test(part.name) && part.vertices)) {
+  const xs=wall.vertices.map(v=>v[0]);
+  assert(!(Math.min(...xs)<27.74-1e-8&&Math.max(...xs)>27.74+1e-8),'Wall caps split at the ridge instead of bridging the two slopes');
+  for(const vertex of wall.vertices.slice(4))near(vertex[2],roofAt(vertex[0]));
+}
+for (const part of model.parts.filter(part => part.name === 'ceiling_backing' || part.name.startsWith('ceiling_board_'))) {
+  const offset = part.name === 'ceiling_backing' ? .01 : .035;
+  for (const vertex of part.vertices.slice(4)) near(vertex[2], roofAt(vertex[0]) - offset);
+}
+near(bounds(parts.get('opener_mount'))[2][1], roofAt(bounds(parts.get('opener_mount'))[0][1]) - .06);
 for (const height of [-0.5, 0, floorHeight]) {
   const shifted = GarageModel.build(GARDEN, height);
   assert.deepEqual(rounded(shifted.parts), rounded(model.parts), 'Floor offset must not change local geometry');
-  near(shifted.dims.wallTop - height, 2.3);
+  near(shifted.dims.wallTop - height, 2.8);
   near(shifted.dims.roofHigh - height, 3.5);
 }
 for (const part of model.parts) {
