@@ -191,7 +191,7 @@ const GARDEN = {
     {
       id: "firePit",
       name: "Corten fire pit ø1 m + mlat seating area ø4 m",
-      meta: {grading: {level: 1.515, surfaceOffset: 0.092}},
+      meta: {grading: {level: 0.85, surfaceOffset: 0.092}},
       parts: [
         {kind: "circle", cx: 34.5, cy: 7.5, r: 2, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5, 4"},
         {kind: "circle", cx: 34.5, cy: 7.5, r: 0.5, fill: "#a75e36", opacity: 0.85, stroke: "#693e28", sw: 1},

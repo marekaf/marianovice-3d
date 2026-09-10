@@ -147,7 +147,7 @@ def height(spec, x, y):
             continue
         nearest, level = route_sample(route, x, y, True)
         clear = min([rect_distance(p, x, y) for p in spec.get('finishPads', [])+spec.get('protectedPads', [])]+[d for _, d in gathering_samples]+[polygon_distance(spec['houseExcavation']['points'], x, y) if spec.get('houseExcavation') else math.inf])
-        influence = (1-smoothstep(max(0, nearest-route['width']/2)/route['bankApron']['blend']))*smoothstep(clear/route['bankApron']['clearBlend'])*smoothstep(route_bank_clearance(route, x, y)/.6)
+        influence = (1-smoothstep(max(0, nearest-route['width']/2)/route['bankApron']['blend']))*smoothstep(clear/route['bankApron']['clearBlend'])*smoothstep(route_bank_clearance(route, x, y))
         h += (level-route.get('bedding', .04)-h)*influence
     for route in spec.get('routeProfiles', []):
         if route.get('bankBounds') and rect_distance(route['bankBounds'], x, y) > 0:
@@ -158,7 +158,7 @@ def height(spec, x, y):
         if distance < blend:
             bedding = route_bedding(route, x, y)
             clear = min([rect_distance(p, x, y) for p in spec.get('finishPads', [])+spec.get('protectedPads', [])]+[d for _, d in gathering_samples]) if route.get('approachBank') else math.inf
-            influence = (1-smoothstep(distance/blend))*(smoothstep(clear/1.2) if route.get('approachBank') else 1)*smoothstep(route_bank_clearance(route, x, y)/.6)
+            influence = (1-smoothstep(distance/blend))*(smoothstep(clear/1.2) if route.get('approachBank') else 1)*smoothstep(route_bank_clearance(route, x, y))
             h += (level-bedding-h)*influence
             if route.get('approachBank'):
                 h = min(h, h+(level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(route_bank_clearance(route, x, y)/.6))
