@@ -41,6 +41,12 @@ const SiteTerrain = (() => {
   function routeBankClearance(route,x,z) {
     return Math.min(Infinity,...(route.bankAvoidRoutes??[]).map(other=>Math.max(0,routeSample(other,x,z).distance-other.width/2)));
   }
+  function routeBedding(route,x,z) {
+    if(route.startBedding===undefined)return route.bedding??.04;
+    const [a,b]=route.points,dx=b[0]-a[0],dz=b[1]-a[1];
+    const distance=((x-a[0])*dx+(z-a[1])*dz)/Math.hypot(dx,dz);
+    return route.startBedding+(route.bedding-route.startBedding)*smoothstep(distance/1.2);
+  }
   function polygonDistance(points, x, z) {
     let inside=false,distance=Infinity;
     for(let i=0,j=points.length-1;i<points.length;j=i++) {
@@ -129,12 +135,13 @@ const SiteTerrain = (() => {
     for(const route of spec.routeProfiles??[]) {
       if(route.bankBounds&&rectDistance(route.bankBounds,x,z)>0)continue;
       const sample=routeSample(route,x,z,true),distance=Math.max(0,sample.distance-route.width/2);
-      const bedding=route.bedding??.04;
+      const bedding=routeBedding(route,x,z);
       const blend=route.bankBlend??.5;
       if(distance<blend) {
         const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d)):Infinity;
         const influence=(1-smoothstep(distance/blend))*(route.approachBank?smoothstep(clear/1.2):1)*smoothstep(routeBankClearance(route,x,z)/.6);
         h+=(sample.level-bedding-h)*influence;
+        if(route.approachBank)h=Math.min(h,h+(sample.level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(routeBankClearance(route,x,z)/.6));
       }
     }
     const pondOuter=spec.continuousGrading&&z<pond.cz?1.3+((pond.northBankOuter??1.3)-1.3)*Math.max(0,(pond.cz-z)/(pond.rz*prr||1))**16:1.3;
@@ -231,7 +238,6 @@ const SiteTerrain = (() => {
       spec.bankReview = [
         {id:'productive-west',label:'Productive court planted banks',bounds:[0,9.48,7.5,18.5],status:'Sloping walking approach with level crossfall aisles. Surrounding banks remain steep and provisional; retaining, drainage and soil stability require engineering review.'},
         {id:'south-house',label:'Southwest house bank',bounds:[8.3,17,27.43,30.5],status:'Broader planted transition; remaining steep sections require soil stability and drainage review.'},
-        {id:'dining-corner',label:'Terrace-to-pergola planted approach bank',bounds:[23.58,31,10.8,17.1],status:'Longer sloping approach with level landings and a blended planted bank. The retained destination heights still require steep local shoulders; confirm retaining, soil stability and surface-water interception before construction.'},
       ];
       spec.finishPads = garden.elements.filter(e => ['eastTerrace', 'westTerrace', 'sauna', 'saunaShelter', 'saunaPath'].includes(e.id))
         .flatMap(e => e.parts.filter(p => p.kind === 'rect').map(p => ({
@@ -252,21 +258,29 @@ const SiteTerrain = (() => {
       spec.gatheringPads=[{...patchRect(gathering),blend:2.4},
         {cx:fire.cx,cz:fire.cy,radius:fire.r,level:fireLevel,blend:2.4}];
       const dining=(garden.gardenRoutes??[]).find(r=>r.id==='Daily dining');
+      if(dining)spec.bankReview.push({id:'dining-corner',label:'Terrace-to-pergola planted approach bank',
+        bounds:[Math.min(...dining.points.map(p=>p[0]))-1.3,Math.max(...dining.points.map(p=>p[0]))+1.3,Math.min(...dining.points.map(p=>p[1]))-1.3,Math.max(...dining.points.map(p=>p[1]))+1.3],
+        status:'Sloping approach to the northern pergola with level landings and blended planted banks. Local shoulders, retaining, soil stability and surface-water interception require engineering review.'});
+      spec.bankReview.push({id:'north-pergola',label:'Northern pergola planted banks',
+        bounds:[gathering.x-2.4,gathering.x+gathering.w+2.4,gathering.y-2.4,gathering.y+gathering.d+2.4],
+        status:'Lowered pergola pad follows the northern terrain. Bank slopes, north boundary drainage, foundations and retaining remain proposals requiring engineering review.'});
       spec.routeProfiles=[];
-      for(const [route,start,end]of [[dining,options.houseFFL,gathering.level+.1],[gatheringLink,gathering.level+.1,fireFinished]])if(route) {
+      const pondWalk=(garden.gardenRoutes??[]).find(r=>r.id==='Pond walk');
+      const pondApproach=pondWalk?{...pondWalk,id:'Pond approach',points:pondWalk.points.slice(3)}:null;
+      const pondStart=pondApproach?height(spec,...pondApproach.points[0])+.02:0;
+      for(const [route,start,end]of [[dining,options.houseFFL,gathering.level+.1],[gatheringLink,gathering.level+.1,fireFinished],[pondApproach,pondStart,fireFinished]])if(route) {
         const lengths=[0];
         for(let i=1;i<route.points.length;i++)lengths.push(lengths[i-1]+Math.hypot(route.points[i][0]-route.points[i-1][0],route.points[i][1]-route.points[i-1][1]));
-        let points=route.points,levels=lengths.map(s=>start+(end-start)*s/lengths.at(-1));
-        if(route===dining) {
-          const startLanding=1.2,endLanding=1.1,transitionLength=.8,active=lengths.at(-1)-startLanding-endLanding;
-          const distances=[...lengths,startLanding,lengths.at(-1)-endLanding].sort((a,b)=>a-b).filter((s,i,a)=>i===0||s-a[i-1]>1e-6);
-          points=distances.map(s=>{const i=Math.max(1,lengths.findIndex(v=>v>=s)),t=(s-lengths[i-1])/(lengths[i]-lengths[i-1]);return route.points[i-1].map((v,k)=>v+t*(route.points[i][k]-v));});
-          levels=distances.map(s=>{const u=Math.max(0,Math.min(active,s-startLanding)),area=v=>v/2-transitionLength*Math.sin(Math.PI*v/transitionLength)/(2*Math.PI);
-            const progress=u<transitionLength?area(u):u>active-transitionLength?active-transitionLength-area(active-u):u-transitionLength/2;
-            return start+(end-start)*progress/(active-transitionLength);});
-        }
+        const startLanding=1.2,endLanding=route===pondApproach?2.4:1.1,transitionLength=.8,active=lengths.at(-1)-startLanding-endLanding;
+        const distances=[...lengths,startLanding,lengths.at(-1)-endLanding].sort((a,b)=>a-b).filter((s,i,a)=>i===0||s-a[i-1]>1e-6);
+        const points=distances.map(s=>{const i=Math.max(1,lengths.findIndex(v=>v>=s)),t=(s-lengths[i-1])/(lengths[i]-lengths[i-1]);return route.points[i-1].map((v,k)=>v+t*(route.points[i][k]-v));});
+        const levels=distances.map(s=>{const u=Math.max(0,Math.min(active,s-startLanding)),area=v=>v/2-transitionLength*Math.sin(Math.PI*v/transitionLength)/(2*Math.PI);
+          const progress=u<transitionLength?area(u):u>active-transitionLength?active-transitionLength-area(active-u):u-transitionLength/2;
+          return start+(end-start)*progress/(active-transitionLength);});
         spec.routeProfiles.push({...route,points,bedding:.1,levels,
           ...(route===gatheringLink?{bankBlend:1.8}:{}),
+          ...(route===pondApproach?{approachBank:true,bankBlend:2.4,startBedding:.02,endCircle:{cx:fire.cx,cz:fire.cy,radius:fire.r},
+            bankAvoidRoutes:[dining,gatheringLink].filter(Boolean).map(r=>({...r,levels:r.points.map(()=>0)}))}:{}),
           ...(route===dining?{approachBank:true,bankBlend:1.3,bankApron:{blend:2.4,clearBlend:1.2},
             startRect:patchRect(garden.elements.find(e=>e.id==='eastTerrace').parts.find(p=>p.kind==='rect')),
             endCircle:{cx:route.points.at(-1)[0],cz:route.points.at(-1)[1],radius:route.width/2},

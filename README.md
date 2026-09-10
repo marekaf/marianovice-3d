@@ -71,6 +71,8 @@ This saves `blender/pergola.blend` and day, evening and dining PNGs using the CP
 
 Run `node verify-sauna.mjs` to check openings, entrance clearance, footing, roof joins and separation of the tub and log rack.
 Run `node verify-pergola.mjs` to check frame connections, furniture supports, paving and lighting placement.
+
+Run `node verify-pergola-view-browser.mjs` with Playwright available to capture the bedroom bed view, window-seat view and garden overview in headless Chrome. Images go to `/tmp/pergola-bedroom-review`; set `PERGOLA_SCREENSHOT_DIR` to choose another output directory. The browser closes after capture. `node verify-pergola-bedroom-view.mjs` checks the north-boundary clearance and the bedroom-to-firepit sightline.
 Run `node verify-garage.mjs` to check garage openings, gate states, floor datum and parking clearances. Use `--model=garage` in the standalone Blender command for exterior and interior previews. The browser interior views are available at `interior.html#garage-cut3d` and `interior.html#garage-north`.
 Run `node verify-fixtures.mjs` to check fixture footprints, heights and floor offsets. Use `--model=fixtures --sample=bath` or `--sample=bed` for standalone fixture renders. Beds default to a north-facing headboard; optional `head: 'N'|'S'|'E'|'W'` rotates the bedding within the supplied footprint.
 Run `node verify-greenhouse.mjs` to check the doorway, roof vent and interior supports. The browser preview is at `#greenhouse`; Roof and Furniture controls expose its interior. Use `--model=greenhouse` for standalone exterior and interior Blender previews.

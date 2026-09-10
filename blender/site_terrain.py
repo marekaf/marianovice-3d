@@ -59,6 +59,15 @@ def route_sample(route, x, y, bank=False):
     return distance, level
 
 
+def route_bedding(route, x, y):
+    if 'startBedding' not in route:
+        return route.get('bedding', .04)
+    a, b = route['points'][:2]
+    dx, dy = b[0]-a[0], b[1]-a[1]
+    distance = ((x-a[0])*dx+(y-a[1])*dy)/math.hypot(dx, dy)
+    return route['startBedding']+(route['bedding']-route['startBedding'])*smoothstep(distance/1.2)
+
+
 def route_bank_clearance(route, x, y):
     return min((max(0, route_sample(other, x, y)[0]-other['width']/2) for other in route.get('bankAvoidRoutes', [])), default=math.inf)
 
@@ -147,10 +156,12 @@ def height(spec, x, y):
         distance = max(0, distance - route['width'] / 2)
         blend = route.get('bankBlend', .5)
         if distance < blend:
-            bedding = route.get('bedding', .04)
+            bedding = route_bedding(route, x, y)
             clear = min([rect_distance(p, x, y) for p in spec.get('finishPads', [])+spec.get('protectedPads', [])]+[d for _, d in gathering_samples]) if route.get('approachBank') else math.inf
             influence = (1-smoothstep(distance/blend))*(smoothstep(clear/1.2) if route.get('approachBank') else 1)*smoothstep(route_bank_clearance(route, x, y)/.6)
             h += (level-bedding-h)*influence
+            if route.get('approachBank'):
+                h = min(h, h+(level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(route_bank_clearance(route, x, y)/.6))
     pond_outer = 1.3+(pond.get('northBankOuter', 1.3)-1.3)*max(0, (pond['cz']-y)/(pond['rz']*radius or 1))**16 if continuous and y < pond['cz'] else 1.3
     if continuous and radius <= 1:
         h = min(h, pond['edge'] - pond['depth'] * .5 * (1 + math.cos(radius * math.pi)))

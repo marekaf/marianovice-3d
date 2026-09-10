@@ -111,6 +111,8 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
     if (route) section(id, label, route.points.map(p => p.slice()), true);
   }
   if (fire && pond) section('fire-pond', 'Fire pit to pond basin', [[fire.cx, fire.cy], [pond.cx, pond.cy]]);
+  const pondApproach=site.spec?.routeProfiles?.find(r=>r.id==='Pond approach');
+  if(pondApproach)section(pondApproach.id,'Pond path to fire pit',pondApproach.points.map(p=>p.slice()),true);
   const driveway = site.spec?.drivewayProfile;
   const garage = rect('garage');
   if (driveway && garage) {
@@ -124,7 +126,12 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
   if(site.spec?.bankReview) {
     section('south-bank', 'Southwest house bank', [[10.75,26.6],[10.75,31]]);
     section('productive-gap', site.spec.productiveCourt?'Productive court: sloped approach and flat aisles':'Greenhouse to west terrace: constrained levels', [[3.2,13.5],[9.98,13.5]]);
-    section('gathering-bank', 'Gathering route shoulder', [[31.8,12.1],[35,12.1]]);
+    const gatheringRoute=garden.gardenRoutes?.find(r=>r.id==='Gathering connection');
+    if(gatheringRoute){
+      const i=Math.floor((gatheringRoute.points.length-1)/2),a=gatheringRoute.points[i],b=gatheringRoute.points[i+1];
+      const length=Math.hypot(b[0]-a[0],b[1]-a[1]),mid=a.map((v,k)=>(v+b[k])/2),normal=[-(b[1]-a[1])/length,(b[0]-a[0])/length];
+      section('gathering-bank','Gathering route shoulder',[-1.6,1.6].map(offset=>mid.map((v,k)=>v+normal[k]*offset)));
+    }
     section('dining-bank', 'Daily dining route shoulder', [[26.4,11.2],[26.4,14]]);
   }
   const wicket = site.spec?.wicketLanding;

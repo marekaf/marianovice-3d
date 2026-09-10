@@ -20,20 +20,27 @@ const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
 let maximumDiningBuildUp=0;
 function verifyRouteSupport(route,x,z){
   const buildUp=site.routeHeight(x,z)-site.height(x,z);
-  if(route.id==='Daily dining'){
-    assert(buildUp>=route.bedding-1e-7,'Dining route finish must remain above its minimum bedding depth');
-    maximumDiningBuildUp=Math.max(maximumDiningBuildUp,buildUp);
+  if(route.id==='Daily dining'||route.id==='Pond approach'){
+    let minimum=route.bedding;
+    if(route.id==='Pond approach'){
+      near(route.startBedding,.02);
+      const [a,b]=route.points,dx=b[0]-a[0],dz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/Math.hypot(dx,dz)/1.2));
+      minimum=route.startBedding+(route.bedding-route.startBedding)*t*t*(3-2*t);
+    }
+    assert(buildUp>=minimum-1e-7,`${route.id} finish must remain above its minimum bedding depth`);
+    if(route.id==='Daily dining')maximumDiningBuildUp=Math.max(maximumDiningBuildUp,buildUp);
   }else near(buildUp,route.bedding);
 }
 const fire=FirepitModel.build(GARDEN,site.height);
-near(pergola.floorHeight,1.715);
+near(pergola.floorHeight,1.05);
 near(site.height(22,14),2.345);
 near(site.routeHeight(22,14),2.465);
 near(fire.floorHeight+.008,1.615);
 for(const v of fire.parts.find(p=>p.name==='gravel_apron').vertices.slice(65))near(v[2]+fire.floorHeight,1.615);
 for(const route of site.spec.routeProfiles) {
   near(route.bedding,.1);
-  near(site.routeHeight(...route.points[0]),route.id==='Daily dining'?TERRAIN.houseFFLInternal:pergola.floorHeight);
+  if(route.id==='Pond approach')near(site.routeHeight(...route.points[0]),route.levels[0]);
+  else near(site.routeHeight(...route.points[0]),route.id==='Daily dining'?TERRAIN.houseFFLInternal:pergola.floorHeight);
   near(site.routeHeight(...route.points.at(-1)),route.id==='Daily dining'?pergola.floorHeight:1.615);
   for(let j=1;j<route.points.length;j++)for(let i=0;i<=20;i++) {
     const t=i/20,a=route.points[j-1],b=route.points[j],x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;
@@ -45,7 +52,7 @@ for(let i=0;i<128;i++)for(const radius of [.5,.9,1]) {
   const p=site.spec.pond,a=i*Math.PI/64,x=p.cx+Math.cos(a)*p.rx*radius,z=p.cz+Math.sin(a)*p.rz*radius;
   assert.ok(site.height(x,z)<=p.edge-p.depth*.5*(1+Math.cos(radius*Math.PI))+1e-7,'Gathering banks must not fill the pond basin');
 }
-assert(site.routeHeight(...link.points[0])>site.routeHeight(...link.points.at(-1)));
+assert(site.routeHeight(...link.points[0])<site.routeHeight(...link.points.at(-1)));
 for(const p of site.spec.finishPads.filter(p=>p.x1<11))near(site.height((p.x0+p.x1)/2,(p.z0+p.z1)/2),TERRAIN.houseFFLInternal-.12);
 const bench=HiddenBenchModel.build(GARDEN,site.height);
 for(const foot of bench.feet)for(const [x,z,y]of foot.bottomCorners){near(bench.floorHeight+y,site.height(x,z));assert(y<0,'Rigid bench rests above graded leveling pads');}
@@ -59,7 +66,7 @@ for(const bed of beds.beds){
   near(soil.position[2]+soil.size[2]/2+beds.floorHeight,expected+.53);
 }
 let minFill=Infinity,maxFill=-Infinity;
-for(let x=25;x<=36.5;x+=.5)for(let z=6.8;z<=10.5;z+=.5) {
+for(let x=25;x<=36.5;x+=.5)for(let z=1.5;z<=10.5;z+=.5) {
   const fill=site.height(x,z)-site.baseHeight(x,z);minFill=Math.min(minFill,fill);maxFill=Math.max(maxFill,fill);
   const h=site.height(x,z);near(h,site.height(x+1e-9,z));
 }
