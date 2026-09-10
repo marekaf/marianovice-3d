@@ -111,7 +111,7 @@ const HOUSE_INTERIOR = {
     { kind: 'cab', room: '1.12', label: 'okno skříň S', x0: 9.95, z0: 3.18, x1: 10.35, z1: 3.95, h: 2.50, front: 'W', modules: [0.77], tags: ['d'], fmat: 'carc', handle: 'push' },
     { kind: 'cab', room: '1.12', label: 'okenní lavice 2×940', x0: 9.95, z0: 1.22, x1: 10.35, z1: 3.18, h: 0.42, front: 'W', modules: [0.98, 0.98], tags: ['d', 'd'], fmat: 'carc', handle: 'push' },
     { kind: 'slab', room: '1.12', label: 'lavice polstr', mat: 'mattress', x0: 9.97, z0: 1.24, x1: 10.33, z1: 3.16, y0: 0.42, h: 0.06 },
-    { kind: 'cab', room: '1.12', label: 'okno horní pás', x0: 9.95, z0: 1.22, x1: 10.35, z1: 3.18, y0: 2.27, h: 0.23, front: 'W', modules: [1.96], tags: ['f'], cmat: 'carc' },
+    { kind: 'cab', room: '1.12', label: 'okno horní pás', x0: 9.95, z0: 1.22, x1: 10.35, z1: 3.18, y0: 2.125, h: 0.375, front: 'W', modules: [1.96], tags: ['f'], cmat: 'carc' },
     { kind: 'cab', room: '1.11', label: 'šatna skříň W', x0: 3.40, z0: 0.45, x1: 4.00, z1: 2.15, h: 2.52, front: 'E', modules: [0.85, 0.85], tags: ['o', 'o'], cmat: 'whiteBoard' },
     { kind: 'cab', room: '1.11', label: 'šatna skříň E', x0: 5.10, z0: 0.45, x1: 5.70, z1: 2.15, h: 2.52, front: 'W', modules: [0.85, 0.85], tags: ['o', 'o'], cmat: 'whiteBoard' },
     { kind: 'cab', room: '1.02', label: 'technická base 800+610+610', x0: 7.35, z0: 16.744, x1: 7.95, z1: 18.80, h: 0.90, plinth: 0.10, front: 'E', modules: [0.628, 0.628, 0.80], tags: ['a', 'a', 'd'], worktop: 0.038 },
