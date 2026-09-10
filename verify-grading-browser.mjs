@@ -9,7 +9,8 @@ try {
   if(!existsSync('docs/survey-terrain.js'))await page.route('**/docs/survey-terrain.js',route=>route.fulfill({contentType:'text/javascript',body:'const SURVEY_TERRAIN={points:[[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5]]};'}));
   await page.goto(new URL('grading.html',base).href);
   await page.locator('#report[data-revision]').waitFor({timeout:30000});
-  assert.equal(await page.locator('.sheet').count(),7);
+  assert.equal(await page.locator('.sheet').count(),8);
+  assert.equal(await page.getByRole('heading',{name:'Highest supported model-ground grade',exact:true}).count(),1);
   for(const label of ['Productive access','Greenhouse access','Bed access'])assert.equal(await page.locator('.section-card h3').filter({hasText:label}).count(),1);
   assert(await page.getByText('Includes the pond basin; NOT a pedestrian route.',{exact:false}).count());
   assert.equal(await page.locator('#printPlan').isVisible(),true);
@@ -27,5 +28,5 @@ try {
   await page.locator('#report[data-state="error"]').waitFor();
   assert.equal(await page.locator('#printPlan').isVisible(),false);
   assert.equal(await page.locator('.sheet').count(),0);
-  console.log('Grading browser: live report, seven unclipped A3 sheets, productive routes and unavailable-survey refusal pass');
+  console.log('Grading browser: live report, eight unclipped A3 sheets, productive routes, bank measurements and unavailable-survey refusal pass');
 } finally {await browser.close();}

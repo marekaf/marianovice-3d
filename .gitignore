@@ -1,5 +1,14 @@
 /node_modules/
+/unreal/generated/
+/unreal/project/
 /docs/*
+!/docs/coffee-niche.js
+!/docs/loft-roof-windows.js
+!/docs/walk-facade.js
+!/docs/walk-house-navigation.js
+!/docs/walk-loft.js
+!/docs/garage-roof-levels.md
+!/docs/loft-levels.md
 !/docs/office-integration.js
 !/docs/office-rooms.js
 !/docs/office-furniture.js

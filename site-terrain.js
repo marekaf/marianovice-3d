@@ -297,15 +297,15 @@ const SiteTerrain = (() => {
           {...patchRect(gathering),finish:gathering.level+.1}];
         let result=height(spec,x,z)+.02;
         for(const p of pads){const d=rectDistance(p,x,z);if(d<.6)result=p.finish+(result-p.finish)*smoothstep(d/.6);}
-        const productive=productivePads.map(p=>({p,d:rectDistance(p,x,z)})).filter(s=>s.d<.6);
+        const productive=productivePads.map(p=>{const d=rectDistance(p,x,z);return {p,d,influence:1-smoothstep(d/.6)};}).filter(s=>s.influence>0);
         if(productive.length===1){const {p,d}=productive[0];result=p.finish+(result-p.finish)*smoothstep(d/.6);}
         else if(productive.length>1){
           const core=productive.find(s=>s.d===0);
           if(core)result=core.p.finish;
           else {
             let total=0,finish=0,strength=0;
-            for(const {p,d}of productive){
-              const influence=1-smoothstep(d/.6),weight=influence/(d*d);
+            for(const {p,d,influence}of productive){
+              const weight=influence/(d*d);
               total+=weight;finish+=p.finish*weight;strength=Math.max(strength,influence);
             }
             result+=(finish/total-result)*strength;

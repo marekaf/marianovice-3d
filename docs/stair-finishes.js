@@ -10,9 +10,9 @@ export function stairFinishSurfaces(stairs) {
     : stairs.toward === 'S' ? [stairs.x1 - v, height, stairs.z0 + u]
     : [stairs.x0 + v, height, stairs.z1 - u];
   const surfaces = [];
-  for (let step = 0; step < stairs.steps; step++) {
+  for (let step = 0; step <= stairs.steps; step++) {
     const top = (step + 1) * stairs.rise;
-    surfaces.push({ name: `vinyl_tread_${step}`, kind: 'tread', step,
+    if (step < stairs.steps) surfaces.push({ name: `vinyl_tread_${step}`, kind: 'tread', step,
       position: point((step + .5) * going, width / 2, top + thickness / 2),
       size: alongX ? [going - 2 * margin, thickness, width - 2 * margin] : [width - 2 * margin, thickness, going - 2 * margin] });
     surfaces.push({ name: `vinyl_riser_${step}`, kind: 'riser', step,

@@ -120,6 +120,7 @@ const INTERIORS3D = (() => {
 
     function wallRect(target, w) {
       const [ax, az] = w.a, [bx, bz] = w.b;
+      const recesses=(data.wallRecesses?.(w)||[]).map(cut=>({...cut,y0:cut.y0+floorY,y1:cut.y1+floorY}));
       if (w.id) wallIdSprite(w.id, (ax + bx) / 2, floorY + (w.h ?? (w.profile ? 1.2 : wallH)) + 0.18, (az + bz) / 2);
       // Gable/štít: a height profile along x, extruded through the wall thickness
       if (w.profile) {
@@ -170,8 +171,9 @@ const INTERIORS3D = (() => {
             (c + d) / 2 > o.reveal.depth0 && (c + d) / 2 < o.reveal.depth1 &&
             (bottom + top) / 2 > floorY + (o.sill || 0) && (bottom + top) / 2 < floorY + (o.sill || 0) + o.h)) continue;
           const rect=alongX?{x0:ax+a,x1:ax+b,z0:c,z1:d,y0:bottom,y1:top}:{x0:c,x1:d,z0:az+a,z1:az+b,y0:bottom,y1:top};
-          for(const cell of layers.split(data,w,rect)){
-            const material=cell.layer&&Math.abs(top-floorY-wh)<1e-8?[wallMat,wallMat,sectionMaterials[cell.layer==='eps'?'wallEPS':'wallMasonry'],wallMat,wallMat,wallMat]:wallMat;
+          const cells=data.subtractWallRecesses?data.subtractWallRecesses(rect,recesses):[rect];
+          for(const cell of cells.flatMap(cell=>layers.split(data,w,cell))){
+            const material=cell.layer&&Math.abs(cell.y1-floorY-wh)<1e-8?[wallMat,wallMat,sectionMaterials[cell.layer==='eps'?'wallEPS':'wallMasonry'],wallMat,wallMat,wallMat]:wallMat;
             const mesh=mkB(target,cell.x0,cell.y0,cell.z0,cell.x1,cell.y1,cell.z1,material);
             mesh.userData.wallLayer=cell.layer;
             opts.decorateWallMesh?.(mesh,w);
@@ -197,7 +199,7 @@ const INTERIORS3D = (() => {
 
     // Plate builder: outline minus holes as ONE mesh with faces only at real boundaries
     // (top, bottom, outline + hole rims) — used by the ceiling lid and the loft floor
-    function plate(target, holes, y0, y1, mat) {
+    function plate(target, holes, y0, y1, mat, topClip = null) {
       const inOutline = (x, z) => {
         let inside = false;
         const pts = data.outline;
@@ -207,7 +209,9 @@ const INTERIORS3D = (() => {
         }
         return inside;
       };
-      const xs = [...new Set([...data.outline.map(p => p[0]), ...holes.flatMap(h => [h.x0, h.x1])])].sort((a, b) => a - b);
+      const outlineXs=data.outline.map(p=>p[0]),crossing=topClip?-topClip.offset/topClip.slope:null;
+      const clipCuts=topClip&&crossing>Math.min(...outlineXs)&&crossing<Math.max(...outlineXs)?[crossing]:[];
+      const xs = [...new Set([...outlineXs, ...holes.flatMap(h => [h.x0, h.x1]), ...clipCuts])].sort((a, b) => a - b);
       const zs = [...new Set([...data.outline.map(p => p[1]), ...holes.flatMap(h => [h.z0, h.z1])])].sort((a, b) => a - b);
       const solidAt = (xi, zi) => {
         if (xi < 0 || zi < 0 || xi >= xs.length - 1 || zi >= zs.length - 1) return false;
@@ -224,17 +228,20 @@ const INTERIORS3D = (() => {
       for (let zi = 0; zi < zs.length - 1; zi++) for (let xi = 0; xi < xs.length - 1; xi++) {
         if (!solidAt(xi, zi)) continue;
         const x0 = xs[xi], x1 = xs[xi + 1], z0 = zs[zi], z1 = zs[zi + 1];
-        quad([[x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0]], [0, 1, 0]);
+        const leftTop=topClip?y1+Math.min(0,topClip.slope*x0+topClip.offset):y1;
+        const rightTop=topClip?y1+Math.min(0,topClip.slope*x1+topClip.offset):y1;
+        quad([[x0, leftTop, z0], [x0, leftTop, z1], [x1, rightTop, z1], [x1, rightTop, z0]], [0, 1, 0]);
         quad([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], [0, -1, 0]);
-        if (!solidAt(xi, zi - 1)) quad([[x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [x1, y0, z0]], [0, 0, -1]);
-        if (!solidAt(xi, zi + 1)) quad([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], [0, 0, 1]);
-        if (!solidAt(xi - 1, zi)) quad([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], [-1, 0, 0]);
-        if (!solidAt(xi + 1, zi)) quad([[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], [1, 0, 0]);
+        if (!solidAt(xi, zi - 1)) quad([[x0, y0, z0], [x0, leftTop, z0], [x1, rightTop, z0], [x1, y0, z0]], [0, 0, -1]);
+        if (!solidAt(xi, zi + 1)) quad([[x0, y0, z1], [x1, y0, z1], [x1, rightTop, z1], [x0, leftTop, z1]], [0, 0, 1]);
+        if (!solidAt(xi - 1, zi)) quad([[x0, y0, z0], [x0, y0, z1], [x0, leftTop, z1], [x0, leftTop, z0]], [-1, 0, 0]);
+        if (!solidAt(xi + 1, zi)) quad([[x1, y0, z0], [x1, rightTop, z0], [x1, rightTop, z1], [x1, y0, z1]], [1, 0, 0]);
       }
       const geom = new THREE.BufferGeometry();
       geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
       geom.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
       geom.setIndex(idx);
+      if(topClip)geom.computeVertexNormals();
       const m = new THREE.Mesh(geom, mat);
       m.castShadow = true;
       m.receiveShadow = true;
@@ -251,7 +258,7 @@ const INTERIORS3D = (() => {
 
     // Floor: plate with holes (loft — open over the cathedral/stairwell) or plain outline extrude
     if (data.floorHoles) {
-      plate(floor, data.floorHoles, floorY - 0.12, floorY, floorMat);
+      plate(floor, data.floorHoles, floorY - (data.floorDepth ?? 0.12), floorY, floorMat, data.floorTopClip);
     } else {
       const shape = new THREE.Shape();
       shape.moveTo(data.outline[0][0], -data.outline[0][1]);
@@ -270,7 +277,7 @@ const INTERIORS3D = (() => {
     // flush with the wall tops; else fall back to one slab per non-open room
     const cH = data.clearH ?? 2.52;
     if (data.lid) {
-      plate(ceiling, data.lid.holes || [], floorY + cH, floorY + cH + 0.2, ceilMat);
+      plate(ceiling, data.lid.holes || [], floorY + cH, floorY + (data.lid.top ?? cH + 0.2), ceilMat);
       if (data.hatch) {
         const h = data.hatch;
         const lidMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });

@@ -1,4 +1,6 @@
 const GarageModel = (() => {
+  const facadeFinish = Object.freeze({ code: 'HN3E', hbw: 61.9, color: '#e2cec5',
+    source: 'https://www.cz.weber/files/cz/2023-09/HN3E.jpg', accuracy: 'Digital swatch approximation' });
   function groundPatch(garden, floorHeight) {
     const footprints = ['garage', 'carport'].map(id => garden.elements.find(e => e.id === id).parts.find(p => p.kind === 'rect'));
     const x = Math.min(...footprints.map(p => p.x)), y = Math.min(...footprints.map(p => p.y));
@@ -10,13 +12,14 @@ const GarageModel = (() => {
     const rect = element.parts.find(p => p.kind === 'rect');
     const { x, y, w, d } = rect;
     const { wallT, openings, workbench } = element.meta;
-    const wallTop = 2.3, roofHigh = 3.5, pitch = 1.2 / w;
-    const roofAt = px => roofHigh - (px - x) * pitch;
+    const wallTop = 2.8, roofHigh = 3.5, roofRidgeOffset = .11, ridgeX = x + roofRidgeOffset;
+    const pitch = (roofHigh - wallTop) / (w - roofRidgeOffset), carportPitch = Math.tan(2 * Math.PI / 180);
+    const roofAt = px => px < ridgeX ? roofHigh + (px - ridgeX) * carportPitch : roofHigh - (px - ridgeX) * pitch;
     const materials = {
-      render: { color: '#888984', roughness: 0.91 },
+      render: { color: facadeFinish.color, roughness: 0.91 },
       paint: { color: '#e6e3dc', roughness: 0.86 },
       floor: { color: '#b1b3af', roughness: 0.48 },
-      foundation: { color: '#787b78', roughness: 0.9 },
+      foundation: { color: '#353332', roughness: 0.65, finish: 'marmolit' },
       skirting: { color: '#a4aaa7', roughness: 0.55 },
       steel: { color: '#626a6d', roughness: 0.4, metalness: 0.75 },
       hardware: { color: '#b6bab9', roughness: 0.25, metalness: 0.9 },
@@ -77,11 +80,21 @@ const GarageModel = (() => {
         if (side === 'S') { coreY += finish; coreD -= finish; linerD = finish; }
         if (side === 'W') { coreW -= finish; linerX += width - finish; linerW = finish; }
         if (side === 'E') { coreX += finish; coreW -= finish; linerW = finish; }
-        prism(`wall_${side}_${i}`, coreX, coreY, coreW, coreD, bottom, bottom,
-          roofAt(coreX), roofAt(coreX + coreW), 'render', side);
-        prism(`wall_lining_${side}_${i}`, linerX, linerY, linerW, linerD, bottom, bottom,
-          roofAt(linerX), roofAt(linerX + linerW), 'paint', side);
+        for (const [name, start, startY, span, spanY, material] of [
+          [`wall_${side}_${i}`, coreX, coreY, coreW, coreD, 'render'],
+          [`wall_lining_${side}_${i}`, linerX, linerY, linerW, linerD, 'paint']
+        ]) {
+          const cuts = [start, ...(start < ridgeX && start + span > ridgeX ? [ridgeX] : []), start + span];
+          for (let j = 0; j < cuts.length - 1; j++) prism(j ? `${name}_ridge_${j}` : name,
+            cuts[j], startY, cuts[j + 1] - cuts[j], spanY, bottom, bottom,
+            roofAt(cuts[j]), roofAt(cuts[j + 1]), material, side);
+        }
         if (bottom === 0) {
+          const thickness = .012;
+          const plinthX = side === 'W' ? px - thickness : side === 'E' ? px + width : px;
+          const plinthY = side === 'N' ? py - thickness : side === 'S' ? py + depth : py;
+          box(`wall_plinth_${side}_${i}`, plinthX, plinthY, -.035,
+            alongX ? width : thickness, alongX ? thickness : depth, .285, 'foundation', side, 0);
           const sx = side === 'W' ? px + width : side === 'E' ? px - 0.009 : px;
           const sy = side === 'N' ? py + depth : side === 'S' ? py - 0.009 : py;
           box(`wall_skirting_${side}_${i}`, sx, sy, 0, alongX ? width : 0.009,
@@ -91,6 +104,10 @@ const GarageModel = (() => {
     }
 
     const innerX = x + wallT, innerY = y + wallT, innerW = w - 2 * wallT, innerD = d - 2 * wallT;
+    for (const side of ['W', 'E']) for (const [corner, start] of [['N', y], ['S', y + d - wallT]]) {
+      box(`plinth_return_${side}_${corner}`, side === 'W' ? x - .012 : x + w, start,
+        -.035, .012, wallT, .285, 'foundation', side, 0);
+    }
     prism('ceiling_backing', innerX, innerY, innerW, innerD,
       roofAt(innerX) - 0.034, roofAt(innerX + innerW) - 0.034,
       roofAt(innerX) - 0.01, roofAt(innerX + innerW) - 0.01, 'charcoal', 'roof');
@@ -283,8 +300,8 @@ const GarageModel = (() => {
       categoryVisibility: { gateOpen: false },
       gateFinish: {manufacturer:'Hörmann',model:'RENOMATIC',surface:'PLANAR',style:'L',exterior:'light grey',interior:'white',
         note:'Light grey is an approximate visualization colour; exact RAL and finish sample are unconfirmed.'},
-      dims: { rect, wallT, wallTop: floorHeight + wallTop, roofHigh: floorHeight + roofHigh, pitch, floorY: floorHeight } };
+      dims: { rect, wallT, wallTop: floorHeight + wallTop, roofHigh: floorHeight + roofHigh, pitch, roofRidgeOffset, roofEndOverhang:.05, roofEastOverhang:.05, carportPitch, floorY: floorHeight } };
   }
-  return { build, groundPatch };
+  return { build, groundPatch, facadeFinish };
 })();
 if (typeof module !== 'undefined') module.exports = { GarageModel };

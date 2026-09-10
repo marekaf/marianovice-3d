@@ -87,6 +87,7 @@
   <button data-view="sim" data-loft-focus hidden>Sim rig proposal</button>
   <button data-view="trainer" data-loft-focus hidden>Bike trainer proposal</button>
   <button data-view="landing" data-loft-focus hidden>Loft landing</button>
+  <button data-view="roofWindow" data-loft-focus hidden>Stair roof window</button>
   <button data-view="attic" data-loft-focus hidden>Attic storage</button>
   <label id="rowGate"><input type="checkbox" id="toggleGate"> Gate open</label>
   <label id="rowVehicles"><input type="checkbox" id="toggleVehicles" checked> Vehicles</label>
@@ -101,24 +102,27 @@
 
 <script src="terrain.js?v=f11b9d65254d"></script>
 <script src="layout.js?v=1a46a61d1c46"></script>
-<script src="garage-model.js?v=cdb29f4bf771"></script>
-<script src="furniture-model.js?v=26476df75f18"></script>
+<script src="garage-model.js?v=8116afc969bc"></script>
+<script src="furniture-model.js?v=7466ac5d1a2f"></script>
 <script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=5d9cb500c019"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
-<script src="interiors3d.js?v=7a1a0df35192"></script>
+<script src="interiors3d.js?v=247b8a579711"></script>
 <script src="vehicle-model.js"></script>
-<script src="house-interior.js?v=9f05e1e1dd7f"></script>
+<script src="house-interior.js?v=7f8e3e1eb260"></script>
+<script src="house-roof.js"></script>
+<script src="docs/house-roof-windows.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mountInteriorUI } from './interior-ui.js';
+import { prepareLoftRoofData, attachLoftRoofWindows } from './docs/loft-roof-windows.js';
 import { attachEyeLevelWalkthrough } from './docs/eye-level-walkthrough.js?v=f53642429967';
 import { ELECTRICAL_POINTS } from './docs/electrical-points.js';
 import { attachElectricalView } from './docs/electrical-view.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { buildModel } from './model3d.js?v=c01f6fdccf42';
+import { buildModel } from './model3d.js?v=2271bf3f980e';
 
 RectAreaLightUniformsLib.init();
 const scene = new THREE.Scene();
@@ -172,7 +176,7 @@ if (hasHouse) {
     document.getElementById('fitoutStatus').textContent = `Office fit-out unavailable: ${error.message}`;
   }
   try {
-    livingIntegration = await import('./docs/living-interior.js?v=df360e65df66');
+    livingIntegration = await import('./docs/living-interior.js?v=54501b62efb2');
     const {createBathroomFinishes}=await import('./docs/bathroom-finishes.js');
     bathroomFinishes=createBathroomFinishes(THREE,HOUSE_INTERIOR);
     utilityIntegration=await import('./docs/utility-equipment.js');
@@ -209,8 +213,15 @@ if (hasHouse) {
 }
 const hasLoft = typeof HOUSE_LOFT !== 'undefined';
 let loft = null;
+let loftRoofFitout = null;
 if (hasLoft) {
-  loft = INTERIORS3D.buildHouse(THREE, {...HOUSE_LOFT,intWalls:HOUSE_LOFT.intWalls.filter(w=>w.id!=='P13')}, { floorY: 2.72, buildModel,finishColors:loftIntegration?.finishColors });
+  const roof = HouseRoof.describe({bbox:[0,0,10.8,19.25],atrium:[0,8.75,4.45,12],gable:[3.2,10.8],baseY:0});
+  const windows = RoofWindows.build({gable:[3.2,10.8],ridgeY:roof.ridgeY,eaveY:roof.ridgeY-4.25,windows:[
+    {side:'e',z:17.58,width:.66,height:1.4},{side:'e',z:13.6,width:.78,height:1.4},{side:'w',z:13.6,width:.78,height:1.4},
+  ]});
+  const loftData = prepareLoftRoofData({...HOUSE_LOFT,intWalls:HOUSE_LOFT.intWalls.filter(w=>w.id!=='P13')},roof,windows);
+  loft = INTERIORS3D.buildHouse(THREE, loftData, { floorY: HOUSE_LOFT.floorY, buildModel,finishColors:loftIntegration?.finishColors });
+  loftRoofFitout = attachLoftRoofWindows(THREE,loft,loftData,{buildModel});
   scene.add(loft.root);
   document.getElementById('loftBtn').style.display = '';
 }
@@ -314,8 +325,8 @@ if (hasLoft) {
   const o = loft.dims.originPlot;
   BUILDINGS.loft = {
     root: loft.root, walls: loft.walls, ceiling: loft.ceiling, labels: loft.labels, wallIds: loft.wallIds, furniture: loft.furniture,
-    views: mkViews(o.x + loft.dims.w / 2, o.z + loft.dims.d / 2, 2.72 + 1.1, loft.dims.w, loft.dims.d, 3.2, 'HOUSE PODKROVÍ'),
-    dims: `podkroví · 2.01–2.03 · clear 0.85–2.27 m · floor +2.72`,
+    views: mkViews(o.x + loft.dims.w / 2, o.z + loft.dims.d / 2, loft.dims.floorY + 1.1, loft.dims.w, loft.dims.d, 3.2, 'HOUSE PODKROVÍ'),
+    dims: `podkroví · 2.01–2.03 · clear 0.85–2.27 m · floor +${HOUSE_LOFT.floorY.toFixed(2)}`,
   };
 }
 
@@ -324,6 +335,12 @@ if(loftFitout)for(const[name,preset]of Object.entries(loftFitout.presets)){
   BUILDINGS.loft.views[name]={label:`LOFT · ${name.toUpperCase()}`,pos:world(preset.position),target:world(preset.target),up:[0,1,0],lookThrough:[],cut:false,ceil:true,rotate:true,perspective:true};
 }
 let curB = hasHouse ? 'house' : 'garage', curV = 'cut3d';
+if (loftRoofFitout) {
+  const o = loft.dims.originPlot;
+  BUILDINGS.loft.views.roofWindow = {label:'LOFT · STAIR ROOF WINDOW',
+    pos:[o.x+8.65,loft.dims.floorY+1.7,o.z+14.55],target:[o.x+8.9125,5.2375,o.z+13.6],
+    up:[0,1,0],lookThrough:[],cut:false,ceil:true,rotate:true,perspective:true};
+}
 let walkthrough = null;
 let electrical = null;
 
@@ -332,9 +349,14 @@ function applyVisibility() {
   const B = BUILDINGS[curB];
   const hidden = new Set(B.views[curV].lookThrough);
   if (document.getElementById('toggleCut').checked) { hidden.add('S'); hidden.add('E'); }
-  for (const b in BUILDINGS) BUILDINGS[b].root.visible = (b === curB);
-  for (const k of ['N', 'S', 'E', 'W']) B.walls[k].visible = !hidden.has(k);
-  B.ceiling.visible = document.getElementById('toggleCeiling').checked;
+  const combinedHouse = camera.isPerspectiveCamera && ['house','loft'].includes(curB);
+  for (const [name,building] of Object.entries(BUILDINGS)) {
+    building.root.visible = name === curB || combinedHouse && ['house','loft'].includes(name);
+    if (!building.root.visible) continue;
+    for (const side of ['N','S','E','W']) building.walls[side].visible = name === curB
+      ? !hidden.has(side) : !(document.getElementById('toggleCut').checked && ['S','E'].includes(side));
+    building.ceiling.visible = document.getElementById('toggleCeiling').checked;
+  }
   if (curB === 'garage') {
     const gateOpen = document.getElementById('toggleGate').checked;
     gar.gateClosed.visible = !hidden.has('S') && !gateOpen;
@@ -343,7 +365,7 @@ function applyVisibility() {
   }
   for (const b in BUILDINGS) if (BUILDINGS[b].labels) BUILDINGS[b].labels.visible = (b === curB) && !camera.isPerspectiveCamera && document.getElementById('toggleLabels').checked;
   for (const b in BUILDINGS) if (BUILDINGS[b].wallIds) BUILDINGS[b].wallIds.visible = (b === curB) && document.getElementById('toggleWallIds').checked;
-  for (const b in BUILDINGS) if (BUILDINGS[b].furniture) BUILDINGS[b].furniture.visible = (b === curB) && document.getElementById('toggleJoinery').checked;
+  for (const b in BUILDINGS) if (BUILDINGS[b].furniture) BUILDINGS[b].furniture.visible = BUILDINGS[b].root.visible && document.getElementById('toggleJoinery').checked;
   document.getElementById('rowJoinery').style.display = BUILDINGS[curB].furniture ? '' : 'none';
   document.getElementById('rowWallIds').style.display = BUILDINGS[curB].wallIds ? '' : 'none';
   document.getElementById('rowGate').style.display = curB === 'garage' ? '' : 'none';
@@ -536,7 +558,7 @@ applyHash();
 mountInteriorUI();
 window.addEventListener('hashchange', applyHash);
 
-window.DEBUG = { scene, get camera() { return camera; }, walkthrough, electrical, gar, livingFitout,utilityFitout,loftFitout,stairFitout,ledFitout,entranceFitout,kitchenWindowFitout,cathedralFitout,
+window.DEBUG = { scene, get camera() { return camera; }, walkthrough, electrical, gar, livingFitout,utilityFitout,loftFitout,loftRoofFitout,stairFitout,ledFitout,entranceFitout,kitchenWindowFitout,cathedralFitout,
   sau: { root: saunaRoot, model: saunaModel, categories: saunaCategories, walls: BUILDINGS.sauna.walls,
     ceiling: saunaCategories.roof, furniture: saunaCategories.furniture, dims: { rect: SA, floorY: 0, clearH: 2.5 } },
   hou: hasHouse ? hou : null, loft: hasLoft ? loft : null };

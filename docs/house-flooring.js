@@ -9,7 +9,7 @@ function insidePolygon(points, x, z) {
 
 export function houseFlooringModel(house, officeOutlines = [], { regions = null } = {}) {
   const rectPolygon = room => [[room.x0, room.z0], [room.x1, room.z0], [room.x1, room.z1], [room.x0, room.z1]];
-  const exteriorThresholds=(house.extWalls||[]).filter(w=>w.openings.some(o=>o.door)&&['N','S','E','W'].includes(w.face)).map(w=>{
+  const exteriorThresholds=(house.extWalls||[]).filter(w=>w.openings.some(o=>o.door||!(o.sill>0))&&['N','S','E','W'].includes(w.face)).map(w=>{
     const [x0,z0]=w.a,[x1,z1]=w.b,midX=(x0+x1)/2,midZ=(z0+z1)/2;
     return rectPolygon({x0:w.face==='E'?midX-.05:x0,x1:w.face==='W'?midX+.05:x1,
       z0:w.face==='S'?midZ-.05:z0,z1:w.face==='N'?midZ+.05:z1});

@@ -6,7 +6,7 @@ const FurnitureModel = (() => {
       front: { color: '#f2f0ea', roughness: 0.5 },
       appliance: { color: '#565b60', roughness: 0.4, metalness: 0.3 },
       ceramic: { color: '#ffffff', roughness: 0.15 },
-      glass: { color: '#e7f0ef', roughness: 0.025, transmission: 1 },
+      glass: { color: '#e7f0ef', roughness: 0.025, transmission: 1, thickness: .008 },
       mirror: { color: '#cfdde6', metalness: 0.3, roughness: 0.08 },
       plinth: { color: '#2b2b2b', roughness: 0.8 },
       mattress: { color: '#eeeae0', roughness: 0.94 },

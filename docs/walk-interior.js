@@ -30,10 +30,10 @@ function insetFacade(mesh,wall,outline) {
   mesh.geometry.computeBoundingSphere();
 }
 
-export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,exteriorWallHeight=data.clearH,roofWallProfile}) {
+export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,exteriorWallHeight=data.clearH,roofWallProfile,loftData,loftRoof,loftWindows}) {
   const {capRoofWall}=await import('./roof-wall-cap.js?v=0ed105086bfd');
   const [officeModule,living,bathroom,utility,stairs,led,entrance,kitchen,cathedral,electrical,records,electricalView,{RoomEnvironment}]=await Promise.all([
-    import('./office-integration.js'),import('./living-interior.js?v=df360e65df66'),import('./bathroom-finishes.js'),
+    import('./office-integration.js'),import('./living-interior.js?v=54501b62efb2'),import('./bathroom-finishes.js'),
     import('./utility-equipment.js'),import('./stair-finishes.js'),import('./interior-led.js'),
     import('./entrance-interior.js'),import('./kitchen-window-worktop.js'),import('./cathedral-interior.js'),
     import('./electrical-model.js'),import('./electrical-points.js'),import('./electrical-view.js'),
@@ -89,6 +89,14 @@ export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,e
     house.electrical=electrical.attachElectricalPoints(THREE,house,records.ELECTRICAL_POINTS
       .filter(point=>point.building==='house'&&point.resolved&&!point.occupiedBy)
       .map(point=>electricalView.outletOnFinishedSurface(point,panels)));
+    if(loftData){
+      const {attachWalkLoft}=await import('./walk-loft.js');
+      const groundDoorCount=doors.length;
+      house.loftFitout=await attachWalkLoft(THREE,house,loftData,{buildModel:trackedBuild,renderer,applyChampagneFloor:officeModule.applyChampagneFloor,roof:loftRoof,windowModel:loftWindows});
+      house.loft=house.loftFitout.loft;
+      house.loft.doors=doors.splice(groundDoorCount);
+      house.loft.electrical=electrical.attachElectricalPoints(THREE,house.loft,records.ELECTRICAL_POINTS.filter(point=>point.building==='loft'&&point.resolved&&!point.occupiedBy));
+    }
     house.labels.visible=false;
     house.wallIds.visible=false;
     house.root.traverse(object=>{if(object.isLight){object.intensity=0;object.visible=false;}});

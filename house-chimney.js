@@ -1,6 +1,8 @@
+export const HOUSE_FLUE_INTERIOR_TOP = 6.95;
+
 export function houseFlue(data) {
   const f=data.fireplace;
-  return {x:(f.x0+f.x1)/2,z:f.z1-.21,radius:.09,bottom:1.975,interiorTop:6.95,top:7.75};
+  return {x:(f.x0+f.x1)/2,z:f.z1-.21,radius:.09,bottom:1.975,interiorTop:HOUSE_FLUE_INTERIOR_TOP,top:7.75};
 }
 
 export function createHouseChimney(THREE,data,{floorY,roofHeight}) {

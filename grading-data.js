@@ -41,6 +41,7 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
     const cell = sample(x, z), h = step / 2;
     cell.slope = Math.hypot((site.height(x + h, z) - site.height(x - h, z)) / step, (site.height(x, z + h) - site.height(x, z - h)) / step) * 100;
     if (!Number.isFinite(cell.slope)) throw new Error('Non-finite ground slope');
+    cell.slopeSupported = [[x,z],[x+h,z],[x-h,z],[x,z+h],[x,z-h]].every(([sx,sz])=>inside(polygon,sx,sz)&&surveyed(sx,sz)&&!excluded(sx,sz));
     cell.area = step * step;
     cells.push(cell);
     totals.plotSampleArea += cell.area;
@@ -54,6 +55,15 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
   }
   totals.surveyedArea = totals.area;
   totals.net = totals.fill - totals.cut;
+  const reviews = (site.spec.bankReview??[]).map(review=>{
+    const [x0,x1,z0,z1]=review.bounds;
+    let samples=0,peak=null;
+    for(const cell of cells)if(cell.slopeSupported&&cell.x>=x0&&cell.x<=x1&&cell.z>=z0&&cell.z<=z1){
+      samples++;
+      if(!peak||cell.slope>peak.slope)peak={x:cell.x,z:cell.z,slope:cell.slope};
+    }
+    return {id:review.id,samples,peak};
+  });
   const points = [], sections = [];
   const element = id => garden.elements.find(e => e.id === id);
   const rect = id => element(id)?.parts.find(p => p.kind === 'rect');
@@ -119,7 +129,7 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
   }
   const wicket = site.spec?.wicketLanding;
   if (wicket?.points) point('wicket', 'Wicket threshold', [0, 1].map(axis => wicket.points.reduce((sum, p) => sum + p[axis], 0) / wicket.points.length), wicket.finishedLevel);
-  return { cells, totals, points, sections, metadata: { step, sectionStep, routeSectionStep, exclusions: EXCLUSIONS.slice(), volumeMethod: 'Midpoint grid approximation; boundary cells selected by centre; no stripping, bulking, compaction or foundations allowance', totalsScope: 'Only non-building sample cells within survey convex hull', heightSurface: 'Model graded ground, not paving or finished floor', slopeMethod: 'Central differences across 0.5 m, percent; not compliance assessment', routeSlopeMethod:'Maximum absolute change in modeled walking finish between centreline samples at most 0.05 m apart; computed, not designed grades. Inner bends and crossfalls can be steeper than the centreline. Narrower features may be missed. Not an accessibility assessment or setting-out instruction.' } };
+  return { cells, totals, points, sections, reviews, metadata: { step, sectionStep, routeSectionStep, exclusions: EXCLUSIONS.slice(), volumeMethod: 'Midpoint grid approximation; boundary cells selected by centre; no stripping, bulking, compaction or foundations allowance', totalsScope: 'Only non-building sample cells within survey convex hull', heightSurface: 'Model graded ground, not paving or finished floor', slopeMethod: 'Central differences across 0.5 m, percent; not compliance assessment', reviewSlopeMethod:'Supported grade samples require the centre and all four gradient endpoints to lie inside the plot and survey hull, outside building exclusions. Finite sampling can miss narrower or steeper features. These are model-ground grades, not surveyed spot grades or allowable slopes.', routeSlopeMethod:'Maximum absolute change in modeled walking finish between centreline samples at most 0.05 m apart; computed, not designed grades. Inner bends and crossfalls can be steeper than the centreline. Narrower features may be missed. Not an accessibility assessment or setting-out instruction.' } };
 }
 
 return { createGradingData };

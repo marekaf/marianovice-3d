@@ -1,4 +1,5 @@
 import {buildCoronaBed} from '../corona-bed-model.js';
+import {buildCoffeeNicheUpper} from './coffee-niche.js';
 
 export function attachInteriorLed(THREE,house,data) {
   const group=new THREE.Group();group.name='Interior LED lighting';
@@ -32,8 +33,10 @@ export function attachInteriorLed(THREE,house,data) {
   strip('Kitchen upper strip',[run.x0+.03,run.y0-.004,run.z1-.035],[run.x1-.03,run.y0-.004,run.z1-.035],[0,-1,0],run.room);
   const island=find('ostrov 2×960').fixture,top=island.worktop;
   strip('Island overhang strip',[top.x0+.045,island.h-.004,top.z1-.045],[top.x1-.045,island.h-.004,top.z1-.045],[0,-1,0],island.room,.30);
-  const niche=find('nika uppers').fixture;
-  strip('Coffee niche strip',[niche.x1-.045,niche.y0-.004,niche.z0+.03],[niche.x1-.045,niche.y0-.004,niche.z1-.03],[0,-1,0],niche.room);
+  const niche=data.coffeeNicheUpper;
+  const nicheBottom=buildCoffeeNicheUpper(data).parts.find(p=>p.name==='coffee_upper_bottom_0');
+  const nicheStripX=nicheBottom.position[0]+nicheBottom.size[0]/2-.045;
+  strip('Coffee niche strip',[nicheStripX,niche.y0-.004,niche.z0+.03],[nicheStripX,niche.y0-.004,niche.z1-.03],[0,-1,0],niche.room);
   const windowTop=find('okno horní pás').fixture;
   strip('Sitting window strip',[windowTop.x0+.035,windowTop.y0-.004,windowTop.z0+.025],[windowTop.x0+.035,windowTop.y0-.004,windowTop.z1-.025],[0,-1,0],windowTop.room,.40);
   const bed=data.bedroomBed;
