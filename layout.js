@@ -39,10 +39,10 @@ const GARDEN = {
     {id:"Productive access",points:[[9.98,13],[9.1,13],[4.7,13]],width:1},
     {id:"Bed access",points:[[4.7,13],[6.7,13],[6.7,9.8]],width:1},
     {id:"Greenhouse access",points:[[4.7,13],[4.7,11.8],[3.2,11.8]],width:1},
-    {id:"Daily dining",points:[[23,12],[24.2,12],[24.7,12.9],[25.2,14.2],[26.1,15.2],[27.3,15.4],[28.5,15],[29,14],[28.8,12.8],[28,11.8],[27,10.6]],width:1.2},
+    {id:"Daily dining",points:[[23,12],[24.2,12],[24.7,12.9],[25.2,14.2],[25.8,15.5],[27,16],[28.3,15.8],[29.3,15],[29.7,13.8],[29.7,11],[29,9],[28,7],[27,5.3]],width:1.2},
     {id:"Quiet garden approach",points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
-    {id:"Gathering connection",points:[[30.5,10.6],[30.5,11.8],[31.8,11.8],[31.8,9.6],[32.6,8.0]],width:1.2},
-    {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[31.7,9.3],[31.4,9.3]],width:1.2},
+    {id:"Gathering connection",points:[[30.5,4.8],[31.8,4.8],[31.8,2.3],[33,2.3],[34.5,4.5],[34.5,5.7]],width:1.2},
+    {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[31.7,9.3],[32.6,8]],width:1.2},
     {id:"Service connection",points:[[38.7,17.8],[37,20],[37,26.3]],width:1.2}
   ],
   gardenReserves: [{"id":"Eastern utilities: verify extent","kind":"rect","x":38,"y":19,"w":5,"d":7,"type":"reserve"},{"id":"Low ground: drainage investigation","kind":"rect","x":37.8,"y":0.2,"w":4.1,"d":5.8,"type":"reserve"}],
@@ -70,7 +70,7 @@ const GARDEN = {
     {"id":"westBackbone","name":"West structural planting","meta":{"palette":"saunaBed","plant":"mixed"},"parts":[{"kind":"polygon","points":[[-0.9,1],[1.7,1],[1.7,6.6],[1.7,12.5],[1.6,15.5],[1.5,21.7],[0.2,22],[-0.9,12]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"productiveBorder","name":"Productive court border","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[2.1,8.8],[5,8.5],[9,8.8],[9,9.5],[5.2,9.4],[2.1,9.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"quietGardenBorder","name":"Quiet garden enclosure","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[1.5,16.3],[3.3,16.3],[6.6,16.6],[8.1,17.4],[7.7,17.8],[6.2,17.3],[3.5,17.2],[2.3,18],[2.5,20.5],[5,21.3],[7,20.8],[8.2,21.5],[6,22],[1.5,21.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
-    {"id":"eastGatheringBorder","name":"Gathering room and pond planting","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[36.8,0.3],[37.4,6.5],[41.6,6.5],[42.3,17.7],[37.7,18.5],[34.8,18.2],[31.7,18.7],[27.8,18.5],[26.8,17.2],[31,16.7],[31.6,14],[30.8,11.9],[32.4,10.8],[32.4,5.2],[28,5],[24,6],[22.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"eastGatheringBorder","name":"Gathering room and pond planting","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[24.4,0.8],[24.4,6],[22.6,6]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1},{"kind":"polygon","points":[[31.6,0.6],[36.8,0.3],[37.4,6.5],[41.6,6.5],[42.3,17.7],[37.7,18.5],[34.8,18.2],[31.7,18.7],[27.8,18.5],[26.8,17.2],[31,16.7],[31.6,14],[30.8,11.9],[32.4,10.8],[33.4,5.4],[31.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"terraceFrontage","name":"Low terrace foreground","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[25,11.8],[25.6,12.8],[25.6,15.8],[25,16.6],[24.6,16],[24.6,12.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1},{"kind":"polygon","points":[[25.6,12.4],[26.1,12.2],[27,12.3],[27.8,13],[28.1,13.8],[27.8,14.3],[27,14.6],[26.3,14.4],[25.9,13.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {
       id: "house",
@@ -203,9 +203,9 @@ const GARDEN = {
       id: "northTrees",
       name: "Gathering room canopy groups",
       parts: [
-        {kind: "circle", cx: 24.7, cy: 3.6, r: 0.5, canopyRadius: 2, fill: "#4d7a4d"},
+        {kind: "circle", cx: 22.5, cy: 2.5, r: 0.5, canopyRadius: 2, fill: "#4d7a4d"},
         {kind: "circle", cx: 34.8, cy: 3.1, r: 0.5, canopyRadius: 2, fill: "#4d7a4d"},
-        {kind: "circle", cx: 29.8, cy: 2.5, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"},
+        {kind: "circle", cx: 35.6, cy: 1.3, r: 0.5, canopyRadius: 1.7, fill: "#4d7a4d"},
         {kind: "circle", cx: 0.25, cy: 4.4, r: 0.5, canopyRadius: 1.2, form: "evergreen", fill: "#4d7a4d"},
         {kind: "circle", cx: .55, cy: 10.3, r: .5, canopyRadius: 1, form: "evergreen", fill: "#426544"},
         {kind: "circle", cx: .7, cy: 16.8, r: .5, canopyRadius: 1.1, form: "evergreen", fill: "#426544"},
@@ -263,14 +263,14 @@ const GARDEN = {
     {
       id: "pergola",
       name: "Pergola + grill 6 × 4 m",
-      meta: {grading: {level: 1.615, blend: 1.2}},
+      meta: {grading: {level: 0.95, blend: 1.2}},
       parts: [
-        {kind: "rect", x: 25, y: 6.8, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6, 3"},
-        {kind: "rect", role: "paving", x: 25.2, y: 7, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9},
-        {kind: "rect", role: "table", x: 26.82, y: 8.25, w: 2.4, d: 1.1, fill: "#d9d3c7"},
-        {kind: "text", x: 28, y: 8.66, text: "pergola + grill", cls: "lbl"},
-        {kind: "text", x: 28, y: 9.4, text: "6 × 4 m", cls: "dim"},
-        {kind: "text", x: 28, y: 10.3, text: "shared gathering room", cls: "lbl-sm", fill: "#5a4828"}
+        {kind: "rect", x: 25, y: 1.5, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6, 3"},
+        {kind: "rect", role: "paving", x: 25.2, y: 1.7, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9},
+        {kind: "rect", role: "table", x: 26.82, y: 2.95, w: 2.4, d: 1.1, fill: "#d9d3c7"},
+        {kind: "text", x: 28, y: 3.36, text: "pergola + grill", cls: "lbl"},
+        {kind: "text", x: 28, y: 4.1, text: "6 × 4 m", cls: "dim"},
+        {kind: "text", x: 28, y: 5, text: "shared gathering room", cls: "lbl-sm", fill: "#5a4828"}
       ]
     },
     {

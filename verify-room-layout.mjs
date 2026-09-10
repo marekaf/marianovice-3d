@@ -15,7 +15,7 @@ const fixed = GARDEN.elements.filter(item => fixedIds.includes(item.id));
 assert.equal(createHash('sha256').update(JSON.stringify(fixed)).digest('hex'),
   'a987da7fd6f269925bc7996a9acfb0496bc702cbc2df3ffd352ba16f5221ceb4',
   'The approved garden layout must not change buildings, terraces or the north passage');
-assert.deepEqual(footprint('pergola'), [25, 6.8, 6, 4]);
+assert.deepEqual(footprint('pergola'), [25, 1.5, 6, 4]);
 assert.deepEqual(footprint('sauna'), [5.3, 2, 4, 3]);
 assert.deepEqual(footprint('saunaShelter'), [2.3, 2, 3, 3]);
 assert.deepEqual(footprint('greenhouse'), [2.2, 12.5, 2, 3]);
@@ -32,7 +32,7 @@ assert.deepEqual(['raisedBed1','raisedBed2','raisedBed3','raisedBed4'].map(footp
   [[5.2,10.5,1,2],[7.2,10.5,1,2],[5.2,13.5,1,2],[7.2,13.5,1,2]]);
 const table = element('pergola').parts.find(part => part.role === 'table');
 assert.deepEqual([table.w, table.d], [2.4, 1.1]);
-assert.equal(element('pergola').meta.grading.level, 1.615);
+assert.equal(element('pergola').meta.grading.level, .95);
 assert.equal(element('firePit').meta.grading.level, 1.515);
 const fire = element('firePit').parts.filter(part => part.kind === 'circle');
 assert.deepEqual(fire.map(part => [part.cx, part.cy, part.r]), [[34.5,7.5,2],[34.5,7.5,.5],[34.5,7.5,.496]]);
@@ -40,8 +40,10 @@ const pond = element('pond').parts[0];
 assert.deepEqual([pond.cx,pond.cy,pond.rx,pond.ry], [34.8,14,1.5,1]);
 assert.equal(new Set(GARDEN.elements.map(item => item.id)).size, GARDEN.elements.length);
 assert.equal(GARDEN.gardenRoutes.length, 9);
-assert.deepEqual(GARDEN.gardenRoutes.find(route => route.id === 'Gathering connection'),
-  {id:'Gathering connection',points:[[30.5,10.6],[30.5,11.8],[31.8,11.8],[31.8,9.6],[32.6,8.0]],width:1.2});
+const gathering=GARDEN.gardenRoutes.find(route => route.id === 'Gathering connection');
+assert.equal(gathering.width,1.2);
+assert.deepEqual(gathering.points[0],[30.5,4.8]);
+assert(Math.hypot(gathering.points.at(-1)[0]-fire[0].cx,gathering.points.at(-1)[1]-fire[0].cy)<fire[0].r,'Gathering route must reach the firepit apron');
 const paving=element('pergola').parts.find(p=>p.role==='paving');
 const dining=GARDEN.gardenRoutes.find(r=>r.id==='Daily dining');
 const diningEnd=dining.points.at(-1);
@@ -85,7 +87,7 @@ for(const shrub of westShrubs.parts){
 assert(trees.some(t=>t.cx===2&&t.cy===28.5));assert(trees.some(t=>t.cx===4.4&&t.cy===28.6));
 assert.ok(trees.every(tree => Math.hypot(tree.cx - fire[0].cx, tree.cy - fire[0].cy) > tree.canopyRadius + fire[0].r),
   'Tree crowns must not overhang the occupied fire apron');
-for (const [cx,cy] of [[3,25],[6.8,27],[24.7,3.6],[34.8,3.1],[40.2,14]]) {
+for (const [cx,cy] of [[3,25],[6.8,27],[22.5,2.5],[34.8,3.1],[40.2,14]]) {
   assert.ok(trees.some(tree => tree.cx === cx && tree.cy === cy));
 }
 for (const reserve of GARDEN.gardenReserves) {

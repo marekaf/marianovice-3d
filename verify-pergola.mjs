@@ -20,15 +20,17 @@ const inside = (point, box, margin = 0) => point.every((v, i) =>
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
 assert.deepEqual(model, PergolaModel.build(GARDEN), 'Geometry must be repeatable');
 near(model.floorHeight - model.groundPatch.level, 0.1);
-near(TERRAIN.houseFFLInternal - model.floorHeight, 0.75, 'Pergola finish must sit 75 cm below the bedroom floor');
+near(TERRAIN.houseFFLInternal - model.floorHeight, 1.415, 'Pergola finish must follow the lower northern terrain');
+assert.deepEqual([model.groundPatch.x,model.groundPatch.y,model.groundPatch.w,model.groundPatch.d],[25,1.5,6,4]);
 near(model.groundPatch.level, element.meta.grading.level);
 const { site } = require('./grading-site.js').GradingSite.create({garden:GARDEN,terrain:TERRAIN});
 const diningRoute=GARDEN.gardenRoutes.find(route=>route.id==='Daily dining');
 near(site.routeHeight(...diningRoute.points.at(-1)),model.floorHeight,'Terrace approach must meet the lowered pergola');
-near(site.routeHeight(30.5,10.6),model.floorHeight,'Firepit connection must start at the lowered pergola');
-near(site.routeHeight(32.6,8),1.615,'Firepit finish must remain unchanged');
-near(model.floorHeight-site.routeHeight(32.6,8),.1,'Firepit remains below the pergola');
-near(site.height(28,8.8),model.floorHeight-.1,'Ground and paving must lower together');
+const gatheringRoute=GARDEN.gardenRoutes.find(route=>route.id==='Gathering connection');
+near(site.routeHeight(...gatheringRoute.points[0]),model.floorHeight,'Firepit connection must start at the lowered pergola');
+near(site.routeHeight(...gatheringRoute.points.at(-1)),1.615,'Firepit finish must remain unchanged');
+near(site.routeHeight(...gatheringRoute.points.at(-1))-model.floorHeight,.565,'Firepit remains above the northern pergola');
+near(site.height(28,3.5),model.floorHeight-.1,'Ground and paving must lower together');
 for (const part of model.parts) {
   assert.ok(model.materials[part.material], `${part.name}: unknown material`);
   assert.ok(['structure', 'roof', 'furniture'].includes(part.category));

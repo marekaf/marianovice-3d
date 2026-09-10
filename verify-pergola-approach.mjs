@@ -9,33 +9,33 @@ const survey=existsSync(new URL('./docs/survey-terrain.js',import.meta.url))?req
 const {site}=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey});
 const route=GARDEN.gardenRoutes.find(r=>r.id==='Daily dining');
 const length=route.points.slice(1).reduce((sum,b,i)=>sum+Math.hypot(b[0]-route.points[i][0],b[1]-route.points[i][1]),0);
-assert(length>10,'Dining approach needs enough length for the retained 750 mm fall');
-let maxGrade=0,maxEdgeGrade=0,maxCrossfall=0;
+assert(length>17,'Dining approach needs enough length for the 1415 mm fall');
+let maxGrade=0,maxEdgeGrade=0,maxCrossfall=0,maxEdgePoint;
 for(let i=1;i<route.points.length;i++) {
   const a=route.points[i-1],b=route.points[i],l=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/l,uz=(b[1]-a[1])/l;
   for(let s=.01;s<l-.01;s+=.02)for(const offset of[-.59,-.4,-.2,0,.2,.4,.59]){
     const x=a[0]+ux*s-uz*offset,z=a[1]+uz*s+ux*offset;
     const grade=Math.abs(site.routeHeight(x+ux*.005,z+uz*.005)-site.routeHeight(x-ux*.005,z-uz*.005))/.01;
     if(offset===0)maxGrade=Math.max(maxGrade,grade);
-    maxEdgeGrade=Math.max(maxEdgeGrade,grade);
+    if(grade>maxEdgeGrade){maxEdgeGrade=grade;maxEdgePoint=[x,z];}
     maxCrossfall=Math.max(maxCrossfall,Math.abs(site.routeHeight(x-uz*.005,z+ux*.005)-site.routeHeight(x+uz*.005,z-ux*.005))/.01);
     assert(site.routeHeight(x,z)-site.height(x,z)>=.095,'Walking ribbon has continuous support below its finish');
   }
 }
 assert(maxGrade<=.10,'Approach centerline stays at or below 10% sampled longitudinal grade');
-assert(maxEdgeGrade<=.14,'Inner bend stays below the provisional 14% sampled edge-grade limit');
+assert(maxEdgeGrade<=.14,`Inner bend stays below the provisional 14% sampled edge-grade limit: ${maxEdgeGrade} at ${maxEdgePoint}`);
 assert(maxCrossfall<=.075,'The turn does not introduce a sharp transverse ridge');
 assert.equal(site.routeHeight(...route.points[0]),2.465);
-assert.equal(site.routeHeight(...route.points.at(-1)),1.715);
+assert.equal(site.routeHeight(...route.points.at(-1)),1.05);
 for(let z=11.58;z<=12.59;z+=.02)assert(Math.abs(site.routeHeight(23.58,z)-2.465)<1e-9,'Entire terrace joining edge remains level');
 const end=route.points.at(-1),previous=route.points.at(-2),lastLength=Math.hypot(end[0]-previous[0],end[1]-previous[1]);
 const paving=GARDEN.elements.find(e=>e.id==='pergola').parts.find(p=>p.role==='paving');
 assert(end[1]<=paving.y+paving.d,'Lower route center must reach the actual paving edge, not touch it with the cap tip');
 assert(end[0]-route.width/2>=paving.x&&end[0]+route.width/2<=paving.x+paving.w,'Full-width landing fits the actual paving');
-for(let offset=-.59;offset<=.59;offset+=.02)assert(Math.abs(site.routeHeight(end[0]+offset,paving.y+paving.d)-1.715)<1e-9,'Full paving-edge overlap stays level');
+for(let offset=-.59;offset<=.59;offset+=.02)assert(Math.abs(site.routeHeight(end[0]+offset,paving.y+paving.d)-1.05)<1e-9,'Full paving-edge overlap stays level');
 for(let offset=-.59;offset<=.59;offset+=.02){
   const x=end[0]-(end[1]-previous[1])/lastLength*offset,z=end[1]+(end[0]-previous[0])/lastLength*offset;
-  assert(Math.abs(site.routeHeight(x,z)-1.715)<1e-9,'Entire lower joining edge remains level');
+  assert(Math.abs(site.routeHeight(x,z)-1.05)<1e-9,'Entire lower joining edge remains level');
 }
 const {SiteTerrain}=require('./site-terrain.js');
 const withoutApproach=structuredClone(site.spec);

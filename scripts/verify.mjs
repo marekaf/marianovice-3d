@@ -22,6 +22,8 @@ const checks=[
   'verify-sauna.mjs',
   'verify-pergola.mjs',
   'verify-pergola-approach.mjs',
+  'verify-pergola-bedroom-view.mjs',
+  'verify-pond-approach.mjs',
   'verify-perennial-sharing.mjs',
   'verify-garage.mjs',
   'verify-garage-roof-ends.mjs',
