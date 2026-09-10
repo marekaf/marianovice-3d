@@ -72,7 +72,7 @@ try{
       return{x:r.camera.position.x,center:center.x,valid:r.doors.canStandAt(r.camera.position.x,r.camera.position.z)};
     },name);
     assert(passage.x<passage.center,`${name}: walk through the open portal`);assert(passage.valid);
-    await page.evaluate(name=>{const r=doorReview,g=r.doors.doors.find(g=>g.name===name);r.aim(g,-1);},name);
+    await page.evaluate(name=>{const r=doorReview,g=r.doors.doors.find(g=>g.name===name);r.aim(g,name==='opening_W7_0'?1:-1);},name);
     await page.waitForFunction(()=>document.querySelector('#walkDoorPrompt').textContent.includes('Close sliding portal'));
     await page.keyboard.press('e');
     assert.equal(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name),false);
