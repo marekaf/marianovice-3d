@@ -204,7 +204,7 @@ import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=17bbd6cc230
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=7f8e3e1eb260';
+  script.src = './house-interior.js?v=af0c2df90b47';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
