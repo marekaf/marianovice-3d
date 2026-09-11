@@ -9,7 +9,7 @@ const survey=existsSync(new URL('./docs/survey-terrain.js',import.meta.url))?req
 const {site}=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey});
 const route=GARDEN.gardenRoutes.find(r=>r.id==='Daily dining');
 const length=route.points.slice(1).reduce((sum,b,i)=>sum+Math.hypot(b[0]-route.points[i][0],b[1]-route.points[i][1]),0);
-assert(length>17,'Dining approach needs enough length for the 1415 mm fall');
+assert(length>=4.5,'Dining approach accommodates the 450 mm fall at 10% or less');
 let maxGrade=0,maxEdgeGrade=0,maxCrossfall=0,maxEdgePoint;
 for(let i=1;i<route.points.length;i++) {
   const a=route.points[i-1],b=route.points[i],l=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/l,uz=(b[1]-a[1])/l;
@@ -24,18 +24,18 @@ for(let i=1;i<route.points.length;i++) {
 }
 assert(maxGrade<=.10,'Approach centerline stays at or below 10% sampled longitudinal grade');
 assert(maxEdgeGrade<=.14,`Inner bend stays below the provisional 14% sampled edge-grade limit: ${maxEdgeGrade} at ${maxEdgePoint}`);
-assert(maxCrossfall<=.075,'The turn does not introduce a sharp transverse ridge');
+assert(maxCrossfall<=.075,`The turn does not introduce a sharp transverse ridge: ${maxCrossfall}`);
 assert.equal(site.routeHeight(...route.points[0]),2.465);
-assert.equal(site.routeHeight(...route.points.at(-1)),1.05);
+assert.equal(site.routeHeight(...route.points.at(-1)),2.015);
 for(let z=11.58;z<=12.59;z+=.02)assert(Math.abs(site.routeHeight(23.58,z)-2.465)<1e-9,'Entire terrace joining edge remains level');
 const end=route.points.at(-1),previous=route.points.at(-2),lastLength=Math.hypot(end[0]-previous[0],end[1]-previous[1]);
 const paving=GARDEN.elements.find(e=>e.id==='pergola').parts.find(p=>p.role==='paving');
 assert(end[1]<=paving.y+paving.d,'Lower route center must reach the actual paving edge, not touch it with the cap tip');
 assert(end[0]-route.width/2>=paving.x&&end[0]+route.width/2<=paving.x+paving.w,'Full-width landing fits the actual paving');
-for(let offset=-.59;offset<=.59;offset+=.02)assert(Math.abs(site.routeHeight(end[0]+offset,paving.y+paving.d)-1.05)<1e-9,'Full paving-edge overlap stays level');
+for(let offset=-.59;offset<=.59;offset+=.02)assert(Math.abs(site.routeHeight(end[0]+offset,paving.y+paving.d)-2.015)<1e-9,'Full paving-edge overlap stays level');
 for(let offset=-.59;offset<=.59;offset+=.02){
   const x=end[0]-(end[1]-previous[1])/lastLength*offset,z=end[1]+(end[0]-previous[0])/lastLength*offset;
-  assert(Math.abs(site.routeHeight(x,z)-1.05)<1e-9,'Entire lower joining edge remains level');
+  assert(Math.abs(site.routeHeight(x,z)-2.015)<1e-9,'Entire lower joining edge remains level');
 }
 const {SiteTerrain}=require('./site-terrain.js');
 const withoutApproach=structuredClone(site.spec);
@@ -43,7 +43,7 @@ withoutApproach.routeProfiles=withoutApproach.routeProfiles.filter(r=>r.id!=='Da
 for(const pad of [...site.spec.finishPads,...site.spec.protectedPads,...site.spec.gatheringPads.filter(p=>p.radius===undefined)]){
   for(let i=0;i<=8;i++)for(let j=0;j<=8;j++){
     const x=pad.x0+(pad.x1-pad.x0)*i/8,z=pad.z0+(pad.z1-pad.z0)*j/8;
-    assert(Math.abs(site.height(x,z)-SiteTerrain.height(withoutApproach,x,z))<1e-9,'Approach soil blending cannot overrun a fixed slab core');
+    assert(Math.abs(site.height(x,z)-SiteTerrain.height(withoutApproach,x,z))<1e-9,`Approach soil blending cannot overrun a fixed slab core at ${x},${z}: ${site.height(x,z)} vs ${SiteTerrain.height(withoutApproach,x,z)}`);
   }
 }
 const bounds=site.spec.routeProfiles.find(r=>r.id==='Daily dining').bankBounds;
@@ -71,7 +71,7 @@ for(let x=22;x<=31;x+=.1)for(let z=10.8;z<=17.2;z+=.1){
 }
 assert(maxBankGrade<1.3,`Planted shoulder stays below the provisional 130% sampled cap: ${maxBankGrade} at ${maxBankPoint}`);
 const planting=GARDEN.elements.find(z=>z.id==='terraceFrontage');
-assert(planting.parts.filter(p=>p.kind==='polygon').length>=2,'Low planting occupies the loop as well as the original terrace strip');
+assert(planting.parts.filter(p=>p.kind==='polygon').length>=1,'Low planting remains beside the terrace approach');
 const viewer=readFileSync(new URL('./index.html',import.meta.url),'utf8');
 const plantingSource=viewer.slice(viewer.indexOf('// Planting communities follow'),viewer.indexOf('const smokeParticles'));
 const positions=[];

@@ -1,6 +1,8 @@
 // Renders the 2D SVG plan from layout.js data. Used by editor.html and generate-svg.js.
 (function () {
   const ROWS = "abcdefghijklmnopqrstuvwxyz";
+  const presentation = typeof module !== 'undefined' ? require('./grading-overlay.js').GradingOverlay : GradingOverlay;
+  const zonesModel = typeof module !== 'undefined' ? require('./grading-zones.js').GradingZones : GradingZones;
 
   function esc(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -14,6 +16,10 @@
   }
 
   function renderPlanSVG(garden) {
+    const grading = zonesModel.create(garden);
+    const zoneExtra = Math.max(0, grading.zones.length - 9) * 18;
+    const footerShift = Math.max(0, zoneExtra + 665 + (grading.dimensions.length - 1) * 15 + 24 - 792);
+    const pageHeight = 880 + footerShift;
     const S = garden.m2px;
     const px = (m) => Math.round(m * S * 100) / 100;
     const cell = garden.gridCellM * S;
@@ -25,7 +31,7 @@
     const plotPts = garden.plot.vertices.map(([x, y]) => `${px(x)},${px(y)}`).join(" ");
     const out = [];
 
-    out.push(`<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="880" viewBox="0 0 1100 880" font-family="-apple-system, BlinkMacSystemFont, sans-serif">`);
+    out.push(`<svg xmlns="http://www.w3.org/2000/svg" width="1450" height="${pageHeight}" viewBox="0 0 1450 ${pageHeight}" font-family="-apple-system, BlinkMacSystemFont, sans-serif">`);
     out.push(`  <defs>
     <pattern id="cellgrid" width="${cell}" height="${cell}" patternUnits="userSpaceOnUse">
       <path d="M ${cell} 0 L 0 0 0 ${cell}" fill="none" stroke="#d8d8d8" stroke-width="0.6"/>
@@ -58,12 +64,18 @@
     .leg { font-size: 8.5px; }
     .note { font-size: 8.5px; fill: #888; }
   </style>`);
-    out.push(`  <rect x="0" y="0" width="1100" height="880" fill="white"/>`);
+    out.push(`  <rect x="0" y="0" width="1450" height="${pageHeight}" fill="white"/>`);
     out.push(`  <text x="550" y="28" class="title">${esc(garden.title)}</text>`);
-    out.push(`  <text x="550" y="46" class="subtitle">Plot ${r2(polyArea(garden.plot.vertices))} m² · grid ${garden.gridCellM} × ${garden.gridCellM} m (columns 1–${cols}, rows a–${ROWS[rows - 1]})</text>`);
+    out.push(`  <text x="550" y="46" class="subtitle">Pozemek ${r2(polyArea(garden.plot.vertices))} m² · síť ${garden.gridCellM} × ${garden.gridCellM} m (sloupce 1–${cols}, řádky a–${ROWS[rows - 1]})</text>`);
     out.push(`  <g transform="translate(80, 110)">`);
     out.push(`    <g clip-path="url(#plotShape)"><rect x="-50" y="-10" width="900" height="700" fill="url(#majorgrid)"/></g>`);
     out.push(`    <polygon points="${plotPts}" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>`);
+    for (const zone of grading.zones) {
+      out.push(`<g data-zone="${zone.id}" fill="${presentation.colorFor(zone)}" fill-opacity=".24" stroke="none">`);
+      for(const polygon of zone.polygons)out.push(`<polygon points="${polygon.map(([x,y])=>`${px(x)},${px(y)}`).join(' ')}"/>`);
+      out.push('</g>');
+
+    }
 
     const colLabels = [];
     for (let i = 1; i <= cols; i++) colLabels.push(`<text x="${(i - 0.5) * cell}" y="-6">${i}</text>`);
@@ -103,30 +115,45 @@
     garden.elements.filter(el=>el.meta?.plant).forEach(renderElement);
     for(const route of garden.gardenRoutes ?? []) {
       const points=route.points.map(([x,y])=>`${px(x)},${px(y)}`).join(' ');
-      out.push(`<polyline data-route="${esc(route.id)}" points="${points}" fill="none" stroke="#c8bea5" stroke-width="${px(route.width)}" stroke-linecap="round" stroke-linejoin="round"><title>${esc(route.id)}</title></polyline>`);
+      const routeName = {'Daily dining':'Cesta k pergole','Gathering connection':'Spojení pergoly a ohniště'}[route.id] || route.name || route.id;
+      out.push(`<polyline data-route="${esc(route.id)}" points="${points}" fill="none" stroke="#c8bea5" stroke-width="${px(route.width)}" stroke-linecap="round" stroke-linejoin="round"><title>${esc(routeName)}</title></polyline>`);
     }
     garden.elements.filter(el=>!el.meta?.plant).forEach(renderElement);
+    for(const zone of grading.zones)for(const [a,b] of zone.boundaries??[])out.push(`<path d="M${px(a[0])},${px(a[1])}L${px(b[0])},${px(b[1])}" fill="none" stroke="white" stroke-width="4"/><path d="M${px(a[0])},${px(a[1])}L${px(b[0])},${px(b[1])}" fill="none" stroke="${presentation.colorFor(zone)}" stroke-width="2.1"/>`);
+    for(const dim of grading.dimensions.filter(d=>d.from&&d.to)) {
+      const [x1,y1]=dim.from.map(px),[x2,y2]=dim.to.map(px);
+      const length=Math.hypot(x2-x1,y2-y1)||1,nx=-(y2-y1)/length,ny=(x2-x1)/length,offset=-7;
+      const ax=x1+nx*offset,ay=y1+ny*offset,bx=x2+nx*offset,by=y2+ny*offset;
+      const value=Math.hypot(dim.to[0]-dim.from[0],dim.to[1]-dim.from[1]).toFixed(2).replace('.',',');
+      out.push(`<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>${esc(dim.name)}: ${esc(dim.value)}</title><path d="M${x1},${y1}L${ax+nx*3},${ay+ny*3}M${x2},${y2}L${bx+nx*3},${by+ny*3}M${ax},${ay}L${bx},${by}" fill="none"/><text x="${(ax+bx)/2}" y="${(ay+by)/2-3}" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">${value} m</text></g>`);
+    }
+    for(const segment of grading.fenceSegments)out.push(`<path data-measured-fence="${esc(segment.id??segment.side??'fence')}" d="M${px(segment.start[0])},${px(segment.start[1])}L${px(segment.end[0])},${px(segment.end[1])}" fill="none" stroke="#243b32" stroke-width="2" stroke-dasharray="6 3"/>`);
+    out.push(presentation.svgLabels(grading.zones,px,px,10));
+    out.push(presentation.svgLevelMarks(grading.levelMarks,px,px));
     out.push(`  </g>`);
 
     out.push(`  <g transform="translate(1020, 110)">
     <circle cx="0" cy="0" r="30" fill="white" stroke="#555" stroke-width="1.5"/>
     <path d="M 0 -24 L 6 4 L 0 -7 L -6 4 Z" fill="#2a2a2a"/>
     <path d="M 0 7 L 6 -4 L 0 24 L -6 -4 Z" fill="#999"/>
-    <text x="0" y="-36" class="compass">N</text>
-    <text x="0" y="44" class="compass">S</text>
-    <text x="-40" y="5" class="compass">W</text>
-    <text x="40" y="5" class="compass">E</text>
+    <text x="0" y="-36" class="compass">S</text>
+    <text x="0" y="44" class="compass">J</text>
+    <text x="-40" y="5" class="compass">Z</text>
+    <text x="40" y="5" class="compass">V</text>
   </g>`);
-    const rows2 = garden.elements.map((el) => scheduleRow(el, garden.gridCellM, garden));
-    out.push(`  <g transform="translate(902, 190)" font-size="8.5" fill="#2a2a2a">`);
-    out.push(`    <text x="0" y="0" font-weight="700" font-size="10">ELEMENT SCHEDULE</text>`);
-    out.push(`    <text x="0" y="15" fill="#555" font-weight="600">element</text><text x="88" y="15" fill="#555" font-weight="600">size (m)</text><text x="170" y="15" fill="#555" font-weight="600" text-anchor="end">m²</text><text x="193" y="15" fill="#555" font-weight="600" text-anchor="end">cell</text>`);
-    out.push(`    <line x1="0" y1="19" x2="193" y2="19" stroke="#bbb" stroke-width="0.8"/>`);
-    rows2.forEach((r, i) => {
-      const y = 30 + i * 12;
-      out.push(`    <text x="0" y="${y}">${esc(r.name)}</text><text x="88" y="${y}">${esc(r.size)}</text><text x="170" y="${y}" text-anchor="end">${r.area === null ? "—" : r2(r.area)}</text><text x="193" y="${y}" text-anchor="end">${esc(r.cell)}</text>`);
+    out.push(`  <g transform="translate(950, 190)" font-size="8.5" fill="#2a2a2a">`);
+    out.push(`<text font-weight="700" font-size="11">OBLASTI ZEMNÍCH PRACÍ</text><text x="470" y="0" text-anchor="end">m²</text>`);
+    grading.zones.forEach((zone,i)=>{
+      const y=22+i*18;
+      out.push(`<rect x="0" y="${y-9}" width="11" height="11" fill="${presentation.colorFor(zone)}"/><text x="18" y="${y}">${zone.id} · ${esc(zone.name)}</text><text x="470" y="${y}" text-anchor="end">${zone.area.toFixed(2).replace('.',',')}</text>`);
     });
+    out.push(`<text y="${202+zoneExtra}" font-weight="700" font-size="11">VÝMĚRY POVRCHŮ</text>`);
+    grading.surfaces.forEach((surface,i)=>out.push(`<text y="${224+zoneExtra+i*18}">${esc(surface.name)}</text><text x="470" y="${224+zoneExtra+i*18}" text-anchor="end">${surface.area.toFixed(2).replace('.',',')}</text>`));
+    out.push(`<text y="${397+zoneExtra}" font-weight="700">Celkem pozemek</text><text x="470" y="${397+zoneExtra}" text-anchor="end">${grading.plotArea.toFixed(2).replace('.',',')} m²</text><text y="${414+zoneExtra}">Povrchy se nepřekrývají; přístřešek je započten v příjezdu.</text><text y="${430+zoneExtra}">Oblasti ${grading.zones[0].id}–${grading.zones.at(-1).id} jsou pracovní celky, nikoli další výměra povrchů.</text>`);
+    out.push(`<text y="${456+zoneExtra}" font-weight="700" font-size="11">HLAVNÍ ROZMĚRY</text>`);
+    grading.dimensions.forEach((dim,i)=>out.push(`<text y="${475+zoneExtra+i*15}">${esc(dim.name)}</text><text x="470" y="${475+zoneExtra+i*15}" text-anchor="end">${esc(dim.value.replace(/\./g,','))}</text>`));
     out.push(`  </g>`);
+    out.push(`<g transform="translate(0,${footerShift})">`);
     out.push(renderLegend());
     out.push(`  <g transform="translate(80, 842)">
     <rect x="0" y="0" width="${5 * S}" height="10" fill="#2a2a2a"/>
@@ -135,8 +162,9 @@
     <text x="${5 * S}" y="24" class="lbl-sm">5 m</text>
     <text x="${10 * S}" y="24" class="lbl-sm">10 m</text>
   </g>`);
-    out.push(`  <text x="300" y="850" class="note">Cells are addressed as "{column}{row}", e.g. "12g" = column 12, row g. Each cell is ${garden.gridCellM} × ${garden.gridCellM} m. Generated from layout.js (node generate-svg.js).</text>`);
+    out.push(`  <text x="300" y="850" class="note">Síť: např. 12g = sloupec 12, řádek g. Buňka ${garden.gridCellM} × ${garden.gridCellM} m.</text><text x="300" y="865" class="note">Koncepční návrh; výšky a sklony viz přehled zemních prací.</text>`);
     out.push(renderTitleBlock(garden));
+    out.push('</g>');
     out.push(`</svg>`);
     return out.join("\n") + "\n";
   }
@@ -239,35 +267,35 @@
     }
     else if (first.kind === "circle") {
       // Concentric circles (e.g. spot symbol inner dots) count as one fixture
-      if (circles.length > 2) size = `${new Set(circles.map((c) => `${c.cx},${c.cy}`)).size} pcs`;
+      if (circles.length > 2) size = `${new Set(circles.map((c) => `${c.cx},${c.cy}`)).size} ks`;
       else { size = `ø ${r2(2 * first.r)}`; area = Math.PI * first.r * first.r; }
     }
-    else if (first.kind === "line") size = `${r2(Math.hypot(first.x2 - first.x1, first.y2 - first.y1))} long`;
+    else if (first.kind === "line") size = `${r2(Math.hypot(first.x2 - first.x1, first.y2 - first.y1))} m délka`;
     const col = Math.floor(bx / cellM) + 1;
     const row = ROWS[Math.max(0, Math.floor(by / cellM))] || "?";
     return { name: el.short || shortName(el.name), size, area, cell: `${col}${row}` };
   }
 
   const LEGEND_ITEMS = [
-    { label: "house", fill: "#d4b896", stroke: "#7a5e3e" },
-    { label: "garage", fill: "#888888", stroke: "#3a3a3a" },
-    { label: "deck / terrace", fill: "#a87d4a", stroke: "#5a3e25" },
-    { label: "driveway / paving", fill: "#cccccc", stroke: "#9a9a9a" },
-    { label: "water (pond, tank)", fill: "#3a7ab8", stroke: "#1f3a5f" },
-    { label: "raised bed", fill: "#7a5a3a", stroke: "#5a3e25" },
-    { label: "perennial bed", fill: "#8fa05a", stroke: "#6a7a3a", dash: true },
-    { label: "shrub planting", fill: "#6a8e5a", stroke: "#4a6e3a", dash: true },
-    { label: "meadow", fill: "#b5c98a", stroke: "#8aa85a", dash: true },
-    { label: "rain garden", fill: "#7aa88a", stroke: "#4a7a6a", dash: true },
-    { label: "tree", tree: true },
-    { label: "light fixture", light: true },
+    { label: "dům", fill: "#d4b896", stroke: "#7a5e3e" },
+    { label: "garáž", fill: "#888888", stroke: "#3a3a3a" },
+    { label: "terasa", fill: "#a87d4a", stroke: "#5a3e25" },
+    { label: "příjezd / dlažba", fill: "#cccccc", stroke: "#9a9a9a" },
+    { label: "voda", fill: "#3a7ab8", stroke: "#1f3a5f" },
+    { label: "vyvýšený záhon", fill: "#7a5a3a", stroke: "#5a3e25" },
+    { label: "trvalkový záhon", fill: "#8fa05a", stroke: "#6a7a3a", dash: true },
+    { label: "keře", fill: "#6a8e5a", stroke: "#4a6e3a", dash: true },
+    { label: "louka", fill: "#b5c98a", stroke: "#8aa85a", dash: true },
+    { label: "dešťový záhon", fill: "#7aa88a", stroke: "#4a7a6a", dash: true },
+    { label: "strom", tree: true },
+    { label: "svítidlo", light: true },
   ];
 
   function renderLegend() {
     const out = [
       `  <g>`,
       `    <rect x="80" y="756" width="620" height="70" fill="white" stroke="#2a2a2a" stroke-width="1"/>`,
-      `    <text x="92" y="771" class="tb-lbl">LEGEND</text>`,
+      `    <text x="92" y="771" class="tb-lbl">LEGENDA</text>`,
     ];
     LEGEND_ITEMS.forEach((it, i) => {
       const x = 92 + (i % 6) * 101;
@@ -291,16 +319,16 @@
       `    <line x1="998" y1="792" x2="998" y2="872" stroke="#2a2a2a" stroke-width="0.6"/>`,
       `    <text x="790" y="807" class="tb-proj">${esc(dm.project || "")}</text>`,
       `    <text x="790" y="818" class="tb-sub">${esc(dm.place || "")}</text>`,
-      `    <text x="1006" y="802" class="tb-lbl">REVISION</text>`,
+      `    <text x="1006" y="802" class="tb-lbl">REVIZE</text>`,
       `    <text x="1006" y="816" class="tb-rev">${esc(dm.revision || "")}</text>`,
-      `    <text x="790" y="832" class="tb-lbl">DRAWING</text>`,
+      `    <text x="790" y="832" class="tb-lbl">VÝKRES</text>`,
       `    <text x="790" y="843" class="tb-val">${esc(dm.drawing || "")}</text>`,
-      `    <text x="1006" y="832" class="tb-lbl">GRID</text>`,
+      `    <text x="1006" y="832" class="tb-lbl">SÍŤ</text>`,
       `    <text x="1006" y="843" class="tb-val">${garden.gridCellM} × ${garden.gridCellM} m</text>`,
-      `    <text x="790" y="857" class="tb-lbl">DRAWN</text>`,
+      `    <text x="790" y="857" class="tb-lbl">ZPRACOVAL</text>`,
       `    <text x="790" y="868" class="tb-val">${esc(dm.author || "")}</text>`,
-      `    <text x="1006" y="857" class="tb-lbl">NORTH</text>`,
-      `    <text x="1006" y="868" class="tb-val">↑ sheet top</text>`,
+      `    <text x="1006" y="857" class="tb-lbl">SEVER</text>`,
+      `    <text x="1006" y="868" class="tb-val">↑ horní okraj</text>`,
       `  </g>`,
     ].join("\n");
   }

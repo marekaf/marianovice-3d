@@ -18,6 +18,8 @@ from mathutils import Quaternion, Vector, noise
 sys.stdout.reconfigure(line_buffering=True)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model_parts import build_model
+from garden_routes import build_routes
+from house_roof import build_house_roof
 from site_terrain import height as site_height
 from procedural_plants import plant_template
 
@@ -41,7 +43,7 @@ for ob in list(bpy.data.objects):
     bpy.data.objects.remove(ob, do_unlink=True)
 
 
-DRIP_BANDS = [(10.48, 21.28, 6.68, 7.18), (10.48, 21.28, 26.43, 26.93), (21.28, 21.78, 7.18, 11.58)]
+DRIP_BANDS = [(10.48, 21.28, 6.73, 7.18), (10.48, 21.28, 26.43, 27.45)]
 
 
 def ground_h(x, y):
@@ -643,6 +645,12 @@ def first_rect(el):
 house = els["house"]
 hpoly = next(p for p in house["parts"] if p["kind"] == "polygon")["points"]
 dpoly = next(p for p in els["driveway"]["parts"] if p["kind"] == "polygon")["points"]
+utility_covers = {}
+for utility_id in ('rainTank', 'waterSource'):
+    element = els[utility_id]
+    part = next(part for part in element['parts'] if part['kind'] in ('rect', 'circle'))
+    cover = element.get('meta', {}).get('accessCover')
+    utility_covers[utility_id] = (cover['x'], cover['z']) if cover else (part['cx'], part['cy']) if part['kind'] == 'circle' else rect_center(part)
 
 # ---------------- grass exclusion mask ----------------
 EXCL_RECTS = []
@@ -661,6 +669,7 @@ EXCL_POLYS = [hpoly, dpoly]
 _fire = next(p for p in els["firePit"]["parts"] if p["kind"] == "circle")
 EXCL_ELLIPSES = [(POND[0], POND[1], POND[2] + 0.35, POND[3] + 0.3), (5.0, 2.5, 1.15, 1.15),
                  (_fire["cx"], _fire["cy"], 1.25, 1.25)]
+EXCL_ELLIPSES.extend((x,y,.6,.6) for x,y in utility_covers.values())
 STEP_STONES = [p for p in els["steppingPaths"]["parts"]
                if p["kind"] == "circle"] if "steppingPaths" in els else []
 for _s in STEP_STONES:
@@ -974,8 +983,19 @@ for z_end in [bb[1], HA[1], HA[3], bb[3]]:
 MAT["gravel_light"] = mat_pbr("gravel_light", "gravel_floor_02", scale=1.0,
                               tint=hexc("#cfcbc3"), tint_fac=0.45, tint_mode="MIX")
 for di, (bx0, bx1, by0, by1) in enumerate(DRIP_BANDS):
-    draped_poly("drip%d" % di, [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1)], 0.03,
-                MAT["gravel_light"], subdiv=3)
+    draped_poly("drip%d" % di, [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1)], 0.07,
+                MAT["gravel_light"], subdiv=6)
+hp_pad = next(p for p in els["heatPumpPad"]["parts"] if p["kind"] == "rect")
+hp_x, hp_y = hp_pad["x"] + hp_pad["w"] / 2, hp_pad["y"] + hp_pad["d"] / 2
+hp_base = GARDEN["garageModel"]["floorHeight"]
+hp_bottom = min(ground_h(hp_x + dx, hp_y + dy) for dx in (-hp_pad["w"] / 2, 0, hp_pad["w"] / 2)
+                for dy in (-hp_pad["d"] / 2, 0, hp_pad["d"] / 2)) - 0.08
+box_p("heat_pump_pad", hp_pad["x"], hp_pad["y"], hp_pad["x"] + hp_pad["w"], hp_pad["y"] + hp_pad["d"],
+      hp_bottom, hp_base + 0.08, MAT["gravel"])
+box_p("heat_pump_body", hp_x - 0.5, hp_y - 0.225, hp_x + 0.5, hp_y + 0.225,
+      hp_base + 0.08, hp_base + 0.83, MAT["frame"])
+hp_fan = add_cyl("heat_pump_fan", hp_x, hp_y + 0.24, hp_base + 0.5, 0.24, 0.04, MAT["roof"], verts=16)
+hp_fan.rotation_euler.x = math.pi / 2
 # marmolit sokl band: level top above floor, bottom under the gravel grade
 MAT["sokl"] = mat_pbr("sokl", "plastered_wall_02", scale=2.0,
                       tint=hexc("#453f38"), tint_fac=0.85, tint_mode="MIX")  # marmolit MAR2 M092, dark
@@ -1027,6 +1047,9 @@ box_p("stit_win_f", ridge_x - 0.435, bb[1] - 0.065, ridge_x + 0.435, bb[1] + 0.0
       WALL_TOP + 0.44, WALL_TOP + 1.56, MAT["frame"])
 box_p("stit_win_g", ridge_x - 0.375, bb[1] - 0.075, ridge_x + 0.375, bb[1] - 0.025,
       WALL_TOP + 0.5, WALL_TOP + 1.5, MAT["roof_glass"])
+
+
+build_house_roof(GARDEN["houseRoof"], [bpy.data.objects.get("house_walls")])
 
 
 def window(name, axis, wall, out_sign, along_c, width, sill, height, door=False):
@@ -1153,7 +1176,7 @@ for i, (vehicle, model) in enumerate(zip(GARDEN["vehicles"], GARDEN["vehicleMode
     for ob in list(collection.objects):
         if ob != root:
             ob.parent = root
-    root.location = (vehicle["cx"], -cy, GF if vehicle["bay"] == "garage" else ground_h(vehicle["cx"], cy) + 0.05)
+    root.location = (vehicle["cx"], -cy, GF if vehicle["bay"] == "garage" else ground_h(vehicle["cx"], cy) + GARDEN["siteTerrain"]["drivewayProfile"]["surfaceOffset"])
     root.rotation_euler.z = math.pi if vehicle.get("reversed") else 0
 build_model(GARDEN["exteriorFurnitureModel"])
 
@@ -1277,7 +1300,7 @@ for i, r in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "re
                         0.04, DECK_TOP - 0.067 - top, MAT["frame"], verts=12)
 
 # driveway + carport + parking bay: one continuous DITON large-format paver surface
-draped_poly("driveway", dpoly, 0.05, MAT["pavers"], subdiv=6)
+draped_poly("driveway", dpoly, GARDEN["siteTerrain"]["drivewayProfile"]["surfaceOffset"], MAT["pavers"], subdiv=6)
 
 # stepping-stone paths: flat stone discs draped on the terrain
 MAT["step_stone"] = mat_concrete("step_stone", hexc("#9a958c"), hexc("#7f7a72"),
@@ -1321,9 +1344,27 @@ FIRE_OBJECTS = [firepit_collection.objects[part["name"]]
                 if part.get("category") == "fire"]
 
 # ---------------- rain tank, sauna, shelter, softub ----------------
-rt = first_rect(els["rainTank"])
-rcx, rcy = rect_center(rt)
-add_cyl("rainTank_manhole", rcx, rcy, ground_h(rcx, rcy) + 0.02, 0.4, 0.06, MAT["manhole"])
+for utility_id, (cx,cy) in utility_covers.items():
+    add_cyl(utility_id+'_manhole', cx, cy, ground_h(cx, cy)+.02, .45, .06, MAT['manhole'])
+
+compost = first_rect(els['compost'])
+compost_x, compost_y, compost_w, compost_d = compost['x'], compost['y'], compost['w'], compost['d']
+compost_corners = [(compost_x+dx, compost_y+dy) for dx in (0, compost_w) for dy in (0, compost_d)]
+compost_ground = [ground_h(x,y) for x,y in compost_corners]
+compost_low, compost_top = min(compost_ground), max(compost_ground)+1
+compost_wood = mat_wood('compost_wood', hexc('#8a6a44'), hexc('#6b4f34'))
+for i, (x,y) in enumerate(compost_corners):
+    post('compost_post_%d' % i, x, y, compost_low, compost_top+.05, compost_wood, half=.045)
+for i in range(6):
+    level = compost_low+.12+(compost_top-.06-compost_low-.12)*i/5
+    for side, y in enumerate((compost_y, compost_y+compost_d)):
+        box_p('compost_cross_slat_%d_%d' % (i,side), compost_x-.01, y-.0125, compost_x+compost_w+.01, y+.0125,
+              level-.045, level+.045, compost_wood)
+    for side, x in enumerate((compost_x, compost_x+compost_w)):
+        box_p('compost_long_slat_%d_%d' % (i,side), x-.0125, compost_y-.01, x+.0125, compost_y+compost_d+.01,
+              level-.045, level+.045, compost_wood)
+box_p('compost_heap', compost_x+.06, compost_y+.06, compost_x+compost_w-.06, compost_y+compost_d-.06,
+      max(compost_ground)-.005, max(compost_ground)+.445, MAT['soil_pot'])
 
 sauna_floor = GARDEN["saunaModel"]["floorHeight"]
 build_model(GARDEN["saunaModel"])
@@ -1459,6 +1500,8 @@ MODEL_PLANT_CLEARANCES = [
 
 
 def clears_model_planting(px, py, radius):
+    if any(math.hypot(px-x,py-y)<.75+radius for x,y in utility_covers.values()):
+        return False
     for x0, y0, x1, y1 in MODEL_PLANT_CLEARANCES:
         dx = max(x0 - px, 0, px - x1)
         dy = max(y0 - py, 0, py - y1)
@@ -1913,55 +1956,12 @@ for i, potc in enumerate(pot_parts):
         make_tuft("pot%d_tuft" % i, pcx2, pcy2, top, depth=0.35)
 
 print("PLANTING:", COUNTS)
+build_routes(GARDEN)
 
 # ---------------- fence ----------------
-GATE_A = Vector((43.83, 27.89))
-GATE_B = Vector((43.44, 32.39))
-
-
-def in_gate(px, py):
-    ab = GATE_B - GATE_A
-    t = (Vector((px, py)) - GATE_A).dot(ab) / ab.length_squared
-    if -0.05 < t < 1.05:
-        closest = GATE_A + ab * t
-        return (Vector((px, py)) - closest).length < 0.6
-    return False
-
-
-def build_fence():
-    n = len(plot)
-    post_i = 0
-    for i in range(n):
-        a = Vector(plot[i])
-        b = Vector(plot[(i + 1) % n])
-        L = (b - a).length
-        steps = max(1, int(math.ceil(L / 2.0)))
-        pts = [a.lerp(b, t / steps) for t in range(steps + 1)]
-        for pt in pts:
-            if in_gate(pt.x, pt.y):
-                continue
-            z = ground_h(pt.x, pt.y)
-            post("fence_post%d" % post_i, pt.x, pt.y, z - 0.15, z + 1.1, MAT["fence"], half=0.045)
-            post_i += 1
-        for j in range(steps):
-            sp, ep = pts[j], pts[j + 1]
-            mid = sp.lerp(ep, 0.5)
-            if in_gate(sp.x, sp.y) or in_gate(ep.x, ep.y) or in_gate(mid.x, mid.y):
-                continue
-            for rz in (0.55, 0.95):
-                s3 = Vector((sp.x, -sp.y, ground_h(sp.x, sp.y) + rz))
-                e3 = Vector((ep.x, -ep.y, ground_h(ep.x, ep.y) + rz))
-                d = e3 - s3
-                bpy.ops.mesh.primitive_cube_add(size=1.0, location=(s3 + d / 2))
-                ob = bpy.context.active_object
-                ob.name = "fence_rail%d_%s" % (post_i, rz)
-                ob.scale = (d.length, 0.035, 0.06)
-                ob.rotation_euler = d.to_track_quat("X", "Z").to_euler()
-                ob.data.materials.append(MAT["fence"])
-
-
-build_fence()
-
+for fence_model in GARDEN["fenceModels"]:
+    build_model(fence_model)
+build_model(GARDEN["entranceGateModel"])
 
 # ---------------- garden light fixtures ----------------
 def circles_of(el_id):

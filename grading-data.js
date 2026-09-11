@@ -32,6 +32,8 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
     if (![existing, proposed].every(Number.isFinite)) throw new Error(`Non-finite ground height at ${x}, ${z}`);
     return { x, z, existing, proposed, delta: proposed - existing, surveyed: surveyed(x, z), excluded: excluded(x, z), ...(baseline?{previous:previousHeight(baseline.spec,x,z)}:{}) };
   };
+  const zones=garden.elements.some(e=>e.id==='driveway')?(typeof module!=='undefined'?require('./grading-zones.js').GradingZones:GradingZones).create(garden).zones:[];
+  const zoneTotals=zones.map(z=>({id:z.id,name:z.name,cut:0,fill:0,area:0,extrapolatedArea:0}));
   const cells = [], totals = { cut: 0, fill: 0, net: 0, area: 0, plotSampleArea: 0, excludedArea: 0, extrapolatedArea: 0, extrapolatedCut: 0, extrapolatedFill: 0, surveyedArea: 0 };
   const minX = Math.floor(Math.min(...polygon.map(p => p[0])) / step) * step;
   const minZ = Math.floor(Math.min(...polygon.map(p => p[1])) / step) * step;
@@ -47,6 +49,9 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
     totals.plotSampleArea += cell.area;
     if (cell.excluded) { totals.excludedArea += cell.area; continue; }
     const cut = Math.max(0, -cell.delta) * cell.area, fill = Math.max(0, cell.delta) * cell.area;
+    const zoneIndex=zones.findIndex(zone=>zone.polygons.some(p=>inside(p,x,z)));
+    const zone=zoneTotals[zoneIndex];
+    if(zone){if(cell.surveyed){zone.area+=cell.area;zone.cut+=cut;zone.fill+=fill;}else zone.extrapolatedArea+=cell.area;}
     if (!cell.surveyed) {
       totals.extrapolatedArea += cell.area; totals.extrapolatedCut += cut; totals.extrapolatedFill += fill;
       continue;
@@ -94,49 +99,59 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
     }
     if (samples.length) sections.push({ id, label, vertices, samples, maxSlope, sampleStep, ...(walking?{maxFinishSlope}:{}), length: distance });
   };
-  for (const [id, label] of [['eastTerrace', 'East terrace'], ['westTerrace', 'West terrace'], ['pergola', 'Pergola'], ['sauna', 'Sauna'], ['greenhouse', 'Greenhouse'], ['zasivarna', 'Red bench']]) point(id, label, centre(rect(id)));
+  for (const [id, label] of [['eastTerrace', 'Východní terasa'], ['westTerrace', 'Západní terasa'], ['pergola', 'Pergola'], ['sauna', 'Sauna'], ['greenhouse', 'Skleník'], ['zasivarna', 'Lavička']]) point(id, label, centre(rect(id)));
   const greenhouse=points.find(p=>p.id==='greenhouse');
   if(greenhouse)greenhouse.finished=site.routeHeight(greenhouse.x,greenhouse.z);
   const bedCentre=centre(rect('raisedBedsPad'));
-  if(bedCentre)point('raisedBeds','Raised-bed central aisle reference',bedCentre,site.routeHeight(...bedCentre));
+  if(bedCentre)point('raisedBeds','Ulička mezi vyvýšenými záhony',bedCentre,site.routeHeight(...bedCentre));
   const fire = element('firePit')?.parts.find(p => p.kind === 'circle');
   const pond = element('pond')?.parts.find(p => p.kind === 'ellipse');
-  if (fire) point('firePit', 'Fire pit apron', [fire.cx, fire.cy]);
+  if (fire) point('firePit', 'Plocha ohniště', [fire.cx, fire.cy]);
   if (pond) {
-    point('pondBasin', 'Pond basin', [pond.cx, pond.cy]);
-    point('pondEdge', 'Pond east bank', [pond.cx + pond.rx, pond.cy]);
+    point('pondBasin', 'Dno jezírka', [pond.cx, pond.cy]);
+    point('pondEdge', 'Východní břeh jezírka', [pond.cx + pond.rx, pond.cy]);
   }
-  for (const [id, label] of [['Daily dining', 'East terrace to pergola'], ['Gathering connection', 'Pergola to fire pit'], ['Wellness access', 'West house approach to sauna'], ['Productive access','Productive access'], ['Greenhouse access','Greenhouse access'], ['Bed access','Bed access']]) {
+  for (const [id, label] of [['Daily dining', 'Východní terasa k pergole'], ['Gathering connection', 'Pergola k ohništi'], ['Wellness access', 'Západní přístup k sauně'], ['Productive access','Productive access'], ['Greenhouse access','Greenhouse access'], ['Bed access','Bed access']]) {
     const route = garden.gardenRoutes?.find(r => r.id === id);
     if (route) section(id, label, route.points.map(p => p.slice()), true);
   }
-  if (fire && pond) section('fire-pond', 'Fire pit to pond basin', [[fire.cx, fire.cy], [pond.cx, pond.cy]]);
+  if (fire && pond) section('fire-pond', 'Ohniště ke dnu jezírka', [[fire.cx, fire.cy], [pond.cx, pond.cy]]);
   const pondApproach=site.spec?.routeProfiles?.find(r=>r.id==='Pond approach');
-  if(pondApproach)section(pondApproach.id,'Pond path to fire pit',pondApproach.points.map(p=>p.slice()),true);
+  if(pondApproach)section(pondApproach.id,'Cesta od jezírka k ohništi',pondApproach.points.map(p=>p.slice()),true);
   const driveway = site.spec?.drivewayProfile;
   const garage = rect('garage');
   if (driveway && garage) {
     const start = [driveway.startX, garage.y + garage.d + .1];
-    section('driveway', 'Garage frontage to gate', [start, driveway.gate]);
-    point('garageFront', 'Garage frontage ground', start);
-    point('gate', 'Gate threshold', driveway.gate, site.spec.gateRunback?.finishedLevel);
+    section('driveway', 'Před garáží k bráně', [start, driveway.gate]);
+    point('garageFront', 'Terén před garáží', start);
+    point('gate', 'Práh brány', driveway.gate, site.spec.gateRunback?.finishedLevel);
   }
   const bench = site.spec?.benchPad;
-  if (bench) section('bench', 'Red bench pad west–east', [[bench.x0 - 1, (bench.z0 + bench.z1) / 2], [bench.x1 + 1, (bench.z0 + bench.z1) / 2]]);
+  if (bench) section('bench', 'Plocha lavičky od západu k východu', [[bench.x0 - 1, (bench.z0 + bench.z1) / 2], [bench.x1 + 1, (bench.z0 + bench.z1) / 2]]);
   if(site.spec?.bankReview) {
-    section('south-bank', 'Southwest house bank', [[10.75,26.6],[10.75,31]]);
+    section('south-bank', 'Jihozápadní svah u domu', [[10.75,26.6],[10.75,31]]);
     section('productive-gap', site.spec.productiveCourt?'Productive court: sloped approach and flat aisles':'Greenhouse to west terrace: constrained levels', [[3.2,13.5],[9.98,13.5]]);
     const gatheringRoute=garden.gardenRoutes?.find(r=>r.id==='Gathering connection');
     if(gatheringRoute){
       const i=Math.floor((gatheringRoute.points.length-1)/2),a=gatheringRoute.points[i],b=gatheringRoute.points[i+1];
       const length=Math.hypot(b[0]-a[0],b[1]-a[1]),mid=a.map((v,k)=>(v+b[k])/2),normal=[-(b[1]-a[1])/length,(b[0]-a[0])/length];
-      section('gathering-bank','Gathering route shoulder',[-1.6,1.6].map(offset=>mid.map((v,k)=>v+normal[k]*offset)));
+      section('gathering-bank','Svah u cesty k ohništi',[-1.6,1.6].map(offset=>mid.map((v,k)=>v+normal[k]*offset)));
     }
-    section('dining-bank', 'Daily dining route shoulder', [[26.4,11.2],[26.4,14]]);
+    section('dining-bank', 'Svah u cesty k pergole', [[26.4,11.2],[26.4,14]]);
   }
+  const west=rect('westTerrace'),house=element('house')?.meta?.bbox;
+  if(west) section('west-drainage','Západní zahrada, snížený pás a terasa',[[west.x-3,21],[west.x+.8,21]]);
+  if(house) {
+    section('north-house','Severní strana domu od západu k východu',[[house[0]-1,house[1]-1],[house[2]+3,house[1]-1]]);
+    section('south-house','Jižní strana domu od západu k východu',[[house[0]-1,house[3]+1],[house[2]+3,house[3]+1]]);
+    section('north-level','Severní rovná zahrada k hranici',[[28,18],[28,0]]);
+    section('lower-fill','Násyp v nízké části k severní hranici',[[39,16],[39,0]]);
+    if(driveway&&garage) section('arrival-level','Rovný příjezd a rampa k bráně',[[house[2]+.2,28],[garage.x+garage.w,28],driveway.gate]);
+  }
+  for(const [id,label] of [['heatPumpService','Servisní plocha čerpadla'],['heatPumpPad','Podstavec čerpadla']])point(id,label,centre(rect(id)));
   const wicket = site.spec?.wicketLanding;
-  if (wicket?.points) point('wicket', 'Wicket threshold', [0, 1].map(axis => wicket.points.reduce((sum, p) => sum + p[axis], 0) / wicket.points.length), wicket.finishedLevel);
-  return { cells, totals, points, sections, reviews, metadata: { step, sectionStep, routeSectionStep, exclusions: EXCLUSIONS.slice(), volumeMethod: 'Midpoint grid approximation; boundary cells selected by centre; no stripping, bulking, compaction or foundations allowance', totalsScope: 'Only non-building sample cells within survey convex hull', heightSurface: 'Model graded ground, not paving or finished floor', slopeMethod: 'Central differences across 0.5 m, percent; not compliance assessment', reviewSlopeMethod:'Supported grade samples require the centre and all four gradient endpoints to lie inside the plot and survey hull, outside building exclusions. Finite sampling can miss narrower or steeper features. These are model-ground grades, not surveyed spot grades or allowable slopes.', routeSlopeMethod:'Maximum absolute change in modeled walking finish between centreline samples at most 0.05 m apart; computed, not designed grades. Inner bends and crossfalls can be steeper than the centreline. Narrower features may be missed. Not an accessibility assessment or setting-out instruction.' } };
+  if (wicket?.points) point('wicket', 'Práh branky', [0, 1].map(axis => wicket.points.reduce((sum, p) => sum + p[axis], 0) / wicket.points.length), wicket.finishedLevel);
+  return { cells, totals, points, sections, reviews, ...(zones.length?{zoneTotals}:{}), metadata: { step, sectionStep, routeSectionStep, exclusions: EXCLUSIONS.slice(), volumeMethod: 'Midpoint grid approximation; boundary cells selected by centre; no stripping, bulking, compaction or foundations allowance', totalsScope: 'Only non-building sample cells within survey convex hull', heightSurface: 'Model graded ground, not paving or finished floor', slopeMethod: 'Central differences across 0.5 m, percent; not compliance assessment', reviewSlopeMethod:'Supported grade samples require the centre and all four gradient endpoints to lie inside the plot and survey hull, outside building exclusions. Finite sampling can miss narrower or steeper features. These are model-ground grades, not surveyed spot grades or allowable slopes.', routeSlopeMethod:'Maximum absolute change in modeled walking finish between centreline samples at most 0.05 m apart; computed, not designed grades. Inner bends and crossfalls can be steeper than the centreline. Narrower features may be missed. Not an accessibility assessment or setting-out instruction.' } };
 }
 
 return { createGradingData };

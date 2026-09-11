@@ -7,7 +7,7 @@ const model = RaisedBedsModel.build(GARDEN);
 const {TERRAIN}=require('./terrain.js'),{GradingSite}=require('./grading-site.js');
 const {site}=GradingSite.create({garden:GARDEN,terrain:TERRAIN});
 for(const [x,z]of [[4,11.9],[4,11.899999],[4,11.900001],[3.999999,11.9],[4.000001,11.9]])
-  assert(Math.abs(site.routeHeight(x,z)-2.725)<1e-9,'Productive blend boundary and its neighbors retain the 2.725 m court finish');
+  assert(Math.abs(site.routeHeight(x,z)-2.865)<1e-9,'Productive blend boundary and its neighbors retain the 2.865 m court finish');
 const courtModel=RaisedBedsModel.build(GARDEN,{surfaceHeight:site.routeHeight,groundHeight:site.height,court:site.spec.productiveCourt});
 const courtGravel=courtModel.parts.find(part=>part.name==='raised_beds_gravel');
 assert(courtGravel.vertices.some(([x,z])=>x===4&&z===11.9),'Court tessellation includes the productive blend boundary');

@@ -91,7 +91,7 @@ export function mountViewerUI({ stopTour }) {
   const groups = [
     ['Overview',['iso','top','east','north','south','ground']],
     ['House',['garage','eastLounge','atriumLounge','cars','entranceGate']],
-    ['Through the windows',['marekOfficeView','cristinaOfficeView','dressingRoomView']],
+    ['Through the windows',['marekOfficeView','cristinaOfficeView','dressingRoomView','bedroomView']],
     ['Garden',['sauna','tubSeat','pergola','pergolaSeat','westPath','greenhouse','raisedBeds','firepit','hiddenBench']],
   ];
   presets.replaceChildren();

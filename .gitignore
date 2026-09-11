@@ -55,3 +55,6 @@ book.html
 project-book.pdf
 house-dxf-walls.json
 site-truth.json
+
+!/docs/fence-survey.js
+!/docs/garden-constraints.md

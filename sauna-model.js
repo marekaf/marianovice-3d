@@ -165,7 +165,7 @@ const SaunaModel = (() => {
     }
     box('gutter_bottom', x - 0.17, y + d + 0.18, 2.48, w + 0.34, 0.12, 0.018, 'trim');
     box('gutter_front', x - 0.17, y + d + 0.28, 2.48, w + 0.34, 0.02, 0.1, 'trim');
-    for (const xx of [x - 0.17, x + w + 0.15]) box(`gutter_end_${xx}`, xx, y + d + 0.18, 2.48, 0.02, 0.12, 0.1, 'trim');
+    for (const [i, xx] of [x - 0.17, x + w + 0.15].entries()) box(`gutter_end_${i}`, xx, y + d + 0.18, 2.48, 0.02, 0.12, 0.1, 'trim');
     category = 'E';
     cylinder('downpipe', [x + w + 0.12, y + d + 0.235, 1.27], 0.036, 2.43, 'trim');
     for (const z of [0.55, 1.9]) box(`pipe_bracket_${z}`, x + w + 0.055, y + d + 0.19, z, 0.1, 0.09, 0.035, 'steel');

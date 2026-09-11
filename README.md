@@ -24,6 +24,7 @@ The viewer and gallery use the published Floorify Champagne reference by default
 
 ## Contents
 
+- [`grading.html`](grading.html) — one-page Czech grading map and legend with work areas A–M, dimensions, surface areas and height marks; `node generate-grading-plan.js` exports the local HTML and SVG
 - [`layout.js`](layout.js) — single source of truth for the garden layout (all coordinates in meters); consumed by the 3D viewer, the 2D editor and the SVG generator
 - [`index.html`](index.html) — 3D viewer (Three.js, single-file)
   - Procedural sky shader with day-of-year + hour sliders (real solar formula, 50° N)
