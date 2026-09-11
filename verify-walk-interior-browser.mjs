@@ -89,7 +89,7 @@ try{
   assert(Math.abs(stairWalk.landing[2]-21.78)<1e-6);
   assert.equal(stairWalk.downstairs.state.surface,'ground');assert(Math.abs(stairWalk.downstairs.position[1]-metrics.floorY-1.7)<1e-6);
   for(const floor of metrics.floors){
-    assert.equal(floor.color,'ffffff');assert.equal(floor.map,process.env.FLOOR_REFERENCE?'Local Floorify Champagne reference':'Procedural pale oak floor');
+    assert.equal(floor.color,'ffffff');assert.equal(floor.map,process.env.FLOOR_REFERENCE?'Local Floorify Champagne reference':'Floorify Champagne');
     assert(floor.roomEnvironment,`${floor.name}: enclosed flooring must use a room environment, not outdoor sky`);
   }
   assert.equal(await page.evaluate(()=>walkReview.house.furniture.visible),false);
