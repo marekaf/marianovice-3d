@@ -60,7 +60,7 @@ const nested=new THREE.Group(),hiddenParent=new THREE.Group();hiddenParent.visib
 hiddenParent.add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),material));nested.add(hiddenParent);loftRoot.add(nested);
 assert.throws(()=>prepareLoftExport(THREE,{root:loftRoot,dims:{originPlot:{x:10.48,z:7.18}}}),/omitted source meshes/,'Hidden descendants cannot silently disappear from a complete loft export');
 const route=JSON.parse(readFileSync(new URL('./walkthrough-route.json',import.meta.url)));
-assert.equal(route.shots.reduce((sum,shot)=>sum+shot.duration,0),90);
-assert.equal(route.shots.length,18);
+assert.equal(route.shots.reduce((sum,shot)=>sum+shot.duration,0),120);
+assert.equal(route.shots.length,22);
 for(const shot of route.shots)for(const key of ['start','end','targetStart','targetEnd'])assert(shot[key].length===3&&shot[key].every(Number.isFinite));
-console.log('Separate loft export preserves alignment and source state; 90-second route verified');
+console.log('Separate loft export preserves alignment and source state; 120-second route verified');

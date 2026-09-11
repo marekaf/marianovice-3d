@@ -47,6 +47,8 @@ def read_route():
     if not isinstance(shots, list) or not shots:
         raise ValueError('Walkthrough needs at least one shot')
     for shot in shots:
+        if 'exposureBias' in shot and (not isinstance(shot['exposureBias'], (int, float)) or not math.isfinite(shot['exposureBias'])):
+            raise ValueError('Shot exposureBias must be finite')
         duration = shot['duration']
         if not isinstance(duration, (int, float)) or not math.isfinite(duration) or duration <= 0:
             raise ValueError('Each shot needs a positive duration in seconds')
@@ -75,8 +77,14 @@ def build_sequence(shots):
         binding = sequence.add_spawnable_from_class(unreal.CameraActor)
         binding.set_display_name(shot['name'])
         camera = binding.get_object_template()
-        camera.camera_component.set_field_of_view(65.0)
+        camera.camera_component.set_field_of_view(85.0)
         camera.camera_component.set_editor_property('aspect_ratio', 1920 / 1080)
+        if 'exposureBias' in shot:
+            settings = camera.camera_component.get_editor_property('post_process_settings')
+            settings.set_editor_property('override_auto_exposure_bias', True)
+            settings.set_editor_property('auto_exposure_bias', shot['exposureBias'])
+            camera.camera_component.set_editor_property('post_process_settings', settings)
+            camera.camera_component.set_editor_property('post_process_blend_weight', 1.0)
         transform = binding.add_track(unreal.MovieScene3DTransformTrack).add_section()
         transform.set_range(offset, offset + duration)
         channels = transform.get_channels_by_type(unreal.MovieSceneScriptingDoubleChannel)
