@@ -20,7 +20,7 @@ After changing an asset referenced with `?v=`, run `yarn assets:version` and com
 
 With Playwright and Chrome available, run `yarn verify:visual` for a local screenshot gallery of furnished rooms, dressing joinery, roofs and operable doors. Set `PLAYWRIGHT_MODULE` to an installed Playwright module path if it is not available by name. The command prints the gallery path and saves full-size PNGs beside it in a temporary directory. It runs browser checks sequentially, closes each browser afterwards, and returns a nonzero exit code with a partial gallery if a check fails. It does not start Unreal or use private finish photos. Passing checks still require visual review of the images.
 
-To review the selected floor locally, use `yarn verify:visual --floor-reference /path/to/reference.jpg`. This applies the selected Floorify Champagne plank crops to every capture and waits for image loading. Keep the resulting screenshots private unless you have publication permission. The source photo is not copied into the repository. Without this option the floor is a generic procedural placeholder, not evidence of the selected decor. The gallery manifest records the finish mode and reference fingerprint.
+The viewer and gallery use the published Floorify Champagne reference by default, with publication permission confirmed by the owner. To override it locally, use `yarn verify:visual --floor-reference /path/to/reference.jpg`. This applies the selected plank crops to every capture and waits for image loading. Override photos are not copied into the repository; keep their screenshots private unless you have publication permission. The gallery manifest records the finish mode and reference fingerprint.
 
 ## Contents
 

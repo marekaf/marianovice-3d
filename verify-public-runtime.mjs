@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { createFloorCanvas, createFloorTexture, plankSamples } from './docs/floor-texture.js';
+import { createFloorTexture, plankSamples, waitForFloorReference } from './docs/floor-texture.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const checked = new Set();
@@ -33,30 +33,24 @@ for (const path of ['house-interior.js', 'docs/survey-terrain.js', 'docs/plantin
   assert(checked.has(resolve(root, path)), `Public viewer does not reference ${path}`);
 }
 
-globalThis.document = {
-  createElement(tag) {
-    assert.equal(tag, 'canvas');
-    return {
-      getContext(kind) {
-        assert.equal(kind, '2d');
-        return {
-          createImageData: (width, height) => ({data: new Uint8ClampedArray(width * height * 4)}),
-          putImageData: pixels => { this.pixels = pixels.data; },
-        };
-      },
-    };
-  },
-};
-const first = createFloorCanvas(), second = createFloorCanvas();
-assert.equal(first.width, 512);
-assert.equal(first.height, 1024);
-assert.deepEqual(first.pixels, second.pixels);
-assert(first.pixels.every((value, index) => index % 4 !== 3 || value === 255));
-assert(new Set(first.pixels.filter((_, index) => index % 4 === 0)).size > 12, 'Wood texture needs tonal variation');
-for (const [u0, u1, v0, v1] of plankSamples) assert(0 <= u0 && u0 < u1 && u1 <= 1 && 0 <= v0 && v0 < v1 && v1 <= 1);
-const texture = createFloorTexture({CanvasTexture: class {constructor(image) {this.image = image;}}, SRGBColorSpace: 'srgb'}, {capabilities: {getMaxAnisotropy: () => 8}});
-assert.equal(texture.colorSpace, 'srgb');
-assert.equal(texture.anisotropy, 8);
-assert.equal(texture.image.width, 512);
-delete globalThis.document;
-console.log(`Public runtime: ${checked.size} reachable assets present; deterministic original floor texture ${createHash('sha256').update(first.pixels).digest('hex').slice(0, 12)}`);
+const image = readFileSync(resolve(root,'floorify-champagne.jpg'));
+assert.equal(createHash('sha256').update(image).digest('hex'),'09eeb1dac3c6ba3b0440373cca544e192353ee23678c34d685055aa90cad0688','Public floor must use the approved reference image');
+assert.deepEqual(plankSamples,[[.003,.247,.55,.98],[.253,.497,.02,.98],[.503,.747,.02,.98],[.753,.997,.29,.98]]);
+let loaded;
+const texture = createFloorTexture({TextureLoader: class {
+  load(url,onLoad) {
+    assert.equal(url,new URL('./floorify-champagne.jpg',import.meta.url).href);
+    loaded=onLoad;return {};
+  }
+}, SRGBColorSpace:'srgb'}, {capabilities:{getMaxAnisotropy:()=>8}});
+assert.equal(texture.name,'Floorify Champagne');
+assert.equal(texture.colorSpace,'srgb');
+assert.equal(texture.anisotropy,8);
+let finished=false;
+const ready=waitForFloorReference().then(()=>{finished=true;});
+await Promise.resolve();
+assert.equal(finished,false,'Floor readiness waits for the image');
+loaded();
+await ready;
+assert.equal(finished,true);
+console.log(`Public runtime: ${checked.size} reachable assets present; approved Champagne image, plank crops and loading verified`);

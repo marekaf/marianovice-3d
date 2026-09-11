@@ -13,7 +13,7 @@ try {
   const reference=await createFloorReference(path);
   assert.equal(reference.metadata.sha256,createHash('sha256').update(bytes).digest('hex'));
   assert(!JSON.stringify(reference.metadata).includes(temporary));
-  const source=reference.module.replace("export {createFloorCanvas} from '/__export/procedural-floor.mjs';",'');
+  const source=reference.module;
   const mod=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
   let succeed,fail;
   const THREE={SRGBColorSpace:'srgb',TextureLoader:class{load(url,onLoad,progress,onError){

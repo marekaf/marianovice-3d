@@ -6,8 +6,7 @@ export async function createFloorReference(file) {
   const bytes=await readFile(file);
   const jpeg=bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
   if(!jpeg)throw new Error('Floor reference must be the selected JPEG plank reference');
-  const module=`export {createFloorCanvas} from '/__export/procedural-floor.mjs';
-export const plankSamples=[[.003,.247,.55,.98],[.253,.497,.02,.98],[.503,.747,.02,.98],[.753,.997,.29,.98]];
+  const module=`export const plankSamples=[[.003,.247,.55,.98],[.253,.497,.02,.98],[.503,.747,.02,.98],[.753,.997,.29,.98]];
 const pending=[];
 export function createFloorTexture(THREE,renderer){
   let texture;
