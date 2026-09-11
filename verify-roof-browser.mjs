@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {prepareReviewFloor,captureReview} from './scripts/review-floor.mjs';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
@@ -17,6 +18,7 @@ let browser;
 try{
   browser=await chromium.launch({channel:'chrome',headless:true});
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+  await prepareReviewFloor(page);
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
   await page.waitForFunction(()=>window.roofReview,null,{timeout:120000});
@@ -54,7 +56,7 @@ try{
       r.controls.target.set(...target);r.controls.update();r.requestRender();
     },{position,target});
     await page.waitForTimeout(250);
-    if(process.env.ROOF_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.ROOF_SCREENSHOT_DIR,`roof-${name}.png`)});
+    if(process.env.ROOF_SCREENSHOT_DIR)await captureReview(page,{path:resolve(process.env.ROOF_SCREENSHOT_DIR,`roof-${name}.png`)});
   }
   await page.evaluate(()=>roofReview.loadWalkInterior());
   const furnished=await verifyCaps();

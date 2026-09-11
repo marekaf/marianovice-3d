@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {prepareReviewFloor,waitForReviewFloor,captureReview} from './scripts/review-floor.mjs';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
@@ -18,6 +19,7 @@ try{
   browser=await chromium.launch({channel:'chrome',headless:true});
   const page=await browser.newPage({viewport:{width:1280,height:900}});
   const errors=[],requests=[];
+  await prepareReviewFloor(page);
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>requests.push(r.url()));
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
@@ -53,6 +55,7 @@ try{
     }).map(hit=>({name:hit.object.name,point:hit.point.toArray()}));
   });
   assert.deepEqual(showerRevealHits,[],'Shower backing must not block the window reveal at eye height');
+  await waitForReviewFloor(page);
   const metrics=await page.evaluate(()=>{
     const r=walkReview,house=r.scene.getObjectByName('garden-walk-interior');
     let meshes=0,lights=0,bytes=0;const geometries=new Set(),floors=[];
@@ -86,7 +89,7 @@ try{
   assert(Math.abs(stairWalk.landing[2]-21.78)<1e-6);
   assert.equal(stairWalk.downstairs.state.surface,'ground');assert(Math.abs(stairWalk.downstairs.position[1]-metrics.floorY-1.7)<1e-6);
   for(const floor of metrics.floors){
-    assert.equal(floor.color,'ffffff');assert.equal(floor.map,'Procedural pale oak floor');
+    assert.equal(floor.color,'ffffff');assert.equal(floor.map,process.env.FLOOR_REFERENCE?'Local Floorify Champagne reference':'Procedural pale oak floor');
     assert(floor.roomEnvironment,`${floor.name}: enclosed flooring must use a room environment, not outdoor sky`);
   }
   assert.equal(await page.evaluate(()=>walkReview.house.furniture.visible),false);
@@ -129,7 +132,7 @@ try{
   ]){
     await page.evaluate(([x,z,yaw,pitch])=>walkReview.aim(x,z,yaw,pitch),[x,z,yaw,pitch]);
     await page.waitForTimeout(350);
-    if(process.env.WALK_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.WALK_SCREENSHOT_DIR,`garden-interior-${name}.png`)});
+    if(process.env.WALK_SCREENSHOT_DIR)await captureReview(page,{path:resolve(process.env.WALK_SCREENSHOT_DIR,`garden-interior-${name}.png`)});
   }
   await page.evaluate(async()=>{await walkReview.loadWalkInterior();await walkReview.loadWalkInterior();});
   await page.evaluate(fov=>{walkReview.camera.fov=fov;walkReview.camera.updateProjectionMatrix();},reviewFov);
@@ -146,7 +149,7 @@ try{
   });
   await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Close'));
   assert(await page.evaluate(()=>walkReview.navigation.aimedDoor(walkReview.camera)===walkReview.house.loft.doors[0]),'Oblique loft approach targets the visible open leaf');
-  if(process.env.WALK_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.WALK_SCREENSHOT_DIR,'garden-interior-loft-door-oblique.png')});
+  if(process.env.WALK_SCREENSHOT_DIR)await captureReview(page,{path:resolve(process.env.WALK_SCREENSHOT_DIR,'garden-interior-loft-door-oblique.png')});
   if(process.env.WALK_SCREENSHOT_DIR){
     for(const [name,x,z,targetX,targetZ] of [
       ['loft-gym',17.6,23,16.6,25],
@@ -163,7 +166,7 @@ try{
       assert.equal(pose.surface,'loft');
       assert(Math.abs(pose.height-4.62375)<1e-6,'Loft review camera remains at upstairs eye height');
       await page.waitForTimeout(350);
-      await page.screenshot({path:resolve(process.env.WALK_SCREENSHOT_DIR,`garden-interior-${name}.png`)});
+      await captureReview(page,{path:resolve(process.env.WALK_SCREENSHOT_DIR,`garden-interior-${name}.png`)});
     }
     await page.evaluate(fov=>{walkReview.camera.fov=fov;walkReview.camera.updateProjectionMatrix();},reviewFov);
   }

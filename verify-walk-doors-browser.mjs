@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {prepareReviewFloor,captureReview} from './scripts/review-floor.mjs';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
@@ -20,6 +21,7 @@ let browser;
 try{
   browser=await chromium.launch({channel:'chrome',headless:true});
   const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
+  await prepareReviewFloor(page);
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
   await page.waitForFunction(()=>window.doorReview,null,{timeout:120000});
@@ -40,7 +42,7 @@ try{
     return{open:g.userData.walkDoor.open,angle:g.userData.walkDoor.pivot.rotation.y,frame:new r.THREE.Box3().setFromObject(g.userData.categories.openings)};
   });
   assert(opened.open);assert.equal(opened.angle,-Math.PI/2);assert.deepEqual(opened.frame,before.frame);
-  await page.screenshot({path:process.env.DOOR_SCREENSHOT||'/tmp/garden-door-open.png'});
+  await captureReview(page,{path:process.env.DOOR_SCREENSHOT||'/tmp/garden-door-open.png'});
   const passage=await page.evaluate(()=>{
     const r=doorReview,g=r.doors.doors.find(group=>group.name==='opening_W22_0'),p=g.userData.walkDoor.panel.position;
     const center=g.localToWorld(new r.THREE.Vector3(p[0],1.7,p[1]));
@@ -62,7 +64,7 @@ try{
     await page.waitForFunction(()=>document.querySelector('#walkDoorPrompt').textContent.includes('Open sliding portal'));
     await page.keyboard.press('e');
     assert.equal(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name),true);
-    if(process.env.PORTAL_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.PORTAL_SCREENSHOT_DIR,`${name}-open.png`)});
+    if(process.env.PORTAL_SCREENSHOT_DIR)await captureReview(page,{path:resolve(process.env.PORTAL_SCREENSHOT_DIR,`${name}-open.png`)});
     const passage=await page.evaluate(name=>{
       const r=doorReview,g=r.doors.doors.find(g=>g.name===name);
       const p=g.userData.walkDoor.model.parts.find(p=>p.name===`${name}_north_glass`).position;
@@ -82,7 +84,7 @@ try{
     await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Open hinged window'));
     await page.keyboard.press('e');
     assert(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name));
-    if(process.env.WINDOW_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.WINDOW_SCREENSHOT_DIR,`${name}-open.png`)});
+    if(process.env.WINDOW_SCREENSHOT_DIR)await captureReview(page,{path:resolve(process.env.WINDOW_SCREENSHOT_DIR,`${name}-open.png`)});
     const passage=await page.evaluate(name=>{
       const r=doorReview,g=r.doors.doors.find(g=>g.name===name),door=g.userData.walkDoor;
       const p=door.model.parts.find(p=>p.name===`${name}_${door.opening.movingHalf}_glass`).position;
@@ -100,10 +102,10 @@ try{
   for(const [name,approach]of [['opening_W15_0',1],['opening_W24_0',-1]]){
     await page.evaluate(([name,side])=>{const r=doorReview;r.aimPocket(r.doors.doors.find(g=>g.name===name),side);},[name,approach]);
     await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Open pocket door'));
-    if(process.env.POCKET_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.POCKET_SCREENSHOT_DIR,`${name}-closed.png`)});
+    if(process.env.POCKET_SCREENSHOT_DIR)await captureReview(page,{path:resolve(process.env.POCKET_SCREENSHOT_DIR,`${name}-closed.png`)});
     await page.keyboard.press('e');
     assert(await page.evaluate(name=>doorReview.doors.doors.find(g=>g.name===name).userData.walkDoor.open,name));
-    if(process.env.POCKET_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.POCKET_SCREENSHOT_DIR,`${name}-open.png`)});
+    if(process.env.POCKET_SCREENSHOT_DIR)await captureReview(page,{path:resolve(process.env.POCKET_SCREENSHOT_DIR,`${name}-open.png`)});
     for(const side of [approach,-approach]){
       const passage=await page.evaluate(([name,side])=>{
         const r=doorReview,g=r.doors.doors.find(g=>g.name===name),p=g.userData.walkDoor.panel.position;
