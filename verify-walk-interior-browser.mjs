@@ -9,7 +9,7 @@ const server=createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://localhost').pathname;
   const file=resolve(root,'.'+path);
   let data=await readFile(file);
-  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,fpUpdate,loadWalkInterior,houseInteriorBacking,houseTerrainY,get navigation(){return walkNavigation;},get house(){return walkHouse;},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);walkNavigation?.reset(camera.position);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
+  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,fpUpdate,loadWalkInterior,houseInteriorBacking,houseTerrainY,get navigation(){return walkNavigation;},get house(){return walkHouse;},lookAt(x,z){fpYaw=Math.atan2(camera.position.x-x,camera.position.z-z);fpPitch=0;fpUpdate(0);requestRender();},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);walkNavigation?.reset(camera.position);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
   res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(data);
 }catch{res.writeHead(404).end();}});
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -111,12 +111,42 @@ try{
   assert(Math.abs(floorPixel.height-.003)<1e-7);
   assert(floorPixel.rgb[0]>floorPixel.rgb[2],`Champagne vinyl must render warm, not with the outdoor cyan cast: ${JSON.stringify(floorPixel)}`);
   await page.locator('#toggleFurniture').evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change'));});
-  for(const [name,x,z,yaw,pitch] of [['living',17.5,18,0,0],['office',13,22.3,0,-.2],['bedroom',18.5,10.3,0,-.2]]){
+  const reviewFov=await page.evaluate(()=>{const camera=walkReview.camera,previous=camera.fov;camera.fov=75;camera.updateProjectionMatrix();return previous;});
+  for(const [name,x,z,yaw,pitch] of [
+    ['living',17.5,18,0,0],['office',13,22.3,0,-.2],['bedroom',18.5,10.3,0,-.2],
+    ['entrance',15.8,21.4,-Math.PI/2,-.15],
+    ['utility',18.5,23.6,-Math.PI/2,-.2],
+    ['guest-bathroom',16.85,23.6,Math.PI,-.2],
+    ['guest-bedroom',14.1,23.4,2.4,-.35],
+    ['north-office',13.5,12.6,Math.PI/2,-.2],
+    ['kitchen',17,14,-Math.PI/2,-.2],
+    ['pantry',14.4,12.3,0,-.4],
+    ['main-bathroom',13,10.5,0,-.45],
+    ['dressing-west-upper',15.4,8.48,Math.PI/2,.25],
+    ['dressing-west-lower',15.4,8.48,Math.PI/2,-.85],
+    ['dressing-east-upper',14.65,8.48,-Math.PI/2,.25],
+    ['dressing-east-lower',14.65,8.48,-Math.PI/2,-.85],
+  ]){
     await page.evaluate(([x,z,yaw,pitch])=>walkReview.aim(x,z,yaw,pitch),[x,z,yaw,pitch]);
     await page.waitForTimeout(350);
     if(process.env.WALK_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.WALK_SCREENSHOT_DIR,`garden-interior-${name}.png`)});
   }
   await page.evaluate(async()=>{await walkReview.loadWalkInterior();await walkReview.loadWalkInterior();});
+  await page.evaluate(fov=>{walkReview.camera.fov=fov;walkReview.camera.updateProjectionMatrix();},reviewFov);
+  await page.evaluate(async()=>{
+    const THREE=await import('three'),r=walkReview;
+    r.aim(15.78,20.68,-Math.PI/2);
+    const move=(x,z)=>{const oldX=r.camera.position.x,oldZ=r.camera.position.z;r.camera.position.x=x;r.camera.position.z=z;r.navigation.constrain(r.camera.position,oldX,oldZ);};
+    move(19.28,20.68);move(18.98,20.68);move(18.98,21.78);
+    const door=r.house.loft.doors[0];
+    if(!r.navigation.toggle(door,r.camera))throw new Error('Loft door did not open');
+    move(17.18,21.78);
+    const target=new THREE.Box3().setFromObject(door.userData.walkDoor.leaf).getCenter(new THREE.Vector3());
+    r.lookAt(target.x,target.z);
+  });
+  await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Close'));
+  assert(await page.evaluate(()=>walkReview.navigation.aimedDoor(walkReview.camera)===walkReview.house.loft.doors[0]),'Oblique loft approach targets the visible open leaf');
+  if(process.env.WALK_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.WALK_SCREENSHOT_DIR,'garden-interior-loft-door-oblique.png')});
   await page.evaluate(()=>{walkReview.aim(17.5,19,0);walkReview.fpState.keys.w=true;});
   await page.waitForTimeout(150);
   const movement=await page.evaluate(()=>{walkReview.fpState.keys={};return walkReview.camera.position.toArray();});

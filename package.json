@@ -2,6 +2,7 @@
   "private": true,
   "packageManager": "yarn@1.22.18",
   "scripts": {
+    "verify:visual": "node scripts/visual-review.mjs",
     "unreal:export": "node unreal/export.mjs",
     "unreal:verify": "node unreal/verify-export-inputs.mjs && node unreal/verify-floor-reference.mjs && node unreal/verify-export.mjs && node unreal/verify-loft-import-guard.mjs && node unreal/verify-refresh-isolation.mjs && node unreal/verify-apertures.mjs",
     "verify": "node scripts/verify.mjs && yarn unreal:verify",
