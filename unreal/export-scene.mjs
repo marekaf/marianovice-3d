@@ -41,6 +41,7 @@ export function prepareExportScene(THREE,roots,origin,geometryOverrides=new Map(
   function material(source){
     if(!materials.has(source)){
       const copy=source.clone();copy.envMap=null;copy.userData={};
+      if(source.name==='mirror'){copy.metalness=1;copy.roughness=.01;}
       copy.name=`material_${materials.size}_${source.name||source.type}`;
       materials.set(source,copy);
     }
