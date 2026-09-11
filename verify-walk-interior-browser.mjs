@@ -9,7 +9,7 @@ const server=createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://localhost').pathname;
   const file=resolve(root,'.'+path);
   let data=await readFile(file);
-  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,fpUpdate,loadWalkInterior,houseInteriorBacking,houseTerrainY,get navigation(){return walkNavigation;},get house(){return walkHouse;},lookAt(x,z){fpYaw=Math.atan2(camera.position.x-x,camera.position.z-z);fpPitch=0;fpUpdate(0);requestRender();},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);walkNavigation?.reset(camera.position);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
+  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,fpUpdate,loadWalkInterior,houseInteriorBacking,houseTerrainY,get navigation(){return walkNavigation;},get house(){return walkHouse;},lookAt(x,z,pitch=0){fpYaw=Math.atan2(camera.position.x-x,camera.position.z-z);fpPitch=pitch;fpUpdate(0);requestRender();},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);walkNavigation?.reset(camera.position);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
   res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(data);
 }catch{res.writeHead(404).end();}});
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -147,6 +147,26 @@ try{
   await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden&&document.querySelector('#walkDoorPrompt').textContent.includes('Close'));
   assert(await page.evaluate(()=>walkReview.navigation.aimedDoor(walkReview.camera)===walkReview.house.loft.doors[0]),'Oblique loft approach targets the visible open leaf');
   if(process.env.WALK_SCREENSHOT_DIR)await page.screenshot({path:resolve(process.env.WALK_SCREENSHOT_DIR,'garden-interior-loft-door-oblique.png')});
+  if(process.env.WALK_SCREENSHOT_DIR){
+    for(const [name,x,z,targetX,targetZ] of [
+      ['loft-gym',17.6,23,16.6,25],
+      ['loft-hobby',18.3,23,19.6,25.4],
+    ]){
+      const pose=await page.evaluate(([x,z,targetX,targetZ])=>{
+        const r=walkReview;
+        r.camera.position.set(x,r.houseTerrainY+4.62375,z);
+        r.camera.fov=75;r.camera.updateProjectionMatrix();
+        r.lookAt(targetX,targetZ,-.35);
+        return {height:r.camera.position.y-r.houseTerrainY,furniture:r.house.loft.furniture.visible,surface:r.navigation.levels.state.surface};
+      },[x,z,targetX,targetZ]);
+      assert.equal(pose.furniture,true);
+      assert.equal(pose.surface,'loft');
+      assert(Math.abs(pose.height-4.62375)<1e-6,'Loft review camera remains at upstairs eye height');
+      await page.waitForTimeout(350);
+      await page.screenshot({path:resolve(process.env.WALK_SCREENSHOT_DIR,`garden-interior-${name}.png`)});
+    }
+    await page.evaluate(fov=>{walkReview.camera.fov=fov;walkReview.camera.updateProjectionMatrix();},reviewFov);
+  }
   await page.evaluate(()=>{walkReview.aim(17.5,19,0);walkReview.fpState.keys.w=true;});
   await page.waitForTimeout(150);
   const movement=await page.evaluate(()=>{walkReview.fpState.keys={};return walkReview.camera.position.toArray();});
