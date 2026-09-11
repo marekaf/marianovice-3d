@@ -28,6 +28,7 @@ const checks=[
   'verify-garage.mjs',
   'verify-garage-roof-ends.mjs',
   'verify-loft-ceiling.mjs',
+  'verify-loft-door-floor.mjs',
   'verify-loft-roof-windows.mjs',
   'verify-walk-loft.mjs',
   'verify-walk-facade.mjs',

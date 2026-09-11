@@ -23,7 +23,16 @@ export function houseFlooringModel(house, officeOutlines = [], { regions = null 
   const width = .225, length = 1.524, offsets = [.38];
   const columns = Math.ceil((bounds.x1 - bounds.x0) / width);
   for (let column = 1; column < columns; column++) offsets.push((offsets[column - 1] + .34 + ((column * 137) % 521) / 1000) % length);
-  const allowed = regions?.map(rectPolygon);
+  const doorways = regions ? (house.intWalls || []).flatMap(wall => {
+    const alongX = wall.b[0] - wall.a[0] > wall.b[1] - wall.a[1];
+    return (wall.openings || []).filter(opening => !(opening.sill > 0)).map(opening => {
+      const start = wall.a[alongX ? 0 : 1] + opening.at, end = start + opening.w;
+      return alongX ? { x0: start, x1: end, z0: wall.a[1], z1: wall.b[1] }
+        : { x0: wall.a[0], x1: wall.b[0], z0: start, z1: end };
+    });
+  }).filter(doorway => regions.some(room => doorway.x0 <= room.x1 && doorway.x1 >= room.x0
+    && doorway.z0 <= room.z1 && doorway.z1 >= room.z0)) : [];
+  const allowed = regions && [...regions, ...doorways].map(rectPolygon);
   const boundaries = [house.outline, ...excluded, ...(allowed || [])].flat();
   const xCuts = [...new Set(boundaries.map(point => point[0]))];
   const zCuts = [...new Set(boundaries.map(point => point[1]))];
