@@ -59,6 +59,16 @@ try{
   assert(!closing.allowed);assert(closing.open);
   const entrance=await page.evaluate(()=>{const g=doorReview.doors.doors.find(group=>group.name==='opening_W9_2');return{y:g.position.y,hinge:g.userData.walkDoor.opening.hinge};});
   assert.equal(entrance.y,2.465);assert.equal(entrance.hinge,'south');
+  await page.evaluate(()=>{const r=doorReview,g=r.doors.doors.find(g=>g.name==='opening_W13_0');r.aim(g);});
+  await page.waitForFunction(()=>!document.querySelector('#walkDoorPrompt').hidden);
+  await page.keyboard.press('e');
+  const bedroom=await page.evaluate(()=>{
+    const r=doorReview,g=r.doors.doors.find(g=>g.name==='opening_W13_0'),d=g.userData.walkDoor;
+    const bounds=new r.THREE.Box3().setFromObject(d.leaf),pivot=g.localToWorld(d.pivot.position.clone());
+    return{open:d.open,hinge:d.opening.hinge,eastReach:bounds.max.x-pivot.x,westReach:pivot.x-bounds.min.x,zOffset:bounds.getCenter(new r.THREE.Vector3()).z-pivot.z};
+  });
+  assert(bedroom.open);assert.equal(bedroom.hinge,'south');
+  assert(bedroom.eastReach>.79&&bedroom.westReach<.04&&Math.abs(bedroom.zOffset)<.01,'D11 opens into the bedroom at the south jamb');
   for(const name of ['opening_W7_0','opening_W9_1']){
     await page.evaluate(name=>{const r=doorReview,g=r.doors.doors.find(g=>g.name===name);r.aim(g);},name);
     await page.waitForFunction(()=>document.querySelector('#walkDoorPrompt').textContent.includes('Open sliding portal'));
