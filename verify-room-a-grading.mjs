@@ -35,13 +35,14 @@ const fire=FirepitModel.build(GARDEN,site.height);
 near(pergola.floorHeight,1.05);
 near(site.height(22,14),2.345);
 near(site.routeHeight(22,14),2.465);
-near(fire.floorHeight+.008,1.615);
-for(const v of fire.parts.find(p=>p.name==='gravel_apron').vertices.slice(65))near(v[2]+fire.floorHeight,1.615);
+const fireFinish=pergola.floorHeight-.1;
+near(fire.floorHeight+.008,fireFinish);
+for(const v of fire.parts.find(p=>p.name==='gravel_apron').vertices.slice(65))near(v[2]+fire.floorHeight,fireFinish);
 for(const route of site.spec.routeProfiles) {
   near(route.bedding,.1);
   if(route.id==='Pond approach')near(site.routeHeight(...route.points[0]),route.levels[0]);
   else near(site.routeHeight(...route.points[0]),route.id==='Daily dining'?TERRAIN.houseFFLInternal:pergola.floorHeight);
-  near(site.routeHeight(...route.points.at(-1)),route.id==='Daily dining'?pergola.floorHeight:1.615);
+  near(site.routeHeight(...route.points.at(-1)),route.id==='Daily dining'?pergola.floorHeight:fireFinish);
   for(let j=1;j<route.points.length;j++)for(let i=0;i<=20;i++) {
     const t=i/20,a=route.points[j-1],b=route.points[j],x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;
     verifyRouteSupport(route,x,z);
@@ -52,7 +53,7 @@ for(let i=0;i<128;i++)for(const radius of [.5,.9,1]) {
   const p=site.spec.pond,a=i*Math.PI/64,x=p.cx+Math.cos(a)*p.rx*radius,z=p.cz+Math.sin(a)*p.rz*radius;
   assert.ok(site.height(x,z)<=p.edge-p.depth*.5*(1+Math.cos(radius*Math.PI))+1e-7,'Gathering banks must not fill the pond basin');
 }
-assert(site.routeHeight(...link.points[0])<site.routeHeight(...link.points.at(-1)));
+assert(site.routeHeight(...link.points[0])>=site.routeHeight(...link.points.at(-1)),'Firepit connection must stay level or descend from the pergola');
 for(const p of site.spec.finishPads.filter(p=>p.x1<11))near(site.height((p.x0+p.x1)/2,(p.z0+p.z1)/2),TERRAIN.houseFFLInternal-.12);
 const bench=HiddenBenchModel.build(GARDEN,site.height);
 for(const foot of bench.feet)for(const [x,z,y]of foot.bottomCorners){near(bench.floorHeight+y,site.height(x,z));assert(y<0,'Rigid bench rests above graded leveling pads');}

@@ -129,7 +129,7 @@ const SiteTerrain = (() => {
       if(route.bankBounds&&rectDistance(route.bankBounds,x,z)>0)continue;
       const sample=routeSample(route,x,z,true),distance=Math.max(0,sample.distance-route.width/2);
       const clear=Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d),spec.houseExcavation?polygonDistance(spec.houseExcavation.points,x,z):Infinity);
-      const influence=(1-smoothstep(distance/route.bankApron.blend))*smoothstep(clear/route.bankApron.clearBlend)*smoothstep(routeBankClearance(route,x,z)/.6);
+      const influence=(1-smoothstep(distance/route.bankApron.blend))*smoothstep(clear/route.bankApron.clearBlend)*smoothstep(routeBankClearance(route,x,z));
       h+=(sample.level-(route.bedding??.04)-h)*influence;
     }
     for(const route of spec.routeProfiles??[]) {
@@ -139,7 +139,7 @@ const SiteTerrain = (() => {
       const blend=route.bankBlend??.5;
       if(distance<blend) {
         const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d)):Infinity;
-        const influence=(1-smoothstep(distance/blend))*(route.approachBank?smoothstep(clear/1.2):1)*smoothstep(routeBankClearance(route,x,z)/.6);
+        const influence=(1-smoothstep(distance/blend))*(route.approachBank?smoothstep(clear/1.2):1)*smoothstep(routeBankClearance(route,x,z));
         h+=(sample.level-bedding-h)*influence;
         if(route.approachBank)h=Math.min(h,h+(sample.level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(routeBankClearance(route,x,z)/.6));
       }
