@@ -86,6 +86,27 @@ Run `node verify-firepit.mjs` to check the cavity, seating footprint, supports a
 Run `node verify-hidden-bench.mjs` to check the bench footprint, connected framing and graded foot contacts. The browser preview is at `#hiddenBench`; use `--model=hiddenBench` for standalone Blender previews.
 Run `node verify-site-terrain.mjs` to compare grading with the saved browser baseline and the Python sampler. Rendering levels follow the placed house geometry; `TERRAIN.houseFFLInternal` remains the nominal survey reference.
 
+## Browser garden details in Blender
+
+Export the visible summer planting, pond, east deck and portal drain into a verified supplement. The source root must contain the viewer dependencies and private survey inputs. The output directory must be ignored by Git.
+
+```sh
+node blender/export-details.mjs --source-root /absolute/viewer/root --output blender/generated
+/Applications/Blender.app/Contents/MacOS/Blender -b --python-exit-code 1 -P blender/poc.py -- blender/garden.json --details blender/generated/garden-details.json --detail-source-root /absolute/viewer/root
+```
+
+The exporter batches foliage into split GLBs and checks their roundtrip bounds. The importer checks source and asset hashes, layout, terrain, category coverage, vertex probes and ground contacts before replacing the corresponding legacy objects. Regenerate the supplement after source changes; a stale supplement fails explicitly. Omitting `--details` uses the existing procedural scene.
+
+Terrain, routes, buildings, furniture, west terrace, atrium pots and firewood stay with the Blender builder. The supplement captures one mature summer state; it does not transfer browser animation or lighting. Blender and browser shading can differ.
+
+Run `node verify-garden-details.mjs` for batching and provenance checks. A detail-only import and saved-scene reload can be checked with:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender -b --python-exit-code 1 -P blender/verify_details_import.py -- blender/generated/garden-details.json blender/garden.json /absolute/viewer/root blender/generated/garden-details.blend
+```
+
+The full scene verifier validates the supplement against its saved provenance and geometry while retaining the building, route and fence checks.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

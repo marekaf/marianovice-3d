@@ -14,6 +14,8 @@ extra = sys.argv[sys.argv.index("--") + 1:]
 with open(extra[0]) as source:
     garden = json.load(source)
 bpy.context.view_layer.update()
+from garden_details import verify_saved_details
+details = verify_saved_details(garden)
 for key in ('roofModel', 'infillModel'):
     model = garden['houseRoof'][key]
     for part in model['parts']:
@@ -36,7 +38,8 @@ assert bpy.data.objects.get("et_table") is None
 assert not any(obj.name.startswith("et_seat") for obj in bpy.data.objects)
 assert any(obj.name.startswith("westTerrace_0_slab") for obj in bpy.data.objects)
 assert any(obj.name.startswith("saunaPath_0_slab") for obj in bpy.data.objects)
-assert any(obj.name.startswith("east_deck_board_") for obj in bpy.data.objects)
+if details is None:
+    assert any(obj.name.startswith("east_deck_board_") for obj in bpy.data.objects)
 elements = {element['id']: element for element in garden['elements']}
 assert not any(obj.name.startswith(('screenNorth', 'guestBathroomPrivacy')) for obj in bpy.data.objects)
 route_mesh = bpy.data.objects['garden_routes']
@@ -184,7 +187,7 @@ for template in templates:
     assert len(template.data.vertices) > 100
     assert min(vertex.co.z for vertex in template.data.vertices) >= -1e-6
 asset_root = os.path.join(os.path.dirname(os.path.abspath(extra[0])), "assets")
-if not os.path.isdir(os.path.join(asset_root, "models")):
+if details is None and not os.path.isdir(os.path.join(asset_root, "models")):
     assert len(templates) >= 10
     assert any(obj.name.startswith("tree") and not obj.hide_render for obj in bpy.data.objects)
 print("SCENE VERIFIED: %d vehicles, %d outdoor furniture parts, %d procedural templates" %

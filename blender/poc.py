@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model_parts import build_model
 from garden_routes import build_routes
 from house_roof import build_house_roof
+from garden_details import verified_manifest, import_details
 from site_terrain import height as site_height
 from procedural_plants import plant_template
 
@@ -35,6 +36,14 @@ with open(json_path) as f:
 SITE_TERRAIN = GARDEN.get("siteTerrain")
 if SITE_TERRAIN is None:
     raise SystemExit("garden.json has no siteTerrain block — regenerate it: node generate-blender-json.js")
+
+DETAILS_PATH = extra[extra.index("--details")+1] if "--details" in extra else None
+DETAILS_SOURCE = extra[extra.index("--detail-source-root")+1] if "--detail-source-root" in extra else None
+if DETAILS_PATH:
+    if not DETAILS_SOURCE:
+        raise ValueError("--details requires --detail-source-root")
+    verified_manifest(DETAILS_PATH, GARDEN, DETAILS_SOURCE)
+detail_legacy = set()
 
 random.seed(42)
 scene = bpy.context.scene
@@ -1208,10 +1217,13 @@ def climbers(prefix, axis, wall, out_sign, a0, a1, z_base, height):
             add_sphere("%s_f%d_%d" % (prefix, i, k), px_, py_, zz, rr, mat, scale=sc, subdiv=1)
 
 
+detail_before = set(bpy.data.objects)
 if "facadeClimbers" in els:
     climbers("climb_gar", "x", gx1, +1, 19.7, 26.2, ground_h(gx1 + 0.3, 22.9), 2.8)
     climbers("climb_atrN", "y", 15.93, +1, 10.8, 14.6, DECK_TOP, 2.4)
     climbers("climb_atrS", "y", 19.18, -1, 10.8, 14.6, DECK_TOP, 2.4)
+
+detail_legacy.update(obj for obj in set(bpy.data.objects)-detail_before if not obj.hide_render and obj.name != "logs0")
 
 # ---------------- carport (thin plate falling west from the garage junction) ----------------
 c = first_rect(els["carport"])
@@ -1278,6 +1290,7 @@ for i, prt in enumerate(x for x in els["westTerrace"]["parts"] if x["kind"] == "
     level_paving("westTerrace_%d" % i, prt)
 for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect" and x.get("role") != "saunaLanding"):
     level_paving("saunaPath_%d" % i, prt)
+detail_before = set(bpy.data.objects)
 for i, r in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
     for j in range(math.ceil(r["d"] / 0.142)):
         depth = min(0.137, r["d"] - j * 0.142)
@@ -1299,6 +1312,8 @@ for i, r in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "re
                 add_cyl("east_deck_pedestal_%d_%d_%d" % (i, j, k), x, y, (top + DECK_TOP - 0.067) / 2,
                         0.04, DECK_TOP - 0.067 - top, MAT["frame"], verts=12)
 
+detail_legacy.update(obj for obj in set(bpy.data.objects)-detail_before if not obj.hide_render and obj.name != "logs0")
+
 # driveway + carport + parking bay: one continuous DITON large-format paver surface
 draped_poly("driveway", dpoly, GARDEN["siteTerrain"]["drivewayProfile"]["surfaceOffset"], MAT["pavers"], subdiv=6)
 
@@ -1319,6 +1334,7 @@ for si, sp in enumerate(STEP_STONES):
 # no separate parking pad — the driveway polygon already covers the parking bay
 
 # ---------------- pond ----------------
+detail_before = set(bpy.data.objects)
 pe = next(x for x in els["pond"]["parts"] if x["kind"] == "ellipse")
 add_cyl("pond_water", pe["cx"], pe["cy"], POND_WATER_Z - 0.02, 1.0, 0.04, MAT["water"],
         sx=pe["rx"] * 0.82, sy=pe["ry"] * 0.82, verts=48)
@@ -1334,6 +1350,8 @@ for i in range(26):  # outer scatter on the bank crest
     py = pe["cy"] + pe["ry"] * 1.04 * math.sin(a)
     place_rock("pond_stone%d" % i, px, py, max(ground_h(px, py) - 0.04, POND_WATER_Z + 0.02),
                0.13 + random.random() * 0.09)
+
+detail_legacy.update(obj for obj in set(bpy.data.objects)-detail_before if not obj.hide_render and obj.name != "logs0")
 
 # ---------------- fire pit + stones + benches ----------------
 fc = next(x for x in els["firePit"]["parts"] if x["kind"] == "circle")
@@ -1530,6 +1548,7 @@ def place_asset(src, name, px, py, footprint=None, z=None):
     return ob
 
 
+detail_before = set(bpy.data.objects)
 # ---------------- trees ----------------
 # Primary canopy is a real photoscanned Acer x freemanii (Freeman maple), client-supplied,
 # in three ready-grown sizes (~6.8 / 9.8 / 10.2 m) sharing one alpha-cut leaf + bark material
@@ -1926,6 +1945,8 @@ for zid, plant, zfn, zbbox in ZONE_SHAPES:
             for mi, (px, py) in enumerate(sample_shape(efn, zbbox, max(2, int(zarea * 0.45)))):
                 place_clump(MOLINIA_MESH, "%s_me%d" % (zid, mi), px, py, 0.9 + random.random() * 0.5, "molinia")
 
+detail_legacy.update(obj for obj in set(bpy.data.objects)-detail_before if not obj.hide_render and obj.name != "logs0")
+
 # atrium pots: planter cylinders on the west-terrace deck
 deck_top = DECK_TOP
 pot_parts = sorted((x for x in els["atriumPots"]["parts"] if x["kind"] == "circle"),
@@ -1962,6 +1983,11 @@ build_routes(GARDEN)
 for fence_model in GARDEN["fenceModels"]:
     build_model(fence_model)
 build_model(GARDEN["entranceGateModel"])
+
+if DETAILS_PATH:
+    detail_manifest, detail_objects = import_details(DETAILS_PATH, GARDEN, DETAILS_SOURCE)
+    for obj in detail_legacy:
+        bpy.data.objects.remove(obj, do_unlink=True)
 
 # ---------------- garden light fixtures ----------------
 def circles_of(el_id):

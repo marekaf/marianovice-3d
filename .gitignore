@@ -1,4 +1,5 @@
 /node_modules/
+/blender/generated/
 /unreal/generated/
 /unreal/project/
 /docs/*
