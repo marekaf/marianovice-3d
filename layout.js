@@ -315,14 +315,6 @@ const GARDEN = {
       ]
     },
     {
-      id: "screenNorth",
-      name: "Gathering room north privacy",
-      meta: {screen: {h: 2}},
-      parts: [
-        {kind: "rect", x: 32.4, y: 5.63, w: 4.4, d: 0.14, fill: "#4a4a4e"}
-      ]
-    },
-    {
       id: "screenWest",
       name: "Wellness west privacy",
       meta: {screen: {h: 2}},

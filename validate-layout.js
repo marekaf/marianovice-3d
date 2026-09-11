@@ -89,7 +89,7 @@ for (const el of GARDEN.elements) {
 // ── Check 2: collisions between SOLID objects not expected to overlap ──────
 // Only physical objects that must not interpenetrate; planting beds/paths/lights/decor are meant to overlap.
 const SOLID = new Set(["house", "garage", "carport", "sauna", "saunaShelter", "softub", "pergola",
-  "greenhouse", "compost", "binStore", "toolStore", "rainTank", "screenNorth", "screenWest", "screenSouth",
+  "greenhouse", "compost", "binStore", "toolStore", "rainTank", "screenWest", "screenSouth",
   "raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]);
 const key = (a, b) => [a, b].sort().join("|");
 const ALLOW = new Set([
