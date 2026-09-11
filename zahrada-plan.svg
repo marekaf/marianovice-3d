@@ -252,9 +252,6 @@
       <text x="138.6" y="261" class="lbl-sm-w" transform="rotate(-90, 138.6, 261)">raised bed 4</text>
       <text x="93.6" y="297" class="dim" text-anchor="start">each 1.0 × 2.0 m,  0.6 m tall</text>
     </g>
-    <g class="el" data-id="screenNorth"><title>Gathering room north privacy</title>
-      <rect x="583.2" y="101.34" width="79.2" height="2.52" fill="#4a4a4e"/>
-    </g>
     <g class="el" data-id="screenWest"><title>Wellness west privacy</title>
       <rect x="37.44" y="36" width="2.52" height="54" fill="#4a4a4e"/>
     </g>
@@ -352,19 +349,18 @@
     <text x="0" y="414">Raised bed 2</text><text x="88" y="414">1 × 2</text><text x="170" y="414" text-anchor="end">2</text><text x="193" y="414" text-anchor="end">4f</text>
     <text x="0" y="426">Raised bed 3</text><text x="88" y="426">1 × 2</text><text x="170" y="426" text-anchor="end">2</text><text x="193" y="426" text-anchor="end">3g</text>
     <text x="0" y="438">Raised bed 4</text><text x="88" y="438">1 × 2</text><text x="170" y="438" text-anchor="end">2</text><text x="193" y="438" text-anchor="end">4g</text>
-    <text x="0" y="450">Gathering room north</text><text x="88" y="450">4.4 × 0.14</text><text x="170" y="450" text-anchor="end">0.62</text><text x="193" y="450" text-anchor="end">17c</text>
-    <text x="0" y="462">Wellness west privac</text><text x="88" y="462">0.14 × 3</text><text x="170" y="462" text-anchor="end">0.42</text><text x="193" y="462" text-anchor="end">2b</text>
-    <text x="0" y="474">Wellness north priva</text><text x="88" y="474">7 × 0.14</text><text x="170" y="474" text-anchor="end">0.98</text><text x="193" y="474" text-anchor="end">2a</text>
-    <text x="0" y="486">Orchard meadow</text><text x="88" y="486">7.2 × 6.6</text><text x="170" y="486" text-anchor="end">43.95</text><text x="193" y="486" text-anchor="end">1l</text>
-    <text x="0" y="498">Orchard meadow canop</text><text x="88" y="498">4 pcs</text><text x="170" y="498" text-anchor="end">—</text><text x="193" y="498" text-anchor="end">1m</text>
-    <text x="0" y="510">Greenhouse</text><text x="88" y="510">2 × 3</text><text x="170" y="510" text-anchor="end">6</text><text x="193" y="510" text-anchor="end">2g</text>
-    <text x="0" y="522">Compost</text><text x="88" y="522">2 × 1</text><text x="170" y="522" text-anchor="end">2</text><text x="193" y="522" text-anchor="end">2e</text>
-    <text x="0" y="534">Atrium pots</text><text x="88" y="534">3 pcs</text><text x="170" y="534" text-anchor="end">—</text><text x="193" y="534" text-anchor="end">6h</text>
-    <text x="0" y="546">North passage</text><text x="88" y="546">12.3 × 1.2</text><text x="170" y="546" text-anchor="end">14.76</text><text x="193" y="546" text-anchor="end">5c</text>
-    <text x="0" y="558">Facade climbers</text><text x="88" y="558">0.25 × 6.6 +2</text><text x="170" y="558" text-anchor="end">3.6</text><text x="193" y="558" text-anchor="end">6h</text>
-    <text x="0" y="570">Zašívárna</text><text x="88" y="570">1.28 × 0.7</text><text x="170" y="570" text-anchor="end">0.9</text><text x="193" y="570" text-anchor="end">16j</text>
-    <text x="0" y="582">Path lights</text><text x="88" y="582">6 pcs</text><text x="170" y="582" text-anchor="end">—</text><text x="193" y="582" text-anchor="end">4d</text>
-    <text x="0" y="594">Garden spots</text><text x="88" y="594">2 pcs</text><text x="170" y="594" text-anchor="end">—</text><text x="193" y="594" text-anchor="end">5g</text>
+    <text x="0" y="450">Wellness west privac</text><text x="88" y="450">0.14 × 3</text><text x="170" y="450" text-anchor="end">0.42</text><text x="193" y="450" text-anchor="end">2b</text>
+    <text x="0" y="462">Wellness north priva</text><text x="88" y="462">7 × 0.14</text><text x="170" y="462" text-anchor="end">0.98</text><text x="193" y="462" text-anchor="end">2a</text>
+    <text x="0" y="474">Orchard meadow</text><text x="88" y="474">7.2 × 6.6</text><text x="170" y="474" text-anchor="end">43.95</text><text x="193" y="474" text-anchor="end">1l</text>
+    <text x="0" y="486">Orchard meadow canop</text><text x="88" y="486">4 pcs</text><text x="170" y="486" text-anchor="end">—</text><text x="193" y="486" text-anchor="end">1m</text>
+    <text x="0" y="498">Greenhouse</text><text x="88" y="498">2 × 3</text><text x="170" y="498" text-anchor="end">6</text><text x="193" y="498" text-anchor="end">2g</text>
+    <text x="0" y="510">Compost</text><text x="88" y="510">2 × 1</text><text x="170" y="510" text-anchor="end">2</text><text x="193" y="510" text-anchor="end">2e</text>
+    <text x="0" y="522">Atrium pots</text><text x="88" y="522">3 pcs</text><text x="170" y="522" text-anchor="end">—</text><text x="193" y="522" text-anchor="end">6h</text>
+    <text x="0" y="534">North passage</text><text x="88" y="534">12.3 × 1.2</text><text x="170" y="534" text-anchor="end">14.76</text><text x="193" y="534" text-anchor="end">5c</text>
+    <text x="0" y="546">Facade climbers</text><text x="88" y="546">0.25 × 6.6 +2</text><text x="170" y="546" text-anchor="end">3.6</text><text x="193" y="546" text-anchor="end">6h</text>
+    <text x="0" y="558">Zašívárna</text><text x="88" y="558">1.28 × 0.7</text><text x="170" y="558" text-anchor="end">0.9</text><text x="193" y="558" text-anchor="end">16j</text>
+    <text x="0" y="570">Path lights</text><text x="88" y="570">6 pcs</text><text x="170" y="570" text-anchor="end">—</text><text x="193" y="570" text-anchor="end">4d</text>
+    <text x="0" y="582">Garden spots</text><text x="88" y="582">2 pcs</text><text x="170" y="582" text-anchor="end">—</text><text x="193" y="582" text-anchor="end">5g</text>
   </g>
   <g>
     <rect x="80" y="756" width="620" height="70" fill="white" stroke="#2a2a2a" stroke-width="1"/>

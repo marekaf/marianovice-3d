@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
+assert.ok(!GARDEN.elements.some(element => element.id === 'screenNorth'), 'Firepit seating stays open without a paravan');
 const { SaunaModel } = require('./sauna-model.js');
 const { PergolaModel } = require('./pergola-model.js');
 const sauna = SaunaModel.build(GARDEN, 2.51);
