@@ -123,7 +123,7 @@ the existing scene to the integrated house needs a separate import review.
 The supplement importer rejects a manifest declaring house-owned loft geometry
 before loading the engine API. It does not remove an already imported supplement.
 
-`walkthrough-route.json` defines 18 room-by-room camera moves covering both floors. Cuts avoid pretending that the closed doors and attic hatch are traversable. The route is 90 seconds at 24 fps.
+`walkthrough-route.json` defines 22 moving shots covering both floors and the garden. Cuts avoid pretending that the closed doors and attic hatch are traversable. The route is 120 seconds at 24 fps. Exterior shots require an aligned garden import in the local map; the house export alone does not provide those surroundings. Per-shot exposure biases are tuned for the reviewed local lighting and require visual checking in another scene. Run `node unreal/verify-walkthrough-motion.mjs` to check movement, speed and route bounds. Verify actual collision geometry and framing in the imported scene before rendering; source-coordinate checks do not establish live clearance.
 
 Set `generated/video-options.json` to `{"preview":true}` for a one-second output test, `{"preview":false,"frameStep":120}` for one storyboard frame per shot, or `{"preview":false}` for the whole video. Run `render-walkthrough.py` inside Unreal. It creates a separate render queue, outputs 1920×1080 PNG frames under `generated/video-frames/`, and records progress/completion in `generated/video-render.json`.
 
