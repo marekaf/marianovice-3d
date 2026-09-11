@@ -9,6 +9,7 @@ import {buildDressingRoom} from './dressing-model.js';
 import {prepareUtilityJoinery} from './utility-joinery.js';
 import {buildShowerFittings} from './shower-fittings.js';
 import {buildCoffeeNicheUpper} from './coffee-niche.js';
+import {buildBedroomWindowReveal} from './bedroom-window-reveal.js';
 
 export const finishColors={wall:'#ddd1be',ceiling:'#ddd1be'};
 
@@ -50,6 +51,7 @@ export function prepareLivingData(data) {
       return part;
     }),...chimney]};
   }, furniture:data.furniture.flatMap(f=>{
+    if(f.room==='1.12'&&f.label==='lavice polstr')return [];
     if(f.kind==='bed'&&f.room==='1.12')return [];
     if(f.room==='1.11'&&f.kind==='cab')return [];
     if(['1.12','1.04'].includes(f.room)&&f.label.startsWith('noční stolek'))return [];
@@ -173,6 +175,8 @@ export function attachLivingInterior(THREE,house,data,{buildModel,applyChampagne
   const bedData=data.furniture.find(f=>f.kind==='bed'&&f.room==='1.12');
   const bedModel=buildCoronaBed(bedData),bed=buildModel(THREE,{...bedModel,floorHeight:house.dims.floorY});
   house.furniture.add(bed);
+  const bedroomReveal=buildModel(THREE,{...buildBedroomWindowReveal(data),floorHeight:house.dims.floorY});
+  house.furniture.add(bedroomReveal);
   const dressingModel=buildDressingRoom(data),dressing=buildModel(THREE,{...dressingModel,floorHeight:house.dims.floorY});
   house.furniture.add(dressing);
   const showerModel=buildShowerFittings(data),showers=buildModel(THREE,{...showerModel,floorHeight:house.dims.floorY});

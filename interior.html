@@ -176,7 +176,7 @@ if (hasHouse) {
     document.getElementById('fitoutStatus').textContent = `Office fit-out unavailable: ${error.message}`;
   }
   try {
-    livingIntegration = await import('./docs/living-interior.js?v=54501b62efb2');
+    livingIntegration = await import('./docs/living-interior.js?v=3b3279089eb4');
     const {createBathroomFinishes}=await import('./docs/bathroom-finishes.js');
     bathroomFinishes=createBathroomFinishes(THREE,HOUSE_INTERIOR);
     utilityIntegration=await import('./docs/utility-equipment.js');

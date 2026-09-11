@@ -2396,7 +2396,7 @@ document.addEventListener('keydown',event=>{
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
     if(!localHouseData)throw new Error('House drawings unavailable');
-    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=96b330e50e61');
+    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=9a7039d900cd');
     const loftData=typeof HOUSE_LOFT==='undefined'?null:HOUSE_LOFT;
     const o=localHouseData.originPlot,localRect=r=>[r[0]-o.x,r[1]-o.z,r[2]-o.x,r[3]-o.z],gable=GABLE.map(x=>x-o.x);
     const loftRoof=loftData?HouseRoof.describe({bbox:localRect(HB),atrium:localRect(HA),gable}):null;
