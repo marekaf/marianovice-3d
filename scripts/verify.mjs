@@ -61,6 +61,7 @@ const checks=[
   'verify-kitchen-fronts.mjs',
   'verify-cabinet-finishes.mjs',
   'verify-window-seat-handles.mjs',
+  'verify-bedroom-window-reveal.mjs',
   'verify-corona-bed.mjs',
   'verify-driveway-check.mjs',
   'verify-grading-data.mjs',
