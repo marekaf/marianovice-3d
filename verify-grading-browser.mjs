@@ -9,10 +9,17 @@ try {
   if(!existsSync('docs/survey-terrain.js'))await page.route('**/docs/survey-terrain.js',route=>route.fulfill({contentType:'text/javascript',body:'const SURVEY_TERRAIN={points:[[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5]]};'}));
   await page.goto(new URL('grading.html',base).href);
   await page.locator('#report[data-revision]').waitFor({timeout:30000});
-  assert.equal(await page.locator('.sheet').count(),8);
-  assert.equal(await page.getByRole('heading',{name:'Highest supported model-ground grade',exact:true}).count(),1);
-  for(const label of ['Productive access','Greenhouse access','Bed access'])assert.equal(await page.locator('.section-card h3').filter({hasText:label}).count(),1);
-  assert(await page.getByText('Includes the pond basin; NOT a pedestrian route.',{exact:false}).count());
+  assert.equal(await page.locator('.sheet').count(),1);
+  assert.equal(await page.locator('#report p, #report .warning').count(),0);
+  const zoneIds=await page.evaluate(()=>GradingZones.create(GARDEN).zones.map(zone=>zone.id));
+  for(const id of zoneIds){const label=page.locator(`[data-zone-label="${id}"]`);assert.equal(await label.count(),1);assert(await label.isVisible());assert.equal((await label.locator('text').allTextContents()).join(''),id);}
+  assert.equal(await page.locator('[data-zone-secondary]').count(),0);
+  assert.equal(await page.locator('[data-level-mark]').count(),4);
+  for(const value of await page.locator('[data-level-mark]:not([data-level-mark="raisedBeds"]) text').allTextContents())assert.equal(value,'−0,50');
+  assert.equal(await page.locator('[data-bank-spot]').count(),4);
+  assert.equal(await page.getByText('Řezy terénem a návaznosti',{exact:false}).count(),0);
+  for(const id of ['driveway','raisedBed1','raisedBed2','raisedBed3','raisedBed4','greenhouse','sauna','compost','waterSource','rainTank'])assert(await page.locator(`[data-feature="${id}"]`).isVisible(),`${id} visible on plan`);
+  assert.equal(await page.locator('[data-feature="saunaPath"]').count(),0);
   assert.equal(await page.locator('#printPlan').isVisible(),true);
   await page.emulateMedia({media:'print'});
   const overflow=await page.locator('.sheet').evaluateAll(sheets=>sheets.map(e=>[e.scrollHeight-e.clientHeight,e.scrollWidth-e.clientWidth]));
@@ -28,5 +35,5 @@ try {
   await page.locator('#report[data-state="error"]').waitFor();
   assert.equal(await page.locator('#printPlan').isVisible(),false);
   assert.equal(await page.locator('.sheet').count(),0);
-  console.log('Grading browser: live report, eight unclipped A3 sheets, productive routes, bank measurements and unavailable-survey refusal pass');
+  console.log('Grading browser: live report, unclipped A3 sheets, survey report and unavailable-survey refusal pass');
 } finally {await browser.close();}

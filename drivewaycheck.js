@@ -95,15 +95,15 @@ function renderDrivewayCheckSVG(garden) {
   const emptied = largestClearCircle(dw, garden.plot.vertices, [ga]).r * 2;
   const turn = {
     need: worst.turn, have, circle,
-    headline: 'No swept-path simulation performed',
+    headline: 'Bez simulace vlečných křivek vozidel',
     lines: [
-      `Gate ${study.gate.dims.opening.toFixed(1)} m; wicket ${study.gate.dims.wicketOpening.toFixed(1)} m clear.`,
-      `Largest listed turning diameter ${worst.turn.toFixed(1)} m.`,
-      `Sampled empty circle Ø ${have.toFixed(1)} m with both`,
-      `bays excluded; Ø ${emptied.toFixed(1)} m excluding garage.`,
-      'Circles do not prove entry, turning or exit.',
-      'Validate wheel paths, overhangs and steering',
-      'with actual vehicles before construction.',
+      `Brána ${study.gate.dims.opening.toFixed(1)} m; branka ${study.gate.dims.wicketOpening.toFixed(1)} m světlost.`,
+      `Největší uvedený průměr otáčení ${worst.turn.toFixed(1)} m.`,
+      `Volný kruh Ø ${have.toFixed(1)} m mimo obě stání;`,
+      `Ø ${emptied.toFixed(1)} m při vyloučení samotné garáže.`,
+      'Kruhy neprokazují průjezd ani možnost otočení.',
+      'Před stavbou ověřit dráhy kol, převisy a řízení',
+      'se skutečnými vozidly.',
     ],
   };
 
@@ -128,8 +128,8 @@ function renderDrivewayCheckSVG(garden) {
     .bad{font-size:10px;font-weight:700;fill:#c0392b}
   </style>`);
   out.push(`  <rect width="1100" height="880" fill="white"/>`);
-  out.push(`  <text x="430" y="26" class="title">Diagrammatic parking and clearance study</text>`);
-  out.push(`  <text x="430" y="44" class="sub">Current model footprints. Not a swept-path simulation or construction setting-out drawing.</text>`);
+  out.push(`  <text x="430" y="26" class="title">Schéma parkování a volných průchodů</text>`);
+  out.push(`  <text x="430" y="44" class="sub">Půdorysy podle modelu. Bez simulace vlečných křivek; neslouží k vytyčení stavby.</text>`);
 
   out.push(`  <g transform="translate(70, 96)">`);
   out.push(`    <g clip-path="url(#plot)"><rect x="-50" y="-10" width="900" height="720" fill="url(#mg)"/></g>`);
@@ -158,13 +158,13 @@ function renderDrivewayCheckSVG(garden) {
   out.push(`    <rect x="${px(ga.x)}" y="${px(ga.y)}" width="${px(ga.w)}" height="${px(ga.d)}" fill="#efe9dd" stroke="#9a9074" stroke-width="1.6"/>`);
   // Garage door opening (5 m) marked on the S wall
   out.push(`    <line x1="${px(gaDoor.x)}" y1="${px(ga.y + ga.d)}" x2="${px(gaDoor.x + gaDoor.w)}" y2="${px(ga.y + ga.d)}" stroke="#3a2a18" stroke-width="3"/>`);
-  out.push(`    <text x="${px(cp.x + cp.w / 2)}" y="${px(cp.y + cp.d) - 4}" class="bay" fill="#2f6f43" text-anchor="middle">CARPORT</text>`);
-  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + ga.d) - 4}" class="bay" fill="#7a6f52" text-anchor="middle">GARAGE</text>`);
+  out.push(`    <text x="${px(cp.x + cp.w / 2)}" y="${px(cp.y + cp.d) - 4}" class="bay" fill="#2f6f43" text-anchor="middle">PŘÍSTŘEŠEK</text>`);
+  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + ga.d) - 4}" class="bay" fill="#7a6f52" text-anchor="middle">GARÁŽ</text>`);
 
   // Garage workbench across the north wall (full width) — cars park south of it
   const gaM = EL.garage.meta;
   out.push(`    <rect x="${px(ga.x + gaM.wallT + 0.1)}" y="${px(ga.y + gaM.wallT)}" width="${px(ga.w - 2 * gaM.wallT - 0.2)}" height="${px(gaM.workbench.d)}" fill="#8a6a44" stroke="#5a4530" stroke-width="1"/>`);
-  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + gaM.wallT + 0.5)}" class="vlbl" text-anchor="middle" fill="#fff">workbench</text>`);
+  out.push(`    <text x="${px(ga.x + ga.w / 2)}" y="${px(ga.y + gaM.wallT + 0.5)}" class="vlbl" text-anchor="middle" fill="#fff">pracovní stůl</text>`);
   // Carport walkways to the two pedestrian doors (keep clear of parked cars)
   out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(0.8)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
   out.push(`    <rect x="${px(cp.x + cp.w - 0.85)}" y="${px(cp.y)}" width="${px(0.85)}" height="${px(cp.d)}" fill="#fbe9c7" fill-opacity="0.7"/>`);
@@ -199,27 +199,27 @@ function renderDrivewayCheckSVG(garden) {
 
   // Gate + access route + the turning space actually available (getting to the carport)
   out.push(`    <line x1="${px(gt.x1)}" y1="${px(gt.y1)}" x2="${px(gt.x2)}" y2="${px(gt.y2)}" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>`);
-  out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">gate ${study.gate.dims.opening.toFixed(1)} m</text>`);
+  out.push(`    <text x="${px(gt.x1) + 8}" y="${px((gt.y1 + gt.y2) / 2)}" class="dim" text-anchor="start">brána ${study.gate.dims.opening.toFixed(1)} m</text>`);
   { const [a,b]=[study.wicketStart,study.wicketEnd];
     out.push(`    <line id="wicket-clear-opening" x1="${px(a[0])}" y1="${px(a[1])}" x2="${px(b[0])}" y2="${px(b[1])}" stroke="#1f7a3d" stroke-width="3" stroke-dasharray="2,2"/>`);
-    out.push(`    <text x="${px(b[0]) + 8}" y="${px((a[1]+b[1])/2)}" class="dim" fill="#1f7a3d" text-anchor="start">wicket ${study.gate.dims.wicketOpening.toFixed(1)} m</text>`); }
+    out.push(`    <text x="${px(b[0]) + 8}" y="${px((a[1]+b[1])/2)}" class="dim" fill="#1f7a3d" text-anchor="start">branka ${study.gate.dims.wicketOpening.toFixed(1)} m</text>`); }
   out.push(`    <circle cx="${px(turn.circle.x)}" cy="${px(turn.circle.y)}" r="${px(turn.need / 2)}" fill="none" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>`);
   out.push(`    <circle cx="${px(turn.circle.x)}" cy="${px(turn.circle.y)}" r="${px(turn.circle.r)}" fill="#1f7a3d" fill-opacity="0.07" stroke="#1f7a3d" stroke-width="1.4"/>`);
-  out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y)}" class="dim" fill="#1f7a3d">clear Ø ${turn.have.toFixed(1)} m</text>`);
-  out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y) + 11}" class="dim">reference Ø ${turn.need.toFixed(1)} m</text>`);
+  out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y)}" class="dim" fill="#1f7a3d">volný Ø ${turn.have.toFixed(1)} m</text>`);
+  out.push(`    <text x="${px(turn.circle.x)}" y="${px(turn.circle.y) + 11}" class="dim">referenční Ø ${turn.need.toFixed(1)} m</text>`);
 
   out.push(`  </g>`);
 
   // Compass
-  out.push(`  <g transform="translate(840, 92)"><circle r="22" fill="white" stroke="#555" stroke-width="1.3"/><path d="M 0 -17 L 5 3 L 0 -5 L -5 3 Z" fill="#2a2a2a"/><path d="M 0 5 L 5 -3 L 0 17 L -5 -3 Z" fill="#999"/><text y="-26" font-size="12" font-weight="700" text-anchor="middle">N</text></g>`);
+  out.push(`  <g transform="translate(840, 92)"><circle r="22" fill="white" stroke="#555" stroke-width="1.3"/><path d="M 0 -17 L 5 3 L 0 -5 L -5 3 Z" fill="#2a2a2a"/><path d="M 0 5 L 5 -3 L 0 17 L -5 -3 Z" fill="#999"/><text y="-26" font-size="12" font-weight="700" text-anchor="middle">S</text></g>`);
 
   // Fit table
   out.push(`  <g transform="translate(872, 150)">`);
-  out.push(`    <text x="0" y="0" class="ph">VEHICLE FOOTPRINTS (nominal)</text>`);
-  out.push(`    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vehicle</text><text x="142" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">L × W m</text><text x="170" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>`);
+  out.push(`    <text x="0" y="0" class="ph">ROZMĚRY VOZIDEL (jmenovité)</text>`);
+  out.push(`    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vozidlo</text><text x="142" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">D × Š m</text><text x="170" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>`);
   out.push(`    <line x1="0" y1="20" x2="170" y2="20" stroke="#bbb" stroke-width="0.8"/>`);
   let y = 33;
-  const grp = Object.fromEntries(Object.entries(study.bays).map(([id,{rect}])=>[id,`${id.toUpperCase()} ${rect.w.toFixed(2)} × ${rect.d.toFixed(2)} m footprint`]));
+  const grp = Object.fromEntries(Object.entries(study.bays).map(([id,{rect}])=>[id,`${id==='carport'?'PŘÍSTŘEŠEK':'GARÁŽ'} ${rect.w.toFixed(2)} × ${rect.d.toFixed(2)} m půdorys`]));
   for (const bay of ["carport", "garage"]) {
     out.push(`    <text x="0" y="${y}" class="pt" font-weight="700" fill="#333">${esc(grp[bay])}</text>`);
     y += 13;
@@ -230,30 +230,30 @@ function renderDrivewayCheckSVG(garden) {
       y += 12;
     }
     const {gaps,boundaryClearance}=study.bays[bay];
-    out.push(`    <text x="0" y="${y}" class="pt">Body-to-body gaps: ${gaps.map(g=>g.toFixed(2)+' m').join(', ')||'n/a'}</text>`);
+    out.push(`    <text x="0" y="${y}" class="pt">Mezery mezi karoseriemi: ${gaps.map(g=>g.toFixed(2)+' m').join(', ')||'neuvedeno'}</text>`);
     y += 12;
-    out.push(`    <text x="0" y="${y}" class="pt">Min. body-to-bay edge: ${boundaryClearance.toFixed(2)} m</text>`);
+    out.push(`    <text x="0" y="${y}" class="pt">Min. odstup karoserie od okraje: ${boundaryClearance.toFixed(2)} m</text>`);
     y += 20;
   }
-  out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Door &amp; exit clearance (carport)</text>`);
+  out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Dveře a pěší průchody pod přístřeškem</text>`);
   y += 12;
   for (const line of [
-    'Yellow strips are proposed pedestrian routes.',
-    'Open car doors are illustrative, not collision-tested.',
-    'Body gaps exclude mirrors, users and luggage.',
-    'Garage edge allows for walls and workbench.',
-    'Carport posts are not included in gap figures.',
-    'Confirm door access and walkways on site.',
+    'Žluté pásy označují navržené pěší průchody.',
+    'Otevřené dveře jsou ilustrační; bez kontroly kolizí.',
+    'Mezery nezahrnují zrcátka, osoby a zavazadla.',
+    'Garážové stání zohledňuje stěny a pracovní stůl.',
+    'Sloupy přístřešku nejsou zahrnuty do odstupů.',
+    'Přístupy ke dveřím a průchody ověřit na místě.',
   ]) { out.push(`    <text x="0" y="${y}" class="pt" fill="#555">${esc(line)}</text>`); y += 12; }
   y += 6;
-  out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Access from the gate</text>`);
+  out.push(`    <text x="0" y="${y}" class="pt" fill="#444" font-weight="700">Příjezd od brány</text>`);
   y += 12;
   out.push(`    <text x="0" y="${y}" class="bad" font-size="8.5">${esc(turn.headline)}</text>`);
   y += 13;
   for (const line of turn.lines) { out.push(`    <text x="0" y="${y}" class="pt" fill="#555">${esc(line)}</text>`); y += 12; }
   y += 6;
-  out.push(`    <text x="0" y="${y}" class="pt" fill="#888">Nominal vehicle specs require confirmation.</text>`);
-  out.push(`    <text x="0" y="${y + 12}" class="pt" fill="#888">Slope and vertical clearances are not assessed.</text>`);
+  out.push(`    <text x="0" y="${y}" class="pt" fill="#888">Jmenovité rozměry vozidel nutno ověřit.</text>`);
+  out.push(`    <text x="0" y="${y + 12}" class="pt" fill="#888">Sklony a průjezdné výšky nejsou posouzeny.</text>`);
   out.push(`  </g>`);
 
   out.push(`</svg>`);

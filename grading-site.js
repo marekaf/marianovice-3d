@@ -1,6 +1,7 @@
 const GradingSite = (() => {
-  function create({garden,terrain,survey,groundPatches}) {
+  function create({garden,terrain,survey,groundPatches,fenceSurvey}) {
     const node = typeof module !== 'undefined';
+    const fences = fenceSurvey ?? (node ? (require('fs').existsSync(require('path').join(__dirname,'docs/fence-survey.js')) ? require('./docs/fence-survey.js').FENCE_SURVEY : null) : typeof FENCE_SURVEY!=='undefined'?FENCE_SURVEY:null);
     const surfaces = node ? require('./survey-surface.js').SurveySurface : SurveySurface;
     const sampler = survey?.height ? survey : survey ? surfaces.create(survey.points,terrain.plane) : null;
     const existing = sampler?.height ?? ((x,z)=>terrain.basePlaneHeight(x,z));
@@ -10,7 +11,7 @@ const GradingSite = (() => {
       greenhouse:(node ? require('./greenhouse-model.js').GreenhouseModel : GreenhouseModel).build(garden,existing).groundPatch,
       raisedBeds:(node ? require('./raised-beds-model.js').RaisedBedsModel : RaisedBedsModel).build(garden).groundPatch,
     };
-    const site = (node ? require('./site-terrain.js').SiteTerrain : SiteTerrain).create(garden,terrain.plane,patches,{surveySurface:sampler?.data,houseFFL:terrain.houseFFLInternal});
+    const site = (node ? require('./site-terrain.js').SiteTerrain : SiteTerrain).create(garden,terrain.plane,patches,{surveySurface:sampler?.data,houseFFL:terrain.houseFFLInternal,fixedFences:fences?.segments});
     if(site.spec.productiveCourt) {
       patches.greenhouse={...patches.greenhouse,level:site.spec.productiveCourt.greenhouseFinish-.04};
       const p=patches.raisedBeds;

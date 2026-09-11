@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Terrain works coordination plan</title></head>
+<html lang="cs">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Zemní práce · přehled úprav terénu</title></head>
 <body>
-<nav><a href="index.html">Back to the model</a><button id="printPlan" hidden>Print / save PDF · A3 landscape</button></nav>
-<main id="report"><h1>Preparing the terrain works plan…</h1><p>A local survey is required. The report will not substitute an approximate plane if the survey is unavailable.</p></main>
-<script src="layout.js"></script><script src="terrain.js"></script><script src="privacy-screen-model.js"></script><script src="garage-model.js"></script><script src="pergola-model.js"></script><script src="greenhouse-model.js?v=71dd86bbbd29"></script><script src="raised-beds-model.js?v=17f54a471ed2"></script><script src="hidden-bench-model.js"></script><script src="site-terrain.js?v=6779e5361cd1"></script><script src="survey-surface.js"></script><script src="grading-site.js?v=f0c11f8a0a27"></script><script src="grading-data.js?v=13dea2301673"></script><script src="grading-report.js?v=44c330b9da2a"></script>
+<nav><a href="index.html">Zpět do modelu</a><button id="printPlan" hidden>Tisk / uložit PDF · A3 na šířku</button></nav>
+<main id="report" aria-busy="true"></main>
+<script src="layout.js"></script><script src="terrain.js"></script><script src="privacy-screen-model.js"></script><script src="garage-model.js"></script><script src="pergola-model.js"></script><script src="greenhouse-model.js"></script><script src="raised-beds-model.js"></script><script src="hidden-bench-model.js"></script><script src="site-terrain.js"></script><script src="survey-surface.js"></script><script src="grading-site.js"></script><script src="docs/fence-survey.js"></script><script src="grading-zones.js"></script><script src="grading-data.js"></script><script src="grading-overlay.js"></script><script src="grading-report.js"></script>
 <script type="module">
 const main=document.getElementById('report');
 try {
   await new Promise((resolve,reject)=>{
     const script=document.createElement('script');script.src='docs/survey-terrain.js';
-    script.onload=resolve;script.onerror=()=>reject(new Error('The local survey data is unavailable. Open this report in the local project with the survey present.'));
+    script.onload=resolve;script.onerror=()=>reject(new Error('Zaměření není dostupné. Otevřete přehled v místním projektu s daty zaměření.'));
     document.head.append(script);
   });
   const {site,survey}=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:SURVEY_TERRAIN});
@@ -18,12 +18,12 @@ try {
   const data=GradingData.createGradingData({garden:GARDEN,terrain:TERRAIN,site,survey,baseline});
   const report=GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data,baseline});
   const style=document.createElement('style');style.textContent=report.css;document.head.append(style);
-  main.innerHTML=report.html;main.dataset.revision=report.revision;
+  main.innerHTML=report.html;main.dataset.revision=report.revision;main.setAttribute('aria-busy','false');
   document.getElementById('printPlan').hidden=false;
   document.getElementById('printPlan').addEventListener('click',()=>window.print());
 } catch(error) {
-  main.replaceChildren();const heading=document.createElement('h1');heading.textContent='Terrain plan unavailable';
-  const note=document.createElement('p');note.textContent=error.message;main.append(heading,note);main.dataset.state='error';
+  main.replaceChildren();const heading=document.createElement('h1');heading.textContent='Plán terénu není dostupný';
+  main.append(heading);main.dataset.state='error';main.setAttribute('aria-busy','false');
 }
 </script>
 </body></html>

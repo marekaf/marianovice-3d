@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 const require=createRequire(import.meta.url);
 const {GARDEN}=require('./layout.js'),{TERRAIN}=require('./terrain.js');
 const {GradingSite}=require('./grading-site.js');
@@ -9,7 +9,7 @@ const {createGradingData}=require('./grading-data.js');
 const {GradingReport}=require('./grading-report.js');
 const points=[[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5]];
 const {site,survey,groundPatches}=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:{points}});
-const viewer=SiteTerrain.create(GARDEN,TERRAIN.plane,groundPatches,{surveySurface:survey.data,houseFFL:TERRAIN.houseFFLInternal});
+const viewer=SiteTerrain.create(GARDEN,TERRAIN.plane,groundPatches,{surveySurface:survey.data,houseFFL:TERRAIN.houseFFLInternal,fixedFences:existsSync('docs/fence-survey.js')?require('./docs/fence-survey.js').FENCE_SURVEY.segments:undefined});
 const data=createGradingData({garden:GARDEN,terrain:TERRAIN,site,survey});
 assert.equal(data.reviews?.length,site.spec.bankReview.length,'Each review region needs a measured model-grade summary');
 for(const review of data.reviews){
@@ -23,40 +23,27 @@ for(const review of data.reviews){
 }
 for(const id of ['Productive access','Greenhouse access','Bed access'])assert(data.sections.some(s=>s.id===id&&s.samples.every(p=>Number.isFinite(p.finished))));
 for(const section of data.sections.filter(s=>Number.isFinite(s.maxFinishSlope)))for(const sample of section.samples)assert.equal(sample.finished,viewer.routeHeight(sample.x,sample.z));
-const greenhouse=require('./greenhouse-model.js').GreenhouseModel.build(GARDEN,survey.height,{floorHeight:site.spec.productiveCourt.greenhouseFinish});
-const beds=require('./raised-beds-model.js').RaisedBedsModel.build(GARDEN,{surfaceHeight:site.routeHeight,groundHeight:site.height,court:site.spec.productiveCourt});
-assert.equal(data.points.find(p=>p.id==='greenhouse').finished,greenhouse.floorHeight);
-assert.equal(data.points.find(p=>p.id==='raisedBeds').finished,beds.floorHeight);
 for(const cell of data.cells)assert.equal(cell.proposed,viewer.height(cell.x,cell.z));
 const result=GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data});
-assert(result.html.includes('Purple: modeled walking finish'));
-assert(result.html.includes('Highest supported model-ground grade'));
-const unsupported=structuredClone(data);
-unsupported.reviews[0]={...unsupported.reviews[0],samples:0,peak:null};
-assert(GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data:unsupported}).html.includes('No fully supported grade samples in this review area'));
-assert(result.html.includes('Highest sampled walking-finish grade'));
-assert(result.html.includes('Greenhouse model floor'));
-assert(result.html.includes('Raised-bed central aisle finish'));
-assert(result.html.includes('Not an accessibility assessment'));
-assert(result.html.includes('Inner bends and crossfalls can be steeper than the centreline'));
-assert.equal((result.html.match(/class="section-card"/g)||[]).length,data.sections.length);
-assert.equal((result.html.match(/class="sheet"/g)||[]).length,4+Math.ceil(data.sections.length/4));
 const changedFinish=structuredClone(data);
 changedFinish.sections.find(s=>Number.isFinite(s.maxFinishSlope)).samples[0].finished+=.01;
 assert.notEqual(result.revision,GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data:changedFinish}).revision,'A changed walking sampler must produce a different report revision even with the same grading spec');
 assert.equal(result.html,GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data}).html);
 assert(!/NaN|undefined|Infinity/.test(result.html));
-assert(result.html.includes('NOT FOR SETTING OUT'));
-assert(result.html.includes('NOT order quantities'));
-assert(result.html.includes('397.000'));
+assert.equal((result.html.match(/class="sheet"/g)??[]).length,1);
+assert(!/<p[ >]|warning|Potvrdit|NEPOUŽÍVAT|Bilance|Záměr úprav/.test(result.html));
+assert(result.html.includes('Legenda oblastí'));
+for(const id of 'ABCDEFGHIJKLM')assert(result.mapSVG.includes(`data-zone-label="${id}"`));
 assert(result.mapSVG.includes('viewBox="0 0 900 650"'));
-assert(result.html.includes('1 m wicket opening'));
-assert(result.html.includes('The productive court is lowered and regraded'));
-assert(result.html.includes('The pergola floor is 1.41 m below the house'));
-assert(result.html.includes('footprint sits near the north boundary'));
-assert(result.html.includes('The terrace approach takes a longer route around the planted area'));
-assert(result.html.includes('Lowering alone does not guarantee bedroom privacy'));
-assert(!result.html.includes('Greenhouse and raised-bed platforms, bench position and platform.'));
+for(const id of ['driveway','carport','sauna','greenhouse','raisedBedsPad','raisedBed1','raisedBed2','raisedBed3','raisedBed4','compost','westTerrace','waterSource','rainTank']) {
+  assert(result.mapSVG.includes(`data-feature="${id}"`),`${id} is visible in the grading map`);
+}
+assert(!result.mapSVG.includes('data-feature="saunaPath"'));
+assert(!result.html.includes('Řezy terénem'));
+assert(!result.html.includes('Výškové body'));
+assert(!result.mapSVG.includes('stroke="#57446d"'));
+const westOutline=result.mapSVG.match(/data-feature="westTerrace"[\s\S]*?<\/g><\/g>/)[0];
+assert.equal((westOutline.match(/<rect /g)??[]).length,4,'Both west terrace rectangles appear in the fill and outline layers');
 assert(readFileSync('index.html','utf8').includes('GradingSite.create'));
 assert(!readFileSync('index.html','utf8').includes('zahrada-flat-plan'));
 assert(!readFileSync('.github/workflows/validate.yml','utf8').includes('generate-flat-plan'));
@@ -65,3 +52,38 @@ const altered=GradingSite.create({garden:GARDEN,terrain:{...TERRAIN,houseFFLInte
 const other=GradingReport.render({garden:GARDEN,terrain:TERRAIN,site:altered.site,survey:altered.survey,data:createGradingData({garden:GARDEN,terrain:TERRAIN,...altered})});
 assert.notEqual(result.revision,other.revision);
 console.log(`Grading report: ${data.cells.length} samples match viewer, deterministic HTML, datum and fail-closed survey checks pass`);
+
+const {GradingZones}=require('./grading-zones.js');
+const quantities=GradingZones.create(GARDEN);
+for(const rows of [quantities.zones,quantities.surfaces])assert(Math.abs(rows.reduce((sum,row)=>sum+row.area,0)-quantities.plotArea)<1e-7);
+assert.deepEqual(quantities.zones.map(z=>z.id),[...'ABCDEFGHIJKLM']);
+const zoneC=quantities.zones.find(z=>z.id==='C');
+for(const polygon of zoneC.polygons)for(const [x,z] of polygon)assert(x>=21.28-1e-7&&x<=34.13+1e-7&&z<=19.38+1e-7,'C stays in the carport-plus-garage strip');
+const contains=(id,x,z)=>quantities.zones.find(q=>q.id===id).polygons.some(p=>p.every((a,i)=>{const b=p[(i+1)%p.length];return (b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0])>=-1e-7;}));
+assert(contains('J',16,3),'Garden north of the house has its own zone');
+assert(contains('F',16,12),'House has its own zone');
+for(const [x,z] of [[24,22],[30,22]])assert(contains('M',x,z),'Carport and garage share a separate building zone');
+assert(!contains('F',16,3)&&!contains('F',28,28),'Building zone excludes northern garden and driveway');
+for(const zone of quantities.zones)assert(zone.name.trim().length>2,'Every zone has a legend name');
+assert(contains('L',41,9)&&contains('H',36,10),'H has a separate fence-bank zone');
+assert(!contains('G',2,24),'Composter does not extend the productive grading zone');
+assert.deepEqual(quantities.levelMarks.map(m=>m.relativeLevel),[-.5,-.5,-.5,.4]);
+const rectangle=(x,y,w,d)=>({kind:'rect',x,y,w,d});
+const overlapGarden={plot:{vertices:[[0,0],[10,0],[10,10],[0,10]]},elements:[{id:'driveway',parts:[rectangle(-2,0,8,5)]},{id:'carport',parts:[rectangle(2,2,5,5)]}]};
+const overlap=GradingZones.create(overlapGarden);
+assert(Math.abs(overlap.surfaces.find(s=>s.id==='driveway').area-43)<1e-8,'Driveway union clips plot and deducts 12 m² carport overlap');
+for(const zone of quantities.zones)for(const polygon of zone.polygons)assert(GradingZones.area(polygon)>0);
+assert.equal((readFileSync('grading.html','utf8').match(/lang="cs"/)??[]).length,1);
+console.log('Grading quantities: clipped overlapping paving union, full plot partition and zone identifiers pass');
+
+assert(Math.abs(quantities.drivewayBreakdown.reduce((sum,s)=>sum+s.area,0)-quantities.surfaces.find(s=>s.id==='driveway').area)<1e-7);
+const withClearance={...overlapGarden,elements:[...overlapGarden.elements,{id:'northPassage',parts:[rectangle(0,7,10,1)]},{id:'saunaPath',parts:[rectangle(0,8,10,1)]}]};
+const clearanceQuantities=GradingZones.create(withClearance);
+assert(Math.abs(clearanceQuantities.surfaces.find(s=>s.id==='paths').area-10)<1e-8,'Only built sauna path is paving; passage clearance is landscape');
+if(data.zoneTotals){assert(Math.abs(data.zoneTotals.reduce((sum,z)=>sum+z.cut,0)-data.totals.cut)<1e-7);assert(Math.abs(data.zoneTotals.reduce((sum,z)=>sum+z.fill,0)-data.totals.fill)<1e-7);}
+for(const zone of quantities.zones){
+  const [x,z]=zone.label;
+  assert(zone.polygons.some(points=>points.every((a,i)=>{const b=points[(i+1)%points.length];return (b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0])>=-1e-8;})),`Zone ${zone.id} letter must be inside its own area`);
+  assert.equal((result.mapSVG.match(new RegExp(`data-zone-label="${zone.id}"`,'g'))??[]).length,1);
+}
+assert(!result.mapSVG.includes('data-zone-secondary'));

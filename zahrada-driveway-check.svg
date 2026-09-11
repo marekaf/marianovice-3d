@@ -19,8 +19,8 @@
     .bad{font-size:10px;font-weight:700;fill:#c0392b}
   </style>
   <rect width="1100" height="880" fill="white"/>
-  <text x="430" y="26" class="title">Diagrammatic parking and clearance study</text>
-  <text x="430" y="44" class="sub">Current model footprints. Not a swept-path simulation or construction setting-out drawing.</text>
+  <text x="430" y="26" class="title">Schéma parkování a volných průchodů</text>
+  <text x="430" y="44" class="sub">Půdorysy podle modelu. Bez simulace vlečných křivek; neslouží k vytyčení stavby.</text>
   <g transform="translate(70, 96)">
     <g clip-path="url(#plot)"><rect x="-50" y="-10" width="900" height="720" fill="url(#mg)"/></g>
     <polygon points="-38.88,5.58 753.48,-14.22 787.5,404.1 779.4,475.74 763.38,618.84 5.4,550.26" fill="none" stroke="#2a2a2a" stroke-width="2.5"/>
@@ -30,18 +30,18 @@
       <polygon points="188.64,129.24 383.04,129.24 383.04,208.44 370.44,208.44 370.44,405.54 383.04,405.54 383.04,475.74 188.64,475.74 188.64,345.24 268.74,345.24 268.74,286.74 188.64,286.74"/>
       <rect x="95.4" y="36" width="72" height="54"/>
       <rect x="41.4" y="36" width="54" height="54"/>
-      <rect x="450" y="27" width="108" height="72"/>
-      <rect x="453.6" y="30.6" width="100.8" height="64.8"/>
-      <rect x="482.76" y="53.1" width="43.2" height="19.8"/>
+      <rect x="403.7" y="30.26" width="108" height="72"/>
+      <rect x="407.3" y="33.86" width="100.8" height="64.8"/>
+      <rect x="436.46" y="56.36" width="43.2" height="19.8"/>
     </g>
-    <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 671.94,486.36 775.44,502.02 765.9,583.02 383.04,534.96" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>
+    <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 775.28,512.57 767.27,584.13 614.34,547.74 383.04,547.74" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>
     <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#e7f3ea" stroke="#3f8f52" stroke-width="1.6"/>
     <rect x="497.34" y="348.84" width="117" height="126.9" fill="#efe9dd" stroke="#9a9074" stroke-width="1.6"/>
     <line x1="510.84" y1="475.74" x2="600.84" y2="475.74" stroke="#3a2a18" stroke-width="3"/>
-    <text x="440.19" y="472.1" class="bay" fill="#2f6f43" text-anchor="middle">CARPORT</text>
-    <text x="555.84" y="471.74" class="bay" fill="#7a6f52" text-anchor="middle">GARAGE</text>
+    <text x="440.19" y="472.1" class="bay" fill="#2f6f43" text-anchor="middle">PŘÍSTŘEŠEK</text>
+    <text x="555.84" y="471.74" class="bay" fill="#7a6f52" text-anchor="middle">GARÁŽ</text>
     <rect x="503.64" y="353.34" width="104.4" height="13.5" fill="#8a6a44" stroke="#5a4530" stroke-width="1"/>
-    <text x="555.84" y="362.34" class="vlbl" text-anchor="middle" fill="#fff">workbench</text>
+    <text x="555.84" y="362.34" class="vlbl" text-anchor="middle" fill="#fff">pracovní stůl</text>
     <rect x="383.04" y="349.2" width="14.4" height="126.9" fill="#fbe9c7" fill-opacity="0.7"/>
     <rect x="482.04" y="349.2" width="15.3" height="126.9" fill="#fbe9c7" fill-opacity="0.7"/>
     <line x1="497.34" y1="380.34" x2="497.34" y2="405.99" stroke="#1f7a3d" stroke-width="3"/>
@@ -75,50 +75,50 @@
     </g>
     <text x="595.8" y="398.43" class="vlbl" text-anchor="middle" transform="rotate(90 595.8 398.43)">Ténéré 700</text>
     <line x1="775.28" y1="512.57" x2="767.27" y2="584.13" stroke="#c0392b" stroke-width="3" stroke-dasharray="2,2"/>
-    <text x="783.28" y="548.35" class="dim" text-anchor="start">gate 4.0 m</text>
+    <text x="783.28" y="548.35" class="dim" text-anchor="start">brána 4.0 m</text>
     <line id="wicket-clear-opening" x1="766.99" y1="586.63" x2="764.98" y2="604.52" stroke="#1f7a3d" stroke-width="3" stroke-dasharray="2,2"/>
-    <text x="772.98" y="595.58" class="dim" fill="#1f7a3d" text-anchor="start">wicket 1.0 m</text>
-    <circle cx="610.4" cy="519.45" r="108.9" fill="none" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>
-    <circle cx="610.4" cy="519.45" r="43.7" fill="#1f7a3d" fill-opacity="0.07" stroke="#1f7a3d" stroke-width="1.4"/>
-    <text x="610.4" y="519.45" class="dim" fill="#1f7a3d">clear Ø 4.9 m</text>
-    <text x="610.4" y="530.45" class="dim">reference Ø 12.1 m</text>
+    <text x="772.98" y="595.58" class="dim" fill="#1f7a3d" text-anchor="start">branka 1.0 m</text>
+    <circle cx="502.42" cy="511.74" r="108.9" fill="none" stroke="#c0392b" stroke-width="1" stroke-dasharray="5,4"/>
+    <circle cx="502.42" cy="511.74" r="36" fill="#1f7a3d" fill-opacity="0.07" stroke="#1f7a3d" stroke-width="1.4"/>
+    <text x="502.42" y="511.74" class="dim" fill="#1f7a3d">volný Ø 4.0 m</text>
+    <text x="502.42" y="522.74" class="dim">referenční Ø 12.1 m</text>
   </g>
-  <g transform="translate(840, 92)"><circle r="22" fill="white" stroke="#555" stroke-width="1.3"/><path d="M 0 -17 L 5 3 L 0 -5 L -5 3 Z" fill="#2a2a2a"/><path d="M 0 5 L 5 -3 L 0 17 L -5 -3 Z" fill="#999"/><text y="-26" font-size="12" font-weight="700" text-anchor="middle">N</text></g>
+  <g transform="translate(840, 92)"><circle r="22" fill="white" stroke="#555" stroke-width="1.3"/><path d="M 0 -17 L 5 3 L 0 -5 L -5 3 Z" fill="#2a2a2a"/><path d="M 0 5 L 5 -3 L 0 17 L -5 -3 Z" fill="#999"/><text y="-26" font-size="12" font-weight="700" text-anchor="middle">S</text></g>
   <g transform="translate(872, 150)">
-    <text x="0" y="0" class="ph">VEHICLE FOOTPRINTS (nominal)</text>
-    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vehicle</text><text x="142" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">L × W m</text><text x="170" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>
+    <text x="0" y="0" class="ph">ROZMĚRY VOZIDEL (jmenovité)</text>
+    <text x="0" y="16" class="pt" font-weight="700" fill="#555">vozidlo</text><text x="142" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">D × Š m</text><text x="170" y="16" class="pt" font-weight="700" fill="#555" text-anchor="end">Ø</text>
     <line x1="0" y1="20" x2="170" y2="20" stroke="#bbb" stroke-width="0.8"/>
-    <text x="0" y="33" class="pt" font-weight="700" fill="#333">CARPORT 6.35 × 7.05 m footprint</text>
+    <text x="0" y="33" class="pt" font-weight="700" fill="#333">PŘÍSTŘEŠEK 6.35 × 7.05 m půdorys</text>
     <rect x="0" y="39" width="8" height="8" fill="#3a72b8"/>
     <text x="13" y="46" class="pt">Scala</text><text x="142" y="46" class="pt" text-anchor="end">4.36 × 1.79</text><text x="170" y="46" class="pt" text-anchor="end">10.4</text>
     <rect x="0" y="51" width="8" height="8" fill="#b3a06e"/>
     <text x="13" y="58" class="pt">A6 allroad</text><text x="142" y="58" class="pt" text-anchor="end">4.95 × 1.90</text><text x="170" y="58" class="pt" text-anchor="end">12.1</text>
-    <text x="0" y="70" class="pt">Body-to-body gaps: 1.00 m</text>
-    <text x="0" y="82" class="pt">Min. body-to-bay edge: 0.60 m</text>
-    <text x="0" y="102" class="pt" font-weight="700" fill="#333">GARAGE 6.50 × 7.05 m footprint</text>
+    <text x="0" y="70" class="pt">Mezery mezi karoseriemi: 1.00 m</text>
+    <text x="0" y="82" class="pt">Min. odstup karoserie od okraje: 0.60 m</text>
+    <text x="0" y="102" class="pt" font-weight="700" fill="#333">GARÁŽ 6.50 × 7.05 m půdorys</text>
     <rect x="0" y="108" width="8" height="8" fill="#0f5aa8"/>
     <text x="13" y="115" class="pt">M4 F82</text><text x="142" y="115" class="pt" text-anchor="end">4.67 × 1.87</text><text x="170" y="115" class="pt" text-anchor="end">11.9</text>
     <rect x="0" y="120" width="8" height="8" fill="#462482"/>
     <text x="13" y="127" class="pt">Ténéré 700</text><text x="142" y="127" class="pt" text-anchor="end">2.37 × 0.91</text><text x="170" y="127" class="pt" text-anchor="end">5.0</text>
-    <text x="0" y="139" class="pt">Body-to-body gaps: 1.01 m</text>
-    <text x="0" y="151" class="pt">Min. body-to-bay edge: 0.32 m</text>
-    <text x="0" y="171" class="pt" fill="#444" font-weight="700">Door &amp; exit clearance (carport)</text>
-    <text x="0" y="183" class="pt" fill="#555">Yellow strips are proposed pedestrian routes.</text>
-    <text x="0" y="195" class="pt" fill="#555">Open car doors are illustrative, not collision-tested.</text>
-    <text x="0" y="207" class="pt" fill="#555">Body gaps exclude mirrors, users and luggage.</text>
-    <text x="0" y="219" class="pt" fill="#555">Garage edge allows for walls and workbench.</text>
-    <text x="0" y="231" class="pt" fill="#555">Carport posts are not included in gap figures.</text>
-    <text x="0" y="243" class="pt" fill="#555">Confirm door access and walkways on site.</text>
-    <text x="0" y="261" class="pt" fill="#444" font-weight="700">Access from the gate</text>
-    <text x="0" y="273" class="bad" font-size="8.5">No swept-path simulation performed</text>
-    <text x="0" y="286" class="pt" fill="#555">Gate 4.0 m; wicket 1.0 m clear.</text>
-    <text x="0" y="298" class="pt" fill="#555">Largest listed turning diameter 12.1 m.</text>
-    <text x="0" y="310" class="pt" fill="#555">Sampled empty circle Ø 4.9 m with both</text>
-    <text x="0" y="322" class="pt" fill="#555">bays excluded; Ø 6.3 m excluding garage.</text>
-    <text x="0" y="334" class="pt" fill="#555">Circles do not prove entry, turning or exit.</text>
-    <text x="0" y="346" class="pt" fill="#555">Validate wheel paths, overhangs and steering</text>
-    <text x="0" y="358" class="pt" fill="#555">with actual vehicles before construction.</text>
-    <text x="0" y="376" class="pt" fill="#888">Nominal vehicle specs require confirmation.</text>
-    <text x="0" y="388" class="pt" fill="#888">Slope and vertical clearances are not assessed.</text>
+    <text x="0" y="139" class="pt">Mezery mezi karoseriemi: 1.01 m</text>
+    <text x="0" y="151" class="pt">Min. odstup karoserie od okraje: 0.32 m</text>
+    <text x="0" y="171" class="pt" fill="#444" font-weight="700">Dveře a pěší průchody pod přístřeškem</text>
+    <text x="0" y="183" class="pt" fill="#555">Žluté pásy označují navržené pěší průchody.</text>
+    <text x="0" y="195" class="pt" fill="#555">Otevřené dveře jsou ilustrační; bez kontroly kolizí.</text>
+    <text x="0" y="207" class="pt" fill="#555">Mezery nezahrnují zrcátka, osoby a zavazadla.</text>
+    <text x="0" y="219" class="pt" fill="#555">Garážové stání zohledňuje stěny a pracovní stůl.</text>
+    <text x="0" y="231" class="pt" fill="#555">Sloupy přístřešku nejsou zahrnuty do odstupů.</text>
+    <text x="0" y="243" class="pt" fill="#555">Přístupy ke dveřím a průchody ověřit na místě.</text>
+    <text x="0" y="261" class="pt" fill="#444" font-weight="700">Příjezd od brány</text>
+    <text x="0" y="273" class="bad" font-size="8.5">Bez simulace vlečných křivek vozidel</text>
+    <text x="0" y="286" class="pt" fill="#555">Brána 4.0 m; branka 1.0 m světlost.</text>
+    <text x="0" y="298" class="pt" fill="#555">Největší uvedený průměr otáčení 12.1 m.</text>
+    <text x="0" y="310" class="pt" fill="#555">Volný kruh Ø 4.0 m mimo obě stání;</text>
+    <text x="0" y="322" class="pt" fill="#555">Ø 6.4 m při vyloučení samotné garáže.</text>
+    <text x="0" y="334" class="pt" fill="#555">Kruhy neprokazují průjezd ani možnost otočení.</text>
+    <text x="0" y="346" class="pt" fill="#555">Před stavbou ověřit dráhy kol, převisy a řízení</text>
+    <text x="0" y="358" class="pt" fill="#555">se skutečnými vozidly.</text>
+    <text x="0" y="376" class="pt" fill="#888">Jmenovité rozměry vozidel nutno ověřit.</text>
+    <text x="0" y="388" class="pt" fill="#888">Sklony a průjezdné výšky nejsou posouzeny.</text>
   </g>
 </svg>

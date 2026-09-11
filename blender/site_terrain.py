@@ -11,6 +11,16 @@ def smoothstep(t):
     return t * t * (3.0 - 2.0 * t)
 
 
+def bank_envelope(value, level, slope, distance):
+    radius = .08*min(1,distance/2)
+    if not radius:
+        return level
+    upper, lower = level+slope*distance, level-slope*distance
+    def soft_max(a,b):
+        return max(a,b)+max(0,radius-abs(a-b))**2/(4*radius)
+    return soft_max(lower,-soft_max(-upper,-value))
+
+
 def rect_distance(rect, x, y):
     return math.hypot(max(rect["x0"] - x, 0, x - rect["x1"]),
                       max(rect["z0"] - y, 0, y - rect["z1"]))
@@ -49,13 +59,17 @@ def route_sample(route, x, y, bank=False):
     level = weighted / total
     if bank_total:
         level += (bank_weighted/bank_total-level)*smoothstep((distance-route['width']/2)/.3)
+    if route.get('levelAxis'):
+        p = route['levelAxis']
+        t = max(0, min(1, ((x if p['axis'] == 'x' else y)-p['start'])/(p['end']-p['start'])))
+        level = route['levels'][0]+(route['levels'][-1]-route['levels'][0])*t
+    if route.get('startRect'):
+        d = rect_distance(route['startRect'], x, y)
+        level = route['levels'][0]+(level-route['levels'][0])*smoothstep(d/route.get('startBlend', .6))
     if route.get('endCircle'):
         circle = route['endCircle']
         d = max(0, math.hypot(x-circle['cx'], y-circle['cz'])-circle['radius'])
-        level = route['levels'][-1]+(level-route['levels'][-1])*smoothstep(d/.6)
-    if route.get('startRect'):
-        d = rect_distance(route['startRect'], x, y)
-        level = route['levels'][0]+(level-route['levels'][0])*smoothstep(d/.6)
+        level = route['levels'][-1]+(level-route['levels'][-1])*smoothstep(d/route.get('endBlend', .6))
     return distance, level
 
 
@@ -77,6 +91,25 @@ def height(spec, x, y):
     base = survey_height(spec['surveySurface'], x, y) if spec.get('surveySurface') else max(0.0, plane["a"] * x + plane["b"] * y + plane["c"])
     continuous = spec.get('continuousGrading', False)
     h = base
+    for pad in spec.get('regionalGrades', []):
+        distance = rect_distance(pad, x, y)
+        level = pad['level'] + pad.get('fallX', 0) * min(pad['x1']-pad['x0'], max(0, x-pad['x0']))
+        h = max(level-.4*distance, min(level+.4*distance, h))
+    if spec.get('drivewayApron'):
+        profile = spec['drivewayProfile']
+        distance = rect_distance(spec['drivewayApron'], x, y)
+        level = profile['startLevel']+(profile['gateLevel']-profile['startLevel'])*smoothstep((x-profile['startX'])/(profile['gate'][0]-profile['startX']))
+        h = max(h, level-spec['drivewayApron']['bankSlope']*distance)
+    if spec.get('regionalGrades'):
+        boundary = spec['boundary']
+        for i, a in enumerate(boundary):
+            b = boundary[(i+1) % len(boundary)]
+            dx, dy = b[0]-a[0], b[1]-a[1]
+            t = max(0, min(1, ((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)))
+            bx, by = a[0]+t*dx, a[1]+t*dy
+            distance = math.hypot(x-bx, y-by)
+            level = survey_height(spec['surveySurface'], bx, by) if spec.get('surveySurface') else max(0, plane['a']*bx+plane['b']*by+plane['c'])
+            h = max(level-.4*distance, min(level+.4*distance, h))
     for rect in spec["cutRects"]:
         blend = rect.get("blend", spec["cutBlend"])
         distance = rect_distance(rect, x, y)
@@ -116,20 +149,30 @@ def height(spec, x, y):
     if spec.get('drivewayProfile'):
         profile = spec['drivewayProfile']
         distance = max(0, polygon_distance(profile['points'], x, y) - profile['edgeMargin'])
-        if distance < profile['blend']:
+        if distance < profile['blend'] or spec.get('regionalGrades'):
             level = profile['startLevel'] + (profile['gateLevel'] - profile['startLevel']) * smoothstep((x - profile['startX']) / (profile['gate'][0] - profile['startX']))
-            h = level + (h - level) * smoothstep(distance / profile['blend'])
+            h = max(level-.4*distance,min(level+.4*distance,h)) if spec.get('regionalGrades') else level + (h - level) * smoothstep(distance / profile['blend'])
     if spec.get('finishPads'):
         distance = min(rect_distance(pad, x, y) / pad['blend'] for pad in spec['finishPads'])
-        if distance < 1:
-            h = spec['finishedSoil'] + (h - spec['finishedSoil']) * smoothstep(distance)
+        level = spec['finishedSoil'] - (.18*smoothstep((y-5.7)/1.48)*(1-smoothstep((x-14.93)/3)) if spec.get('regionalGrades') else 0)
+        if spec.get('regionalGrades'):
+            metres = min(rect_distance(pad, x, y) for pad in spec['finishPads'])
+            h = max(level-.4*metres,min(level+.4*metres,h))
+        elif distance < 1:
+            h = level + (h - level) * smoothstep(distance)
     for pad in spec.get('protectedPads', []):
         distance = rect_distance(pad, x, y)
-        if distance < pad['blend']:
-            h = pad['level'] + (h - pad['level']) * smoothstep(distance / pad['blend'])
+        level = pad['level']+pad.get('fallX',0)*min(pad['x1']-pad['x0'],max(0,x-pad['x0']))
+        if pad.get('bankSlope'):
+            h = bank_envelope(h,level,pad['bankSlope'],distance)
+        elif distance < pad['blend']:
+            h = level + (h - level) * smoothstep(distance / pad['blend'])
     gathering_samples = [(pad, rect_distance(pad, x, y) if 'radius' not in pad else max(0, math.hypot(x-pad['cx'], y-pad['cz'])-pad['radius'])) for pad in spec.get('gatheringPads', [])]
     core = next((pad for pad, distance in gathering_samples if distance == 0), None)
-    if core is not None:
+    if spec.get('regionalGrades'):
+        for pad, distance in gathering_samples:
+            h = max(pad['level']-.4*distance,min(pad['level']+.4*distance,h))
+    elif core is not None:
         h = core['level']
     else:
         total, level, strength = 0, 0, 0
@@ -142,7 +185,7 @@ def height(spec, x, y):
                 strength = max(strength, influence)
         if total:
             h += (level/total-h)*strength
-    for route in [r for r in spec.get('routeProfiles', []) if r.get('bankApron')]:
+    for route in [r for r in spec.get('routeProfiles', []) if r.get('bankApron') and not spec.get('regionalGrades')]:
         if route.get('bankBounds') and rect_distance(route['bankBounds'], x, y) > 0:
             continue
         nearest, level = route_sample(route, x, y, True)
@@ -155,16 +198,24 @@ def height(spec, x, y):
         distance, level = route_sample(route, x, y, True)
         distance = max(0, distance - route['width'] / 2)
         blend = route.get('bankBlend', .5)
-        if distance < blend:
+        bedding = route_bedding(route, x, y)
+        if spec.get('regionalGrades'):
+            target = max(level-bedding-route.get('bankSlope', .4)*distance,min(level-bedding+route.get('bankSlope', .4)*distance,h))
+            clear = min((rect_distance(p, x, y) for p in spec.get('finishPads', [])), default=math.inf) if route.get('approachBank') else math.inf
+            h += (target-h)*smoothstep(clear/.3)
+        elif distance < blend:
             bedding = route_bedding(route, x, y)
             clear = min([rect_distance(p, x, y) for p in spec.get('finishPads', [])+spec.get('protectedPads', [])]+[d for _, d in gathering_samples]) if route.get('approachBank') else math.inf
             influence = (1-smoothstep(distance/blend))*(smoothstep(clear/1.2) if route.get('approachBank') else 1)*smoothstep(route_bank_clearance(route, x, y))
             h += (level-bedding-h)*influence
             if route.get('approachBank'):
                 h = min(h, h+(level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(route_bank_clearance(route, x, y)/.6))
-    pond_outer = 1.3+(pond.get('northBankOuter', 1.3)-1.3)*max(0, (pond['cz']-y)/(pond['rz']*radius or 1))**16 if continuous and y < pond['cz'] else 1.3
+    outer = pond.get('bankOuter', 1.3)
+    pond_outer = outer+(pond.get('northBankOuter', outer)-outer)*max(0, (pond['cz']-y)/(pond['rz']*radius or 1))**16 if continuous and y < pond['cz'] else outer
     if continuous and radius <= 1:
         h = min(h, pond['edge'] - pond['depth'] * .5 * (1 + math.cos(radius * math.pi)))
+    elif spec.get('regionalGrades') and radius > 1:
+        h = min(h, pond['edge']+.4*(radius-1)*min(pond['rx'],pond['rz']))
     elif continuous and radius < pond_outer:
         h = min(h, pond['edge'] + (h - pond['edge']) * smoothstep((radius - 1) / (pond_outer-1)))
     if spec.get('gateRunback'):
@@ -174,15 +225,15 @@ def height(spec, x, y):
             h = runback['level']+(h-runback['level'])*smoothstep(distance/runback['blend'])
     if spec.get('wicketLanding'):
         landing = spec['wicketLanding']
-        distance = polygon_distance(landing['points'], x, y)
-        if distance < landing['blend'] and polygon_distance(landing['boundary'], x, y) < 1e-9:
+        distance = math.hypot(polygon_distance(landing['points'], x, y), polygon_distance(landing['boundary'], x, y))
+        if distance < landing['blend']:
             h = landing['level']+(h-landing['level'])*smoothstep(distance/landing['blend'])
     if spec.get('benchPad'):
         pad = spec['benchPad']
         distance = math.hypot(max(pad['x0']-x, 0, x-pad['x1'])/pad['blend'], max(pad['z0']-y, 0)/pad['blend'], max(y-pad['z1'], 0)/pad['southBlend'])
         if distance < 1:
             h = pad['level']+(h-pad['level'])*smoothstep(distance)
-    if spec.get('productiveCourt'):
+    if spec.get('productiveCourt') and spec['productiveCourt'].get('mode') != 'level':
         court = spec['productiveCourt']
         distance = rect_distance(court, x, y)
         for route in court['routes']:
@@ -196,4 +247,13 @@ def height(spec, x, y):
             greenhouse_weight = 1-smoothstep(rect_distance(court['greenhouse'], x, y)/.3)
             bedding = .06-.02*greenhouse_weight+.06*smoothstep((x-(court['x1']-.68))/.68)
             h += (finish-bedding-h)*weight
+    for segment in spec.get('fixedFences', {}).get('segments', []):
+        a, b = segment['start'], segment['end']
+        dx, dy = b[0]-a[0], b[1]-a[1]
+        t = max(0, min(1, ((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)))
+        bx, by = a[0]+t*dx, a[1]+t*dy
+        distance = math.hypot(x-bx, y-by)
+        level = survey_height(spec['surveySurface'], bx, by) if spec.get('surveySurface') else max(0, plane['a']*bx+plane['b']*by+plane['c'])
+        slope = spec['fixedFences']['bankSlope']
+        h = max(level-slope*distance, min(level+slope*distance, h))
     return h

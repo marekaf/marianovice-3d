@@ -4,9 +4,15 @@
 const { GARDEN } = require("./layout.js");
 const PLOT = GARDEN.plot.vertices;
 
-const inPoly = (px, py, poly) => {
+const inPoly = (px, py, poly, includeBoundary = false) => {
   let c = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    if (includeBoundary) {
+      const [ax, ay] = poly[j], [bx, by] = poly[i], dx = bx - ax, dy = by - ay;
+      const length2 = dx * dx + dy * dy;
+      const t = length2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / length2)) : 0;
+      if (Math.hypot(px - ax - t * dx, py - ay - t * dy) <= 1e-7) return true;
+    }
     if ((poly[i][1] > py) !== (poly[j][1] > py) &&
         px < ((poly[j][0] - poly[i][0]) * (py - poly[i][1])) / (poly[j][1] - poly[i][1]) + poly[i][0]) c = !c;
   }
@@ -81,7 +87,7 @@ for (const el of GARDEN.elements) {
   if (el.parts.every(p => p.clipToPlot)) { /* clipped elements are allowed to touch the edge, but a fully-outside one is still wrong */ }
   const pts = elFootprint(el);
   if (!pts.length) continue;
-  const inCount = pts.filter(([x, y]) => inPoly(x, y, PLOT)).length;
+  const inCount = pts.filter(([x, y]) => inPoly(x, y, PLOT, true)).length;
   if (inCount === 0) outside.push({ id: el.id, kind: "FULLY OUTSIDE the plot" });
   else if (inCount < pts.length) outside.push({ id: el.id, kind: `crosses boundary (fence through it) — ${pts.length - inCount}/${pts.length} pts outside` });
 }
@@ -125,7 +131,7 @@ try {
   for (const m of html.matchAll(/add(?:Tree|Conifer)\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/g)) hits.push(["tree/conifer", +m[1], +m[2]]);
   const bp = html.match(/bushPositions\s*=\s*\[([\s\S]*?)\];/);
   if (bp) for (const m of bp[1].matchAll(/\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/g)) hits.push(["bush", +m[1], +m[2]]);
-  htmlOut = hits.filter(([, x, z]) => !inPoly(x, z, PLOT));
+  htmlOut = hits.filter(([, x, z]) => !inPoly(x, z, PLOT, true));
 } catch (e) { /* index.html not readable */ }
 
 // ── Report ────────────────────────────────────────────────────────────────

@@ -37,7 +37,7 @@ const FenceModel=(()=>{
       }
       parts.push({name:`chain_link_mesh_${bay}`,type:'repeatedMesh',groups:[...groups.values()],smooth:true,material:'fenceWire',category:'structure'});
       for(const h of [.21,1.1,1.99])beam(`tension_wire_${bay}_${h}`,point(from,.003,ha+h),point(to,.003,hb+h),.003,'fenceWire');
-      for(const t of [from,to])beam(`board_retainer_${bay}_${t}`,point(t,0,base(t)+.02),point(t,0,base(t)+.22),.018);
+      for(const [endIndex,t] of [from,to].entries())beam(`board_retainer_${bay}_${endIndex}`,point(t,0,base(t)+.02),point(t,0,base(t)+.22),.018);
       bays.push({from,to,bottom,top:[ha+.2,hb+.2],samples,height:2});
     }
     for(const [endIndex,enabled,t,sign] of [[0,startPost,0,1],[1,endPost,length,-1]])if(enabled&&length>1.2){

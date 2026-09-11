@@ -19,13 +19,20 @@ const { GradingSite } = require("./grading-site.js");
 const { SurveySurface } = require("./survey-surface.js");
 const VehicleModel = require("./vehicle-model.js");
 const { ExteriorFurnitureModel } = require("./exterior-furniture-model.js");
+const { buildHouseRoofExport } = require("./house-roof-export.js");
+const { GradingZones } = require("./grading-zones.js");
+const { GardenRouteModel } = require("./garden-route-model.js");
 
+const { BoundaryFenceModel } = require("./boundary-fence-model.js");
+const fenceSurveyPath = path.join(__dirname, "docs", "fence-survey.js");
+const fenceSurvey = fs.existsSync(fenceSurveyPath) ? require(fenceSurveyPath).FENCE_SURVEY : null;
 const surveyPath = path.join(__dirname, "docs", "survey-terrain.js");
 const surveySurface = fs.existsSync(surveyPath)
   ? SurveySurface.create(require(surveyPath).SURVEY_TERRAIN.points, TERRAIN.plane)
   : null;
 const existingGround = surveySurface ? surveySurface.height : TERRAIN.basePlaneHeight.bind(TERRAIN);
 
+const boundaryFence = BoundaryFenceModel.build({ garden: GARDEN, survey: fenceSurvey, heightAt: existingGround });
 const pergolaModel = PergolaModel.build(GARDEN);
 const garageModel = GarageModel.build(GARDEN, TERRAIN.houseFFLInternal - 0.5);
 const {site:siteTerrain} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:surveySurface});
@@ -33,7 +40,7 @@ const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround,{floorHeigh
 const raisedBedsModel = RaisedBedsModel.build(GARDEN,{surfaceHeight:siteTerrain.routeHeight,groundHeight:siteTerrain.height,court:siteTerrain.spec.productiveCourt});
 
 const out = path.join(__dirname, "blender", "garden.json");
-if (surveySurface) {
+if (surveySurface || fenceSurvey) {
   // Survey coordinates must never be written into a tracked or stageable export.
   const relative = path.relative(__dirname, out);
   const tracked = execFileSync("git", ["ls-files", "--", relative], { cwd: __dirname, encoding: "utf8" }).trim();
@@ -42,6 +49,11 @@ if (surveySurface) {
 }
 fs.writeFileSync(out, JSON.stringify({
   ...GARDEN,
+  houseRoof: buildHouseRoofExport(GARDEN,siteTerrain.spec.houseBaseY),
+  fenceModels: boundaryFence.models,
+  entranceGateModel: boundaryFence.gateModel,
+  gradingAreas: GradingZones.create(GARDEN),
+  gardenRouteGeometry: GardenRouteModel.geometry(GARDEN.gardenRoutes,siteTerrain.routeHeight,.12,[...GardenRouteModel.surfaceExclusions(GARDEN),{kind:"rect",...raisedBedsModel.surfaceFootprint},{kind:"rect",...HiddenBenchModel.build(GARDEN,siteTerrain.height).groundPatch}]),
   saunaModel: SaunaModel.build(GARDEN, siteTerrain.spec.deckTop),
   pergolaModel,
   garageModel,

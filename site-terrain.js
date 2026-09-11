@@ -4,7 +4,15 @@ const SiteTerrain = (() => {
   const naturalHeight = (spec, x, z) => spec.surveySurface ? surveySampler().height(spec.surveySurface, x, z) : baseHeight(spec.plane, x, z);
   const smoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
   const rectDistance = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
+  function bankEnvelope(value,level,slope,distance){
+    const radius=.08*Math.min(1,distance/2);
+    if(!radius)return level;
+    const upper=level+slope*distance,lower=level-slope*distance;
+    const softMax=(a,b)=>Math.max(a,b)+Math.max(0,radius-Math.abs(a-b))**2/(4*radius);
+    return softMax(lower,-softMax(-upper,-value));
+  }
   function productiveFinish(court,x) {
+    if(court.mode==='level')return court.finish;
     const clamp=(value,max)=>Math.max(0,Math.min(max,value));
     const run=court.x1-court.runStart;
     const flat=court.aisles.reduce((sum,[a,b])=>sum+b-a,0);
@@ -34,8 +42,9 @@ const SiteTerrain = (() => {
     }
     let level=weighted/total;
     if(bankTotal)level+=(bankWeighted/bankTotal-level)*smoothstep((distance-route.width/2)/.3);
-    if(route.endCircle){const p=route.endCircle,d=Math.max(0,Math.hypot(x-p.cx,z-p.cz)-p.radius);level=route.levels.at(-1)+(level-route.levels.at(-1))*smoothstep(d/.6);}
-    if(route.startRect){const d=rectDistance(route.startRect,x,z);level=route.levels[0]+(level-route.levels[0])*smoothstep(d/.6);}
+    if(route.levelAxis){const p=route.levelAxis,t=Math.max(0,Math.min(1,((p.axis==='x'?x:z)-p.start)/(p.end-p.start)));level=route.levels[0]+(route.levels.at(-1)-route.levels[0])*t;}
+    if(route.startRect){const d=rectDistance(route.startRect,x,z);level=route.levels[0]+(level-route.levels[0])*smoothstep(d/(route.startBlend??.6));}
+    if(route.endCircle){const p=route.endCircle,d=Math.max(0,Math.hypot(x-p.cx,z-p.cz)-p.radius);level=route.levels.at(-1)+(level-route.levels.at(-1))*smoothstep(d/(route.endBlend??.6));}
     return {distance,level};
   }
   function routeBankClearance(route,x,z) {
@@ -61,6 +70,25 @@ const SiteTerrain = (() => {
   function height(spec, x, z) {
     const base = naturalHeight(spec, x, z);
     let h = base;
+    for (const p of spec.regionalGrades ?? []) {
+      const distance = rectDistance(p, x, z);
+      const level = p.level + (p.fallX ?? 0) * Math.min(p.x1 - p.x0, Math.max(0, x - p.x0));
+      h = Math.max(level - .4 * distance, Math.min(level + .4 * distance, h));
+    }
+    if(spec.drivewayApron) {
+      const p=spec.drivewayProfile,distance=rectDistance(spec.drivewayApron,x,z);
+      const level=p.startLevel+(p.gateLevel-p.startLevel)*smoothstep((x-p.startX)/(p.gate[0]-p.startX));
+      h=Math.max(h,level-spec.drivewayApron.bankSlope*distance);
+    }
+    if (spec.regionalGrades) {
+      const boundary = spec.boundary;
+      for (let i = 0; i < boundary.length; i++) {
+        const a = boundary[i], b = boundary[(i + 1) % boundary.length], dx = b[0] - a[0], dz = b[1] - a[1];
+        const t = Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));
+        const bx=a[0]+t*dx,bz=a[1]+t*dz,distance=Math.hypot(x-bx,z-bz),level=naturalHeight(spec,bx,bz);
+        h=Math.max(level-.4*distance,Math.min(level+.4*distance,h));
+      }
+    }
     for (const r of spec.cutRects) {
       const blend = r.blend ?? spec.cutBlend;
       const d = rectDistance(r, x, z);
@@ -101,22 +129,29 @@ const SiteTerrain = (() => {
     }
     if (spec.drivewayProfile) {
       const p=spec.drivewayProfile,distance=Math.max(0,polygonDistance(p.points,x,z)-p.edgeMargin);
-      if(distance<p.blend) {
+      if(distance<p.blend || spec.regionalGrades) {
         const level=p.startLevel+(p.gateLevel-p.startLevel)*smoothstep((x-p.startX)/(p.gate[0]-p.startX));
-        h=level+(h-level)*smoothstep(distance/p.blend);
+        h=spec.regionalGrades?Math.max(level-.4*distance,Math.min(level+.4*distance,h)):level+(h-level)*smoothstep(distance/p.blend);
       }
     }
     if (spec.finishPads?.length) {
       const distance = Math.min(...spec.finishPads.map(p => rectDistance(p, x, z) / p.blend));
-      if (distance < 1) h = spec.finishedSoil + (h - spec.finishedSoil) * smoothstep(distance);
+      const level = spec.finishedSoil - (spec.regionalGrades ? .18 * smoothstep((z - 5.7) / 1.48) * (1 - smoothstep((x - 14.93) / 3)) : 0);
+      if (spec.regionalGrades) {
+        const metres=Math.min(...spec.finishPads.map(p=>rectDistance(p,x,z)));
+        h=Math.max(level-.4*metres,Math.min(level+.4*metres,h));
+      } else if (distance < 1) h = level + (h - level) * smoothstep(distance);
     }
     for (const p of spec.protectedPads ?? []) {
       const distance = rectDistance(p, x, z);
-      if (distance < p.blend) h = p.level + (h - p.level) * smoothstep(distance / p.blend);
+      const level=p.level+(p.fallX??0)*Math.min(p.x1-p.x0,Math.max(0,x-p.x0));
+      if (p.bankSlope) h=bankEnvelope(h,level,p.bankSlope,distance);
+      else if (distance < p.blend) h = level + (h - level) * smoothstep(distance / p.blend);
     }
     const gatheringSamples=(spec.gatheringPads??[]).map(p=>({p,d:p.radius===undefined?rectDistance(p,x,z):Math.max(0,Math.hypot(x-p.cx,z-p.cz)-p.radius)}));
     const core=gatheringSamples.find(s=>s.d===0);
-    if(core)h=core.p.level;
+    if(spec.regionalGrades)for(const {p,d} of gatheringSamples)h=Math.max(p.level-.4*d,Math.min(p.level+.4*d,h));
+    else if(core)h=core.p.level;
     else {
       let total=0,level=0,strength=0;
       for(const {p,d}of gatheringSamples)if(d<p.blend){
@@ -125,7 +160,7 @@ const SiteTerrain = (() => {
       }
       if(total)h+=(level/total-h)*strength;
     }
-    for(const route of (spec.routeProfiles??[]).filter(route=>route.bankApron)) {
+    for(const route of (spec.routeProfiles??[]).filter(route=>route.bankApron&&!spec.regionalGrades)) {
       if(route.bankBounds&&rectDistance(route.bankBounds,x,z)>0)continue;
       const sample=routeSample(route,x,z,true),distance=Math.max(0,sample.distance-route.width/2);
       const clear=Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d),spec.houseExcavation?polygonDistance(spec.houseExcavation.points,x,z):Infinity);
@@ -137,28 +172,37 @@ const SiteTerrain = (() => {
       const sample=routeSample(route,x,z,true),distance=Math.max(0,sample.distance-route.width/2);
       const bedding=routeBedding(route,x,z);
       const blend=route.bankBlend??.5;
-      if(distance<blend) {
+      if(spec.regionalGrades){const target=Math.max(sample.level-bedding-(route.bankSlope??.4)*distance,Math.min(sample.level-bedding+(route.bankSlope??.4)*distance,h));const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z))):Infinity;h+=(target-h)*smoothstep(clear/.3);}
+      else if(distance<blend) {
         const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d)):Infinity;
         const influence=(1-smoothstep(distance/blend))*(route.approachBank?smoothstep(clear/1.2):1)*smoothstep(routeBankClearance(route,x,z));
         h+=(sample.level-bedding-h)*influence;
         if(route.approachBank)h=Math.min(h,h+(sample.level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(routeBankClearance(route,x,z)/.6));
       }
     }
-    const pondOuter=spec.continuousGrading&&z<pond.cz?1.3+((pond.northBankOuter??1.3)-1.3)*Math.max(0,(pond.cz-z)/(pond.rz*prr||1))**16:1.3;
-    if(spec.continuousGrading&&prr<pondOuter) {
+    const outer=pond.bankOuter??1.3;
+    const pondOuter=spec.continuousGrading&&z<pond.cz?outer+((pond.northBankOuter??outer)-outer)*Math.max(0,(pond.cz-z)/(pond.rz*prr||1))**16:outer;
+    if(spec.regionalGrades && prr>1)h=Math.min(h,pond.edge+.4*(prr-1)*Math.min(pond.rx,pond.rz));
+    else if(spec.continuousGrading&&prr<pondOuter) {
       if(prr<=1)h=Math.min(h,pond.edge-pond.depth*.5*(1+Math.cos(prr*Math.PI)));
       else h=Math.min(h,pond.edge+(h-pond.edge)*smoothstep((prr-1)/(pondOuter-1)));
     }
     if(spec.gateRunback){const p=spec.gateRunback,d=polygonDistance(p.points,x,z);if(d<p.blend)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
-    if(spec.wicketLanding){const p=spec.wicketLanding,d=polygonDistance(p.points,x,z);if(d<p.blend&&polygonDistance(p.boundary,x,z)<1e-9)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
+    if(spec.wicketLanding){const p=spec.wicketLanding,d=Math.hypot(polygonDistance(p.points,x,z),polygonDistance(p.boundary,x,z));if(d<p.blend)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
     if(spec.benchPad){const p=spec.benchPad,d=Math.hypot(Math.max(p.x0-x,0,x-p.x1)/p.blend,Math.max(p.z0-z,0)/p.blend,Math.max(z-p.z1,0)/p.southBlend);if(d<1)h=p.level+(h-p.level)*smoothstep(d);}
-    if(spec.productiveCourt) {
+    if(spec.productiveCourt&&spec.productiveCourt.mode!=='level') {
       const p=spec.productiveCourt,weight=productiveInfluence(p,x,z);
       if(weight) {
         const greenhouseWeight=1-smoothstep(rectDistance(p.greenhouse,x,z)/.3);
         const bedding=.06-.02*greenhouseWeight+.06*smoothstep((x-(p.x1-.68))/.68);
         h+=(productiveFinish(p,x)-bedding-h)*weight;
       }
+    }
+    for(const segment of spec.fixedFences?.segments??[]) {
+      const [a,b]=[segment.start,segment.end],dx=b[0]-a[0],dz=b[1]-a[1];
+      const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));
+      const bx=a[0]+t*dx,bz=a[1]+t*dz,d=Math.hypot(x-bx,z-bz),level=naturalHeight(spec,bx,bz),slope=spec.fixedFences.bankSlope;
+      h=Math.max(level-slope*d,Math.min(level+slope*d,h));
     }
     return h;
   }
@@ -223,39 +267,53 @@ const SiteTerrain = (() => {
       spec.surveySurface = options.surveySurface;
       spec.continuousGrading = true;
       spec.gradingStatus = 'concept proposal over measured-ground interpolation';
+      spec.gradingBanks = garden.gradingBanks ?? [];
+      if(options.fixedFences?.length)spec.fixedFences={segments:options.fixedFences,bankSlope:.4};
       spec.houseBaseY = options.houseFFL;
       spec.deckTop = options.houseFFL;
       spec.finishedSoil = options.houseFFL - .12;
       spec.houseExcavation = { points: garden.elements.find(e => e.id === 'house').parts.find(p => p.kind === 'polygon').points.map(p => p.slice()),
         level: options.houseFFL - .2, blend: .2 };
       spec.fillPads = [];
-      spec.levelPads = [groundPatches.garage]
-        .map(p => ({ ...patchRect(p), blend: Math.max(p.blend ?? 2, 2.4) }));
-      spec.cutRects = cutRects.map(p => ({ ...p, level: Math.min(p.level, spec.finishedSoil) }));
-      spec.cutRects[0].blend = 4;
-      Object.assign(spec.postCuts[1], { z1:27.43, blend:2.4 });
-      Object.assign(spec.postCuts[2], { z1:29, blend:3 });
+      spec.levelPads = [];
+      spec.cutRects = [];
+      spec.postCuts = [];
+      spec.boundary = garden.plot.vertices.map(p => p.slice());
+      spec.boundaryBlend = 5;
+      spec.regionalGrades = [
+        {id:'lower-fill',x0:24,z0:3,x1:40,z1:24,level:groundPatches.garage.level,fallX:-.025,blend:5},
+        {id:'north-lawn',x0:10.48,z0:4.2,x1:34.13,z1:26.43,level:groundPatches.garage.level,blend:4},
+        {...patchRect(groundPatches.raisedBeds),id:'productive',blend:3.5},
+        {...patchRect(groundPatches.greenhouse),id:'greenhouse-apron',x0:groundPatches.greenhouse.x-.2,x1:groundPatches.greenhouse.x+groundPatches.greenhouse.w+.2,blend:2.5},
+        {id:'west-strip',x0:8.73,z0:7.18,x1:10.48,z1:26.43,level:options.houseFFL-.3,blend:3},
+        {id:'north-fall',x0:10.48,z0:6.18,x1:21.28,z1:7.18,level:options.houseFFL-.04,fallX:-.5/10.8,blend:2.5},
+        {id:'south-fall',x0:10.48,z0:26.43,x1:21.28,z1:27.43,level:options.houseFFL-.04,fallX:-.5/10.8,blend:3},
+      ];
       spec.bankReview = [
-        {id:'productive-west',label:'Productive court planted banks',bounds:[0,9.48,7.5,18.5],status:'Sloping walking approach with level crossfall aisles. Surrounding banks remain steep and provisional; retaining, drainage and soil stability require engineering review.'},
-        {id:'south-house',label:'Southwest house bank',bounds:[8.3,17,27.43,30.5],status:'Broader planted transition; remaining steep sections require soil stability and drainage review.'},
+        {id:'productive-west',label:'Užitková zahrada a západní průleh',bounds:[0,10.48,7,23],status:'Čtyři záhony ve dvou řadách blíže západní hranici, 0,40 m nad západní terasou; plynulé spojení se skleníkem a saunou.'},
+        {id:'south-house',label:'Jižní svah a servisní plocha',bounds:[8.3,22,26.43,31],status:'Plynulý spád od západu k východu; rovná odbočka k tepelnému čerpadlu. Ověřit povrchový odtok.'},
+        {id:'north-fill',label:'Severní a východní dosypání',bounds:[24,43,0,19],status:'Dosypání s volnými svahy do stávajících hranic. Únosnost sousední zdi není započtena; konečný sklon ověřit podle zeminy.'},
       ];
       spec.finishPads = garden.elements.filter(e => ['eastTerrace', 'westTerrace', 'sauna', 'saunaShelter', 'saunaPath'].includes(e.id))
         .flatMap(e => e.parts.filter(p => p.kind === 'rect').map(p => ({
-          x0: p.x, z0: p.y, x1: p.x + p.w, z1: p.y + p.d, blend: 3,
+          x0: p.x, z0: p.y, x1: p.x + p.w, z1: p.y + p.d, blend: e.id === 'westTerrace' ? .75 : 3,
         })));
       spec.protectedPads = [{ ...patchRect(groundPatches.garage), blend: .2 }];
       const greenhouse=patchRect(groundPatches.greenhouse),beds=patchRect(groundPatches.raisedBeds);
-      spec.productiveCourt={x0:greenhouse.x0,x1:9.48,z0:beds.z0,z1:beds.z1,runStart:greenhouse.x1,
-        greenhouseFinish:2.725,houseFinish:options.houseFFL,aisles:[[4.2,5.2],[6.2,7.2]],blend:2.4,eastBlend:.4,greenhouse,
-        routes:(garden.gardenRoutes??[]).filter(r=>['Productive access','Bed access','Greenhouse access'].includes(r.id)).map(r=>({...r,levels:r.points.map(()=>0)}))};
+      spec.productiveCourt={...beds,mode:'level',finish:groundPatches.raisedBeds.level+.06,greenhouseFinish:groundPatches.greenhouse.level+.04,aisles:[],greenhouse};
+      spec.protectedPads.push(...[groundPatches.greenhouse,groundPatches.raisedBeds].map(p=>({...patchRect(p),blend:.3,bankSlope:p.bankSlope??.4})));
+      const service=garden.elements.find(e=>e.id==='heatPumpService')?.parts.find(p=>p.kind==='rect');
+      if(service)spec.protectedPads.push({...patchRect({...service,level:groundPatches.garage.level}),blend:1.2,bankSlope:.4});
+      spec.protectedPads.push({id:'north-facade',x0:10.48,z0:6.73,x1:21.28,z1:7.18,level:options.houseFFL-.07,fallX:-.5/10.8,blend:1,bankSlope:.4});
       const fireElement=garden.elements.find(e=>e.id==='firePit');
       const fire=fireElement.parts.find(p=>p.kind==='circle');
       const gathering=groundPatches.pergola;
       const fireLevel=fireElement.meta?.grading?.level??gathering.level;
       const fireFinished=fireLevel+(fireElement.meta?.grading?.surfaceOffset??0)+.008;
       spec.pond.northBankOuter=Math.max(1.3,(pond.cz-fire.cy-fire.r)/pond.rz);
+      spec.pond.bankOuter=3;
       const gatheringLink=(garden.gardenRoutes??[]).find(r=>r.id==='Gathering connection');
-      spec.gatheringPads=[{...patchRect(gathering),blend:2.4},
+      spec.gatheringPads=[{...patchRect(gathering),blend:4},
         {cx:fire.cx,cz:fire.cy,radius:fire.r,level:fireLevel,blend:2.4}];
       const dining=(garden.gardenRoutes??[]).find(r=>r.id==='Daily dining');
       if(dining)spec.bankReview.push({id:'dining-corner',label:'Terrace-to-pergola planted approach bank',
@@ -271,7 +329,7 @@ const SiteTerrain = (() => {
       for(const [route,start,end]of [[dining,options.houseFFL,gathering.level+.1],[gatheringLink,gathering.level+.1,fireFinished],[pondApproach,pondStart,fireFinished]])if(route) {
         const lengths=[0];
         for(let i=1;i<route.points.length;i++)lengths.push(lengths[i-1]+Math.hypot(route.points[i][0]-route.points[i-1][0],route.points[i][1]-route.points[i-1][1]));
-        const startLanding=1.2,endLanding=route===pondApproach?2.4:1.1,transitionLength=.8,active=lengths.at(-1)-startLanding-endLanding;
+        const startLanding=route===gatheringLink?.4:1.2,endLanding=route===pondApproach?lengths.at(-1)-lengths.at(-3)+1.2:route===gatheringLink?lengths.at(-1)-lengths[1]+.4:1.1,transitionLength=route===gatheringLink?.4:.8,active=lengths.at(-1)-startLanding-endLanding;
         const distances=[...lengths,startLanding,lengths.at(-1)-endLanding].sort((a,b)=>a-b).filter((s,i,a)=>i===0||s-a[i-1]>1e-6);
         const points=distances.map(s=>{const i=Math.max(1,lengths.findIndex(v=>v>=s)),t=(s-lengths[i-1])/(lengths[i]-lengths[i-1]);return route.points[i-1].map((v,k)=>v+t*(route.points[i][k]-v));});
         const levels=distances.map(s=>{const u=Math.max(0,Math.min(active,s-startLanding)),area=v=>v/2-transitionLength*Math.sin(Math.PI*v/transitionLength)/(2*Math.PI);
@@ -286,13 +344,25 @@ const SiteTerrain = (() => {
             endCircle:{cx:route.points.at(-1)[0],cz:route.points.at(-1)[1],radius:route.width/2},
             bankAvoidRoutes:(garden.gardenRoutes??[]).filter(r=>r.id==='Pond walk').map(r=>({...r,levels:r.points.map(()=>0)})),
             bankBounds:{x0:Math.min(...points.map(p=>p[0]))-3,x1:Math.max(...points.map(p=>p[0]))+3,z0:Math.min(...points.map(p=>p[1]))-3,z1:Math.max(...points.map(p=>p[1]))+3}}:{}),
-          ...(route===gatheringLink?{startRect:patchRect(gathering),endCircle:{cx:fire.cx,cz:fire.cy,radius:fire.r}}:{})});
+          ...(route===gatheringLink?{endCircle:{cx:fire.cx,cz:fire.cy,radius:fire.r}}:{})});
+      }
+      for (const id of ['Productive access', 'Bed access', 'Greenhouse access']) {
+        const route = (garden.gardenRoutes ?? []).find(r => r.id === id);
+        if (!route) continue;
+        const bedFinish = groundPatches.raisedBeds.level + .06;
+        const end = id === 'Greenhouse access' ? groundPatches.greenhouse.level+.04 : bedFinish;
+        const start = Number.isFinite(route.startRelativeLevel) ? options.houseFFL+route.startRelativeLevel : id === 'Productive access' ? options.houseFFL : bedFinish;
+        const lengths = [0];
+        for (let i = 1; i < route.points.length; i++) lengths.push(lengths[i-1] + Math.hypot(route.points[i][0]-route.points[i-1][0], route.points[i][1]-route.points[i-1][1]));
+        spec.routeProfiles.push({...route,bedding:.06,bankBlend:1.2,levels:lengths.map((distance,i)=>start+(end-start)*(route.levelFractions?.[i]??Math.min(1,distance/(id==='Productive access'?lengths.at(-2):lengths.at(-1))))) });
       }
       const driveway = garden.elements.find(e => e.id === 'driveway').parts.find(p => p.kind === 'polygon');
       const gateLine = garden.elements.find(e => e.id === 'gate').parts.find(p => p.kind === 'line');
       const gate = [(gateLine.x1 + gateLine.x2) / 2, (gateLine.y1 + gateLine.y2) / 2];
       spec.drivewayProfile = { points: driveway.points.map(p => p.slice()), startX: groundPatches.garage.x + groundPatches.garage.w,
-        startLevel: groundPatches.garage.level, gate, gateLevel: naturalHeight(spec, ...gate) - .05, surfaceOffset: .05, edgeMargin: .15, blend: 1 };
+        startLevel: groundPatches.garage.level, gate, gateLevel: naturalHeight(spec, ...gate) - .04, surfaceOffset: .04, edgeMargin: .15, blend: 3 };
+      const waterSource=garden.elements.find(e=>e.id==='waterSource')?.parts.find(p=>p.kind==='circle');
+      if(waterSource)spec.drivewayApron={id:'water-source-approach',x0:spec.drivewayProfile.startX,z0:waterSource.cy-2.45,x1:waterSource.cx+1.25,z1:27.89,bankSlope:.4};
       const gateLength=Math.hypot(gateLine.x2-gateLine.x1,gateLine.y2-gateLine.y1);
       const direction=[(gateLine.x2-gateLine.x1)/gateLength,(gateLine.y2-gateLine.y1)/gateLength],start=[gateLine.x1,gateLine.y1];
       const gatePoint=(t,inset)=>[start[0]+direction[0]*t-direction[1]*inset,start[1]+direction[1]*t+direction[0]*inset];
@@ -326,7 +396,7 @@ const SiteTerrain = (() => {
           }
         }
         for(const route of spec.routeProfiles){if(route.bankBounds&&rectDistance(route.bankBounds,x,z)>0)continue;const sample=routeSample(route,x,z),d=Math.max(0,sample.distance-route.width/2-.02);if(d<.5)result=sample.level+(result-sample.level)*smoothstep(d/.5);}
-        const influence=productiveInfluence(spec.productiveCourt,x,z);
+        const influence=spec.productiveCourt.mode==='level'?0:productiveInfluence(spec.productiveCourt,x,z);
         result+=(productiveFinish(spec.productiveCourt,x)-result)*influence;
         return result;
       };

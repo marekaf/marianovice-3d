@@ -104,34 +104,34 @@ const syntheticSurvey = [[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5],[18,17,2.7]
 const surveySurface = SurveySurface.create(syntheticSurvey,TERRAIN.plane).data;
 const surveyed = SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{surveySurface,houseFFL:TERRAIN.houseFFLInternal});
 const fixedFallback = SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{houseFFL:TERRAIN.houseFFLInternal});
-assert.equal(fixedFallback.routeHeight(4.6,13),2.725,'Greenhouse aisle retains its chosen finish without a survey');
+assert.equal(fixedFallback.routeHeight(4.6,13),2.865,'Bed court retains its chosen finish without a survey');
 function verifyProductiveFinishes(sample){
   const court=sample.spec.productiveCourt;
   const snapshot=JSON.stringify(sample.spec);
   assert(court,'Fixed-datum terrain uses the coordinated court');
   for(let ix=0;ix<=40;ix++)for(let iz=0;iz<=16;iz++){
     const x=court.x0+(court.x1-court.x0)*ix/40,z=court.z0+(court.z1-court.z0)*iz/16;
-    assert(Math.abs(sample.routeHeight(x,z)-SiteTerrain.productiveFinish(court,x))<1e-10,'Court core follows its shared sloping finish and level aisles');
+    assert(Math.abs(sample.routeHeight(x,z)-SiteTerrain.productiveFinish(court,x))<1e-10,'Court core follows its shared level finish');
   }
-  for(const x of [court.x0-court.blend,court.x0,...court.aisles.flat(),court.x1,court.x1+court.eastBlend])
-    for(const z of [court.z0-court.blend-.6,court.z0,court.z1,court.z1+court.blend]){
+  for(const x of [court.x0-.3,court.x0,...court.aisles.flat(),court.x1,court.x1+.3])
+    for(const z of [court.z0-.3-.6,court.z0,court.z1,court.z1+.3]){
       const height=sample.routeHeight(x,z);
       for(const [dx,dz]of [[1e-6,0],[-1e-6,0],[0,1e-6],[0,-1e-6]])assert(Math.abs(sample.routeHeight(x+dx,z+dz)-height)<1e-5,'Productive finish remains continuous across court and influence boundaries');
     }
   const {GardenRouteModel}=require('./garden-route-model.js');
   const beds=RaisedBedsModel.build(GARDEN,{surfaceHeight:sample.routeHeight,groundHeight:sample.height,court});
   const geometry=GardenRouteModel.geometry(GARDEN.gardenRoutes,sample.routeHeight,.12,[...GardenRouteModel.surfaceExclusions(GARDEN),beds.surfaceFootprint]);
-  let northJoinVertices=0;
+  let courtJoinVertices=0;
   for(let i=0;i<geometry.positions.length;i+=3){
     const [x,y,z]=geometry.positions.slice(i,i+3);
-    if(Math.abs(z-court.z0)<1e-8&&x>6.2&&x<7.2){
-      northJoinVertices++;assert(Math.abs(y-2.645731707317073)<1e-10,'Clipped northern route triangles meet the level bed aisle');
+    if(Math.abs(x-court.x1)<1e-8&&z>12.7&&z<13.7){
+      courtJoinVertices++;assert(Math.abs(y-court.finish)<1e-10,'Clipped eastern route triangles meet the level bed aisle');
     }
   }
-  assert(northJoinVertices>10,'Regression covers visible route/court join');
+  assert(courtJoinVertices>0,'Regression covers visible route/court join');
   const gravel=beds.parts.find(p=>p.name==='raised_beds_gravel');
-  const houseEdge=gravel.vertices.filter(([x,z,y])=>Math.abs(x-court.x1)<1e-8&&z>12.5&&z<13.5&&Math.abs(y+beds.floorHeight-court.houseFinish)<1e-8);
-  assert(houseEdge.length>10,'Court triangles meet the fixed house terrace finish');
+  const houseEdge=gravel.vertices.filter(([x,z,y])=>Math.abs(x-court.x1)<1e-8&&z>12.5&&z<13.5&&Math.abs(y+beds.floorHeight-court.finish)<1e-8);
+  assert(houseEdge.length>10,'Court triangles meet the fixed productive court finish');
   assert.equal(JSON.stringify(sample.spec),snapshot,'Sampling productive finishes must not alter the shared grading specification');
 }
 verifyProductiveFinishes(fixedFallback);
@@ -155,7 +155,8 @@ function insideHouse(x,z) {
   return inside;
 }
 for(let x=10.49;x<21.28;x+=.2)for(let z=7.19;z<26.43;z+=.2)if(insideHouse(x,z)) {
-  assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.12+1e-10,'House excavation must keep soil below finished floors');
+  const clearance=x<=11.56&&z<=7.305?.07:.12;
+  assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-clearance+1e-10,'House excavation and north gravel bedding must keep soil below finished floors');
   checks.push([x,z]);
 }
 assert.ok(!insideHouse(12,17),'House excavation polygon must exclude atrium notch');
@@ -236,11 +237,14 @@ for(let angle=0;angle<=90;angle++)for(let step=0;step<=20;step++){
   const a=angle*Math.PI/180,s=.948*step/20,t=5.10-Math.cos(a)*s,inset=Math.sin(a)*s;
   const p=landingPoint(t,inset);
   assert(Math.abs(surveyed.height(...p)-landing.level)<1e-8,'Whole wicket sweep must have level subgrade');
-  assert(Math.abs(landing.finishedLevel+.035-(surveyed.height(...p)+.05)-.035)<1e-8,'Wicket must clear finished paving by35mm at every angle');
+  assert(Math.abs(landing.finishedLevel+.035-(surveyed.height(...p)+surveyed.spec.drivewayProfile.surfaceOffset)-.035)<1e-8,'Wicket must clear finished paving by35mm at every angle');
   checks.push(p);
 }
-const drivewayEnd=Math.max(...surveyed.spec.drivewayProfile.points.map(p=>(p[0]-landing.start[0])*landing.direction[0]+(p[1]-landing.start[1])*landing.direction[1]));
-assert(landing.from>drivewayEnd,'Wicket landing must stay south of vehicle driveway');
+const {GradingZones}=require('./grading-zones.js');
+const drivewayLandingOverlap=GradingZones.triangles(surveyed.spec.drivewayProfile.points).reduce((area,triangle)=>area+GradingZones.area(GradingZones.split(triangle,landing.points).inside),0);
+assert(drivewayLandingOverlap<1e-9,'Wicket landing footprint must not overlap vehicle driveway');
+const vehicleGate=GARDEN.elements.find(e=>e.id==='gate').parts.find(p=>p.kind==='line');
+assert(landing.from>Math.hypot(vehicleGate.x2-vehicleGate.x1,vehicleGate.y2-vehicleGate.y1),'Wicket landing starts beyond the vehicle gate opening');
 for(const t of [landing.from,landing.to])for(const inset of [.1,.6,1.2]){
   const p=landingPoint(t,inset),h=surveyed.height(...p);
   for(const [dx,dz]of[[1e-7,0],[-1e-7,0],[0,1e-7],[0,-1e-7]])assert(Math.abs(surveyed.height(p[0]+dx,p[1]+dz)-h)<1e-5,'Wicket landing edge must blend continuously');
@@ -251,12 +255,12 @@ for(const t of [6.6,6.8,7])for(const inset of [.1,.6,1.2]){
   assert.equal(surveyed.height(...p),SiteTerrain.height(withoutLanding,...p),'Wicket grading must not alter neighbor ground');
 }
 const runback=surveyed.spec.gateRunback;
-assert(Math.abs(runback.finishedLevel-runback.level-.05)<1e-9,'Runback gravel must meet the 50mm driveway finish');
+assert(Math.abs(runback.finishedLevel-runback.level-surveyed.spec.drivewayProfile.surfaceOffset)<1e-9,'Runback gravel must meet the driveway finish');
 let runbackMaxFill=0,runbackMaxCut=0;
 for(let t=runback.from;t<=runback.to;t+=.05)for(const inset of [.05,.18,.75]){
   const [ux,uz]=runback.direction,x=runback.start[0]+ux*t-uz*inset,z=runback.start[1]+uz*t+ux*inset;
   assert(Math.abs(surveyed.height(x,z)-runback.level)<1e-8,'Gate runback ground must share the opening datum');
-  assert(Math.abs(runback.finishedLevel+.035-(surveyed.height(x,z)+.05)-.035)<1e-8,'Cantilever runner retains 35 mm clearance over finished gravel throughout travel');
+  assert(Math.abs(runback.finishedLevel+.035-(surveyed.height(x,z)+surveyed.spec.drivewayProfile.surfaceOffset)-.035)<1e-8,'Cantilever runner retains 35 mm clearance over finished gravel throughout travel');
   const delta=surveyed.height(x,z)-surveyed.baseHeight(x,z);runbackMaxFill=Math.max(runbackMaxFill,delta);runbackMaxCut=Math.max(runbackMaxCut,-delta);
   checks.push([x,z]);
 }
