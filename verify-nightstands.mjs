@@ -36,7 +36,13 @@ for(const [i,f]of fixtures.entries()){
     assert(outlet.position[1]-.04-highest>=.15-1e-9,'Guest socket frame remains above both drawers');
   }
 }
-assert.deepEqual(fixtures.filter(f=>f.room==='1.04').map(f=>[f.x0,f.x1,f.z0,f.z1]),[[.7,1.1,18.45,18.75],[2.9,3.3,18.45,18.75]]);
+assert.deepEqual(fixtures.filter(f=>f.room==='1.04').map(f=>[f.x0,f.x1,f.z0,f.z1]),[[.9,1.3,18.45,18.75],[3.1,3.5,18.45,18.75]]);
 const bed=data.furniture.find(f=>f.kind==='bed'&&f.room==='1.04');
-assert.deepEqual([bed.x0,bed.x1,bed.z0,bed.z1],[1.1,2.9,16.75,18.75]);
+assert.deepEqual([bed.x0,bed.x1,bed.z0,bed.z1],[1.3,3.1,16.75,18.75]);
+const guestSockets=['1.04-Z02','1.04-Z01'].map(id=>ELECTRICAL_POINTS.find(p=>p.id===id));
+assert.deepEqual(guestSockets.map(p=>p.position),[[1.1,.7,18.8],[3.3,.7,18.8]]);
+close((bed.x0+bed.x1)/2,(guestSockets[0].position[0]+guestSockets[1].position[0])/2);
+for(const [i,f] of fixtures.filter(f=>f.room==='1.04').entries())close((f.x0+f.x1)/2,guestSockets[i].position[0]);
+const wardrobe=data.furniture.find(f=>f.room==='1.04'&&f.kind==='cab');
+assert(wardrobe.x0-3.5>=.35-1e-9,'East nightstand retains 350 mm clearance to wardrobe');
 console.log('Bedroom and guest nightstand drawing dimensions verified');
