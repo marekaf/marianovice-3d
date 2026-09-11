@@ -74,6 +74,20 @@ def build_model(model):
 
     for part in model["parts"]:
         kind = part["type"]
+        if kind == 'repeatedMesh':
+            for variant, group in enumerate(part['groups']):
+                mesh = bpy.data.meshes.new("%s_%d" % (part['name'],variant))
+                mesh.from_pydata([(x,-y,z) for x,y,z in group['vertices']], [], [tuple(reversed(face)) for face in group['faces']])
+                mesh.materials.append(materials[part['material']])
+                for polygon in mesh.polygons:
+                    polygon.use_smooth = part.get('smooth',False)
+                mesh.update()
+                for index, (x,y,z) in enumerate(group['positions']):
+                    obj = bpy.data.objects.new("%s_%d_%d" % (part['name'],variant,index),mesh)
+                    obj.location = (x,-y,base_height+z)
+                    obj.hide_render = obj.hide_viewport = model.get('categoryVisibility',{}).get(part.get('category','structure'),True) is False
+                    collection.objects.link(obj)
+            continue
         if kind in ("box", "beam"):
             if kind == "beam":
                 start, end = Vector(part["start"]), Vector(part["end"])
