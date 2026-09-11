@@ -136,3 +136,39 @@ node unreal/encode-walkthrough.mjs
 The encoder requires a successful complete render, checks every frame, adds optional room-name subtitles and verifies dimensions, frame count, duration and error-free decoding. Its output is `generated/house-walkthrough.mp4` with validation in `generated/video-validation.json`.
 
 The video uses fixed exposure and provisional room lighting. It is a visualisation draft, not a daylight or electrical-lighting simulation. Generated videos, images and engine assets stay local.
+
+### Full-detail fallback geometry
+
+Generate a source manifest with `node unreal/export-fallback-manifest.mjs input.glb output.json`.
+It records the GLB hash and each mesh's raw/nondegenerate triangle counts and
+position fingerprints. The default input is `unreal/generated/house-walkthrough.glb`.
+
+In an idle Unreal editor, load `unreal/build-full-detail.py` with `runpy.run_path`
+and call `start(options)`. Supply `sourceRoot` (the imported `StaticMeshes` asset
+folder), a separate `targetRoot`, `manifest` (the manifest file path), and `output`
+(the build report file path). Source assets must use the importer's
+`house-walkthrough_mesh_<index>` naming. Retain the returned session and return
+control to the editor: its ticker builds one mesh at a time. Check
+`session['active']` and `session['report']['state']` for completion or failure.
+
+The builder duplicates reduced meshes into the separate asset root, configures
+100% fallback triangles without trimming, and saves only those copies. It does
+not replace scene components, modify source meshes, or save the level. Matching
+reports permit resuming; untracked target assets and overlapping builds are
+rejected. Do not delete the report when resuming an interrupted build.
+
+Triangle counts alone do not establish geometric equivalence. After completion,
+load `unreal/export-fallback-geometry.py` in the editor and call
+`export_geometry(report_path, output_path)` to extract the actual LOD0 sections.
+Run `node unreal/verify-fallback-geometry.mjs source.glb extraction.json` outside
+the editor and require every mesh to match before using the copies. The command
+also accepts a third mesh-index argument for a single raw-section probe.
+
+Position comparison assumes mesh-local geometry imported without pivot baking:
+source metres become Unreal float32 centimetres using `[x,z,y] * 100`. It checks
+nondegenerate triangle positions independent of winding and indexing, not node
+transforms, normals, materials, lighting, or visual quality. Inspect the rendered
+result separately. A partial extraction verifies only the included meshes.
+
+`yarn unreal:verify` runs synthetic GLB/section tests and a mocked editor build
+lifecycle test using Python 3. Neither requires Unreal or generated house assets.
