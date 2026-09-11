@@ -16,8 +16,12 @@ with open(extra[0]) as source:
 bpy.context.view_layer.update()
 for key in ('roofModel', 'infillModel'):
     model = garden['houseRoof'][key]
+    names = {}
     for part in model['parts']:
-        obj = bpy.data.objects[part['name']]
+        count = names.get(part['name'],0)
+        names[part['name']] = count+1
+        name = part['name']+(".%03d" % count if count else "")
+        obj = bpy.data.objects[name]
         assert len(obj.data.vertices) == len(part['vertices'])
         for vertex, expected in zip(obj.data.vertices, part['vertices']):
             point = obj.matrix_world @ vertex.co
