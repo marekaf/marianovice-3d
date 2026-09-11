@@ -179,7 +179,8 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
   const key = `${wall.id}:${index}`, doorId = internalDoors[key];
   const fallback = doorId ? { kind:'door', doorId, width:opening.w, height:opening.h,
     leafWidth:opening.w-.1, leafHeight:opening.h-.1,
-    hinge:wall.b[0]-wall.a[0]>wall.b[1]-wall.a[1]?'west':'north',
+    hinge:key==='W13:0'?'south':wall.b[0]-wall.a[0]>wall.b[1]-wall.a[1]?'west':'north',
+    reverseSwing:key==='W13:0',
     pocket:['W15:0','W24:0'].includes(key),pocketDirection:key==='W15:0'?-1:1,
     provisional:true, bottomGap:key==='W27:2'?.002:.01, acousticThreshold:key==='W27:2',
     doorModel:key==='W27:2'?'Superior M10':'Elegant Komfort M10' } : null;
@@ -212,7 +213,7 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     }
     if (moving && doorOpen) {
       const hinge = hingeAtStart ? start + doorEdge : end - (spec.kind === 'entrance' ? .06 : doorEdge);
-      const direction = hingeAtStart ? 1 : -1;
+      const direction = (hingeAtStart ? 1 : -1) * (spec.reverseSwing ? -1 : 1);
       position = [depth - direction * (z - hinge), hinge + direction * (x - depth), y];
       size = [d, w, h];
     }
@@ -291,7 +292,7 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     rail('leaf', leafStart, leafEnd, bottom, bottom + leafHeight, 'door', entrance ? 0.075 : 0.042, depth, true);
     if (spec.acousticThreshold) rail('drop_seal', leafStart+.004, leafEnd-.004, 0, bottom, 'seal', .035, depth, true);
     const hinge = hingeAtStart ? leafStart : leafEnd;
-    doorMotion={pivot:alongX?[hinge,0,depth]:[depth,0,hinge],angle:(alongX?1:-1)*(hingeAtStart?1:-1)*Math.PI/2,movingParts};
+    doorMotion={pivot:alongX?[hinge,0,depth]:[depth,0,hinge],angle:(alongX?1:-1)*(hingeAtStart?1:-1)*(spec.reverseSwing?-1:1)*Math.PI/2,movingParts};
     if(spec.pocket){
       const travel=spec.pocketDirection*(spec.width-doorEdge);
       doorMotion={kind:'slide',pivot:[0,0,0],offset:alongX?[travel,0,0]:[0,0,travel],movingParts};
