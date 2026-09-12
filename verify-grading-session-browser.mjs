@@ -51,15 +51,30 @@ try {
     return {count,error};
   });
   assert(pergolaGround.count>100&&pergolaGround.error<1e-5,`Rendered soil is level beneath the pergola: ${JSON.stringify(pergolaGround)}`);
-  const drainageGround=await page.evaluate(()=>{
+  const drainageGround=await page.evaluate(async()=>{
     const t=gradingSession,ray=new t.THREE.Raycaster();let samples=0,missing=0,maximumError=0;
+    const {createMeshHeightQuery}=await import('./mesh-height-query.js'),groundHeight=createMeshHeightQuery(t.ground);
+    const covered=GARDEN.elements.find(e=>e.id==='westDrainageStrip').meta.grading.coveredCrossings;
     for(const strip of t.siteTerrain.spec.drainageStrips??[])for(let x=strip.x0+.0001;x<strip.x1;x+=.1)for(let z=strip.z0+.0001;z<strip.z1;z+=.1){
+      if(covered.some(p=>x>=p.x&&x<=p.x+p.w&&z>=p.y&&z<=p.y+p.d))continue;
       ray.set(new t.THREE.Vector3(x,strip.level+1,z),new t.THREE.Vector3(0,-1,0));
-      const hit=ray.intersectObject(t.ground,false)[0];samples++;
-      if(!hit)missing++;else maximumError=Math.max(maximumError,Math.abs(hit.point.y-strip.level));
+      const actual=groundHeight(x,z);samples++;
+      if(actual===null)missing++;else maximumError=Math.max(maximumError,Math.abs(actual-t.siteTerrain.height(x,z)));
     }
-    return {samples,missing,maximumError};
+    let coveredSamples=0,coveredMissing=0,coveredError=0,soilContactSamples=0,minimumRenderedClearance=Infinity;
+    const slabs=[];t.scene.traverse(o=>{if(o.name==='garden-stepping-slab'||o.name==='paving-joint-shoulder')slabs.push(o);});
+    for(const p of covered)for(let i=1;i<20;i++){
+      const x=p.x+p.w*i/20,z=p.y+p.d/2;
+      ray.set(new t.THREE.Vector3(x,t.siteTerrain.spec.deckTop+1,z),new t.THREE.Vector3(0,-1,0));
+      const hits=p.routeId==='Quiet garden approach'?ray.intersectObject(t.gardenRoutes,false):ray.intersectObjects(slabs,false);
+      if(p.routeId==='Quiet garden approach'&&hits.length){const soil=groundHeight(x,z);if(soil!==null){soilContactSamples++;minimumRenderedClearance=Math.min(minimumRenderedClearance,hits[0].point.y-soil);}}
+      coveredSamples++;if(!hits.length)coveredMissing++;else {const support=hits[0].object.userData.support,edge=support&&(x<support.x0||x>support.x1||z<support.z0||z>support.z1);if(edge){if(hits[0].point.y<t.siteTerrain.height(x,z)-.002||hits[0].point.y>t.siteTerrain.spec.deckTop+.002)coveredError=Infinity;}else coveredError=Math.max(coveredError,p.routeId==='Quiet garden approach'?Math.abs(hits[0].point.y-t.siteTerrain.routeHeight(x,z)):Math.max(0,hits[0].point.y-t.siteTerrain.spec.deckTop,t.siteTerrain.spec.deckTop-.018-hits[0].point.y));}
+    }
+    return {samples,missing,maximumError,coveredSamples,coveredMissing,coveredError,soilContactSamples,minimumRenderedClearance};
   });
+  console.log('Actual E ground and crossing:',JSON.stringify(drainageGround));
+  assert(drainageGround.soilContactSamples===19&&drainageGround.minimumRenderedClearance>=.02-2e-5,'Independent ground and route meshes retain2cm separation at the crossing');
+  assert(drainageGround.coveredSamples>=38&&!drainageGround.coveredMissing&&drainageGround.coveredError<.002,`Covered crossings preserve their walkway surfaces: ${JSON.stringify(drainageGround)}`);
   assert(drainageGround.samples>1000&&!drainageGround.missing&&drainageGround.maximumError<2e-5,`Actual drainage mesh stays below the terrace: ${JSON.stringify(drainageGround)}`);
   assert(restored.garageColors.length&&restored.garageColors.every(color=>color==='e2cec5'),'Actual garage facade meshes use HN3E');
   const firepitSurface=await page.evaluate(()=>{
@@ -106,8 +121,8 @@ try {
   });
   assert.deepEqual(surfaces.removedScreens,[],"Firepit and guest bathroom screens are absent from the rendered scene");
   assert(surfaces.northWest.length&&surfaces.northEast.length);
-  assert(surfaces.northWest.every(h=>Math.abs(h-2.465)<1e-4),'North gravel starts at west terrace finish');
-  assert(surfaces.northEast.every(h=>Math.abs(h-1.965)<1e-4),'North gravel falls 50 cm toward the east');
+  assert(surfaces.northWest.every(h=>Math.abs(h-2.215)<1e-4),'North gravel starts above the lower E return');
+  assert(surfaces.northEast.every(h=>Math.abs(h-1.965)<1e-4),'North gravel reaches50cm below the west terrace');
   const southGrade=await page.evaluate(()=>{
     const t=gradingSession,south=t.scene.getObjectByName('south-facade-gravel'),ray=new t.THREE.Raycaster();
     let samples=0,missing=0,error=0;
@@ -115,7 +130,7 @@ try {
       ray.set(new t.THREE.Vector3(x,5,z),new t.THREE.Vector3(0,-1,0));
       const hit=ray.intersectObject(south,false)[0];samples++;
       if(!hit){missing++;continue;}
-      error=Math.max(error,Math.abs(hit.point.y-(2.465-.5*(x-10.48)/10.8)));
+      error=Math.max(error,Math.abs(hit.point.y-(2.215-.25*(x-10.48)/10.8)));
     }
     const ends=[10.4801,21.2799].map(x=>{
       ray.set(new t.THREE.Vector3(x,5,26.4301),new t.THREE.Vector3(0,-1,0));
@@ -124,7 +139,7 @@ try {
     return {samples,missing,error,ends};
   });
   assert(southGrade.samples>1400&&southGrade.missing===0&&southGrade.error<1e-5,`Actual south gravel maintains the full-width west-to-east fall outside the service spur: ${JSON.stringify(southGrade)}`);
-  assert(southGrade.ends.every((height,i)=>Math.abs(height-[2.465,1.965][i])<2e-5),'Actual south gravel joins the west terrace and east driveway with a 50 cm finished fall');
+  assert(southGrade.ends.every((height,i)=>Math.abs(height-[2.215,1.965][i])<2e-5),'Actual south gravel falls25cm from E toward the east driveway,50cm below the west terrace');
   assert(surfaces.padGap<1e-5,'Heat pump bearing pad reaches the graded soil');
   assert(surfaces.flatPaving.length&&surfaces.flatPaving.every(y=>Math.abs(y-1.965)<1e-5),'Rendered A paving has the common finished level');
   assert(Math.abs(surfaces.bedFinish-2.865)<1e-6,'Ground under the raised beds is 40 cm above the west terrace');
@@ -146,7 +161,7 @@ try {
     return Object.fromEntries(['bank','downhill','flat','preserve'].map(kind=>[kind,names.filter(name=>name.startsWith('grading-'+kind+'-')).length]));
   });
   assert(terrainMarks.bank>=2&&terrainMarks.downhill>=9&&terrainMarks.flat>=5&&terrainMarks.preserve>=14,`Terrain instructions are present in the actual 3D overlay: ${JSON.stringify(terrainMarks)}`);
-  assert.deepEqual(await page.evaluate(()=>{const names=[];gradingSession.gradingOverlay.group.traverse(object=>{if(object.name.startsWith("grading-flat-"))names.push(object.name);});return [...new Set(names)].sort();}),["grading-flat-A","grading-flat-C","grading-flat-D","grading-flat-G","grading-flat-carport"]);
+  assert.deepEqual(await page.evaluate(()=>{const names=[];gradingSession.gradingOverlay.group.traverse(object=>{if(object.name.startsWith("grading-flat-"))names.push(object.name);});return [...new Set(names)].sort();}),["grading-flat-A","grading-flat-C","grading-flat-D","grading-flat-E","grading-flat-G","grading-flat-carport"]);
   assert.deepEqual(await page.evaluate(()=>gradingSession.gradingOverlay.data.zones.map(z=>z.id)),[...'ABCDEFGHIJKLM']);
   await page.check('#gradingDimensions');
   await page.selectOption('#terrainMode','existing');

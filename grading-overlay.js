@@ -34,9 +34,17 @@ const GradingOverlay = (() => {
       {id:'driveway-ramp',from:[35,29],to:[41,30]},
       {id:'west-bed',from:[-1.0436216216,12],to:[1.4,12]}
     ];
+    const drainage=garden.elements.find(e=>e.id==='westDrainageStrip');
+    const mainDrainage=drainage?.parts.find(p=>p.kind==='rect');
+    if(mainDrainage&&!mainDrainage.grading?.fallX&&!mainDrainage.grading?.fallZ)flats.push({id:'E',position:[9.105,22]});
+    for(const [i,p] of (drainage?.parts??[]).entries())if(p.grading?.fallX||p.grading?.fallZ) {
+      const a=p.grading.fallX?[p.grading.xStart??p.x,p.y+p.d/2]:[p.x+p.w/2,p.y];
+      const b=p.grading.fallX?[p.x+p.w,p.y+p.d/2]:[p.x+p.w/2,p.grading.zEnd??p.y+p.d];
+      slopes.push({id:'drainage-'+i,from:(p.grading.fallX??p.grading.fallZ)<0?a:b,to:(p.grading.fallX??p.grading.fallZ)<0?b:a});
+    }
     return {banks,slopes,flats,fences:quantities.fenceSegments??[]};
   }
-  const terrainLegend=[['flat','Rovná plocha oblasti'],['slope','Svah · šipka dolů'],['fixed','Zachovat výšku zaměřeného plotu']];
+  const terrainLegend=[['flat','Rovná plocha'],['slope','Svah · šipka dolů'],['fixed','Zachovat výšku zaměřeného plotu']];
   function svgTerrainSymbol(kind,x,y) {
     if(kind==='flat')return `<path d="M${x-7} ${y-3}h14M${x-7} ${y+3}h14" fill="none" stroke="#17649e" stroke-width="2.2"/>`;
     if(kind==='fixed')return `<path d="M${x-6} ${y-4}l12 8M${x-6} ${y+4}l12 -8" fill="none" stroke="#243b32" stroke-width="2"/>`;

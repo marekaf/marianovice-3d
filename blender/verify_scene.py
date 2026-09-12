@@ -118,9 +118,9 @@ finished_floor = garden['terrain']['houseFFLInternal']
 north_gravel = bpy.data.objects['drip0']
 north_vertices = [north_gravel.matrix_world @ vertex.co for vertex in north_gravel.data.vertices]
 for vertex in north_vertices:
-    expected = finished_floor-.5*(vertex.x-house[0])/(house[2]-house[0])
+    expected = finished_floor-.25-.25*(vertex.x-house[0])/(house[2]-house[0])
     assert abs(vertex.z-expected) < 1e-5, ('north gravel finish', tuple(vertex), expected)
-for x, level in [(house[0], finished_floor), (house[2], finished_floor-.5)]:
+for x, level in [(house[0], finished_floor-.25), (house[2], finished_floor-.5)]:
     edge = [vertex for vertex in north_vertices if abs(vertex.x-x) < 1e-5]
     assert len(edge) >= 2
     assert all(abs(vertex.z-level) < 1e-5 for vertex in edge)
@@ -193,14 +193,31 @@ if garden.get('terrainMeshBoundaries'):
             hit,position,_,_=terrain_mesh.ray_cast(terrain_inverse@Vector((x,-z,lawn['level']+1)),terrain_inverse.to_3x3()@Vector((0,0,-1)))
             assert hit and abs((terrain_mesh.matrix_world@position).z-lawn['level'])<1e-3, ('Level lawn mesh does not interpolate across route banks',x,z)
 walk_grass_samples = 0
+drainage_crossings = elements['westDrainageStrip']['meta']['grading'].get('coveredCrossings', [])
 for strip in garden['siteTerrain'].get('drainageStrips', []):
     for ix in range(16):
         for iz in range(386):
             x = strip['x0']+(strip['x1']-strip['x0'])*ix/15
             z = strip['z0']+(strip['z1']-strip['z0'])*iz/385
-            hit, position, _, _ = terrain_mesh.ray_cast(terrain_inverse @ Vector((x, -z, strip['level']+1)),
+            if any(p['x'] <= x <= p['x']+p['w'] and p['y'] <= z <= p['y']+p['d'] for p in drainage_crossings):
+                continue
+            expected = site_height(garden['siteTerrain'], x, z)
+            hit, position, _, _ = terrain_mesh.ray_cast(terrain_inverse @ Vector((x, -z, expected+1)),
                 terrain_inverse.to_3x3() @ Vector((0, 0, -1)))
-            assert hit and abs((terrain_mesh.matrix_world @ position).z-strip['level']) < 2e-5, ('Drainage strip mesh keeps its lowered level', x, z)
+            assert hit and abs((terrain_mesh.matrix_world @ position).z-expected) < 2e-5, ('Open drainage mesh follows its falling soil profile', x, z)
+
+for crossing in drainage_crossings:
+    candidates = [route_mesh] if crossing['routeId'] == 'Quiet garden approach' else [obj for obj in bpy.data.objects if obj.type == 'MESH' and obj.name.startswith('saunaPath_')]
+    for i in range(1, 20):
+        x = crossing['x']+crossing['w']*i/20
+        z = crossing['y']+crossing['d']/2
+        hits = []
+        for obj in candidates:
+            inverse = obj.matrix_world.inverted()
+            hit, position, _, _ = obj.ray_cast(inverse @ Vector((x, -z, garden['siteTerrain']['deckTop']+1)), inverse.to_3x3() @ Vector((0, 0, -1)))
+            if hit:
+                hits.append((obj.matrix_world @ position).z)
+        assert hits and max(hits) > site_height(garden['siteTerrain'], x, z)+.015, ('Covered drainage retains walkway surface above channel', crossing['routeId'], x, z)
 
 for vertex in terrain_mesh.data.vertices:
     point = terrain_mesh.matrix_world @ vertex.co
@@ -275,4 +292,4 @@ if details is None and not os.path.isdir(os.path.join(asset_root, "models")):
     assert any(obj.name.startswith("tree") and not obj.hide_render for obj in bpy.data.objects)
 print("SCENE VERIFIED: %d vehicles, %d outdoor furniture parts, %d procedural templates" %
       (len(roots), len(furniture["parts"]), len(templates)))
-print("GRADING VERIFIED: north gravel 0.50 m fall; greenhouse footprint and finish; heat-pump pad contact")
+print("GRADING VERIFIED: north gravel 0.25 m fall after E; terrace-to-east 0.50 m; greenhouse footprint and finish; heat-pump pad contact")

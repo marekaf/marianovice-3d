@@ -11,6 +11,11 @@ const SiteTerrain = (() => {
     const softMax=(a,b)=>Math.max(a,b)+Math.max(0,radius-Math.abs(a-b))**2/(4*radius);
     return softMax(lower,-softMax(-upper,-value));
   }
+  function drainageLevel(strip,x,z) {
+    const dx=Math.max(0,Math.min(strip.xEnd??strip.x1,x)-(strip.xStart??strip.x0));
+    const dz=Math.max(0,Math.min(strip.zEnd??strip.z1,z)-(strip.zStart??strip.z0));
+    return strip.level+(strip.fallX??0)*dx+(strip.fallZ??0)*dz;
+  }
   function productiveFinish(court,x) {
     if(court.mode==='level')return court.finish;
     const clamp=(value,max)=>Math.max(0,Math.min(max,value));
@@ -181,7 +186,7 @@ const SiteTerrain = (() => {
       if(spec.regionalGrades){
         let target=Math.max(sample.level-bedding-(route.bankSlope??.4)*distance,Math.min(sample.level-bedding+(route.bankSlope??.4)*distance,h));
         for(const pad of spec.fixedFences?.levelPads??[])target=Math.max(target,pad.level-.4*rectDistance(pad,x,z));
-        for(const strip of spec.drainageStrips??[])target=Math.min(target,strip.level+.4*rectDistance(strip,x,z));
+        for(const strip of spec.drainageStrips??[])target=Math.min(target,drainageLevel(strip,x,z)+(strip.bankSlope??.45)*rectDistance(strip,x,z));
         const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z))):Infinity;
         h+=(target-h)*smoothstep(clear/.3);
       }
@@ -192,6 +197,7 @@ const SiteTerrain = (() => {
         if(route.approachBank)h=Math.min(h,h+(sample.level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(routeBankClearance(route,x,z)/.6));
       }
     }
+    for(const strip of spec.drainageStrips??[])h=Math.min(h,drainageLevel(strip,x,z)+(strip.bankSlope??.45)*rectDistance(strip,x,z));
     const outer=pond.bankOuter??1.3;
     if(spec.regionalGrades)h=Math.max(h,pond.edge-.4*Math.max(0,Math.hypot(x-pond.cx,z-pond.cz)-Math.max(pond.rx,pond.rz)));
     const pondOuter=spec.continuousGrading&&z<pond.cz?outer+((pond.northBankOuter??outer)-outer)*Math.max(0,(pond.cz-z)/(pond.rz*prr||1))**16:outer;
@@ -211,6 +217,11 @@ const SiteTerrain = (() => {
         h+=(productiveFinish(p,x)-bedding-h)*weight;
       }
     }
+    if(spec.drainageStrips?.some(strip=>strip.fallX||strip.fallZ)) {
+      const p=(spec.protectedPads??[]).find(p=>p.id==='north-facade');
+      if(p)h=Math.max(h,p.level+(p.fallX??0)*Math.min(p.x1-p.x0,Math.max(0,x-p.x0))-.4*rectDistance(p,x,z));
+    }
+    for(const strip of spec.drainageStrips??[])if(strip.minimumSurface)h=Math.max(h,drainageLevel(strip,x,z)-(strip.bankSlope??.45)*rectDistance(strip,x,z));
     for(const segment of spec.fixedFences?.segments??[]) {
       const [a,b]=[segment.start,segment.end],dx=b[0]-a[0],dz=b[1]-a[1];
       const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));
@@ -301,10 +312,10 @@ const SiteTerrain = (() => {
         {...patchRect(groundPatches.raisedBeds),id:'productive',blend:3.5},
         {...patchRect(groundPatches.greenhouse),id:'greenhouse-apron',x0:groundPatches.greenhouse.x-.2,x1:groundPatches.greenhouse.x+groundPatches.greenhouse.w+.2,blend:2.5},
         {id:'west-strip',x0:8.73,z0:7.18,x1:10.48,z1:26.43,level:options.houseFFL-.3,blend:3},
-        {id:'north-fall',x0:10.48,z0:6.18,x1:21.28,z1:7.18,level:options.houseFFL-.04,fallX:-.5/10.8,blend:2.5},
-        {id:'south-fall',x0:10.48,z0:26.43,x1:21.28,z1:27.43,level:options.houseFFL-.04,fallX:-.5/10.8,blend:3},
+        {id:'north-fall',x0:10.48,z0:6.18,x1:21.28,z1:7.18,level:options.houseFFL-.32,fallX:-.25/10.8,blend:2.5},
+        {id:'south-fall',x0:10.48,z0:26.43,x1:21.28,z1:27.43,level:options.houseFFL-.32,fallX:-.22/10.8,blend:3},
       ];
-      spec.drainageStrips=garden.elements.filter(e=>e.id==='westDrainageStrip').flatMap(e=>e.parts.filter(p=>p.kind==='rect').map(p=>({...patchRect(p),level:options.houseFFL+e.meta.grading.relativeLevel})));
+      spec.drainageStrips=garden.elements.filter(e=>e.id==='westDrainageStrip').flatMap(e=>e.parts.filter(p=>p.kind==='rect').map(p=>({...patchRect(p),...p.grading,level:options.houseFFL+(p.grading?.relativeLevel??e.meta.grading.relativeLevel)})));
       spec.bankReview = [
         {id:'productive-west',label:'Užitková zahrada a západní průleh',bounds:[0,10.48,7,23],status:'Čtyři záhony ve dvou řadách blíže západní hranici, 0,40 m nad západní terasou; plynulé spojení se skleníkem a saunou.'},
         {id:'south-house',label:'Jižní svah a servisní plocha',bounds:[8.3,22,26.43,31],status:'Plynulý spád od západu k východu; rovná odbočka k tepelnému čerpadlu. Ověřit povrchový odtok.'},
@@ -320,9 +331,9 @@ const SiteTerrain = (() => {
       spec.protectedPads.push(...[groundPatches.greenhouse,groundPatches.raisedBeds].map(p=>({...patchRect(p),blend:.3,bankSlope:p.bankSlope??.4})));
       const service=garden.elements.find(e=>e.id==='heatPumpService')?.parts.find(p=>p.kind==='rect');
       spec.southGravel={x0:10.48,x1:21.28,startDepth:.07,endDepth:.04,service:service?patchRect(service):null,serviceBlend:.15};
-      spec.protectedPads.push({id:'south-facade',x0:10.48,z0:26.43,x1:21.28,z1:27.45,level:options.houseFFL-.07,fallX:-.47/10.8,blend:1,bankSlope:.4});
+      spec.protectedPads.push({id:'south-facade',x0:10.48,z0:26.43,x1:21.28,z1:27.45,level:options.houseFFL-.32,fallX:-.22/10.8,blend:1,bankSlope:.4});
       if(service)spec.protectedPads.push({...patchRect({...service,level:groundPatches.garage.level}),blend:1.2,bankSlope:.4});
-      spec.protectedPads.push({id:'north-facade',x0:10.48,z0:6.73,x1:21.28,z1:7.18,level:options.houseFFL-.07,fallX:-.5/10.8,blend:1,bankSlope:.4});
+      spec.protectedPads.push({id:'north-facade',x0:10.48,z0:6.43,x1:21.28,z1:7.18,level:options.houseFFL-.32,fallX:-.25/10.8,blend:1,bankSlope:.4});
       const fireElement=garden.elements.find(e=>e.id==='firePit');
       const fire=fireElement.parts.find(p=>p.kind==='circle');
       const gathering=groundPatches.pergola;
@@ -399,10 +410,16 @@ const SiteTerrain = (() => {
       const productivePads=[
         {...patchRect(groundPatches.raisedBeds),finish:groundPatches.raisedBeds.level+.06},
         {...patchRect(groundPatches.greenhouse),finish:groundPatches.greenhouse.level+.04}];
+      const crossingSurfaces=(garden.elements.find(e=>e.id==='westDrainageStrip')?.meta.grading.coveredCrossings??[]).filter(p=>p.surfaceReference).map(p=>{
+        const west=garden.elements.find(e=>e.id==='westTerrace').parts.find(p=>p.kind==='rect');
+        const route=garden.gardenRoutes.find(r=>r.id===p.routeId);
+        return {route:{...route,levels:route.points.map(()=>0)},spec:{...spec,drainageStrips:[{x0:west.x-.75,x1:west.x,z0:west.y,z1:west.y+west.d,level:options.houseFFL+p.surfaceReference.relativeLevel,bankSlope:p.surfaceReference.bankSlope}]}};
+      });
       const routeHeight=(x,z)=>{
         const pads=[...spec.finishPads.map(p=>({...p,finish:options.houseFFL})),
           {...patchRect(gathering),finish:gathering.level+.1}];
-        let result=height(spec,x,z)+.02;
+        const crossing=crossingSurfaces.find(p=>routeSample(p.route,x,z).distance<=p.route.width/2+.02);
+        let result=height(crossing?.spec??spec,x,z)+.02;
         for(const p of pads){const d=rectDistance(p,x,z);if(d<.6)result=p.finish+(result-p.finish)*smoothstep(d/.6);}
         const productive=productivePads.map(p=>{const d=rectDistance(p,x,z);return {p,d,influence:1-smoothstep(d/.6)};}).filter(s=>s.influence>0);
         if(productive.length===1){const {p,d}=productive[0];result=p.finish+(result-p.finish)*smoothstep(d/.6);}

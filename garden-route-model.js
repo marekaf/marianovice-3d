@@ -58,6 +58,12 @@ const GardenRouteModel = (() => {
   }
   function geometry(routes,height,step=.12,exclusions=[]) {
     if(!routes.length)return {positions:[],uv:[]};
+    const fine=routes.filter(route=>route.surfaceStep&&route.surfaceStep<step);
+    if(fine.length){
+      const ordinary=routes.filter(route=>!fine.includes(route));
+      const pieces=[geometry(ordinary,height,step,exclusions),...fine.map(route=>geometry([route],height,route.surfaceStep,exclusions))];
+      return {positions:pieces.flatMap(p=>p.positions),uv:pieces.flatMap(p=>p.uv)};
+    }
     const points=routes.flatMap(r=>r.points),margin=Math.max(...routes.map(r=>r.width))/2+step;
     const x0=Math.min(...points.map(p=>p[0]))-margin,z0=Math.min(...points.map(p=>p[1]))-margin;
     const nx=Math.ceil((Math.max(...points.map(p=>p[0]))+margin-x0)/step),nz=Math.ceil((Math.max(...points.map(p=>p[1]))+margin-z0)/step);
