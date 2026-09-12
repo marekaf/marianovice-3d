@@ -187,6 +187,15 @@ const GARDEN = {
       ]
     },
     {
+      id: "sewerInspection",
+      name: "Kanalizační šachta DN400 · poloha orientační",
+      meta: {source: "Projekt C.3, 06/2024: stávající kanalizační revizní šachta DN400; poloha odměřena z výkresu", positionApproximate: true, nominalDiameterMm: 400, coverSchematic: true},
+      parts: [
+        {kind: "circle", cx: 42.1, cy: 29.0, r: .20, fill: "#444444", stroke: "#222222", sw: 1.2},
+        {kind: "text", x: 41.6, y: 31.8, text: "kanalizační šachta DN400", cls: "lbl-sm", anchor: "end"}
+      ]
+    },
+    {
       id: "waterSource",
       name: "Vodovodní šachta — poklop dle upřesnění vlastníka",
       parts: [

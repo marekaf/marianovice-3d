@@ -235,14 +235,25 @@ for name, x, y, finish_offset in [('driveway', carport_rect['x']+carport_rect['w
     assert hit
     assert abs((obj.matrix_world @ position).z+finish_offset-(finished_floor-.5)) < 1e-5, ('common arrival and lawn finish', name, x, y)
 
-for utility_id in ('rainTank', 'waterSource'):
+for utility_id in ('rainTank', 'waterSource', 'sewerInspection'):
     element=elements[utility_id]
     part=next(part for part in element['parts'] if part['kind'] in ('rect','circle'))
     cover=element.get('meta',{}).get('accessCover')
     x,y=(cover['x'],cover['z']) if cover else (part['cx'],part['cy']) if part['kind']=='circle' else (part['x']+part['w']/2,part['y']+part['d']/2)
     lid=bpy.data.objects[utility_id+'_manhole']
     assert abs(lid.location.x-x)<1e-5 and abs(lid.location.y+y)<1e-5, 'Utility covers keep their separate recorded positions'
-    assert abs(lid.location.z-site_height(garden['siteTerrain'],x,y)-.02)<1e-5, 'Utility cover follows finished ground'
+    if utility_id == 'sewerInspection':
+        assert abs(lid.dimensions.x-2*part['r'])<1e-5 and abs(lid.dimensions.y-2*part['r'])<1e-5
+        paving=bpy.data.objects['driveway']
+        inverse=paving.matrix_world.inverted()
+        for vertex in lid.data.vertices:
+            point=lid.matrix_world @ vertex.co
+            hit,support,_,_=paving.ray_cast(inverse @ Vector((point.x,point.y,10)),inverse.to_3x3() @ Vector((0,0,-1)))
+            assert hit,'Sewer lid footprint is supported by driveway paving'
+            clearance=point.z-(paving.matrix_world @ support).z
+            assert min(abs(clearance-.002),abs(clearance+.058))<2e-5,'Sewer lid conforms to the paved ramp'
+    else:
+        assert abs(lid.location.z-site_height(garden['siteTerrain'],x,y)-.02)<1e-5, 'Utility cover follows finished ground'
 compost=next(part for part in elements['compost']['parts'] if part['kind']=='rect')
 compost_posts=[obj for obj in bpy.data.objects if obj.name.startswith('compost_post_')]
 assert len(compost_posts)==4

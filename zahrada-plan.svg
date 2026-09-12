@@ -2776,6 +2776,10 @@
       <text x="668.34" y="328.5" class="lbl-sm" font-weight="700">dešťová nádrž</text>
       <text x="668.34" y="342" class="dim">8–10 m³ · orientačně</text>
     </g>
+    <g class="el" data-id="sewerInspection"><title>Kanalizační šachta DN400 · poloha orientační</title>
+      <circle cx="757.8" cy="522" r="3.6" fill="#444444" stroke="#222222" stroke-width="1.2"/>
+      <text x="748.8" y="572.4" class="lbl-sm" text-anchor="end">kanalizační šachta DN400</text>
+    </g>
     <g class="el" data-id="waterSource"><title>Vodovodní šachta — poklop dle upřesnění vlastníka</title>
       <circle cx="742.5" cy="422.1" r="8.1" fill="#444444" stroke="#222222" stroke-width="1.2"/>
       <text x="742.5" y="441" class="lbl-sm">vodovodní šachta</text>
