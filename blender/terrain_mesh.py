@@ -45,21 +45,25 @@ def align_circular_pads(mesh, spec):
             continue
         cx, cy, radius = pad['cx'], -pad['cz'], pad['radius']
         count = 512
-        inner_radius = radius*math.cos(math.pi/count)
+        coordinate_scale = max(abs(cx)+radius, abs(cy)+radius, 1.0)
+        float32_ulp = math.ldexp(1.0, math.frexp(coordinate_scale)[1]-24)
+        # Keep rounded outer fragments outside the true circle at Float32 precision.
+        clip_radius = radius+2*float32_ulp
+        clip_extent = clip_radius/math.cos(math.pi/count)
         planes = [(math.cos((i+.5)*math.tau/count), math.sin((i+.5)*math.tau/count)) for i in range(count)]
         candidates = [face for face in mesh.faces
-                      if min(v.co.x for v in face.verts) <= cx+radius and max(v.co.x for v in face.verts) >= cx-radius
-                      and min(v.co.y for v in face.verts) <= cy+radius and max(v.co.y for v in face.verts) >= cy-radius]
+                      if min(v.co.x for v in face.verts) <= cx+clip_extent and max(v.co.x for v in face.verts) >= cx-clip_extent
+                      and min(v.co.y for v in face.verts) <= cy+clip_extent and max(v.co.y for v in face.verts) >= cy-clip_extent]
         cache = {(round(v.co.x, 10), round(v.co.y, 10)): v for face in candidates for v in face.verts}
         touched, replaced = set(), []
         for face in candidates:
             points = [tuple(vertex.co) for vertex in face.verts]
-            if all(math.hypot(point[0]-cx, point[1]-cy) < inner_radius for point in points):
+            if all(math.hypot(point[0]-cx, point[1]-cy) < clip_radius for point in points):
                 touched.update(face.verts)
                 continue
             remaining, fragments = points, []
             for nx, ny in planes:
-                remaining, outside = split_polygon(remaining, nx, ny, nx*cx+ny*cy+inner_radius)
+                remaining, outside = split_polygon(remaining, nx, ny, nx*cx+ny*cy+clip_radius)
                 if len(outside) >= 3:
                     fragments.append(outside)
                 if len(remaining) < 3:
