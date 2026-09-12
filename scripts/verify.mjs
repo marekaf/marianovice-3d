@@ -79,6 +79,8 @@ const checks=[
   'verify-garden-routes.mjs',
   'verify-route-ground-clipping.mjs',
   'verify-circular-pad-ground.mjs',
+  'verify-mesh-height-query.mjs',
+  'verify-pond-ground-mesh.mjs',
   'verify-fence-model.mjs',
   'verify-gate-model.mjs',
   'verify-boundary-memory.mjs',

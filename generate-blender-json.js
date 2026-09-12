@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 const { GARDEN } = require("./layout.js");
+const { gradingGroundBoundaries, gradingGroundRefinement } = require("./circular-pad-ground.js");
 const { TERRAIN } = require("./terrain.js");
 const { SaunaModel } = require("./sauna-model.js");
 const { PergolaModel } = require("./pergola-model.js");
@@ -64,6 +65,8 @@ fs.writeFileSync(out, JSON.stringify({
   raisedBedsModel,
   firepitModel: FirepitModel.build(GARDEN, siteTerrain.height),
   hiddenBenchModel: HiddenBenchModel.build(GARDEN, siteTerrain.height),
+  terrainMeshBoundaries: gradingGroundBoundaries(GARDEN,siteTerrain.spec),
+  terrainMeshRefinement: gradingGroundRefinement(siteTerrain.spec),
   siteTerrain: siteTerrain.spec,
   terrain: { ...TERRAIN.plane, houseFFLInternal: TERRAIN.houseFFLInternal, bpvDatum: TERRAIN.bpvDatum },
 }, null, 1));

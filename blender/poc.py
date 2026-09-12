@@ -22,7 +22,7 @@ from garden_routes import build_routes
 from house_roof import build_house_roof
 from garden_details import verified_manifest, import_details
 from site_terrain import height as site_height, south_gravel_depth
-from terrain_mesh import align_level_pads, align_circular_pads
+from terrain_mesh import align_level_pads, align_circular_pads, refine_plateau_ground
 from procedural_plants import plant_template
 
 argv = sys.argv
@@ -801,7 +801,8 @@ def build_terrain():
     for _ in range(8):
         bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=1, use_grid_fill=True)
     align_level_pads(bm, SITE_TERRAIN)
-    align_circular_pads(bm, SITE_TERRAIN)
+    align_circular_pads(bm, SITE_TERRAIN, GARDEN.get("terrainMeshBoundaries", []))
+    refine_plateau_ground(bm, SITE_TERRAIN, GARDEN.get("terrainMeshRefinement"))
     for v in bm.verts:
         v.co.z = terrain_z(v.co.x, -v.co.y)
     mesh = bpy.data.meshes.new("terrain")
