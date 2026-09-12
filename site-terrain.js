@@ -308,7 +308,7 @@ const SiteTerrain = (() => {
         .flatMap(e => e.parts.filter(p => p.kind === 'rect').map(p => ({
           x0: p.x, z0: p.y, x1: p.x + p.w, z1: p.y + p.d, blend: e.id === 'westTerrace' ? .75 : 3,
         })));
-      spec.protectedPads = [{ ...patchRect(groundPatches.garage), blend: .2 }];
+      spec.protectedPads = [{ ...patchRect(groundPatches.garage), bankSlope: .4 }];
       const greenhouse=patchRect(groundPatches.greenhouse),beds=patchRect(groundPatches.raisedBeds);
       spec.productiveCourt={...beds,mode:'level',finish:groundPatches.raisedBeds.level+.06,greenhouseFinish:groundPatches.greenhouse.level+.04,aisles:[],greenhouse};
       spec.protectedPads.push(...[groundPatches.greenhouse,groundPatches.raisedBeds].map(p=>({...patchRect(p),blend:.3,bankSlope:p.bankSlope??.4})));
