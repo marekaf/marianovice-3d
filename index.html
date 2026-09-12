@@ -193,7 +193,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=2271bf3f980e';
 import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
 import { GroundSurfaceModel } from './ground-surface-model.js';
-import {levelCircularGround} from "./circular-pad-ground.js?v=7ead2a4d7b8d";
+import {levelCircularGround,gradingGroundBoundaries,refinePlateauGround,gradingGroundRefinement} from "./circular-pad-ground.js?v=113ffa11bd49";
 import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=d987e1d4cd90';
 import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
@@ -898,7 +898,7 @@ const groundGeom = (() => {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   g.setIndex(index);
-  return levelCircularGround(THREE,g,siteTerrain.spec.gatheringPads,terrainHeight);
+  return refinePlateauGround(THREE,levelCircularGround(THREE,g,[...siteTerrain.spec.gatheringPads,...gradingGroundBoundaries(GARDEN,siteTerrain.spec)],terrainHeight),terrainHeight,gradingGroundRefinement(siteTerrain.spec));
 })();
 
 const groundSurface = GroundSurfaceModel.create(THREE, { garden: GARDEN, clearances: plantingClearances, grassTexture: grassTex });

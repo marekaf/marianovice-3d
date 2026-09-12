@@ -146,6 +146,22 @@ for pad in garden['siteTerrain'].get('fixedFences', {}).get('levelPads', []):
             hit, position, _, _ = terrain_mesh.ray_cast(terrain_inverse @ Vector((x, -z, 100)),
                 terrain_inverse.to_3x3() @ Vector((0, 0, -1)))
             assert hit and abs((terrain_mesh.matrix_world @ position).z-pad['level']) < 2e-5, ('Pergola ground mesh must be flat', x, z)
+if garden.get('terrainMeshBoundaries'):
+    pond= garden['siteTerrain']['pond']
+    for i in range(720):
+        angle=i*math.tau/720
+        x,z=pond['cx']+pond['rx']*math.cos(angle),pond['cz']+pond['rz']*math.sin(angle)
+        hit,position,_,_=terrain_mesh.ray_cast(terrain_inverse@Vector((x,-z,pond['edge']+1)),terrain_inverse.to_3x3()@Vector((0,0,-1)))
+        assert hit and abs((terrain_mesh.matrix_world@position).z-pond['edge'])<2e-5, ('Pond rim terrain follows its finished edge',x,z)
+    lawn=next(p for p in garden['siteTerrain']['regionalGrades'] if p['id']=='north-lawn')
+    garage_rect=next(p for p in elements['garage']['parts'] if p['kind']=='rect')
+    for ix in range(math.ceil((lawn['x1']-house[2])/.1)):
+        for iz in range(math.ceil((garage_rect['y']-lawn['z0'])/.1)):
+            x,z=house[2]+ix*.1,lawn['z0']+iz*.1
+            if abs(site_height(garden['siteTerrain'],x,z)-lawn['level'])>1e-8:
+                continue
+            hit,position,_,_=terrain_mesh.ray_cast(terrain_inverse@Vector((x,-z,lawn['level']+1)),terrain_inverse.to_3x3()@Vector((0,0,-1)))
+            assert hit and abs((terrain_mesh.matrix_world@position).z-lawn['level'])<1e-3, ('Level lawn mesh does not interpolate across route banks',x,z)
 walk_grass_samples = 0
 for strip in garden['siteTerrain'].get('drainageStrips', []):
     for ix in range(16):

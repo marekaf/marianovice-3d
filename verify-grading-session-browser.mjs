@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 const {GARDEN}=createRequire(import.meta.url)('./layout.js');
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+const started=Date.now();
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
@@ -10,6 +11,7 @@ try {
   await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,gardenRoutes,firepitGroup,firepitModel,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
   await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
+  console.log('Viewer ready in',Date.now()-started,'ms');
   assert.deepEqual(errors,[]);
   await page.waitForFunction(()=>window.gradingSession?.renderer.info.render.calls>0);
   const restored=await page.evaluate(()=>{
@@ -27,6 +29,21 @@ try {
   restored.dimensions.forEach(d=>assert(Math.abs(d.distance-2)<1e-7,`${d.id} stays exactly 2 m`));
   assert.equal(restored.measuredFenceCount,14);assert.equal(restored.renderedFenceCount,restored.fenceModels);assert(restored.fencePostError<1e-8);
   assert.equal(restored.garageFacade,'#e2cec5','Approved HN3E facade retained');
+  const pondGround=await page.evaluate(async()=>{
+    const {createMeshHeightQuery}=await import('./mesh-height-query.js');
+    const t=gradingSession;t.scene.updateMatrixWorld(true);
+    const query=createMeshHeightQuery(t.ground),routeQuery=createMeshHeightQuery(t.gardenRoutes),p=t.siteTerrain.spec.pond,zone=t.gradingOverlay.data.zones.find(z=>z.id==='C');
+    const contains=(x,z)=>zone.polygons.some(poly=>poly.every((a,i)=>{const b=poly[(i+1)%poly.length];return (b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0])>=-1e-8;}));
+    let lawnSamples=0,lawnMissing=0,lawnError=0,routeSamples=0,routeError=0,rimError=0,rimMissing=0,worst,missingPoint;
+    for(let x=21.28;x<=34.13;x+=.06)for(let z=-2;z<=19.4;z+=.06)if(contains(x,z)&&Math.abs(t.siteTerrain.height(x,z)-p.edge)<1e-8){
+      lawnSamples++;const y=query(x,z);if(y===null){const routeY=routeQuery(x,z);if(routeY===null){lawnMissing++;missingPoint??=[x,z];}else{routeSamples++;routeError=Math.max(routeError,Math.abs(routeY-t.siteTerrain.routeHeight(x,z)));}}else if(Math.abs(y-p.edge)>lawnError){lawnError=Math.abs(y-p.edge);worst=[x,z,y];}
+    }
+    for(let i=0;i<720;i++){const a=i*Math.PI/360,y=query(p.cx+p.rx*Math.cos(a),p.cz+p.rz*Math.sin(a));if(y===null)rimMissing++;else rimError=Math.max(rimError,Math.abs(y-p.edge));}
+    return {lawnSamples,lawnMissing,lawnError,worst,routeSamples,routeError,missingPoint,rimSamples:720,rimMissing,rimError,triangles:(t.ground.geometry.index?.count??t.ground.geometry.attributes.position.count)/3};
+  });
+  console.log('Actual pond/C terrain:',JSON.stringify(pondGround));
+  assert(pondGround.lawnSamples>20000&&!pondGround.lawnMissing&&pondGround.lawnError<.001,`Actual C plateau transitions stay within1mm: ${JSON.stringify(pondGround)}`);
+  assert(!pondGround.rimMissing&&pondGround.rimError<2e-5,`Actual pond rim stays at the filled grade: ${JSON.stringify(pondGround)}`);
   const pergolaGround=await page.evaluate(()=>{
     const t=gradingSession,p=t.pergolaModel.groundPatch,vertices=t.ground.geometry.attributes.position;
     let count=0,error=0;
