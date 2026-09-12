@@ -82,6 +82,18 @@ existing `generated/editor-task.py` immediately on startup and watches for later
 changes. It is not a sandbox. Nothing in the website or verification commands
 starts that editor session automatically.
 
+After task-owned render delegates and capture callbacks have been released, a
+task can call `result = close_editor_session()`. It unregisters the session's
+polling callback and disables Python keep-alive; repeated calls are harmless.
+With the command-line Python runner, let that runner finish the exit instead of
+calling `SystemLibrary.quit_editor()` directly. Unreal's
+`FExecuterTickable::RequestExit` destroys its notification before issuing the
+deferred `QUIT_EDITOR` command, allowing the notification ticker to drain.
+This ordering passed an isolated native editor exit check. It does not establish
+that a render or mirror-capture session is free of separate native shutdown
+faults. `verify-editor-session.py` checks the callable cleanup without launching
+Unreal.
+
 For a fresh project:
 
 1. Create a local Unreal project. Keep generated engine assets out of the public repository while the workflow is being evaluated.

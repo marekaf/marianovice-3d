@@ -11,13 +11,26 @@ RESULT = ROOT / 'generated' / 'editor-result.json'
 last_digest = None
 last_check = 0
 busy = False
+closed = False
 
 unreal.EditorPythonScripting.set_keep_python_script_alive(True)
 
 
+def close_editor_session():
+    global handle, closed
+    if not closed:
+        if handle is not None:
+            unreal.unregister_slate_post_tick_callback(handle)
+            handle = None
+        # The Python runner clears its notification before deferring editor exit.
+        unreal.EditorPythonScripting.set_keep_python_script_alive(False)
+        closed = True
+    return {'closed': closed, 'tickerRemoved': handle is None}
+
+
 def tick(delta):
     global last_digest, last_check, busy
-    if busy or time.monotonic() - last_check < .5:
+    if closed or busy or time.monotonic() - last_check < .5:
         return
     last_check = time.monotonic()
     if not TASK.exists():
@@ -31,7 +44,8 @@ def tick(delta):
     RESULT.write_text(json.dumps(report))
     busy = True
     try:
-        context = {'__file__': str(TASK), '__name__': '__main__', 'unreal': unreal}
+        context = {'__file__': str(TASK), '__name__': '__main__', 'unreal': unreal,
+                   'close_editor_session': close_editor_session}
         exec(compile(source, str(TASK), 'exec'), context)
         report.update(status='complete', result=context.get('result'))
     except Exception:
