@@ -69,6 +69,7 @@ const checks=[
   'verify-driveway-check.mjs',
   'verify-grading-data.mjs',
   'verify-grading-report.mjs',
+  'verify-plan-terrain.mjs',
   'verify-grading-layout.mjs',
   'verify-boundary-fence.mjs',
   'verify-terrain-banks.mjs',
