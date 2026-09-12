@@ -61,7 +61,7 @@ for(let i=1;i<route.points.length;i++){
     }
   }
 }
-const result=runPythonJson('import json,sys\nfrom blender.site_terrain import height\ndata=json.load(sys.stdin)\nprint(json.dumps([height(data["spec"],x,z) for x,z in data["points"]]))',{spec:site.spec,points:checks});
+const result=runPythonJson('import json,sys\nfrom blender.site_terrain import height\ndata=json.load(sys.stdin)\nprint(json.dumps([height(data["spec"],x,z) for x,z in data["points"]]))',{spec:site.spec,points:checks},{timeout:90000});
 for(let i=0;i<checks.length;i++)assert(Math.abs(result[i]-site.height(...checks[i]))<1e-9,'Python and browser terrain agree');
 console.log(JSON.stringify({stripSamples:16*386,maximumBankSlope:peak,paritySamples:checks.length}));
 
