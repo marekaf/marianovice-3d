@@ -42,7 +42,12 @@ const SiteTerrain = (() => {
     }
     let level=weighted/total;
     if(bankTotal)level+=(bankWeighted/bankTotal-level)*smoothstep((distance-route.width/2)/.3);
-    if(route.levelAxis){const p=route.levelAxis,t=Math.max(0,Math.min(1,((p.axis==='x'?x:z)-p.start)/(p.end-p.start)));level=route.levels[0]+(route.levels.at(-1)-route.levels[0])*t;}
+    if(route.levelAxis){
+      const p=route.levelAxis,length=Math.abs(p.end-p.start),u=Math.max(0,Math.min(length,((p.axis==='x'?x:z)-p.start)*Math.sign(p.end-p.start)));
+      const easing=Math.min(p.easing??0,length/2),area=v=>v/2-easing*Math.sin(Math.PI*v/easing)/(2*Math.PI);
+      const progress=easing?(u<easing?area(u):u>length-easing?length-easing-area(length-u):u-easing/2)/(length-easing):u/length;
+      level=route.levels[0]+(route.levels.at(-1)-route.levels[0])*progress;
+    }
     if(route.startRect){const d=rectDistance(route.startRect,x,z);level=route.levels[0]+(level-route.levels[0])*smoothstep(d/(route.startBlend??.6));}
     if(route.endCircle){const p=route.endCircle,d=Math.max(0,Math.hypot(x-p.cx,z-p.cz)-p.radius);level=route.levels.at(-1)+(level-route.levels.at(-1))*smoothstep(d/(route.endBlend??.6));}
     if(route.finishJoin){const shared=routeSample(route.finishJoin,x,z);const d=Math.max(0,shared.distance-route.finishJoin.width/2);level+=(shared.level-level)*(1-smoothstep(d/.5));}
@@ -188,6 +193,7 @@ const SiteTerrain = (() => {
       }
     }
     const outer=pond.bankOuter??1.3;
+    if(spec.regionalGrades)h=Math.max(h,pond.edge-.4*Math.max(0,Math.hypot(x-pond.cx,z-pond.cz)-Math.max(pond.rx,pond.rz)));
     const pondOuter=spec.continuousGrading&&z<pond.cz?outer+((pond.northBankOuter??outer)-outer)*Math.max(0,(pond.cz-z)/(pond.rz*prr||1))**16:outer;
     if(spec.regionalGrades && prr>1)h=Math.min(h,pond.edge+.4*(prr-1)*Math.min(pond.rx,pond.rz));
     else if(spec.continuousGrading&&prr<pondOuter) {
@@ -325,6 +331,7 @@ const SiteTerrain = (() => {
       const fireFinished=fireLevel+(fireElement.meta?.grading?.surfaceOffset??0)+.008;
       spec.pond.northBankOuter=Math.max(1.3,(pond.cz-fire.cy-fire.r)/pond.rz);
       spec.pond.bankOuter=3;
+      spec.pond.edge=groundPatches.garage.level;
       const gatheringLink=(garden.gardenRoutes??[]).find(r=>r.id==='Gathering connection');
       spec.gatheringPads=[{...patchRect(gathering),blend:4},
         {cx:fire.cx,cz:fire.cy,radius:fire.r,level:fireLevel,blend:2.4}];
@@ -352,6 +359,7 @@ const SiteTerrain = (() => {
         spec.routeProfiles.push({...route,points,bedding:.1,levels,
           ...(route===gatheringLink?{bankBlend:1.8}:{}),
           ...(route===pondApproach?{approachBank:true,bankBlend:2.4,startBedding:.02,endCircle:{cx:fire.cx,cz:fire.cy,radius:fire.r},
+            levelAxis:{axis:'x',start:pondApproach.points[0][0],end:groundPatches.garage.x+groundPatches.garage.w,easing:.2},
             finishJoin:spec.routeProfiles.find(profile=>profile.id===gatheringLink?.id),
             bankAvoidRoutes:[dining,gatheringLink].filter(Boolean).map(r=>({...r,levels:r.points.map(()=>0)}))}:{}),
           ...(route===dining?{approachBank:true,bankBlend:1.3,bankApron:{blend:2.4,clearBlend:1.2},
