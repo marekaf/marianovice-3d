@@ -88,6 +88,7 @@ for(const id of ["A","C","D","G"])assert.equal(flatInstructions.flats.filter(mar
 assert(!flatInstructions.slopes.some(mark=>mark.id==="bed-sauna"),"G has no internal slope annotation");
 assert(!flatInstructions.flats.some(mark=>["raisedBeds","sauna","pergola"].includes(mark.id)),"Structures do not duplicate their zone flat symbol");
 assert(contains('J',16,3),'Garden north of the house has its own zone');
+for(const [x,z] of [[17.2,26.8],[19,27],[21.2,27.2]])assert(contains('A',x,z),'A includes the complete heat-pump service spur');
 assert(contains('F',16,12),'House has its own zone');
 for(const [x,z] of [[24,22],[30,22]])assert(contains('M',x,z),'Carport and garage share a separate building zone');
 assert(!contains('F',16,3)&&!contains('F',28,28),'Building zone excludes northern garden and driveway');
@@ -114,3 +115,7 @@ for(const zone of quantities.zones){
   assert.equal((result.mapSVG.match(new RegExp(`data-zone-label="${zone.id}"`,'g'))??[]).length,1);
 }
 assert(!result.mapSVG.includes('data-zone-secondary'));
+
+const paintedBoundaries=[...result.mapSVG.matchAll(/data-zone-boundary="([A-Z])"/g)].map(m=>m[1]);
+assert(paintedBoundaries.lastIndexOf('I')<paintedBoundaries.indexOf('A'),'Arrival outline remains visible above adjoining garden borders');
+assert(paintedBoundaries.lastIndexOf('A')<paintedBoundaries.indexOf('F'),'House outline remains visible above arrival boundary');
