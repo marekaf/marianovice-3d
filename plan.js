@@ -17,7 +17,7 @@
 
   function renderPlanSVG(garden) {
     const grading = zonesModel.create(garden);
-    const tableDimensions = grading.dimensions.filter(dim=>!['saunaDepth','pergolaDepth'].includes(dim.id));
+    const tableDimensions = grading.dimensions.filter(dim=>dim.table!==false&&!['saunaDepth','pergolaDepth'].includes(dim.id));
     const zoneExtra = Math.max(0, grading.zones.length - 9) * 18;
     const footerShift = Math.max(0, zoneExtra + 665 + (tableDimensions.length - 1) * 15 + 115 - 792);
     const pageHeight = 880 + footerShift;
@@ -124,7 +124,8 @@
     for(const dim of grading.dimensions.filter(d=>d.from&&d.to)) {
       const [x1,y1]=dim.from.map(px),[x2,y2]=dim.to.map(px);
       const length=Math.hypot(x2-x1,y2-y1)||1,nx=-(y2-y1)/length,ny=(x2-x1)/length,offset=-7;
-      const ax=x1+nx*offset,ay=y1+ny*offset,bx=x2+nx*offset,by=y2+ny*offset;
+      const sx=px(dim.displayOffset?.[0]??0)-px(0),sy=px(dim.displayOffset?.[1]??0)-px(0);
+      const ax=x1+nx*offset+sx,ay=y1+ny*offset+sy,bx=x2+nx*offset+sx,by=y2+ny*offset+sy;
       const value=Math.hypot(dim.to[0]-dim.from[0],dim.to[1]-dim.from[1]).toFixed(2).replace('.',',');
       out.push(`<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>${esc(dim.name)}: ${esc(dim.value)}</title><path d="M${x1},${y1}L${ax+nx*3},${ay+ny*3}M${x2},${y2}L${bx+nx*3},${by+ny*3}M${ax},${ay}L${bx},${by}" fill="none"/><text x="${(ax+bx)/2}" y="${(ay+by)/2-3}" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">${value} m</text></g>`);
     }

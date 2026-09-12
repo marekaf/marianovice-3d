@@ -16,7 +16,7 @@ for(const [,label] of GradingOverlay.terrainLegend)assert(svg.includes(label),'T
 assert(svg.includes('data-terrain-flat='));
 assert.equal(svg.includes('data-terrain-preserve='),data.fenceSegments.length>0,'Preservation marks require measured fence data');
 for(const dimension of data.dimensions.filter(d=>d.from&&d.to))assert(svg.includes(`<title>${dimension.name}: ${dimension.value}</title>`),'Dimension is drawn on the map, not only listed');
-for(const id of ['saunaDepth','pergolaDepth']){
+for(const id of ['saunaDepth','pergolaDepth','saunaFacilityDepth']){
   const dimension=data.dimensions.find(d=>d.id===id);
   assert(dimension&&svg.includes(`<title>${dimension.name}: ${dimension.value}</title>`));
   assert(!new RegExp(`<text[^>]*>${dimension.name}</text>`).test(svg),'Depth dimension does not duplicate the footprint table row');
