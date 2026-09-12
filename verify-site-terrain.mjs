@@ -155,8 +155,8 @@ function insideHouse(x,z) {
   return inside;
 }
 for(let x=10.49;x<21.28;x+=.2)for(let z=7.19;z<26.43;z+=.2)if(insideHouse(x,z)) {
-  const clearance=x<=11.56&&z<=7.305?.07:.12;
-  assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-clearance+1e-10,'House excavation and north gravel bedding must keep soil below finished floors');
+  const clearance=x<=11.56&&(z<=7.305||z>=26.305)?.07:.12;
+  assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-clearance+1e-10,'House excavation and facade gravel bedding must keep soil below finished floors');
   checks.push([x,z]);
 }
 assert.ok(!insideHouse(12,17),'House excavation polygon must exclude atrium notch');

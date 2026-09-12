@@ -11,6 +11,15 @@ def smoothstep(t):
     return t * t * (3.0 - 2.0 * t)
 
 
+def south_gravel_depth(spec, x, z):
+    p = spec.get('southGravel')
+    if not p:
+        return .07
+    t = max(0, min(1, (x-p['x0'])/(p['x1']-p['x0'])))
+    service = 1-smoothstep(rect_distance(p['service'], x, z)/p['serviceBlend']) if p.get('service') else 0
+    return p['startDepth']+(p['endDepth']-p['startDepth'])*t*(1-service)
+
+
 def bank_envelope(value, level, slope, distance):
     radius = .08*min(1,distance/2)
     if not radius:
@@ -61,7 +70,12 @@ def route_sample(route, x, y, bank=False):
         level += (bank_weighted/bank_total-level)*smoothstep((distance-route['width']/2)/.3)
     if route.get('levelAxis'):
         p = route['levelAxis']
-        t = max(0, min(1, ((x if p['axis'] == 'x' else y)-p['start'])/(p['end']-p['start'])))
+        length = abs(p['end']-p['start'])
+        u = max(0, min(length, ((x if p['axis'] == 'x' else y)-p['start'])*(1 if p['end']>p['start'] else -1)))
+        easing = min(p.get('easing', 0), length/2)
+        def area(v):
+            return v/2-easing*math.sin(math.pi*v/easing)/(2*math.pi)
+        t = ((area(u) if u<easing else length-easing-area(length-u) if u>length-easing else u-easing/2)/(length-easing)) if easing else u/length
         level = route['levels'][0]+(route['levels'][-1]-route['levels'][0])*t
     if route.get('startRect'):
         d = rect_distance(route['startRect'], x, y)
@@ -219,6 +233,8 @@ def height(spec, x, y):
             if route.get('approachBank'):
                 h = min(h, h+(level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(route_bank_clearance(route, x, y)/.6))
     outer = pond.get('bankOuter', 1.3)
+    if spec.get('regionalGrades'):
+        h = max(h, pond['edge']-.4*max(0, math.hypot(x-pond['cx'], y-pond['cz'])-max(pond['rx'], pond['rz'])))
     pond_outer = outer+(pond.get('northBankOuter', outer)-outer)*max(0, (pond['cz']-y)/(pond['rz']*radius or 1))**16 if continuous and y < pond['cz'] else outer
     if continuous and radius <= 1:
         h = min(h, pond['edge'] - pond['depth'] * .5 * (1 + math.cos(radius * math.pi)))

@@ -42,7 +42,12 @@ const SiteTerrain = (() => {
     }
     let level=weighted/total;
     if(bankTotal)level+=(bankWeighted/bankTotal-level)*smoothstep((distance-route.width/2)/.3);
-    if(route.levelAxis){const p=route.levelAxis,t=Math.max(0,Math.min(1,((p.axis==='x'?x:z)-p.start)/(p.end-p.start)));level=route.levels[0]+(route.levels.at(-1)-route.levels[0])*t;}
+    if(route.levelAxis){
+      const p=route.levelAxis,length=Math.abs(p.end-p.start),u=Math.max(0,Math.min(length,((p.axis==='x'?x:z)-p.start)*Math.sign(p.end-p.start)));
+      const easing=Math.min(p.easing??0,length/2),area=v=>v/2-easing*Math.sin(Math.PI*v/easing)/(2*Math.PI);
+      const progress=easing?(u<easing?area(u):u>length-easing?length-easing-area(length-u):u-easing/2)/(length-easing):u/length;
+      level=route.levels[0]+(route.levels.at(-1)-route.levels[0])*progress;
+    }
     if(route.startRect){const d=rectDistance(route.startRect,x,z);level=route.levels[0]+(level-route.levels[0])*smoothstep(d/(route.startBlend??.6));}
     if(route.endCircle){const p=route.endCircle,d=Math.max(0,Math.hypot(x-p.cx,z-p.cz)-p.radius);level=route.levels.at(-1)+(level-route.levels.at(-1))*smoothstep(d/(route.endBlend??.6));}
     if(route.finishJoin){const shared=routeSample(route.finishJoin,x,z);const d=Math.max(0,shared.distance-route.finishJoin.width/2);level+=(shared.level-level)*(1-smoothstep(d/.5));}
@@ -188,6 +193,7 @@ const SiteTerrain = (() => {
       }
     }
     const outer=pond.bankOuter??1.3;
+    if(spec.regionalGrades)h=Math.max(h,pond.edge-.4*Math.max(0,Math.hypot(x-pond.cx,z-pond.cz)-Math.max(pond.rx,pond.rz)));
     const pondOuter=spec.continuousGrading&&z<pond.cz?outer+((pond.northBankOuter??outer)-outer)*Math.max(0,(pond.cz-z)/(pond.rz*prr||1))**16:outer;
     if(spec.regionalGrades && prr>1)h=Math.min(h,pond.edge+.4*(prr-1)*Math.min(pond.rx,pond.rz));
     else if(spec.continuousGrading&&prr<pondOuter) {
@@ -308,11 +314,13 @@ const SiteTerrain = (() => {
         .flatMap(e => e.parts.filter(p => p.kind === 'rect').map(p => ({
           x0: p.x, z0: p.y, x1: p.x + p.w, z1: p.y + p.d, blend: e.id === 'westTerrace' ? .75 : 3,
         })));
-      spec.protectedPads = [{ ...patchRect(groundPatches.garage), blend: .2 }];
+      spec.protectedPads = [{ ...patchRect(groundPatches.garage), bankSlope: .4 }];
       const greenhouse=patchRect(groundPatches.greenhouse),beds=patchRect(groundPatches.raisedBeds);
       spec.productiveCourt={...beds,mode:'level',finish:groundPatches.raisedBeds.level+.06,greenhouseFinish:groundPatches.greenhouse.level+.04,aisles:[],greenhouse};
       spec.protectedPads.push(...[groundPatches.greenhouse,groundPatches.raisedBeds].map(p=>({...patchRect(p),blend:.3,bankSlope:p.bankSlope??.4})));
       const service=garden.elements.find(e=>e.id==='heatPumpService')?.parts.find(p=>p.kind==='rect');
+      spec.southGravel={x0:10.48,x1:21.28,startDepth:.07,endDepth:.04,service:service?patchRect(service):null,serviceBlend:.15};
+      spec.protectedPads.push({id:'south-facade',x0:10.48,z0:26.43,x1:21.28,z1:27.45,level:options.houseFFL-.07,fallX:-.47/10.8,blend:1,bankSlope:.4});
       if(service)spec.protectedPads.push({...patchRect({...service,level:groundPatches.garage.level}),blend:1.2,bankSlope:.4});
       spec.protectedPads.push({id:'north-facade',x0:10.48,z0:6.73,x1:21.28,z1:7.18,level:options.houseFFL-.07,fallX:-.5/10.8,blend:1,bankSlope:.4});
       const fireElement=garden.elements.find(e=>e.id==='firePit');
@@ -323,6 +331,7 @@ const SiteTerrain = (() => {
       const fireFinished=fireLevel+(fireElement.meta?.grading?.surfaceOffset??0)+.008;
       spec.pond.northBankOuter=Math.max(1.3,(pond.cz-fire.cy-fire.r)/pond.rz);
       spec.pond.bankOuter=3;
+      spec.pond.edge=groundPatches.garage.level;
       const gatheringLink=(garden.gardenRoutes??[]).find(r=>r.id==='Gathering connection');
       spec.gatheringPads=[{...patchRect(gathering),blend:4},
         {cx:fire.cx,cz:fire.cy,radius:fire.r,level:fireLevel,blend:2.4}];
@@ -350,6 +359,7 @@ const SiteTerrain = (() => {
         spec.routeProfiles.push({...route,points,bedding:.1,levels,
           ...(route===gatheringLink?{bankBlend:1.8}:{}),
           ...(route===pondApproach?{approachBank:true,bankBlend:2.4,startBedding:.02,endCircle:{cx:fire.cx,cz:fire.cy,radius:fire.r},
+            levelAxis:{axis:'x',start:pondApproach.points[0][0],end:groundPatches.garage.x+groundPatches.garage.w,easing:.2},
             finishJoin:spec.routeProfiles.find(profile=>profile.id===gatheringLink?.id),
             bankAvoidRoutes:[dining,gatheringLink].filter(Boolean).map(r=>({...r,levels:r.points.map(()=>0)}))}:{}),
           ...(route===dining?{approachBank:true,bankBlend:1.3,bankApron:{blend:2.4,clearBlend:1.2},
@@ -430,6 +440,12 @@ const SiteTerrain = (() => {
     return { spec, height: (x, z) => height(spec, x, z), baseHeight: (x, z) => baseHeight(plane, x, z) };
   }
 
-  return { create, height, productiveFinish };
+  function southGravelDepth(spec,x,z) {
+    const p=spec.southGravel;if(!p)return .07;
+    const t=Math.max(0,Math.min(1,(x-p.x0)/(p.x1-p.x0)));
+    const service=p.service?1-smoothstep(rectDistance(p.service,x,z)/p.serviceBlend):0;
+    return p.startDepth+(p.endDepth-p.startDepth)*t*(1-service);
+  }
+  return { create, height, productiveFinish, southGravelDepth };
 })();
 if (typeof module !== 'undefined') module.exports = { SiteTerrain };

@@ -181,7 +181,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="fence-model.js?v=05c4f578f39e"></script>
 <script src="boundary-fence-model.js?v=97937679db2b"></script>
 <script src="utility-pillar-model.js"></script>
-<script src="site-terrain.js?v=636a2616e09e"></script>
+<script src="site-terrain.js?v=17c3cfd76704"></script>
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
@@ -711,7 +711,7 @@ function addTerrainPlatform(verts2d, thickness, color, opts = {}) {
       triangle(a,ab,ca);triangle(ab,b,bc);triangle(ca,bc,c);triangle(ab,bc,ca);
       return;
     }
-    for(const [x,z] of [a,b,c]){positions.push(x,terrainHeight(x,z)+thickness,z);uv.push(x,z);}
+    for(const [x,z] of [a,b,c]){positions.push(x,terrainHeight(x,z)+(typeof thickness==='function'?thickness(x,z):thickness),z);uv.push(x,z);}
   }
   for(let i=0;i<outline.index.count;i+=3) {
     const corners=[0,1,2].map(offset=>{const k=outline.index.getX(i+offset);return [source.getX(k),source.getZ(k)];});
@@ -1404,7 +1404,7 @@ scene.add(driveway);
   scene.add(GravelSurfaceModel.create(THREE,{surface:northGravel,bounds:{x0:northStrip.x,x1:northStrip.x+northStrip.w,z0:northStrip.y,z1:northStrip.y+northStrip.d},seed:41}));
   {
     const gx0 = southStrip.x, gx1 = southStrip.x+southStrip.w, gz0 = southStrip.y, gz1 = southStrip.y+southStrip.d;
-    const slab = addTerrainPlatform(rectVerts(southStrip), 0.07, 0x9a9a97);
+    const slab = addTerrainPlatform(rectVerts(southStrip), (x,z)=>SiteTerrain.southGravelDepth(siteTerrain.spec,x,z), 0x9a9a97);
     slab.name='south-facade-gravel';
     scene.add(GravelSurfaceModel.create(THREE,{surface:slab,bounds:{x0:gx0,x1:gx1,z0:gz0,z1:gz1},
       exclusions:[{x0:17.125,x1:18.275,z0:26.7,z1:27.3}],seed:79}));
