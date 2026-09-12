@@ -21,10 +21,8 @@ const GradingOverlay = (() => {
   }
   function terrainMarks(garden,quantities) {
     const banks=(garden.gradingBanks??[]).map(bank=>({...bank,from:bank.id==='north'&&bank.spotCrest&&bank.spotFoot?bank.spotCrest.map((v,i)=>v+(bank.spotFoot[i]-v)*.25):bank.spotCrest,to:bank.spotFoot}));
-    const flats=(quantities.levelMarks??[]).map(mark=>({id:mark.id,position:mark.id==='C'?[29.5,12.9]:mark.id==='raisedBeds'?[mark.position[0]+1.3,mark.position[1]]:[mark.position[0],mark.position[1]+.9]}));
-    const pergola=garden.elements.find(e=>e.id==='pergola')?.parts.find(p=>p.kind==='rect');
-    if(pergola)flats.push({id:'pergola',position:[pergola.x+pergola.w/2,pergola.y+pergola.d/2+.9]});
-    if(garden.elements.some(e=>e.id==='sauna'))flats.push({id:'sauna',position:[7.6,5.7]});
+    const flats=(quantities.levelMarks??[]).filter(mark=>mark.id!=='raisedBeds').map(mark=>({id:mark.id,position:mark.id==='C'?[29.5,12.9]:[mark.position[0],mark.position[1]+.9]}));
+    for(const id of ['D','G']){const zone=quantities.zones.find(zone=>zone.id===id);if(zone)flats.push({id,position:[zone.label[0],zone.label[1]+1.4]});}
     const slopes=[
       {id:'north-house',from:[12,6.95],to:[20,6.95]},
       {id:'south-house',from:[12,27.5],to:[16,27.5]},
@@ -32,12 +30,11 @@ const GradingOverlay = (() => {
       {id:'north-terrace',from:[22.5,11.58],to:[22.5,9.5]},
       {id:'south-driveway',from:[26,32],to:[26,30.5]},
       {id:'driveway-ramp',from:[35,29],to:[41,30]},
-      {id:'bed-sauna',from:[6.6,9.8],to:[6.6,6.2]},
       {id:'west-bed',from:[-1.0436216216,12],to:[1.4,12]}
     ];
     return {banks,slopes,flats,fences:quantities.fenceSegments??[]};
   }
-  const terrainLegend=[['flat','Rovná plocha v místě značky'],['slope','Svah · šipka dolů'],['fixed','Zachovat výšku zaměřeného plotu']];
+  const terrainLegend=[['flat','Rovná plocha oblasti'],['slope','Svah · šipka dolů'],['fixed','Zachovat výšku zaměřeného plotu']];
   function svgTerrainSymbol(kind,x,y) {
     if(kind==='flat')return `<path d="M${x-7} ${y-3}h14M${x-7} ${y+3}h14" fill="none" stroke="#17649e" stroke-width="2.2"/>`;
     if(kind==='fixed')return `<path d="M${x-6} ${y-4}l12 8M${x-6} ${y+4}l12 -8" fill="none" stroke="#243b32" stroke-width="2"/>`;
