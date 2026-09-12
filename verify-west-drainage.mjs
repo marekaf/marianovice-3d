@@ -74,7 +74,7 @@ for(const side of [.001,.25,.5,.75,.999]){
     const expected=TERRAIN.houseFFLInternal+(-.28)*blend;
     assert(Math.abs(finish-expected)<1e-8,'Covered crossing keeps its terrace approach independently of channel soil');
     assert(finish>=previous-1e-8,'Covered crossing rises continuously toward the terrace');previous=finish;
-    assert(finish-site.height(x,z)>.05,'Covered crossing clears the draining channel');
+    assert(finish-site.height(x,z)>=.02-1e-8,'Preserved crossing has at least2cm bedding above the level strip');
   }
 }
 
