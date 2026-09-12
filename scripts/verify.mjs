@@ -11,6 +11,7 @@ function run(command,args,stdio='inherit') {
 
 const checks=[
   'validate-layout.js',
+  'verify-garden-details.mjs',
   'verify-exterior.mjs',
   'verify-exterior-furniture.mjs',
   'verify-room-layout.mjs',

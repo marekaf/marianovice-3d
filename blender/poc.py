@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from model_parts import build_model
 from garden_routes import build_routes
 from house_roof import build_house_roof
+from garden_details import verified_manifest, import_details
 from site_terrain import height as site_height
 from procedural_plants import plant_template
 
@@ -35,6 +36,13 @@ with open(json_path) as f:
 SITE_TERRAIN = GARDEN.get("siteTerrain")
 if SITE_TERRAIN is None:
     raise SystemExit("garden.json has no siteTerrain block — regenerate it: node generate-blender-json.js")
+
+DETAILS_PATH = extra[extra.index("--details")+1] if "--details" in extra else None
+DETAILS_SOURCE = extra[extra.index("--detail-source-root")+1] if "--detail-source-root" in extra else None
+if DETAILS_PATH:
+    if not DETAILS_SOURCE:
+        raise ValueError("--details requires --detail-source-root")
+    verified_manifest(DETAILS_PATH, GARDEN, DETAILS_SOURCE)
 
 random.seed(42)
 scene = bpy.context.scene
@@ -1208,10 +1216,12 @@ def climbers(prefix, axis, wall, out_sign, a0, a1, z_base, height):
             add_sphere("%s_f%d_%d" % (prefix, i, k), px_, py_, zz, rr, mat, scale=sc, subdiv=1)
 
 
-if "facadeClimbers" in els:
-    climbers("climb_gar", "x", gx1, +1, 19.7, 26.2, ground_h(gx1 + 0.3, 22.9), 2.8)
-    climbers("climb_atrN", "y", 15.93, +1, 10.8, 14.6, DECK_TOP, 2.4)
-    climbers("climb_atrS", "y", 19.18, -1, 10.8, 14.6, DECK_TOP, 2.4)
+if not DETAILS_PATH:
+    if "facadeClimbers" in els:
+        climbers("climb_gar", "x", gx1, +1, 19.7, 26.2, ground_h(gx1 + 0.3, 22.9), 2.8)
+        climbers("climb_atrN", "y", 15.93, +1, 10.8, 14.6, DECK_TOP, 2.4)
+        climbers("climb_atrS", "y", 19.18, -1, 10.8, 14.6, DECK_TOP, 2.4)
+
 
 # ---------------- carport (thin plate falling west from the garage junction) ----------------
 c = first_rect(els["carport"])
@@ -1278,26 +1288,28 @@ for i, prt in enumerate(x for x in els["westTerrace"]["parts"] if x["kind"] == "
     level_paving("westTerrace_%d" % i, prt)
 for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect" and x.get("role") != "saunaLanding"):
     level_paving("saunaPath_%d" % i, prt)
-for i, r in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
-    for j in range(math.ceil(r["d"] / 0.142)):
-        depth = min(0.137, r["d"] - j * 0.142)
-        if depth >= 0.005:
-            box_p("east_deck_board_%d_%d" % (i, j), r["x"], r["y"] + j * 0.142,
-                  r["x"] + r["w"], r["y"] + j * 0.142 + depth, DECK_TOP - 0.022, DECK_TOP, MAT["wood"])
-    joists = math.ceil((r["w"] - 0.12) / 0.4)
-    supports = math.ceil((r["d"] - 0.24) / 1.2)
-    for j in range(joists + 1):
-        x = r["x"] + 0.06 + (r["w"] - 0.12) * j / joists
-        box_p("east_deck_joist_%d_%d" % (i, j), x - 0.0225, r["y"] + 0.04, x + 0.0225, r["y"] + r["d"] - 0.04,
-              DECK_TOP - 0.067, DECK_TOP - 0.022, MAT["wood"])
-        for k in range(supports + 1):
-            y = r["y"] + 0.12 + (r["d"] - 0.24) * k / supports
-            ground = [ground_h(x + dx, y + dy) for dx in (-0.09, 0, 0.09) for dy in (-0.09, 0, 0.09)]
-            bottom, top = min(ground) - 0.08, max(ground) + 0.025
-            if top < DECK_TOP - 0.067:
-                box_p("east_deck_pad_%d_%d_%d" % (i, j, k), x - 0.09, y - 0.09, x + 0.09, y + 0.09, bottom, top, MAT["gravel"])
-                add_cyl("east_deck_pedestal_%d_%d_%d" % (i, j, k), x, y, (top + DECK_TOP - 0.067) / 2,
-                        0.04, DECK_TOP - 0.067 - top, MAT["frame"], verts=12)
+if not DETAILS_PATH:
+    for i, r in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
+        for j in range(math.ceil(r["d"] / 0.142)):
+            depth = min(0.137, r["d"] - j * 0.142)
+            if depth >= 0.005:
+                box_p("east_deck_board_%d_%d" % (i, j), r["x"], r["y"] + j * 0.142,
+                      r["x"] + r["w"], r["y"] + j * 0.142 + depth, DECK_TOP - 0.022, DECK_TOP, MAT["wood"])
+        joists = math.ceil((r["w"] - 0.12) / 0.4)
+        supports = math.ceil((r["d"] - 0.24) / 1.2)
+        for j in range(joists + 1):
+            x = r["x"] + 0.06 + (r["w"] - 0.12) * j / joists
+            box_p("east_deck_joist_%d_%d" % (i, j), x - 0.0225, r["y"] + 0.04, x + 0.0225, r["y"] + r["d"] - 0.04,
+                  DECK_TOP - 0.067, DECK_TOP - 0.022, MAT["wood"])
+            for k in range(supports + 1):
+                y = r["y"] + 0.12 + (r["d"] - 0.24) * k / supports
+                ground = [ground_h(x + dx, y + dy) for dx in (-0.09, 0, 0.09) for dy in (-0.09, 0, 0.09)]
+                bottom, top = min(ground) - 0.08, max(ground) + 0.025
+                if top < DECK_TOP - 0.067:
+                    box_p("east_deck_pad_%d_%d_%d" % (i, j, k), x - 0.09, y - 0.09, x + 0.09, y + 0.09, bottom, top, MAT["gravel"])
+                    add_cyl("east_deck_pedestal_%d_%d_%d" % (i, j, k), x, y, (top + DECK_TOP - 0.067) / 2,
+                            0.04, DECK_TOP - 0.067 - top, MAT["frame"], verts=12)
+
 
 # driveway + carport + parking bay: one continuous DITON large-format paver surface
 draped_poly("driveway", dpoly, GARDEN["siteTerrain"]["drivewayProfile"]["surfaceOffset"], MAT["pavers"], subdiv=6)
@@ -1319,21 +1331,23 @@ for si, sp in enumerate(STEP_STONES):
 # no separate parking pad — the driveway polygon already covers the parking bay
 
 # ---------------- pond ----------------
-pe = next(x for x in els["pond"]["parts"] if x["kind"] == "ellipse")
-add_cyl("pond_water", pe["cx"], pe["cy"], POND_WATER_Z - 0.02, 1.0, 0.04, MAT["water"],
-        sx=pe["rx"] * 0.82, sy=pe["ry"] * 0.82, verts=48)
-for i in range(19):  # flattened rock chunks around the waterline lip
-    a = i * 2 * math.pi / 19.0 + random.uniform(-0.08, 0.08)
-    px = pe["cx"] + pe["rx"] * 0.80 * math.cos(a)
-    py = pe["cy"] + pe["ry"] * 0.80 * math.sin(a)
-    place_rock("pond_lip%d" % i, px, py, max(POND_WATER_Z + 0.03, terrain_z(px, py) - 0.02),
-               0.12 + random.random() * 0.08, squash=0.5)
-for i in range(26):  # outer scatter on the bank crest
-    a = i * 2 * math.pi / 26.0 + random.uniform(-0.06, 0.06)
-    px = pe["cx"] + pe["rx"] * 1.04 * math.cos(a)
-    py = pe["cy"] + pe["ry"] * 1.04 * math.sin(a)
-    place_rock("pond_stone%d" % i, px, py, max(ground_h(px, py) - 0.04, POND_WATER_Z + 0.02),
-               0.13 + random.random() * 0.09)
+if not DETAILS_PATH:
+    pe = next(x for x in els["pond"]["parts"] if x["kind"] == "ellipse")
+    add_cyl("pond_water", pe["cx"], pe["cy"], POND_WATER_Z - 0.02, 1.0, 0.04, MAT["water"],
+            sx=pe["rx"] * 0.82, sy=pe["ry"] * 0.82, verts=48)
+    for i in range(19):  # flattened rock chunks around the waterline lip
+        a = i * 2 * math.pi / 19.0 + random.uniform(-0.08, 0.08)
+        px = pe["cx"] + pe["rx"] * 0.80 * math.cos(a)
+        py = pe["cy"] + pe["ry"] * 0.80 * math.sin(a)
+        place_rock("pond_lip%d" % i, px, py, max(POND_WATER_Z + 0.03, terrain_z(px, py) - 0.02),
+                   0.12 + random.random() * 0.08, squash=0.5)
+    for i in range(26):  # outer scatter on the bank crest
+        a = i * 2 * math.pi / 26.0 + random.uniform(-0.06, 0.06)
+        px = pe["cx"] + pe["rx"] * 1.04 * math.cos(a)
+        py = pe["cy"] + pe["ry"] * 1.04 * math.sin(a)
+        place_rock("pond_stone%d" % i, px, py, max(ground_h(px, py) - 0.04, POND_WATER_Z + 0.02),
+                   0.13 + random.random() * 0.09)
+
 
 # ---------------- fire pit + stones + benches ----------------
 fc = next(x for x in els["firePit"]["parts"] if x["kind"] == "circle")
@@ -1463,15 +1477,20 @@ SHRUBS = (append_from("shrub_02", ["shrub_02_a_LOD1", "shrub_02_c_LOD1"]) +
 GROUND_PLANTS = (append_from("shrub_sorrel_01", ["shrub_sorrel_01_a", "shrub_sorrel_01_c",
                                                  "shrub_sorrel_01_e", "shrub_sorrel_01_g"]) +
                  append_from("fern_02", ["fern_02_a", "fern_02_c"]))
-FLOWER_OBJS = append_from("flower_empodium", ["flower_empodium_a_LOD1", "flower_empodium_c_LOD1",
-                                              "flower_empodium_e_LOD1"])
+if not DETAILS_PATH:
+    FLOWER_OBJS = append_from("flower_empodium", ["flower_empodium_a_LOD1", "flower_empodium_c_LOD1",
+                                                  "flower_empodium_e_LOD1"])
+else:
+    FLOWER_OBJS = []
+
 GRASS_CLUMPS = append_from("grass_medium_01",
                            ["grass_medium_01_large_a_LOD1", "grass_medium_01_large_b_LOD1",
                             "grass_medium_01_mid_a_LOD1", "grass_medium_01_mid_b_LOD1",
                             "grass_medium_01_tall_a_LOD1", "grass_medium_01_small_a_LOD1"], res="1k")
 SHRUBS = SHRUBS or [plant_template("procedural_shrub_%d" % i, "shrub", i) for i in range(3)]
 GROUND_PLANTS = GROUND_PLANTS or [plant_template("procedural_ground_%d" % i, "shrub", i + 3) for i in range(2)]
-FLOWER_OBJS = FLOWER_OBJS or [plant_template("procedural_flower", "flower")]
+if not DETAILS_PATH:
+    FLOWER_OBJS = FLOWER_OBJS or [plant_template("procedural_flower", "flower")]
 GRASS_CLUMPS = GRASS_CLUMPS or [plant_template("procedural_grass", "grass")]
 # real-geometry perennial mix (ferns, sorrel, yellow flowers, ornamental grass tufts);
 # grass weighted up so beds read as planted, not spotted. Replaces the old pastel blobs.
@@ -1481,13 +1500,19 @@ print("LIB shrubs %d ground %d flowers %d grass %d" %
 
 # photoscanned flowering accents (client-supplied CC-licensed assets, textures packed):
 # ~1.8 m marguerite-daisy bushes in three colours, a ~1 m rose shrub, a firewood log pile.
-DAISY_LIB = (append_ext("plants/daisy_white.blend", ["daisy_white"]) +
-             append_ext("plants/daisy_pink.blend", ["daisy_pink"]) +
-             append_ext("plants/daisy_red.blend", ["daisy_red"]))
-ROSE_LIB = append_ext("plants/roses.blend", ["roses"])
+if not DETAILS_PATH:
+    DAISY_LIB = (append_ext("plants/daisy_white.blend", ["daisy_white"]) +
+                 append_ext("plants/daisy_pink.blend", ["daisy_pink"]) +
+                 append_ext("plants/daisy_red.blend", ["daisy_red"]))
+    ROSE_LIB = append_ext("plants/roses.blend", ["roses"])
+else:
+    DAISY_LIB = []
+    ROSE_LIB = []
+
 LOG_LIB = append_ext("plants/wood_logs.blend", ["wooden logs"])
-DAISY_LIB = DAISY_LIB or [plant_template("procedural_daisy_%d" % i, "flower", i) for i in range(3)]
-ROSE_LIB = ROSE_LIB or [plant_template("procedural_rose", "flower", 1)]
+if not DETAILS_PATH:
+    DAISY_LIB = DAISY_LIB or [plant_template("procedural_daisy_%d" % i, "flower", i) for i in range(3)]
+    ROSE_LIB = ROSE_LIB or [plant_template("procedural_rose", "flower", 1)]
 print("PLANT LIB daisies %d roses %d logs %d" %
       (len(DAISY_LIB), len(ROSE_LIB), len(LOG_LIB)))
 
@@ -1537,125 +1562,126 @@ def place_asset(src, name, px, py, footprint=None, z=None):
 # secondary silhouettes so the screen isn't a maple monoculture. Each maple / _LOD1 is a single
 # realized mesh; copies share it, so a species costs one unique mesh however many trees use it.
 # No conifers -- the client rejected needle trees.
-TREE_LIB = {
-    "island1": append_from("island_tree_01", ["island_tree_01_LOD1"], res="1k"),
-    "island3": append_from("island_tree_03", ["island_tree_03_LOD1"], res="1k"),
-    "broad": append_from("tree_small_02", ["tree_small_02_LOD1"], res="1k"),
-}
-_maples = append_ext("maple_freeman/maple_freeman.blend",
-                     ["Acer_X_freemanii_Freeman_Maple_Sapindaceae_Tree",
-                      "Acer_X_freemanii_Freeman_Maple_Sapindaceae_Tree03",
-                      "Acer_X_freemanii_Freeman_Maple_Sapindaceae_Version3.2"])
-_maples.sort(key=lambda o: o.dimensions.z)
-for _sp, _ob in zip(("maple_s", "maple_m", "maple_l"), _maples):
-    TREE_LIB[_sp] = [_ob]
-for i, species in enumerate(("island1", "island3", "broad", "maple_s", "maple_m", "maple_l")):
-    if not TREE_LIB.get(species):
-        TREE_LIB[species] = [plant_template("procedural_tree_" + species, "tree", i)]
-# native crown height per species (from the realized mesh) so target heights in metres
-# convert to a uniform scale regardless of how big each source model ships
-TREE_NATIVE_H = {k: (max(min(o.dimensions.z for o in v), 0.5) if v else 4.0)
-                 for k, v in TREE_LIB.items()}
-print("TREE LIB " + " ".join("%s %d(%.1fm)" % (k, len(v), TREE_NATIVE_H[k])
-                              for k, v in TREE_LIB.items()))
+if not DETAILS_PATH:
+    TREE_LIB = {
+        "island1": append_from("island_tree_01", ["island_tree_01_LOD1"], res="1k"),
+        "island3": append_from("island_tree_03", ["island_tree_03_LOD1"], res="1k"),
+        "broad": append_from("tree_small_02", ["tree_small_02_LOD1"], res="1k"),
+    }
+    _maples = append_ext("maple_freeman/maple_freeman.blend",
+                         ["Acer_X_freemanii_Freeman_Maple_Sapindaceae_Tree",
+                          "Acer_X_freemanii_Freeman_Maple_Sapindaceae_Tree03",
+                          "Acer_X_freemanii_Freeman_Maple_Sapindaceae_Version3.2"])
+    _maples.sort(key=lambda o: o.dimensions.z)
+    for _sp, _ob in zip(("maple_s", "maple_m", "maple_l"), _maples):
+        TREE_LIB[_sp] = [_ob]
+    for i, species in enumerate(("island1", "island3", "broad", "maple_s", "maple_m", "maple_l")):
+        if not TREE_LIB.get(species):
+            TREE_LIB[species] = [plant_template("procedural_tree_" + species, "tree", i)]
+    # native crown height per species (from the realized mesh) so target heights in metres
+    # convert to a uniform scale regardless of how big each source model ships
+    TREE_NATIVE_H = {k: (max(min(o.dimensions.z for o in v), 0.5) if v else 4.0)
+                     for k, v in TREE_LIB.items()}
+    print("TREE LIB " + " ".join("%s %d(%.1fm)" % (k, len(v), TREE_NATIVE_H[k])
+                                  for k, v in TREE_LIB.items()))
 
 
-def place_tree(species, name, cx, cy, hmin, hmax, tilt=0.05):
-    """Linked-duplicate a species template so instances share mesh data. Scale to a
+    def place_tree(species, name, cx, cy, hmin, hmax, tilt=0.05):
+        """Linked-duplicate a species template so instances share mesh data. Scale to a
     target crown height (hmin..hmax metres, normalised by the species' native height),
     Z-spin, and a slight tilt so the row does not read as clones."""
-    greenhouse_clearances = GARDEN["greenhouseModel"]["plantingClearances"]
-    for rect in greenhouse_clearances:
-        dx = max(rect["x"] - cx, 0, cx - rect["x"] - rect["w"])
-        dy = max(rect["y"] - cy, 0, cy - rect["y"] - rect["d"])
-        if math.hypot(dx, dy) <= 0.35:
-            return None
-    tmpl = random.choice(TREE_LIB[species])
-    ob = tmpl.copy()
-    bpy.context.collection.objects.link(ob)
-    ob.hide_render = False
-    sc = (hmin + random.random() * (hmax - hmin)) / TREE_NATIVE_H[species]
-    ob.scale = (sc * (0.93 + random.random() * 0.14),
-                sc * (0.93 + random.random() * 0.14),
-                sc * (0.96 + random.random() * 0.10))
-    ob.rotation_euler = ((random.random() - 0.5) * tilt,
-                         (random.random() - 0.5) * tilt,
-                         random.random() * 6.283)
-    ob.location = (cx, -cy, terrain_z(cx, cy) - 0.05)
-    ob.name = name
-    bounds = [ob.matrix_basis @ Vector(corner) for corner in ob.bound_box]
-    for rect in greenhouse_clearances:
-        x0, y0, x1, y1 = rect["x"], rect["y"], rect["x"] + rect["w"], rect["y"] + rect["d"]
-        if (max(p.x for p in bounds) < x0 or min(p.x for p in bounds) > x1
-                or max(-p.y for p in bounds) < y0 or min(-p.y for p in bounds) > y1):
-            continue
-        for vertex in ob.data.vertices:
-            point = ob.matrix_basis @ vertex.co
-            if (x0 <= point.x <= x1 and y0 <= -point.y <= y1
-                    and GARDEN["greenhouseModel"]["floorHeight"] <= point.z <= greenhouse_top):
-                bpy.data.objects.remove(ob, do_unlink=True)
+        greenhouse_clearances = GARDEN["greenhouseModel"]["plantingClearances"]
+        for rect in greenhouse_clearances:
+            dx = max(rect["x"] - cx, 0, cx - rect["x"] - rect["w"])
+            dy = max(rect["y"] - cy, 0, cy - rect["y"] - rect["d"])
+            if math.hypot(dx, dy) <= 0.35:
                 return None
-    return ob
+        tmpl = random.choice(TREE_LIB[species])
+        ob = tmpl.copy()
+        bpy.context.collection.objects.link(ob)
+        ob.hide_render = False
+        sc = (hmin + random.random() * (hmax - hmin)) / TREE_NATIVE_H[species]
+        ob.scale = (sc * (0.93 + random.random() * 0.14),
+                    sc * (0.93 + random.random() * 0.14),
+                    sc * (0.96 + random.random() * 0.10))
+        ob.rotation_euler = ((random.random() - 0.5) * tilt,
+                             (random.random() - 0.5) * tilt,
+                             random.random() * 6.283)
+        ob.location = (cx, -cy, terrain_z(cx, cy) - 0.05)
+        ob.name = name
+        bounds = [ob.matrix_basis @ Vector(corner) for corner in ob.bound_box]
+        for rect in greenhouse_clearances:
+            x0, y0, x1, y1 = rect["x"], rect["y"], rect["x"] + rect["w"], rect["y"] + rect["d"]
+            if (max(p.x for p in bounds) < x0 or min(p.x for p in bounds) > x1
+                    or max(-p.y for p in bounds) < y0 or min(-p.y for p in bounds) > y1):
+                continue
+            for vertex in ob.data.vertices:
+                point = ob.matrix_basis @ vertex.co
+                if (x0 <= point.x <= x1 and y0 <= -point.y <= y1
+                        and GARDEN["greenhouseModel"]["floorHeight"] <= point.z <= greenhouse_top):
+                    bpy.data.objects.remove(ob, do_unlink=True)
+                    return None
+        return ob
 
 
-# perimeter screen (north + east edges): Freeman-maple-dominant mixed canopy at garden
-# height, with island + wild-syringa broadleaves tucked between for silhouette variety.
-# 13 mix entries = 13 perimeter positions, shuffled then dealt one per slot so species and
-# height vary along the screen without visible clones.
-PERIM_MIX = ([("maple_l", 9.5, 11.5)] * 3 +
-             [("maple_m", 8.5, 10.5)] * 4 +
-             [("maple_s", 6.5, 8.5)] * 2 +
-             [("island1", 5.5, 8.0)] * 2 +
-             [("broad", 5.0, 7.0)] * 2)
-tree_i = 0
-perim_seq = [(prt["cx"], prt["cy"]) for eid in ("northTrees", "eastTrees")
-             for prt in els[eid]["parts"] if prt["kind"] == "circle"]
-random.shuffle(PERIM_MIX)
-for pi, (cx, cy) in enumerate(perim_seq):
-    sp, hmin, hmax = PERIM_MIX[pi % len(PERIM_MIX)]
-    place_tree(sp, "tree%d" % tree_i, cx, cy, hmin, hmax)
-    tree_i += 1
-# orchard: smaller crowns at fruit-tree scale (~3.5-6 m); a young maple plus the smaller
-# broadleaves so the block reads as an orchard, not a second tall screen.
-ORCHARD_MIX = [("maple_s", 4.6, 6.0), ("broad", 3.8, 5.2), ("island3", 3.2, 4.6)]
-oi = 0
-for prt in els["orchard"]["parts"]:
-    if prt["kind"] == "circle":
-        sp, hmin, hmax = ORCHARD_MIX[oi % len(ORCHARD_MIX)]
-        place_tree(sp, "tree%d" % tree_i, prt["cx"], prt["cy"], hmin, hmax)
+    # perimeter screen (north + east edges): Freeman-maple-dominant mixed canopy at garden
+    # height, with island + wild-syringa broadleaves tucked between for silhouette variety.
+    # 13 mix entries = 13 perimeter positions, shuffled then dealt one per slot so species and
+    # height vary along the screen without visible clones.
+    PERIM_MIX = ([("maple_l", 9.5, 11.5)] * 3 +
+                 [("maple_m", 8.5, 10.5)] * 4 +
+                 [("maple_s", 6.5, 8.5)] * 2 +
+                 [("island1", 5.5, 8.0)] * 2 +
+                 [("broad", 5.0, 7.0)] * 2)
+    tree_i = 0
+    perim_seq = [(prt["cx"], prt["cy"]) for eid in ("northTrees", "eastTrees")
+                 for prt in els[eid]["parts"] if prt["kind"] == "circle"]
+    random.shuffle(PERIM_MIX)
+    for pi, (cx, cy) in enumerate(perim_seq):
+        sp, hmin, hmax = PERIM_MIX[pi % len(PERIM_MIX)]
+        place_tree(sp, "tree%d" % tree_i, cx, cy, hmin, hmax)
         tree_i += 1
-        oi += 1
-# specimen maple: one large Freeman maple standing alone in the east lawn room (east of the
-# pond, clear of beds and the drive) as a focal shade tree read from the terrace + living views
-if TREE_LIB.get("maple_l"):
-    place_tree("maple_l", "specimen_maple", 35.0, 13.0, 12.0, 13.0, tilt=0.03)
-    tree_i += 1
-print("TREES placed:", tree_i)
+    # orchard: smaller crowns at fruit-tree scale (~3.5-6 m); a young maple plus the smaller
+    # broadleaves so the block reads as an orchard, not a second tall screen.
+    ORCHARD_MIX = [("maple_s", 4.6, 6.0), ("broad", 3.8, 5.2), ("island3", 3.2, 4.6)]
+    oi = 0
+    for prt in els["orchard"]["parts"]:
+        if prt["kind"] == "circle":
+            sp, hmin, hmax = ORCHARD_MIX[oi % len(ORCHARD_MIX)]
+            place_tree(sp, "tree%d" % tree_i, prt["cx"], prt["cy"], hmin, hmax)
+            tree_i += 1
+            oi += 1
+    # specimen maple: one large Freeman maple standing alone in the east lawn room (east of the
+    # pond, clear of beds and the drive) as a focal shade tree read from the terrace + living views
+    if TREE_LIB.get("maple_l"):
+        place_tree("maple_l", "specimen_maple", 35.0, 13.0, 12.0, 13.0, tilt=0.03)
+        tree_i += 1
+    print("TREES placed:", tree_i)
 
-# ---------------- perennial strip + bushes ----------------
-peren_i = 0
-while peren_i < 70:
-    px = 5.0 + random.random() * 38.0
-    if 3.5 <= px <= 10.5 or 25.28 <= px <= 32.28:
-        continue
-    py = 0.3 + random.random() * 2.6
-    place_asset(random.choice(GROUND_PLANTS + SHRUBS[2:5]), "peren%d" % peren_i, px, py,
-                footprint=0.4 + random.random() * 0.5)
-    peren_i += 1
+    # ---------------- perennial strip + bushes ----------------
+    peren_i = 0
+    while peren_i < 70:
+        px = 5.0 + random.random() * 38.0
+        if 3.5 <= px <= 10.5 or 25.28 <= px <= 32.28:
+            continue
+        py = 0.3 + random.random() * 2.6
+        place_asset(random.choice(GROUND_PLANTS + SHRUBS[2:5]), "peren%d" % peren_i, px, py,
+                    footprint=0.4 + random.random() * 0.5)
+        peren_i += 1
 
-def make_bush(name, bx, by, s=1.0):
-    place_asset(random.choice(SHRUBS), name, bx, by, footprint=(1.0 + random.random() * 0.4) * s)
+    def make_bush(name, bx, by, s=1.0):
+        place_asset(random.choice(SHRUBS), name, bx, by, footprint=(1.0 + random.random() * 0.4) * s)
 
 
-# massed understory: a thick band inside the west + east fences, plus fillers around the
-# open mid-garden lawn so the perimeter reads as a planted screen, not fence + grass
-for i, (bx, by) in enumerate([(7, 11), (7, 14), (7, 18), (7, 22), (25.5, 12.5), (34.5, 12.5),
-                              (25.5, 17.8), (34.5, 17.8), (4, 6), (11.5, 6),
-                              (7, 9), (7, 12.5), (7, 16), (7, 20), (7, 24), (2.5, 20),
-                              (2.5, 33), (6, 33), (25.5, 10.5), (25.5, 15), (34.5, 10.5),
-                              (34.5, 15), (34.5, 20), (40, 9), (40, 13), (40, 17),
-                              (40, 21), (40, 31), (40, 34)]):
-    make_bush("bush%d" % i, bx, by, s=0.9 + random.random() * 0.5)
+    # massed understory: a thick band inside the west + east fences, plus fillers around the
+    # open mid-garden lawn so the perimeter reads as a planted screen, not fence + grass
+    for i, (bx, by) in enumerate([(7, 11), (7, 14), (7, 18), (7, 22), (25.5, 12.5), (34.5, 12.5),
+                                  (25.5, 17.8), (34.5, 17.8), (4, 6), (11.5, 6),
+                                  (7, 9), (7, 12.5), (7, 16), (7, 20), (7, 24), (2.5, 20),
+                                  (2.5, 33), (6, 33), (25.5, 10.5), (25.5, 15), (34.5, 10.5),
+                                  (34.5, 15), (34.5, 20), (40, 9), (40, 13), (40, 17),
+                                  (40, 21), (40, 31), (40, 34)]):
+        make_bush("bush%d" % i, bx, by, s=0.9 + random.random() * 0.5)
 
 
 # ---------------- photoscanned flowering accents + firewood ----------------
@@ -1682,89 +1708,91 @@ def place_plant(lib, name, px, py, footprint, zoff=0.0):
 
 # daisy bushes (white/pink/red) planted the Flera way: single-colour DRIFTS in the beds, a
 # dedicated cutting bed beside the raised beds, and naturalised through the orchard meadow.
-def place_daisy(ci, name, px, py, foot):
-    src = DAISY_LIB[ci % len(DAISY_LIB)]
-    s = foot / max(src.dimensions.x, src.dimensions.y, 0.01)
-    rotation = random.random() * 6.283
-    if not clears_model_planting(px, py, max(math.hypot(c[0], c[1]) for c in src.bound_box) * s):
-        return
-    ob = src.copy()
-    bpy.context.collection.objects.link(ob)
-    ob.hide_render = False
-    ob.scale = (s, s, s)
-    ob.rotation_euler = (0, 0, rotation)
-    base = min(c[2] for c in ob.bound_box) * s
-    ob.location = (px, -py, terrain_z(px, py) - base - 0.03)
-    ob.name = name
+if not DETAILS_PATH:
+    def place_daisy(ci, name, px, py, foot):
+        src = DAISY_LIB[ci % len(DAISY_LIB)]
+        s = foot / max(src.dimensions.x, src.dimensions.y, 0.01)
+        rotation = random.random() * 6.283
+        if not clears_model_planting(px, py, max(math.hypot(c[0], c[1]) for c in src.bound_box) * s):
+            return
+        ob = src.copy()
+        bpy.context.collection.objects.link(ob)
+        ob.hide_render = False
+        ob.scale = (s, s, s)
+        ob.rotation_euler = (0, 0, rotation)
+        base = min(c[2] for c in ob.bound_box) * s
+        ob.location = (px, -py, terrain_z(px, py) - base - 0.03)
+        ob.name = name
 
 
-di = 0
-# (1) single-colour drifts (cx, cy, colour 0=white/1=pink/2=red, count) in the flower beds
-for cx, cy, ci, cnt in [(25.7, 13.2, 0, 4), (25.9, 17.4, 1, 4),          # bedTerrace
-                        (30.0, 8.6, 2, 4), (31.9, 9.9, 0, 3),            # prairieIsland
-                        (24.4, 3.1, 1, 3), (30.9, 3.0, 2, 3), (33.4, 3.9, 0, 3),  # pergola
-                        (39.4, 3.6, 1, 3),                               # rainGarden
-                        (13.5, 6.4, 0, 3), (18.0, 6.4, 1, 3)]:           # northFoundation
-    for k in range(cnt):
-        place_daisy(ci, "daisy%d" % di, cx + (random.random() - 0.5) * 1.1,
-                    cy + (random.random() - 0.5) * 0.9, 0.9 + random.random() * 0.4)
+    di = 0
+    # (1) single-colour drifts (cx, cy, colour 0=white/1=pink/2=red, count) in the flower beds
+    for cx, cy, ci, cnt in [(25.7, 13.2, 0, 4), (25.9, 17.4, 1, 4),          # bedTerrace
+                            (30.0, 8.6, 2, 4), (31.9, 9.9, 0, 3),            # prairieIsland
+                            (24.4, 3.1, 1, 3), (30.9, 3.0, 2, 3), (33.4, 3.9, 0, 3),  # pergola
+                            (39.4, 3.6, 1, 3),                               # rainGarden
+                            (13.5, 6.4, 0, 3), (18.0, 6.4, 1, 3)]:           # northFoundation
+        for k in range(cnt):
+            place_daisy(ci, "daisy%d" % di, cx + (random.random() - 0.5) * 1.1,
+                        cy + (random.random() - 0.5) * 0.9, 0.9 + random.random() * 0.4)
+            di += 1
+    # (2) dedicated cutting bed east of the raised beds: a dense mixed block of daisies
+    for row in range(5):
+        for col in range(4):
+            place_daisy((row + col) % 3, "daisycut%d" % di,
+                        5.2 + col * 0.62 + (random.random() - 0.5) * 0.18,
+                        11.0 + row * 1.55 + (random.random() - 0.5) * 0.4, 0.75 + random.random() * 0.25)
+            di += 1
+    # (3) naturalised drifts scattered through the orchard meadow (west)
+    for k in range(14):
+        place_daisy(k % 3, "daisymeadow%d" % di, 0.8 + random.random() * 4.2,
+                    21.7 + random.random() * 9.6, 0.7 + random.random() * 0.35)
         di += 1
-# (2) dedicated cutting bed east of the raised beds: a dense mixed block of daisies
-for row in range(5):
-    for col in range(4):
-        place_daisy((row + col) % 3, "daisycut%d" % di,
-                    5.2 + col * 0.62 + (random.random() - 0.5) * 0.18,
-                    11.0 + row * 1.55 + (random.random() - 0.5) * 0.4, 0.75 + random.random() * 0.25)
-        di += 1
-# (3) naturalised drifts scattered through the orchard meadow (west)
-for k in range(14):
-    place_daisy(k % 3, "daisymeadow%d" % di, 0.8 + random.random() * 4.2,
-                21.7 + random.random() * 9.6, 0.7 + random.random() * 0.35)
-    di += 1
-print("DAISIES placed:", di)
+    print("DAISIES placed:", di)
 
-# rose shrubs along the pergola beds + the bed-terrace strip
-ROSE_SPOTS = [(23.8, 2.2), (26.2, 4.6), (28.8, 2.0), (31.4, 4.8), (33.8, 2.6),
-              (26.6, 12.2), (26.6, 15.0), (26.6, 18.2)]
-for i, (px, py) in enumerate(ROSE_SPOTS):
-    place_plant(ROSE_LIB, "rose%d" % i, px, py, 0.9 + random.random() * 0.4, zoff=-0.02)
+    # rose shrubs along the pergola beds + the bed-terrace strip
+    ROSE_SPOTS = [(23.8, 2.2), (26.2, 4.6), (28.8, 2.0), (31.4, 4.8), (33.8, 2.6),
+                  (26.6, 12.2), (26.6, 15.0), (26.6, 18.2)]
+    for i, (px, py) in enumerate(ROSE_SPOTS):
+        place_plant(ROSE_LIB, "rose%d" % i, px, py, 0.9 + random.random() * 0.4, zoff=-0.02)
 
 
-# climbing roses trained up the pergola posts and spilling over the top slats: stacked rose
-# clumps up each corner post (bulging inward toward the frame) form a rough vertical column,
-# plus a run of clumps along the two long top beams so the roof reads as rose-covered.
-def put_rose(name, px, py, z, smin, smax):
-    ob = random.choice(ROSE_LIB).copy()
-    bpy.context.collection.objects.link(ob)
-    ob.hide_render = False
-    s = (smin + random.random() * (smax - smin)) / max(ob.dimensions.x, ob.dimensions.y, 0.01)
-    ob.scale = (s, s, s)
-    ob.rotation_euler = (0, 0, random.random() * 6.283)
-    ob.location = (px, -py, z)
-    ob.name = name
+    # climbing roses trained up the pergola posts and spilling over the top slats: stacked rose
+    # clumps up each corner post (bulging inward toward the frame) form a rough vertical column,
+    # plus a run of clumps along the two long top beams so the roof reads as rose-covered.
+    def put_rose(name, px, py, z, smin, smax):
+        ob = random.choice(ROSE_LIB).copy()
+        bpy.context.collection.objects.link(ob)
+        ob.hide_render = False
+        s = (smin + random.random() * (smax - smin)) / max(ob.dimensions.x, ob.dimensions.y, 0.01)
+        ob.scale = (s, s, s)
+        ob.rotation_euler = (0, 0, random.random() * 6.283)
+        ob.location = (px, -py, z)
+        ob.name = name
 
 
-if ROSE_LIB:
-    pg = first_rect(els["pergola"])
-    px0, py0, pw, pdp = pg["x"], pg["y"], pg["w"], pg["d"]
-    pgz = GARDEN["pergolaModel"]["floorHeight"]
-    top = pgz + 2.35
-    ri = 0
-    for qx, qy in [(px0 + 0.16, py0 + 0.16), (px0 + pw - 0.16, py0 + 0.16),
-                   (px0 + 0.16, py0 + pdp - 0.16), (px0 + pw - 0.16, py0 + pdp - 0.16)]:
-        ox = 0.12 if qx < px0 + pw / 2 else -0.12
-        oy = 0.12 if qy < py0 + pdp / 2 else -0.12
-        for h in (0.7, 1.25, 1.8, 2.25):
-            put_rose("pergrose%d" % ri, qx + ox + (random.random() - 0.5) * 0.1,
-                     qy + oy + (random.random() - 0.5) * 0.1, pgz + h, 0.5, 0.85)
-            ri += 1
-    for edge_y in (py0 + 0.15, py0 + pdp - 0.15):
-        for k in range(6):
-            put_rose("pergrose%d" % ri,
-                     px0 + 0.4 + (pw - 0.8) * k / 5.0 + (random.random() - 0.5) * 0.2,
-                     edge_y + (random.random() - 0.5) * 0.15, top - 0.15, 0.55, 0.95)
-            ri += 1
-    print("PERGOLA ROSES:", ri)
+    if ROSE_LIB:
+        pg = first_rect(els["pergola"])
+        px0, py0, pw, pdp = pg["x"], pg["y"], pg["w"], pg["d"]
+        pgz = GARDEN["pergolaModel"]["floorHeight"]
+        top = pgz + 2.35
+        ri = 0
+        for qx, qy in [(px0 + 0.16, py0 + 0.16), (px0 + pw - 0.16, py0 + 0.16),
+                       (px0 + 0.16, py0 + pdp - 0.16), (px0 + pw - 0.16, py0 + pdp - 0.16)]:
+            ox = 0.12 if qx < px0 + pw / 2 else -0.12
+            oy = 0.12 if qy < py0 + pdp / 2 else -0.12
+            for h in (0.7, 1.25, 1.8, 2.25):
+                put_rose("pergrose%d" % ri, qx + ox + (random.random() - 0.5) * 0.1,
+                         qy + oy + (random.random() - 0.5) * 0.1, pgz + h, 0.5, 0.85)
+                ri += 1
+        for edge_y in (py0 + 0.15, py0 + pdp - 0.15):
+            for k in range(6):
+                put_rose("pergrose%d" % ri,
+                         px0 + 0.4 + (pw - 0.8) * k / 5.0 + (random.random() - 0.5) * 0.2,
+                         edge_y + (random.random() - 0.5) * 0.15, top - 0.15, 0.55, 0.95)
+                ri += 1
+        print("PERGOLA ROSES:", ri)
+
 
 # firewood pile beside the sauna
 place_plant(LOG_LIB, "logs0", 11.9, 3.4, 1.5)
@@ -1878,9 +1906,10 @@ def build_molinia_mesh(name, n_blades=28, n_stalks=6, blade_len=0.55):
     return mesh
 
 
-MOLINIA_MESH = build_molinia_mesh("molinia", 28, 6)
-STALKS_MESH = build_molinia_mesh("stalksOnly", 5, 8, blade_len=0.35)
-MOLINIA_ZONES = {"pondFringe", "prairieIsland", "arrivalStrip"}
+if not DETAILS_PATH:
+    MOLINIA_MESH = build_molinia_mesh("molinia", 28, 6)
+    STALKS_MESH = build_molinia_mesh("stalksOnly", 5, 8, blade_len=0.35)
+    MOLINIA_ZONES = {"pondFringe", "prairieIsland", "arrivalStrip"}
 
 
 CLUMP_RADII = {}
@@ -1901,30 +1930,32 @@ def place_clump(mesh, name, px, py, s, kind):
     return ob
 
 
-for zid, plant, zfn, zbbox in ZONE_SHAPES:
-    zarea = shape_area(zfn, zbbox)
-    if plant == "perennials":
-        scatter_perennials(zid, zfn, zbbox, zarea,
-                           density=4.0 if zid in MOLINIA_ZONES else 5.5)
-    elif plant == "shrubs":
-        scatter_shrubs(zid, zfn, zbbox, zarea)
-        scatter_perennials(zid, zfn, zbbox, zarea, density=2.5, tufts=0.5)  # groundcover under the shrubs
-    elif plant == "mixed":
-        scatter_shrubs(zid, zfn, zbbox, zarea, per_m2=0.45)
-        scatter_perennials(zid, zfn, zbbox, zarea, density=3.5, tufts=0.6)
-    elif plant == "meadow":
-        scatter_flowers(zid, zfn, zbbox, zarea)
-        for mi, (px, py) in enumerate(sample_shape(zfn, zbbox, max(3, int(zarea * 0.28)))):
-            place_clump(STALKS_MESH, "%s_st%d" % (zid, mi), px, py, 0.7 + random.random() * 0.4, "stalks")
-        for gi, (px, py) in enumerate(sample_shape(zfn, zbbox, max(2, int(zarea * 0.2)))):
-            make_tuft("%s_mg%d" % (zid, gi), px, py, terrain_z(px, py), depth=0.5)
-    if zid in MOLINIA_ZONES:
-        for mi, (px, py) in enumerate(sample_shape(zfn, zbbox, max(2, int(zarea * 0.6)))):
-            place_clump(MOLINIA_MESH, "%s_m%d" % (zid, mi), px, py, 0.8 + random.random() * 0.5, "molinia")
-        if zid == "pondFringe":  # denser on the east side
-            efn = (lambda f: (lambda x, y: f(x, y) and x > 30.5))(zfn)
-            for mi, (px, py) in enumerate(sample_shape(efn, zbbox, max(2, int(zarea * 0.45)))):
-                place_clump(MOLINIA_MESH, "%s_me%d" % (zid, mi), px, py, 0.9 + random.random() * 0.5, "molinia")
+if not DETAILS_PATH:
+    for zid, plant, zfn, zbbox in ZONE_SHAPES:
+        zarea = shape_area(zfn, zbbox)
+        if plant == "perennials":
+            scatter_perennials(zid, zfn, zbbox, zarea,
+                               density=4.0 if zid in MOLINIA_ZONES else 5.5)
+        elif plant == "shrubs":
+            scatter_shrubs(zid, zfn, zbbox, zarea)
+            scatter_perennials(zid, zfn, zbbox, zarea, density=2.5, tufts=0.5)  # groundcover under the shrubs
+        elif plant == "mixed":
+            scatter_shrubs(zid, zfn, zbbox, zarea, per_m2=0.45)
+            scatter_perennials(zid, zfn, zbbox, zarea, density=3.5, tufts=0.6)
+        elif plant == "meadow":
+            scatter_flowers(zid, zfn, zbbox, zarea)
+            for mi, (px, py) in enumerate(sample_shape(zfn, zbbox, max(3, int(zarea * 0.28)))):
+                place_clump(STALKS_MESH, "%s_st%d" % (zid, mi), px, py, 0.7 + random.random() * 0.4, "stalks")
+            for gi, (px, py) in enumerate(sample_shape(zfn, zbbox, max(2, int(zarea * 0.2)))):
+                make_tuft("%s_mg%d" % (zid, gi), px, py, terrain_z(px, py), depth=0.5)
+        if zid in MOLINIA_ZONES:
+            for mi, (px, py) in enumerate(sample_shape(zfn, zbbox, max(2, int(zarea * 0.6)))):
+                place_clump(MOLINIA_MESH, "%s_m%d" % (zid, mi), px, py, 0.8 + random.random() * 0.5, "molinia")
+            if zid == "pondFringe":  # denser on the east side
+                efn = (lambda f: (lambda x, y: f(x, y) and x > 30.5))(zfn)
+                for mi, (px, py) in enumerate(sample_shape(efn, zbbox, max(2, int(zarea * 0.45)))):
+                    place_clump(MOLINIA_MESH, "%s_me%d" % (zid, mi), px, py, 0.9 + random.random() * 0.5, "molinia")
+
 
 # atrium pots: planter cylinders on the west-terrace deck
 deck_top = DECK_TOP
@@ -1962,6 +1993,9 @@ build_routes(GARDEN)
 for fence_model in GARDEN["fenceModels"]:
     build_model(fence_model)
 build_model(GARDEN["entranceGateModel"])
+
+if DETAILS_PATH:
+    detail_manifest, detail_objects = import_details(DETAILS_PATH, GARDEN, DETAILS_SOURCE)
 
 # ---------------- garden light fixtures ----------------
 def circles_of(el_id):
