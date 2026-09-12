@@ -22,6 +22,7 @@ from garden_routes import build_routes
 from house_roof import build_house_roof
 from garden_details import verified_manifest, import_details
 from site_terrain import height as site_height
+from terrain_mesh import align_level_pads
 from procedural_plants import plant_template
 
 argv = sys.argv
@@ -799,6 +800,7 @@ def build_terrain():
     bmesh.ops.triangulate(bm, faces=bm.faces[:])
     for _ in range(8):
         bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=1, use_grid_fill=True)
+    align_level_pads(bm, SITE_TERRAIN)
     for v in bm.verts:
         v.co.z = terrain_z(v.co.x, -v.co.y)
     mesh = bpy.data.meshes.new("terrain")
