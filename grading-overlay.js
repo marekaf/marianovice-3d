@@ -1,5 +1,5 @@
 const GradingOverlay = (() => {
-  const palette={A:'#667785',B:'#b37943',C:'#2f845b',D:'#c7992e',E:'#a66081',F:'#8470ad',G:'#758c36',H:'#397f9b',I:'#9a9381',J:'#468d8d',K:'#ba753c',L:'#a86642',M:'#346d9c'};
+  const palette={A:'#667785',B:'#b37943',C:'#2f845b',D:'#c7992e',E:'#a66081',F:'#8470ad',G:'#758c36',H:'#397f9b',I:'#9a9381',J:'#468d8d',K:'#ba753c',L:'#a86642',M:'#346d9c',N:'#b15c64'};
   const colorFor=zone=>palette[zone.id]??zone.color;
   const boundaryOrder=zones=>zones.slice().sort((a,b)=>({I:0,A:2,E:2,F:3,M:3}[a.id]??1)-({I:0,A:2,E:2,F:3,M:3}[b.id]??1));
   function svgLabels(zones,px,pz,fontSize=11) {
@@ -28,8 +28,8 @@ const GradingOverlay = (() => {
     const slopes=[
       {id:'north-house',from:[12,6.95],to:[20,6.95]},
       {id:'south-house',from:[12,27.5],to:[16,27.5]},
-      {id:'east-terrace',from:[23.58,15],to:[25.5,15]},
-      {id:'north-terrace',from:[22.5,11.58],to:[22.5,9.5]},
+      {id:'east-terrace',from:[23.65,15],to:[24.55,15]},
+      {id:'north-terrace',from:[22.5,11.5],to:[22.5,10.6]},
       {id:'south-driveway',from:[26,32],to:[26,30.5]},
       {id:'driveway-ramp',from:[35,29],to:[41,30]},
       {id:'west-bed',from:[-1.0436216216,12],to:[1.4,12]}

@@ -33,7 +33,7 @@ assert(!/NaN|undefined|Infinity/.test(result.html));
 assert.equal((result.html.match(/class="sheet"/g)??[]).length,1);
 assert(!/<p[ >]|warning|Potvrdit|NEPOUŽÍVAT|Bilance|Záměr úprav/.test(result.html));
 assert(result.html.includes('Legenda oblastí'));
-for(const id of 'ABCDEFGHIJKLM')assert(result.mapSVG.includes(`data-zone-label="${id}"`));
+for(const id of 'ABCDEFGHIJKLMN')assert(result.mapSVG.includes(`data-zone-label="${id}"`));
 assert(result.mapSVG.includes('viewBox="0 0 900 650"'));
 for(const id of ['driveway','carport','sauna','greenhouse','raisedBedsPad','raisedBed1','raisedBed2','raisedBed3','raisedBed4','compost','westTerrace','waterSource','rainTank']) {
   assert(result.mapSVG.includes(`data-feature="${id}"`),`${id} is visible in the grading map`);
@@ -88,12 +88,30 @@ if(existsSync('docs/survey-terrain.js')) {
   }
 }
 for(const rows of [quantities.zones,quantities.surfaces])assert(Math.abs(rows.reduce((sum,row)=>sum+row.area,0)-quantities.plotArea)<1e-7);
-assert.deepEqual(quantities.zones.map(z=>z.id),[...'ABCDEFGHIJKLM']);
+assert.deepEqual(quantities.zones.map(z=>z.id),[...'ABCDEFGHIJKLMN']);
 const zoneC=quantities.zones.find(z=>z.id==='C');
 for(const polygon of zoneC.polygons)for(const [x,z] of polygon)assert(x>=21.28-1e-7&&x<=34.13+1e-7&&z<=19.38+1e-7,'C stays in the carport-plus-garage strip');
 const contains=(id,x,z)=>quantities.zones.find(q=>q.id===id).polygons.some(p=>p.every((a,i)=>{const b=p[(i+1)%p.length];return (b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0])>=-1e-7;}));
 const flatInstructions=GradingOverlay.terrainMarks(GARDEN,quantities);
 for(const id of ["A","C","D","E","G"])assert.equal(flatInstructions.flats.filter(mark=>contains(id,...mark.position)).length,1, id+" has one zone-level flat symbol");
+const terraceZone=quantities.zones.find(zone=>zone.id==='N');
+assert.equal(terraceZone.name,'Svahy kolem východní terasy');
+assert(contains('N',...terraceZone.label));
+for(const mark of flatInstructions.slopes.filter(mark=>['east-terrace','north-terrace'].includes(mark.id)))for(let i=0;i<=100;i++){const t=i/100;assert(contains('N',mark.from[0]+t*(mark.to[0]-mark.from[0]),mark.from[1]+t*(mark.to[1]-mark.from[1])),'Terrace arrows stay inside their slope zone');}
+for(const point of [[24.7,15],[22.5,10.4],[24,19.5],[23,14]])assert(!contains('N',...point),'Slope zone excludes level garden, carport and terrace');
+assert(contains('N',24.2,11)&&!contains('N',24.5,10.7),'The northeast bank follows a rounded corner');
+if(existsSync('docs/survey-terrain.js')){
+  const actual=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:require('./docs/survey-terrain.js').SURVEY_TERRAIN}).site;
+  const {GardenRouteModel}=require('./garden-route-model.js');
+  let samples=0;
+  for(let x=20.6;x<24.63;x+=.05)for(let z=10.54;z<19.38;z+=.05){
+    if(!contains('N',x,z)||GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<.01)continue;
+    const h=.001,grade=Math.hypot((actual.height(x+h,z)-actual.height(x-h,z))/(2*h),(actual.height(x,z+h)-actual.height(x,z-h))/(2*h));
+    assert(grade>.01,'The terrace bank is sloped outside the preserved walking ribbon');samples++;
+  }
+  assert(samples>3000);
+}
+
 assert(!flatInstructions.slopes.some(mark=>mark.id==="bed-sauna"),"G has no internal slope annotation");
 assert(!flatInstructions.flats.some(mark=>["raisedBeds","sauna","pergola"].includes(mark.id)),"Structures do not duplicate their zone flat symbol");
 assert(contains('J',16,3),'Garden north of the house has its own zone');
