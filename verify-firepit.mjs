@@ -151,5 +151,32 @@ const approachAngle = model.approach.angle * Math.PI / 180;
 const approachX = pit.cx + Math.cos(approachAngle) * (seating.r + 0.5);
 const approachY = pit.cy + Math.sin(approachAngle) * (seating.r + 0.5);
 assert.ok(model.plantingClearances.some(rect => approachX >= rect.x && approachX <= rect.x + rect.w
-  && approachY >= rect.y && approachY <= rect.y + rect.d), 'Southwest entrance must exclude external planting');
+  && approachY >= rect.y && approachY <= rect.y + rect.d), 'Entrance towards pergola must exclude external planting');
+const pointSegmentDistance=(p,a,b)=>{
+  const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy)));
+  return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy);
+};
+const cross=(a,b,p)=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);
+function ribbonClearance(a,b,polygon) {
+  const inside=p=>polygon.every((v,i)=>cross(v,polygon[(i+1)%polygon.length],p)>=-1e-9)
+    ||polygon.every((v,i)=>cross(v,polygon[(i+1)%polygon.length],p)<=1e-9);
+  if(inside(a)||inside(b))return 0;
+  let distance=Infinity;
+  for(let i=0;i<polygon.length;i++){
+    const c=polygon[i],d=polygon[(i+1)%polygon.length];
+    if(cross(a,b,c)*cross(a,b,d)<0&&cross(c,d,a)*cross(c,d,b)<0)return 0;
+    distance=Math.min(distance,pointSegmentDistance(a,c,d),pointSegmentDistance(b,c,d),pointSegmentDistance(c,a,b),pointSegmentDistance(d,a,b));
+  }
+  return distance;
+}
+for(const route of GARDEN.gardenRoutes.filter(route=>['Gathering connection','Pond walk'].includes(route.id))){
+  for(const seat of model.parts.filter(part=>/^bench_\d+_seat_\d+$/.test(part.name))){
+    const footprint=seat.vertices.slice(0,4);
+    for(let i=1;i<route.points.length;i++)assert(ribbonClearance(route.points[i-1],route.points[i],footprint)>=route.width/2,
+      `${route.id}: full walking width intersects ${seat.name}`);
+  }
+  const end=route.points.at(-1),previous=route.points.at(-2),dx=end[0]-previous[0],dy=end[1]-previous[1],length=Math.hypot(dx,dy);
+  for(const offset of[-route.width/2,route.width/2])assert(Math.hypot(end[0]-dy/length*offset-seating.cx,end[1]+dx/length*offset-seating.cy)<=seating.r,
+    `${route.id}: full joining edge must enter the seating apron`);
+}
 console.log(`Firepit: ${model.parts.length} parts; fixed footprint, hollow ring, supported logs, grounded benches and access pass`);

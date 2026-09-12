@@ -70,6 +70,10 @@ def route_sample(route, x, y, bank=False):
         circle = route['endCircle']
         d = max(0, math.hypot(x-circle['cx'], y-circle['cz'])-circle['radius'])
         level = route['levels'][-1]+(level-route['levels'][-1])*smoothstep(d/route.get('endBlend', .6))
+    if route.get('finishJoin'):
+        shared_distance, shared_level = route_sample(route['finishJoin'], x, y)
+        d = max(0, shared_distance-route['finishJoin']['width']/2)
+        level += (shared_level-level)*(1-smoothstep(d/.5))
     return distance, level
 
 

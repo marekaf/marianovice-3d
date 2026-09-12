@@ -45,6 +45,7 @@ const SiteTerrain = (() => {
     if(route.levelAxis){const p=route.levelAxis,t=Math.max(0,Math.min(1,((p.axis==='x'?x:z)-p.start)/(p.end-p.start)));level=route.levels[0]+(route.levels.at(-1)-route.levels[0])*t;}
     if(route.startRect){const d=rectDistance(route.startRect,x,z);level=route.levels[0]+(level-route.levels[0])*smoothstep(d/(route.startBlend??.6));}
     if(route.endCircle){const p=route.endCircle,d=Math.max(0,Math.hypot(x-p.cx,z-p.cz)-p.radius);level=route.levels.at(-1)+(level-route.levels.at(-1))*smoothstep(d/(route.endBlend??.6));}
+    if(route.finishJoin){const shared=routeSample(route.finishJoin,x,z);const d=Math.max(0,shared.distance-route.finishJoin.width/2);level+=(shared.level-level)*(1-smoothstep(d/.5));}
     return {distance,level};
   }
   function routeBankClearance(route,x,z) {
@@ -337,7 +338,8 @@ const SiteTerrain = (() => {
       for(const [route,start,end]of [[dining,options.houseFFL,gathering.level+.1],[gatheringLink,gathering.level+.1,fireFinished],[pondApproach,pondStart,fireFinished]])if(route) {
         const lengths=[0];
         for(let i=1;i<route.points.length;i++)lengths.push(lengths[i-1]+Math.hypot(route.points[i][0]-route.points[i-1][0],route.points[i][1]-route.points[i-1][1]));
-        const startLanding=route===gatheringLink?.8:1.2,endLanding=route===pondApproach?lengths.at(-1)-lengths.at(-3)+1.2:route===gatheringLink?lengths.at(-1)-lengths[1]+.25:1.1,transitionLength=route===gatheringLink?.4:.8,active=lengths.at(-1)-startLanding-endLanding;
+        const startLanding=route.startLanding??(route===gatheringLink?.8:1.2),endLanding=route.endLanding??(route===pondApproach?lengths.at(-1)-lengths.at(-3)+1.2:route===gatheringLink?lengths.at(-1)-lengths[1]+.25:1.1);
+        const transitionLength=route===gatheringLink?.4:.8,active=lengths.at(-1)-startLanding-endLanding;
         const distances=[...lengths,startLanding,lengths.at(-1)-endLanding].sort((a,b)=>a-b).filter((s,i,a)=>i===0||s-a[i-1]>1e-6);
         const points=distances.map(s=>{const i=Math.max(1,lengths.findIndex(v=>v>=s)),t=(s-lengths[i-1])/(lengths[i]-lengths[i-1]);return route.points[i-1].map((v,k)=>v+t*(route.points[i][k]-v));});
         const levels=distances.map(s=>{const u=Math.max(0,Math.min(active,s-startLanding)),area=v=>v/2-transitionLength*Math.sin(Math.PI*v/transitionLength)/(2*Math.PI);
@@ -346,6 +348,7 @@ const SiteTerrain = (() => {
         spec.routeProfiles.push({...route,points,bedding:.1,levels,
           ...(route===gatheringLink?{bankBlend:1.8}:{}),
           ...(route===pondApproach?{approachBank:true,bankBlend:2.4,startBedding:.02,endCircle:{cx:fire.cx,cz:fire.cy,radius:fire.r},
+            finishJoin:spec.routeProfiles.find(profile=>profile.id===gatheringLink?.id),
             bankAvoidRoutes:[dining,gatheringLink].filter(Boolean).map(r=>({...r,levels:r.points.map(()=>0)}))}:{}),
           ...(route===dining?{approachBank:true,bankBlend:1.3,bankApron:{blend:2.4,clearBlend:1.2},
             startRect:patchRect(garden.elements.find(e=>e.id==='eastTerrace').parts.find(p=>p.kind==='rect')),

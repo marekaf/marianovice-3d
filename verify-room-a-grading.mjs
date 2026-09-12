@@ -35,7 +35,7 @@ const fire=FirepitModel.build(GARDEN,site.height);
 near(pergola.floorHeight,2.015);
 near(site.height(22,14),2.345);
 near(site.routeHeight(22,14),2.465);
-const fireFinish=pergola.floorHeight-.4;
+const fireFinish=TERRAIN.houseFFLInternal-.5;
 near(fire.floorHeight+.008,fireFinish);
 for(const v of fire.parts.find(p=>p.name==='gravel_apron').vertices.slice(65))near(v[2]+fire.floorHeight,fireFinish);
 for(const route of site.spec.routeProfiles) {

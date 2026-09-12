@@ -22,7 +22,7 @@ from garden_routes import build_routes
 from house_roof import build_house_roof
 from garden_details import verified_manifest, import_details
 from site_terrain import height as site_height
-from terrain_mesh import align_level_pads
+from terrain_mesh import align_level_pads, align_circular_pads
 from procedural_plants import plant_template
 
 argv = sys.argv
@@ -677,7 +677,7 @@ EXCL_RECTS.append((raised_bed_pad["x"], raised_bed_pad["y"],
 EXCL_POLYS = [hpoly, dpoly]
 _fire = next(p for p in els["firePit"]["parts"] if p["kind"] == "circle")
 EXCL_ELLIPSES = [(POND[0], POND[1], POND[2] + 0.35, POND[3] + 0.3), (5.0, 2.5, 1.15, 1.15),
-                 (_fire["cx"], _fire["cy"], 1.25, 1.25)]
+                 (_fire["cx"], _fire["cy"], _fire["r"], _fire["r"])]
 EXCL_ELLIPSES.extend((x,y,.6,.6) for x,y in utility_covers.values())
 STEP_STONES = [p for p in els["steppingPaths"]["parts"]
                if p["kind"] == "circle"] if "steppingPaths" in els else []
@@ -801,6 +801,7 @@ def build_terrain():
     for _ in range(8):
         bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=1, use_grid_fill=True)
     align_level_pads(bm, SITE_TERRAIN)
+    align_circular_pads(bm, SITE_TERRAIN)
     for v in bm.verts:
         v.co.z = terrain_z(v.co.x, -v.co.y)
     mesh = bpy.data.meshes.new("terrain")
