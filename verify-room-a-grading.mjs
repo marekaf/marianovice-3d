@@ -123,8 +123,9 @@ console.log(JSON.stringify({saunaAccessVertices:saunaAccess.positions.length/3,b
 
 const descends=points=>{let previous=Infinity;for(const [x,z] of points){const value=site.routeHeight(x,z);assert(value<=previous+1e-8,'Every full-width trajectory descends or stays level toward sauna');previous=value;}};
 for(let side=-.5;side<=.5;side+=.025){
-  descends(Array.from({length:401},(_,i)=>[5.6+2.4*i/400,13.2+side]));
-  descends(Array.from({length:401},(_,i)=>[8+side,13.2-7.5*i/400]));
+  const points=GARDEN.gardenRoutes.find(route=>route.id==='Productive access').points;
+  for(let segment=points.length-1;segment>0;segment--){
+    const a=points[segment],b=points[segment-1],dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
+    descends(Array.from({length:401},(_,i)=>[a[0]+dx*i/400-dz/length*side,a[1]+dz*i/400+dx/length*side]));
+  }
 }
-for(let radius=0;radius<=.5;radius+=.025)for(const outer of [false,true])descends(Array.from({length:101},(_,i)=>{const a=i/100*Math.PI/2;return outer?[8+radius*Math.sin(a),13.2+radius*Math.cos(a)]:[8-radius*Math.cos(a),13.2-radius*Math.sin(a)];}));
-assert(site.routeHeight(8,13.2)<beds.floorHeight-.1,'Connector descends immediately outside court instead of extending a raised platform to its bend');

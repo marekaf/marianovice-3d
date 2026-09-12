@@ -207,6 +207,8 @@ def height(spec, x, y):
             target = max(level-bedding-route.get('bankSlope', .4)*distance,min(level-bedding+route.get('bankSlope', .4)*distance,h))
             for pad in spec.get('fixedFences', {}).get('levelPads', []):
                 target = max(target, pad['level']-.4*rect_distance(pad, x, y))
+            for strip in spec.get('drainageStrips', []):
+                target = min(target, strip['level']+.4*rect_distance(strip, x, y))
             clear = min((rect_distance(p, x, y) for p in spec.get('finishPads', [])), default=math.inf) if route.get('approachBank') else math.inf
             h += (target-h)*smoothstep(clear/.3)
         elif distance < blend:

@@ -37,7 +37,7 @@ const GARDEN = {
   ],
   gardenRoutes: [
     {id:"Wellness access",points:[[9.98,7.2],[9.98,5.7],[8,5.7]],width:1},
-    {id:"Productive access",points:[[8,5.7],[8,6.2],[8,13.2],[5.6,13.2],[3.5,13.2]],width:1,levelFractions:[0,0,.7,1,1]},
+    {id:"Productive access",points:[[8,5.7],[6.6,6.2],[6.6,13.2],[5.6,13.2],[3.5,13.2]],width:1,levelAxis:{axis:"z",start:6.2,end:9.8},levelFractions:[0,0,1,1,1]},
     {id:"Bed access",points:[[3.5,10.6],[3.5,13.2],[1.8,13.2]],width:1,bankSlope:.48},
     {id:"Greenhouse access",points:[[2.5,5.7],[2.5,6.9]],width:.8,bankSlope:.35,startRelativeLevel:0,levelAxis:{axis:"z",start:6.2,end:6.9}},
     {"id":"Daily dining","levelAxis":{"axis":"z","start":11.4,"end":6.2},"points":[[23,12],[24.4,12],[24.4,8],[25.42785414913,5.38127450503]],"width":1.2},
@@ -437,7 +437,7 @@ const GARDEN = {
       meta: { light: "bollard" },
       parts: [
         { kind: "circle", cx: 8, cy: 6.8, r: 0.18, route: "Wellness access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
-        { kind: "circle", cx: 8.9, cy: 14.2, r: 0.18, route: "Productive access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 7.7, cy: 14.2, r: 0.18, route: "Productive access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 7.7, cy: 20.1, r: 0.18, route: "Quiet garden approach", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 23.1, cy: 10.5, r: 0.18, route: "Daily dining", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 28, cy: 16.6, r: 0.18, route: "Pond walk", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },

@@ -85,3 +85,8 @@ for(const x of [1.2,1.75,2.49,2.51,3.25,3.8]){
   assert(new THREE.Raycaster(new THREE.Vector3(x,middle,1.99),new THREE.Vector3(0,0,1),0,.02).intersectObject(edgeMesh).length,'No seam opening on either side of the boundary T junction');
 }
 console.log('Route ground ownership: rendered Pond walk penetration removed without changing path or source terrain');
+const drainage=geometry([[0,2.165,0],[0,2.165,2],[1,2.165,2],[1,2.165,0],[2,2.165,2],[2,2.165,0]],[0,1,2,0,2,3,3,2,4,3,4,5]);
+const crossing=geometry([[0,2.4,0],[0,2.4,2],[2,2.4,2],[2,2.4,0]],[0,1,2,0,2,3]);
+const preserved=cutGroundUnderRoutes(THREE,drainage,crossing,[{x0:0,x1:1,z0:0,z1:2}]);
+assert(Math.abs(heightAt(preserved,.3,.7)-2.165)<1e-6,'Aligned drainage soil remains beneath a path crossing');
+assert.equal(heightAt(preserved,1.3,.7),undefined,'Ordinary route ground is still removed outside the preserved strip');

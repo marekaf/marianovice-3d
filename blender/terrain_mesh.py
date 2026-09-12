@@ -2,7 +2,7 @@ import bmesh
 
 
 def align_level_pads(mesh, spec):
-    pads = spec.get('fixedFences', {}).get('levelPads', [])
+    pads = spec.get('fixedFences', {}).get('levelPads', [])+spec.get('drainageStrips', [])
     if not pads:
         return
     for pad in pads:

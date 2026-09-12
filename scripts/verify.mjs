@@ -73,6 +73,7 @@ const checks=[
   'verify-grading-layout.mjs',
   'verify-boundary-fence.mjs',
   'verify-terrain-banks.mjs',
+  'verify-west-drainage.mjs',
   'verify-garden-routes.mjs',
   'verify-route-ground-clipping.mjs',
   'verify-circular-pad-ground.mjs',
