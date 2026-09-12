@@ -75,6 +75,7 @@ const checks=[
   'verify-terrain-banks.mjs',
   'verify-west-drainage.mjs',
   'verify-garage-bank.mjs',
+  'verify-pond-grading.mjs',
   'verify-garden-routes.mjs',
   'verify-route-ground-clipping.mjs',
   'verify-circular-pad-ground.mjs',

@@ -31,8 +31,9 @@ for(let i=1;i<points.length;i++){
 }
 assert(maximumGrade<=.10,`Pond approach exceeds 10% center grade: ${maximumGrade}`);
 assert(minimumSupport>=.0199,`Pond route needs continuous bedding from the existing mineral path: ${minimumSupport}`);
-for(let x=points[0][0]-1;x<points[0][0];x+=.005){
-  const grade=Math.abs(site.routeHeight(x+.005,points[0][1])-site.routeHeight(x,points[0][1]))/.005;
+for(let x=points[0][0]-1;x<points[0][0];x+=.005)for(const offset of [-.59,0,.59]){
+  const z=points[0][1]+offset;
+  const grade=Math.abs(site.routeHeight(x+.005,z)-site.routeHeight(x,z))/.005;
   assert(grade<=.10,`Existing path transition exceeds 10%: ${grade}`);
 }
 assert(Math.hypot(points.at(-1)[0]-apron.cx,points.at(-1)[1]-apron.cy)<apron.r);
