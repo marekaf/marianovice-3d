@@ -68,9 +68,6 @@ const GradingOverlay = (() => {
     }
     for(const mark of marks.flats)out+=`<g data-terrain-flat="${mark.id}">${svgTerrainSymbol('flat',px(mark.position[0]),pz(mark.position[1]))}</g>`;
     for(const [i,segment] of marks.fences.entries())out+=`<g data-terrain-preserve="${i}">${svgTerrainSymbol('fixed',px((segment.start[0]+segment.end[0])/2),pz((segment.start[1]+segment.end[1])/2))}</g>`;
-    const drainage=garden.elements.find(e=>e.id==='westDrainageStrip')?.meta?.grading;
-    for(const p of drainage?.coveredCrossings??[])out+=`<rect data-drainage-crossing="covered" x="${px(p.x)}" y="${pz(p.y)}" width="${px(p.x+p.w)-px(p.x)}" height="${pz(p.y+p.d)-pz(p.y)}" fill="#fffef9" fill-opacity=".7" stroke="#276d88" stroke-width="2" stroke-dasharray="3 2"/>`;
-    if(drainage?.outlet){const p=drainage.outlet.position;out+=`<circle data-drainage-outlet="buried" cx="${px(p[0])}" cy="${pz(p[1])}" r="4" fill="#276d88" stroke="white" stroke-width="1"/>`;}
     return out;
   }
   function create({THREE,scene,ground,garden,height,panel,existingHeight,houseFFL=0}) {
@@ -138,9 +135,6 @@ const GradingOverlay = (() => {
     }
     for(const mark of terrain.flats){const [x,z]=mark.position;for(const offset of [-.1,.1])terrainLine([[x-.3,z+offset],[x+.3,z+offset]],'grading-flat-'+mark.id,'#17649e');}
     for(const [i,segment] of terrain.fences.entries()){const x=(segment.start[0]+segment.end[0])/2,z=(segment.start[1]+segment.end[1])/2;for(const sign of [-1,1])terrainLine([[x-.2,z-sign*.2],[x+.2,z+sign*.2]],'grading-preserve-'+i,'#243b32');}
-    const drainage=garden.elements.find(e=>e.id==='westDrainageStrip')?.meta?.grading;
-    for(const [i,p] of (drainage?.coveredCrossings??[]).entries())terrainLine([[p.x,p.y],[p.x+p.w,p.y],[p.x+p.w,p.y+p.d],[p.x,p.y+p.d],[p.x,p.y]],'grading-drainage-crossing-'+i,'#276d88');
-    if(drainage?.outlet){const [x,z]=drainage.outlet.position;terrainLine(Array.from({length:25},(_,i)=>[x+.15*Math.cos(i*Math.PI/12),z+.15*Math.sin(i*Math.PI/12)]),'grading-drainage-outlet','#276d88');}
     const spots=bankSpots(garden);
     for(const spot of spots)label(spot.id,...spot.position,.021,'#49595f',true).name='grading-bank-spot-'+spot.id;
     const dimensions=new THREE.Group();dimensions.visible=false;group.add(dimensions);

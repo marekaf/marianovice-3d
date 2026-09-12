@@ -221,6 +221,7 @@ const SiteTerrain = (() => {
       const p=(spec.protectedPads??[]).find(p=>p.id==='north-facade');
       if(p)h=Math.max(h,p.level+(p.fallX??0)*Math.min(p.x1-p.x0,Math.max(0,x-p.x0))-.4*rectDistance(p,x,z));
     }
+    for(const strip of spec.drainageStrips??[])if(strip.minimumSurface)h=Math.max(h,drainageLevel(strip,x,z)-(strip.bankSlope??.45)*rectDistance(strip,x,z));
     for(const segment of spec.fixedFences?.segments??[]) {
       const [a,b]=[segment.start,segment.end],dx=b[0]-a[0],dz=b[1]-a[1];
       const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));

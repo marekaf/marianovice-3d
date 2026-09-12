@@ -282,6 +282,9 @@ def height(spec, x, y):
         p = next((p for p in spec.get('protectedPads', []) if p.get('id') == 'north-facade'), None)
         if p:
             h = max(h, p['level']+p.get('fallX', 0)*min(p['x1']-p['x0'], max(0, x-p['x0']))-.4*rect_distance(p, x, y))
+    for strip in spec.get('drainageStrips', []):
+        if strip.get('minimumSurface'):
+            h = max(h, drainage_level(strip, x, y)-strip.get('bankSlope', .45)*rect_distance(strip, x, y))
     for segment in spec.get('fixedFences', {}).get('segments', []):
         a, b = segment['start'], segment['end']
         dx, dy = b[0]-a[0], b[1]-a[1]
