@@ -91,6 +91,23 @@ try {
   assert(surfaces.northWest.length&&surfaces.northEast.length);
   assert(surfaces.northWest.every(h=>Math.abs(h-2.465)<1e-4),'North gravel starts at west terrace finish');
   assert(surfaces.northEast.every(h=>Math.abs(h-1.965)<1e-4),'North gravel falls 50 cm toward the east');
+  const southGrade=await page.evaluate(()=>{
+    const t=gradingSession,south=t.scene.getObjectByName('south-facade-gravel'),ray=new t.THREE.Raycaster();
+    let samples=0,missing=0,error=0;
+    for(let z=26.44;z<=27.44;z+=.04)for(let x=10.49;x<=16.2;x+=.1) {
+      ray.set(new t.THREE.Vector3(x,5,z),new t.THREE.Vector3(0,-1,0));
+      const hit=ray.intersectObject(south,false)[0];samples++;
+      if(!hit){missing++;continue;}
+      error=Math.max(error,Math.abs(hit.point.y-(2.465-.5*(x-10.48)/10.8)));
+    }
+    const ends=[10.4801,21.2799].map(x=>{
+      ray.set(new t.THREE.Vector3(x,5,26.4301),new t.THREE.Vector3(0,-1,0));
+      return ray.intersectObject(south,false)[0]?.point.y;
+    });
+    return {samples,missing,error,ends};
+  });
+  assert(southGrade.samples>1400&&southGrade.missing===0&&southGrade.error<1e-5,`Actual south gravel maintains the full-width west-to-east fall outside the service spur: ${JSON.stringify(southGrade)}`);
+  assert(southGrade.ends.every((height,i)=>Math.abs(height-[2.465,1.965][i])<2e-5),'Actual south gravel joins the west terrace and east driveway with a 50 cm finished fall');
   assert(surfaces.padGap<1e-5,'Heat pump bearing pad reaches the graded soil');
   assert(surfaces.flatPaving.length&&surfaces.flatPaving.every(y=>Math.abs(y-1.965)<1e-5),'Rendered A paving has the common finished level');
   assert(Math.abs(surfaces.bedFinish-2.865)<1e-6,'Ground under the raised beds is 40 cm above the west terrace');

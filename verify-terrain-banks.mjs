@@ -37,6 +37,16 @@ for(const id of ['north-fall','south-fall']) {
   const region=site.spec.regionalGrades.find(r=>r.id===id);
   near(region.fallX*(region.x1-region.x0),-.5,'House-side west to east fall');
 }
+let southSamples=0;
+for(let z=26.43;z<=27.45+1e-8;z+=.02)for(let x=10.48;x<=16.28+1e-8;x+=.05) {
+  near(site.height(x,z)+SiteTerrain.southGravelDepth(site.spec,x,z),TERRAIN.houseFFLInternal-.5*(x-10.48)/10.8,'South gravel falls consistently across its full width');
+  southSamples++;
+}
+assert(southSamples>5000);
+for(const z of [26.43,26.5,27.45]) {
+  near(site.height(10.48,z)+SiteTerrain.southGravelDepth(site.spec,10.48,z)-site.height(21.28,z)-SiteTerrain.southGravelDepth(site.spec,21.28,z),.5,'South gravel edge has the complete 50 cm fall');
+}
+for(const x of [17.2,18,20,21.2])near(site.height(x,27)+SiteTerrain.southGravelDepth(site.spec,x,27),TERRAIN.houseFFLInternal-.47,'Service gravel keeps its approved level above the driveway soil');
 const withoutApron=structuredClone(site.spec);
 delete withoutApron.drivewayApron;
 const previous=(x,z)=>SiteTerrain.height(withoutApron,x,z);
@@ -77,9 +87,12 @@ console.log(JSON.stringify({vehicleCourt:'level',westStrip:'300 mm below terrace
 if(site.spec.fixedFences?.segments.length) {
   const points=site.spec.fixedFences.segments.flatMap(segment=>Array.from({length:101},(_,i)=>segment.start.map((v,axis)=>v+(segment.end[axis]-v)*i/100)));
   for(let x=0;x<44;x+=2)for(let z=0;z<31;z+=2)points.push([x,z]);
+  for(let x=10.48;x<=21.28;x+=.1)for(let z=26.43;z<=27.45;z+=.05)points.push([x,z]);
   const pergola=site.spec.gatheringPads[0];
   for(let x=pergola.x0-1;x<=pergola.x1+1;x+=.25)for(let z=pergola.z0-1;z<=pergola.z1+1;z+=.25)points.push([x,z]);
   const result=runPythonJson('import json,sys; from blender.site_terrain import height; d=json.load(sys.stdin); print(json.dumps([height(d["spec"],*p) for p in d["points"]]))',{spec:site.spec,points});
+  const depths=runPythonJson('import json,sys; from blender.site_terrain import south_gravel_depth; d=json.load(sys.stdin); print(json.dumps([south_gravel_depth(d["spec"],*p) for p in d["points"]]))',{spec:site.spec,points});
+  points.forEach((p,i)=>near(depths[i],SiteTerrain.southGravelDepth(site.spec,...p),'South gravel thickness agrees in both renderers'));
   let maximumError=0;points.forEach((p,i)=>{const error=Math.abs(result[i]-site.height(...p));maximumError=Math.max(maximumError,error);assert(error<1e-10,'Measured fixed-fence grading agrees in both renderers');});
   console.log(JSON.stringify({fixedFenceParitySamples:points.length,maximumError}));
 }

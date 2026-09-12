@@ -11,6 +11,15 @@ def smoothstep(t):
     return t * t * (3.0 - 2.0 * t)
 
 
+def south_gravel_depth(spec, x, z):
+    p = spec.get('southGravel')
+    if not p:
+        return .07
+    t = max(0, min(1, (x-p['x0'])/(p['x1']-p['x0'])))
+    service = 1-smoothstep(rect_distance(p['service'], x, z)/p['serviceBlend']) if p.get('service') else 0
+    return p['startDepth']+(p['endDepth']-p['startDepth'])*t*(1-service)
+
+
 def bank_envelope(value, level, slope, distance):
     radius = .08*min(1,distance/2)
     if not radius:

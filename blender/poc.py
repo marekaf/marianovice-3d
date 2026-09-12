@@ -21,7 +21,7 @@ from model_parts import build_model
 from garden_routes import build_routes
 from house_roof import build_house_roof
 from garden_details import verified_manifest, import_details
-from site_terrain import height as site_height
+from site_terrain import height as site_height, south_gravel_depth
 from terrain_mesh import align_level_pads, align_circular_pads
 from procedural_plants import plant_template
 
@@ -474,7 +474,7 @@ def draped_poly(name, pts, lift, mat, subdiv=4):
     for _ in range(subdiv):
         bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=1, use_grid_fill=True)
     for v in bm.verts:
-        v.co.z = terrain_z(v.co.x, -v.co.y) + lift
+        v.co.z = terrain_z(v.co.x, -v.co.y) + (lift(v.co.x, -v.co.y) if callable(lift) else lift)
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
@@ -994,7 +994,7 @@ for z_end in [bb[1], HA[1], HA[3], bb[3]]:
 MAT["gravel_light"] = mat_pbr("gravel_light", "gravel_floor_02", scale=1.0,
                               tint=hexc("#cfcbc3"), tint_fac=0.45, tint_mode="MIX")
 for di, (bx0, bx1, by0, by1) in enumerate(DRIP_BANDS):
-    draped_poly("drip%d" % di, [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1)], 0.07,
+    draped_poly("drip%d" % di, [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1)], (lambda x, y: south_gravel_depth(SITE_TERRAIN, x, y)) if di == 1 else .07,
                 MAT["gravel_light"], subdiv=6)
 hp_pad = next(p for p in els["heatPumpPad"]["parts"] if p["kind"] == "rect")
 hp_x, hp_y = hp_pad["x"] + hp_pad["w"] / 2, hp_pad["y"] + hp_pad["d"] / 2
