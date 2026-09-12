@@ -7,7 +7,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
   page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
-  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
+  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,gardenRoutes,firepitGroup,firepitModel,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
   await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
   assert.deepEqual(errors,[]);
@@ -35,6 +35,33 @@ try {
   });
   assert(pergolaGround.count>100&&pergolaGround.error<1e-5,`Rendered soil is level beneath the pergola: ${JSON.stringify(pergolaGround)}`);
   assert(restored.garageColors.length&&restored.garageColors.every(color=>color==='e2cec5'),'Actual garage facade meshes use HN3E');
+  const firepitSurface=await page.evaluate(()=>{
+    const t=gradingSession,part=GARDEN.elements.find(e=>e.id==='firePit').parts.find(p=>p.kind==='circle');
+    t.scene.updateMatrixWorld(true);
+    const apron=t.firepitGroup.getObjectByName('Firepit_structure_gravel');
+    const bounds=new t.THREE.Box3().setFromObject(apron),ray=new t.THREE.Raycaster();
+    let samples=0,groundSamples=0,routeSamples=0,apronError=0,supportError=0,missing=0;
+    const failures=[];
+    for(let ring=0;ring<=10;ring++)for(let i=0;i<(ring?64:1);i++){
+      const radius=part.r*.9999*ring/10,angle=i*Math.PI*2/64,x=part.cx+Math.cos(angle)*radius,z=part.cy+Math.sin(angle)*radius;
+      ray.set(new t.THREE.Vector3(x,10,z),new t.THREE.Vector3(0,-1,0));
+      const top=ray.intersectObject(apron,false)[0],ground=ray.intersectObject(t.ground,false)[0],route=ray.intersectObject(t.gardenRoutes,false)[0];
+      samples++;
+      if(!top||(!ground&&!route)){missing++;continue;}
+      apronError=Math.max(apronError,Math.abs(top.point.y-1.965));
+      const surface=ground??route,expected=ground?1.865:1.965;
+      const error=Math.abs(surface.point.y-expected);
+      supportError=Math.max(supportError,error);
+      if(error>1e-4&&failures.length<5)failures.push({x,z,kind:ground?'ground':'route',height:surface.point.y,expected});
+      if(ground)groundSamples++;else routeSamples++;
+    }
+    return {bounds:[bounds.min.x,bounds.max.x,bounds.min.z,bounds.max.z,bounds.max.y],circle:part,samples,groundSamples,routeSamples,apronError,supportError,missing,failures};
+  });
+  const fireCircle=GARDEN.elements.find(e=>e.id==='firePit').parts.find(p=>p.kind==='circle');
+  const fireBounds=[fireCircle.cx-fireCircle.r,fireCircle.cx+fireCircle.r,fireCircle.cy-fireCircle.r,fireCircle.cy+fireCircle.r,1.965];
+  assert(firepitSurface.bounds.every((value,i)=>Math.abs(value-fireBounds[i])<1e-4),'Actual firepit apron retains its 4 m diameter and zone C finish');
+  assert(firepitSurface.samples>600&&firepitSurface.groundSamples===firepitSurface.samples&&firepitSurface.routeSamples===0,`The apron excludes paths and retains soil beneath every sample: ${JSON.stringify(firepitSurface)}`);
+  assert(firepitSurface.missing===0&&firepitSurface.apronError<1e-4&&firepitSurface.supportError<1e-4,`Actual firepit disk is level and supported: ${JSON.stringify(firepitSurface)}`);
   const surfaces=await page.evaluate(()=>{
     const t=gradingSession,north=t.scene.getObjectByName('north-facade-gravel').geometry.attributes.position;
     const west=[],east=[];

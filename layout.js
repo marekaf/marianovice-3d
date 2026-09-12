@@ -42,8 +42,8 @@ const GARDEN = {
     {id:"Greenhouse access",points:[[2.5,5.7],[2.5,6.9]],width:.8,bankSlope:.35,startRelativeLevel:0,levelAxis:{axis:"z",start:6.2,end:6.9}},
     {"id":"Daily dining","levelAxis":{"axis":"z","start":11.4,"end":6.2},"points":[[23,12],[24.4,12],[24.4,8],[25.42785414913,5.38127450503]],"width":1.2},
     {id:"Quiet garden approach",points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
-    {"id":"Gathering connection","points":[[27.967854149129998,5.38127450503],[29.7,9.8],[31.8,9.8],[32.6,8]],"width":1.2},
-    {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[31.7,9.3],[32.6,8]],width:1.2},
+    {"id":"Gathering connection","points":[[27.9,4.6],[28.8,4.6],[30.15,5.75]],"width":1.2,"startLanding":1.2,"endLanding":.5},
+    {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[29,8.8],[29,6.3],[30.25,5.75]],width:1.2},
     {id:"Service connection",points:[[38.7,17.8],[37,20],[37,26.3]],width:1.2}
   ],
   gardenReserves: [{"id":"Eastern utilities: verify extent","kind":"rect","x":38,"y":19,"w":5,"d":7,"type":"reserve"},{"id":"Low ground: drainage investigation","kind":"rect","x":37.8,"y":0.2,"w":4.1,"d":5.8,"type":"reserve"}],
@@ -204,12 +204,12 @@ const GARDEN = {
     {
       id: "firePit",
       name: "Ohniště ø 1 m a mlatové posezení ø 4 m",
-      meta: {grading: {level: 1.515, surfaceOffset: 0.092}},
+      meta: {grading: {level: 1.865, surfaceOffset: 0.092}},
       parts: [
-        {kind: "circle", cx: 34.5, cy: 7.5, r: 2, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5, 4"},
-        {kind: "circle", cx: 34.5, cy: 7.5, r: 0.5, fill: "#a75e36", opacity: 0.85, stroke: "#693e28", sw: 1},
-        {kind: "circle", cx: 34.5, cy: 7.5, r: 0.496, fill: "#514d45", opacity: 0.9},
-        {kind: "text", x: 34.5, y: 9.9, text: "ohniště ø 1 m · mlat ø 4 m", cls: "lbl-sm", fill: "#5a4828"}
+        {kind: "circle", cx: 31.5, cy: 6.5, r: 2, fill: "none", stroke: "#8a7a5a", sw: 1, dash: "5, 4"},
+        {kind: "circle", cx: 31.5, cy: 6.5, r: 0.5, fill: "#a75e36", opacity: 0.85, stroke: "#693e28", sw: 1},
+        {kind: "circle", cx: 31.5, cy: 6.5, r: 0.496, fill: "#514d45", opacity: 0.9},
+        {kind: "text", x: 31.5, y: 8.9, text: "ohniště ø 1 m · mlat ø 4 m", cls: "lbl-sm", fill: "#5a4828"}
       ]
     },
     {

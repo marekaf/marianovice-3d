@@ -28,7 +28,7 @@ const diningRoute=GARDEN.gardenRoutes.find(route=>route.id==='Daily dining');
 near(site.routeHeight(...diningRoute.points.at(-1)),model.floorHeight,'Terrace approach must meet the lowered pergola');
 const gatheringRoute=GARDEN.gardenRoutes.find(route=>route.id==='Gathering connection');
 near(site.routeHeight(...gatheringRoute.points[0]),model.floorHeight,'Firepit connection must start at the lowered pergola');
-near(site.routeHeight(...gatheringRoute.points.at(-1)),1.615,'Firepit finish stays below the pergola');
+near(site.routeHeight(...gatheringRoute.points.at(-1)),1.965,'Firepit finish stays below the pergola');
 assert(site.routeHeight(...gatheringRoute.points.at(-1))<=model.floorHeight,'Firepit cannot sit above the pergola');
 near(site.height(28,3.5),model.floorHeight-.1,'Ground and paving must lower together');
 for (const part of model.parts) {

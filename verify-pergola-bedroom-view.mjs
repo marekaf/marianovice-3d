@@ -8,7 +8,7 @@ assert.equal(pergola.meta.grading.level,1.915,'Pergola follows the northern gard
 const fire=GARDEN.elements.find(e=>e.id==='firePit').parts.find(p=>p.kind==='circle');
 const fireGrading=GARDEN.elements.find(e=>e.id==='firePit').meta.grading;
 assert(fireGrading.level+fireGrading.surfaceOffset+.008<=pergola.meta.grading.level+.1,'Firepit seating must not sit above the pergola terrace');
-assert.deepEqual([fire.cx,fire.cy,fire.r],[34.5,7.5,2],'Keep the northeast firepit and its seating area in place');
+assert.deepEqual([fire.cx,fire.cy,fire.r],[31.5,6.5,2],'Keep the firepit and its seating area in the level garden');
 assert(roof.y+roof.d<7.18,'Pergola belongs near the north fence, clear of the bedroom foreground');
 for(const windowZ of [8.52,9.38,10.24])for(const targetZ of [fire.cy-1,fire.cy,fire.cy+1]){
   for(let x=roof.x-.08;x<=roof.x+roof.w+.08;x+=.02){

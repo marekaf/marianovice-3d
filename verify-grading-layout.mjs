@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
+import {existsSync} from 'node:fs';
 const require=createRequire(import.meta.url);
 const {GARDEN}=require('./layout.js');
 const {TERRAIN}=require('./terrain.js');
 const {GreenhouseModel}=require('./greenhouse-model.js');
 const {PergolaModel}=require('./pergola-model.js');
+const {GradingZones}=require('./grading-zones.js');
 const element=id=>GARDEN.elements.find(e=>e.id===id);
 const rect=id=>element(id).parts.find(p=>p.kind==='rect');
 const west=rect('westTerrace'),strip=rect('westDrainageStrip'),court=rect('raisedBedsPad');
@@ -35,4 +37,23 @@ assert.equal(apron.d,4);
 assert(Math.abs(apron.y-garage.y-garage.d)<1e-8,'Level four-metre apron starts at the garage frontage');
 const drivewayPoints=drive.parts.find(p=>p.kind==='polygon').points;
 for(const y of [apron.y,apron.y+apron.d])assert(drivewayPoints.some(p=>Math.abs(p[0]-garage.x-garage.w)<1e-8&&Math.abs(p[1]-y)<1e-8),'Straight driveway connects to both apron corners at the garage east end');
+const fire=element('firePit'),circle=fire.parts.find(p=>p.kind==='circle');
+const zoneC=GradingZones.create(GARDEN).zones.find(zone=>zone.id==='C');
+const contains=(polygon,x,z)=>{
+  const sides=polygon.map((a,i)=>{const b=polygon[(i+1)%polygon.length];return (b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0]);});
+  return sides.every(value=>value>=-1e-8)||sides.every(value=>value<=1e-8);
+};
+for(let i=0;i<360;i++){
+  const angle=i*Math.PI/180,x=circle.cx+circle.r*Math.cos(angle),z=circle.cy+circle.r*Math.sin(angle);
+  assert(zoneC.polygons.some(p=>contains(p,x,z)),'Entire firepit seating circle belongs to zone C');
+}
+const fireFinish=fire.meta.grading.level+fire.meta.grading.surfaceOffset+.008;
+assert(Math.abs(fireFinish-(TERRAIN.houseFFLInternal-.5))<1e-8,'Firepit apron shares the C finished level');
+if(existsSync(new URL('./docs/survey-terrain.js',import.meta.url))){
+  const {site}=require('./grading-site.js').GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:require('./docs/survey-terrain.js').SURVEY_TERRAIN});
+  for(let radius=0;radius<=circle.r+.001;radius+=.1)for(let i=0;i<72;i++){
+    const angle=i*Math.PI/36,x=circle.cx+radius*Math.cos(angle),z=circle.cy+radius*Math.sin(angle);
+    assert(Math.abs(site.height(x,z)-fire.meta.grading.level)<1e-8,'Ground beneath the full firepit apron is level');
+  }
+}
 console.log('Grading layout: lowered west strip, smaller coordinated greenhouse, relocated beds and clear bedroom sightline pass');
