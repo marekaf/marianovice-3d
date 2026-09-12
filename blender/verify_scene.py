@@ -41,6 +41,17 @@ assert any(obj.name.startswith("saunaPath_0_slab") for obj in bpy.data.objects)
 if details is None:
     assert any(obj.name.startswith("east_deck_board_") for obj in bpy.data.objects)
 elements = {element['id']: element for element in garden['elements']}
+if details is not None:
+    legacy_prefixes = ('tree', 'specimen_maple', 'pond_water', 'east_deck_board_', 'climb_')
+    assert not any(obj.name.startswith(legacy_prefixes) and not obj.hide_render for obj in bpy.data.objects), 'Supplement must not duplicate visible legacy garden geometry'
+    pots = sorted((part for part in elements['atriumPots']['parts'] if part['kind'] == 'circle'), key=lambda part: -part['r'])
+    containers = [obj for obj in bpy.data.objects if re.fullmatch(r'pot\d+', obj.name)]
+    assert len(containers) == len(pots), 'Supplement preserves every atrium pot container'
+    for index, pot in enumerate(pots):
+        container = bpy.data.objects['pot%d' % index]
+        expected = Vector((pot['cx'], -pot['cy'], garden['siteTerrain']['deckTop'] + .25))
+        assert not container.hide_render and (container.matrix_world.translation - expected).length < 1e-5, 'Atrium pot remains at its layout centre'
+
 assert not any(obj.name.startswith(('screenNorth', 'guestBathroomPrivacy')) for obj in bpy.data.objects)
 route_mesh = bpy.data.objects['garden_routes']
 route_positions = garden['gardenRouteGeometry']['positions']

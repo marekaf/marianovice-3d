@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {prepareGardenDetails} from './unreal/garden-detail-scene.mjs';
-import {readFileSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -57,9 +57,6 @@ try{
   const code=`import sys,json,pathlib\nsys.path.insert(0,sys.argv[1])\nfrom garden_details import verified_manifest\np=pathlib.Path(sys.argv[2]); manifest=p/'manifest.json'; garden=json.loads((p/'garden.json').read_text()); original=json.loads(manifest.read_text())\nverified_manifest(manifest,garden,p,p)\nchanges=[lambda d:d.update(sourceOrigin=[1,0,0]),lambda d:d.update(controlPoints=[]),lambda d:d['assets'][0].update(sha256='bad'),lambda d:d['layout'].update(title='changed'),lambda d:d['terrain'].update(houseBaseY=-100),lambda d:d['categories'].pop('drain'),lambda d:d['sources']['viewer']['fileHashes'].update({'/source.js':'bad'})]\nfor change in changes:\n d=json.loads(json.dumps(original));change(d);manifest.write_text(json.dumps(d))\n try: verified_manifest(manifest,garden,p,p)\n except (ValueError,FileNotFoundError): pass\n else: raise AssertionError('Invalid supplement accepted')\nprint('Garden supplement provenance rejects stale files, geometry, datum and missing categories')`;
   console.log(execFileSync('python3',['-I','-c',code,resolve('blender'),directory],{encoding:'utf8',timeout:30000}).trim());
 }finally{rmSync(directory,{recursive:true,force:true});}
-const poc=readFileSync('blender/poc.py','utf8');
-assert(poc.indexOf('detail_legacy.update',poc.indexOf('# ---------------- trees'))<poc.indexOf('# atrium pots:'));
-assert(poc.indexOf('detail_legacy.update',poc.indexOf('# ---------------- trees'))<poc.indexOf('build_routes(GARDEN)'));
 const rollbackCode=`import sys,types
 sys.path.insert(0,sys.argv[1])
 import garden_details
@@ -78,4 +75,4 @@ else: raise AssertionError('Partial import failure swallowed')
 assert objects=={original}, 'Partial import left objects behind or removed existing objects'
 print('Partial garden import rolls back all new objects and preserves existing scene')`;
 console.log(execFileSync('python3',['-I','-c',rollbackCode,resolve('blender')],{encoding:'utf8',timeout:30000}).trim());
-console.log('Garden detail batches preserve category bounds, colours, mirrored winding and legacy routes/pots');
+console.log('Garden detail batches preserve category bounds, colours, mirrored winding');
