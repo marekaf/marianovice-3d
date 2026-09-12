@@ -16,8 +16,12 @@ with open(extra[0]) as source:
 bpy.context.view_layer.update()
 for key in ('roofModel', 'infillModel'):
     model = garden['houseRoof'][key]
+    names = {}
     for part in model['parts']:
-        obj = bpy.data.objects[part['name']]
+        count = names.get(part['name'],0)
+        names[part['name']] = count+1
+        name = part['name']+(".%03d" % count if count else "")
+        obj = bpy.data.objects[name]
         assert len(obj.data.vertices) == len(part['vertices'])
         for vertex, expected in zip(obj.data.vertices, part['vertices']):
             point = obj.matrix_world @ vertex.co
@@ -49,6 +53,11 @@ for vertex in route_mesh.data.vertices:
 route_inverse = route_mesh.matrix_world.inverted()
 hit, bend, _, _ = route_mesh.ray_cast(route_inverse @ Vector((8, -13.2, 10)), route_inverse.to_3x3() @ Vector((0, 0, -1)))
 assert hit and (route_mesh.matrix_world @ bend).z < garden['raisedBedsModel']['floorHeight']-.1, 'Walkway bend must descend from the bed court'
+
+expected_wire_instances = sum(len(group['positions']) for model in garden['fenceModels'] for part in model['parts'] if part['type'] == 'repeatedMesh' for group in part['groups'])
+wire_instances = [obj for obj in bpy.data.objects if obj.name.startswith('chain_link_mesh_')]
+assert len(wire_instances) == expected_wire_instances, 'All measured-fence mesh repetitions are present'
+assert len({obj.data.as_pointer() for obj in wire_instances}) < len(wire_instances), 'Repeated fence wires share their source meshes'
 
 expected_fence_posts = [part for model in garden['fenceModels'] for part in model['parts'] if part['type'] == 'cylinder']
 actual_fence_posts = [obj for obj in bpy.data.objects if re.fullmatch(r'fence_post_\d+(?:\.\d+)?', obj.name)]
