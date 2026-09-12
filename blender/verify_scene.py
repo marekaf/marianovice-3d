@@ -118,9 +118,9 @@ finished_floor = garden['terrain']['houseFFLInternal']
 north_gravel = bpy.data.objects['drip0']
 north_vertices = [north_gravel.matrix_world @ vertex.co for vertex in north_gravel.data.vertices]
 for vertex in north_vertices:
-    expected = finished_floor-.5*(vertex.x-house[0])/(house[2]-house[0])
+    expected = finished_floor-.25-.25*(vertex.x-house[0])/(house[2]-house[0])
     assert abs(vertex.z-expected) < 1e-5, ('north gravel finish', tuple(vertex), expected)
-for x, level in [(house[0], finished_floor), (house[2], finished_floor-.5)]:
+for x, level in [(house[0], finished_floor-.25), (house[2], finished_floor-.5)]:
     edge = [vertex for vertex in north_vertices if abs(vertex.x-x) < 1e-5]
     assert len(edge) >= 2
     assert all(abs(vertex.z-level) < 1e-5 for vertex in edge)
@@ -292,4 +292,4 @@ if details is None and not os.path.isdir(os.path.join(asset_root, "models")):
     assert any(obj.name.startswith("tree") and not obj.hide_render for obj in bpy.data.objects)
 print("SCENE VERIFIED: %d vehicles, %d outdoor furniture parts, %d procedural templates" %
       (len(roots), len(furniture["parts"]), len(templates)))
-print("GRADING VERIFIED: north gravel 0.50 m fall; greenhouse footprint and finish; heat-pump pad contact")
+print("GRADING VERIFIED: north gravel 0.25 m fall after E; terrace-to-east 0.50 m; greenhouse footprint and finish; heat-pump pad contact")

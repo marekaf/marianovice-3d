@@ -50,10 +50,10 @@ const GARDEN = {
   elements: [
     {id:'heatPumpService',name:'Rovná servisní odbočka k tepelnému čerpadlu',short:'Servis TČ',meta:{grading:{relativeLevel:-.54}},parts:[{kind:'rect',x:17.125,y:26.7,w:4.155,d:.6,fill:'#c8c2b0',opacity:.65,stroke:'#77715f',sw:.7},{kind:'text',x:19.3,y:27.15,text:'servis TČ',cls:'lbl-sm'}]},
     {id:'heatPumpPad',name:'Základ pod venkovní jednotkou TČ',short:'Základ TČ',parts:[{kind:'rect',x:17.125,y:26.7,w:1.15,d:.6,fill:'#8d8a84',opacity:.9,stroke:'#666',sw:.7}]},
-    {id:'westDrainageStrip',name:'Snížený pás zeleně kolem západní terasy',short:'Západní průleh',meta:{plant:'perennials',palette:'bedTerrace',maxHeight:.45,grading:{relativeLevel:-.3,coveredCrossings:[{x:9.48,y:6.43,w:1,d:.75,routeId:"Wellness access"},{x:8.73,y:18.1,w:.75,d:1,routeId:"Quiet garden approach",surfaceReference:{relativeLevel:-.3,bankSlope:.4}}],outlet:{position:[9.105,26.805],kind:'buried-proposal'}}},parts:[
-      {kind:'rect',x:8.73,y:7.18,w:.75,d:20,grading:{relativeLevel:-.3,fallZ:-.004,zEnd:26.43},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
-      {kind:'rect',x:8.73,y:6.43,w:1.75,d:.75,grading:{relativeLevel:-.3,fallX:.01,xStart:9.48},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
-      {kind:'rect',x:9.48,y:26.43,w:1,d:.75,grading:{relativeLevel:-.377,fallX:.307,minimumSurface:true},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8}
+    {id:'westDrainageStrip',name:'Snížený pás zeleně kolem západní terasy',short:'Západní průleh',meta:{plant:'perennials',palette:'bedTerrace',maxHeight:.45,grading:{relativeLevel:-.3,coveredCrossings:[{x:9.48,y:6.43,w:1,d:.75,routeId:"Wellness access"},{x:8.73,y:18.1,w:.75,d:1,routeId:"Quiet garden approach",surfaceReference:{relativeLevel:-.3,bankSlope:.4}}]}},parts:[
+      {kind:'rect',x:8.73,y:7.18,w:.75,d:20,grading:{relativeLevel:-.3},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
+      {kind:'rect',x:8.73,y:6.43,w:1.75,d:.75,grading:{relativeLevel:-.3,fallX:-.02,xStart:9.48,minimumSurface:true},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
+      {kind:'rect',x:9.48,y:26.43,w:1,d:.75,grading:{relativeLevel:-.3,fallX:-.02,minimumSurface:true},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8}
     ]},
     {id:'arrivalStrip',name:'Kvetoucí pás podél jižní hranice příjezdu',meta:{palette:'arrivalStrip',plant:'perennials',maxHeight:.9},parts:[{kind:'polygon',points:[[21.4,30.1],[38.9,32.3],[38.9,33.5],[21.4,31.8]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},
     {id:'tankCover',name:'Nízká zeleň nad nádrží: mocnost zeminy a zatížení k ověření',meta:{plant:'perennials',utilityCover:true,maxHeight:.25},parts:[{kind:'polygon',points:[[35.63,16.7],[38.63,16.7],[38.63,20.2],[35.63,20.2]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},

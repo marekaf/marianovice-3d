@@ -10,7 +10,7 @@ const strip=GARDEN.elements.find(e=>e.id==='westDrainageStrip').parts.find(p=>p.
 const level=TERRAIN.houseFFLInternal-.3,checks=[];
 for(let ix=0;ix<=15;ix++)for(let iz=0;iz<=385;iz++){
   const x=strip.x+strip.w*ix/15,z=strip.y+strip.d*iz/385;
-  assert(Math.abs(site.height(x,z)-(level-.004*(Math.min(z,26.43)-strip.y)))<1e-8,`Full lowered strip at ${x},${z}: ${site.height(x,z)} instead of the draining plane`);
+  assert(Math.abs(site.height(x,z)-level)<1e-8,`Full lowered strip at ${x},${z}: ${site.height(x,z)} instead of the level plane`);
   checks.push([x,z]);
 }
 const drainage=GARDEN.elements.find(e=>e.id==='westDrainageStrip');
@@ -21,21 +21,15 @@ assert.equal(south.y,terrace.y+terrace.d);
 assert.equal(south.x,terrace.x);
 assert.equal(south.w,terrace.w);
 assert.equal(strip.y+strip.d,south.y+south.d);
-for(const trace of [[[10.48,6.805],[9.105,6.805],[9.105,7.18],[9.105,26.805]],[[10.48,26.805],[9.48,26.805],[9.105,26.805]]]){
-  let last=Infinity;
-  for(let i=1;i<trace.length;i++)for(let j=0;j<=100;j++){
-    const a=trace[i-1],b=trace[i],x=a[0]+(b[0]-a[0])*j/100,z=a[1]+(b[1]-a[1])*j/100,h=site.height(x,z);
-    assert(h<=last+1e-8,'Both returns drain continuously into the western collector');last=h;checks.push([x,z]);
+for(const arm of [north,south])for(let iz=0;iz<=30;iz++){
+  const z=arm.y+arm.d*iz/30;let previous=Infinity;
+  for(let ix=0;ix<=590;ix++){
+    const x=9.48+11.8*ix/590,h=site.height(x,z);
+    assert(h<=previous+1e-8,'Each full-width return and adjoining garden continue downhill east');previous=h;checks.push([x,z]);
+    if(x<=10.48+1e-8)assert(Math.abs(h-(level-.02*(x-9.48)))<1e-8,'Short returns fall east at2%');
   }
-  assert(Math.abs(last-2.088)<1e-8,'Collector low end is independent of the higher facade');
-}
-for(let i=0;i<=100;i++)for(let j=0;j<=75;j++){
-  const x=south.x+i/100,z=south.y+j/100;
-  assert(Math.abs(site.height(x,z)-(2.088+.307*i/100))<1e-8,'Entire south return drains away from the house without a hump');checks.push([x,z]);
-}
-for(let z=26.43;z<=27.18;z+=.025){
-  assert(Math.abs(site.height(10.48,z)-2.395)<1e-8,'South facade soil elevation remains fixed');
-  for(const x of [9.48,10.48])assert(Math.abs(site.height(x+1e-7,z)-site.height(x-1e-7,z))<1e-6,'Return edges are continuous');
+  assert(Math.abs(site.height(10.48,z)-(level-.02))<1e-8,'Returns join the lowered J/I western edge');
+  for(const x of [9.48,10.48])assert(Math.abs(site.height(x+1e-7,z)-site.height(x-1e-7,z))<1e-6,'Return joins are continuous');
 }
 let peak=0;
 for(let x=5.65;x<=strip.x+.001;x+=.05)for(let z=7.18;z<=17;z+=.05){

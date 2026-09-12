@@ -118,8 +118,8 @@ try {
   });
   assert.deepEqual(surfaces.removedScreens,[],"Firepit and guest bathroom screens are absent from the rendered scene");
   assert(surfaces.northWest.length&&surfaces.northEast.length);
-  assert(surfaces.northWest.every(h=>Math.abs(h-2.465)<1e-4),'North gravel starts at west terrace finish');
-  assert(surfaces.northEast.every(h=>Math.abs(h-1.965)<1e-4),'North gravel falls 50 cm toward the east');
+  assert(surfaces.northWest.every(h=>Math.abs(h-2.215)<1e-4),'North gravel starts above the lower E return');
+  assert(surfaces.northEast.every(h=>Math.abs(h-1.965)<1e-4),'North gravel reaches50cm below the west terrace');
   const southGrade=await page.evaluate(()=>{
     const t=gradingSession,south=t.scene.getObjectByName('south-facade-gravel'),ray=new t.THREE.Raycaster();
     let samples=0,missing=0,error=0;
@@ -127,7 +127,7 @@ try {
       ray.set(new t.THREE.Vector3(x,5,z),new t.THREE.Vector3(0,-1,0));
       const hit=ray.intersectObject(south,false)[0];samples++;
       if(!hit){missing++;continue;}
-      error=Math.max(error,Math.abs(hit.point.y-(2.465-.5*(x-10.48)/10.8)));
+      error=Math.max(error,Math.abs(hit.point.y-(2.215-.25*(x-10.48)/10.8)));
     }
     const ends=[10.4801,21.2799].map(x=>{
       ray.set(new t.THREE.Vector3(x,5,26.4301),new t.THREE.Vector3(0,-1,0));
@@ -136,7 +136,7 @@ try {
     return {samples,missing,error,ends};
   });
   assert(southGrade.samples>1400&&southGrade.missing===0&&southGrade.error<1e-5,`Actual south gravel maintains the full-width west-to-east fall outside the service spur: ${JSON.stringify(southGrade)}`);
-  assert(southGrade.ends.every((height,i)=>Math.abs(height-[2.465,1.965][i])<2e-5),'Actual south gravel joins the west terrace and east driveway with a 50 cm finished fall');
+  assert(southGrade.ends.every((height,i)=>Math.abs(height-[2.215,1.965][i])<2e-5),'Actual south gravel falls25cm from E toward the east driveway,50cm below the west terrace');
   assert(surfaces.padGap<1e-5,'Heat pump bearing pad reaches the graded soil');
   assert(surfaces.flatPaving.length&&surfaces.flatPaving.every(y=>Math.abs(y-1.965)<1e-5),'Rendered A paving has the common finished level');
   assert(Math.abs(surfaces.bedFinish-2.865)<1e-6,'Ground under the raised beds is 40 cm above the west terrace');
