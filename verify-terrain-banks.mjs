@@ -9,6 +9,8 @@ const survey=existsSync('docs/survey-terrain.js')?require('./docs/survey-terrain
 const {site}=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey});
 const near=(actual,expected,label)=>assert(Math.abs(actual-expected)<1e-8,`${label}: ${actual} != ${expected}`);
 if(existsSync('docs/survey-terrain.js')){
+  const pergola=site.spec.gatheringPads[0];
+  for(let x=pergola.x0;x<=pergola.x1+.001;x+=.1)for(let z=pergola.z0;z<=pergola.z1+.001;z+=.1)near(site.height(x,z),pergola.level,'Entire pergola ground stays level');
   const x=1.4,z=10.3,step=.025;
   const slopeJump=Math.abs(site.height(x+step,z)-2*site.height(x,z)+site.height(x-step,z))/step;
   assert(slopeJump<.15,'Bed-court bank crest eases into its level pad');
@@ -61,8 +63,8 @@ function maximum(fn,[x0,x1,z0,z1]) {
   }
   return max*100;
 }
-const measurements=[['north',[10,40,1,5]],['lower',[35,43,2,18]],['productive',[0,9,7,23]],['south',[8,23,27.5,31]],['east terrace',[23.58,27,12.5,18.5]],['water-source approach',[34.13,42.5,21,27.89]]].map(([name,bounds])=>({name,maximumPercent:maximum(site.height,bounds)}));
-if(existsSync('docs/survey-terrain.js'))for(const value of measurements)assert(value.maximumPercent<=50,`${value.name} earth banks must remain within the 1:2 concept envelope`);
+const measurements=[['north west',[10,20,1,5]],['pergola bank',[20,31,0,6],65],['north east',[31,40,1,5]],['lower',[35,43,2,18]],['productive',[0,9,7,23]],['south',[8,23,27.5,31]],['east terrace',[23.58,27,12.5,18.5]],['water-source approach',[34.13,42.5,21,27.89]]].map(([name,bounds,limitPercent=50])=>({name,maximumPercent:maximum(site.height,bounds),limitPercent}));
+if(existsSync('docs/survey-terrain.js'))for(const value of measurements)assert(value.maximumPercent<=value.limitPercent,`${value.name} earth banks exceed their local slope allowance`);
 for(const segment of site.spec.fixedFences?.segments??[])for(let i=0;i<=100;i++){const t=i/100,x=segment.start[0]+(segment.end[0]-segment.start[0])*t,z=segment.start[1]+(segment.end[1]-segment.start[1])*t;near(site.height(x,z),site.baseHeight(x,z),'Every measured built-fence foot preserves existing ground');}
 for(const bank of GARDEN.gradingBanks) {
   assert(bank.points.length>=4 && bank.maxSlope<=.48 && bank.designSlope===.4);
@@ -75,6 +77,8 @@ console.log(JSON.stringify({vehicleCourt:'level',westStrip:'300 mm below terrace
 if(site.spec.fixedFences?.segments.length) {
   const points=site.spec.fixedFences.segments.flatMap(segment=>Array.from({length:101},(_,i)=>segment.start.map((v,axis)=>v+(segment.end[axis]-v)*i/100)));
   for(let x=0;x<44;x+=2)for(let z=0;z<31;z+=2)points.push([x,z]);
+  const pergola=site.spec.gatheringPads[0];
+  for(let x=pergola.x0-1;x<=pergola.x1+1;x+=.25)for(let z=pergola.z0-1;z<=pergola.z1+1;z+=.25)points.push([x,z]);
   const result=runPythonJson('import json,sys; from blender.site_terrain import height; d=json.load(sys.stdin); print(json.dumps([height(d["spec"],*p) for p in d["points"]]))',{spec:site.spec,points});
   let maximumError=0;points.forEach((p,i)=>{const error=Math.abs(result[i]-site.height(...p));maximumError=Math.max(maximumError,error);assert(error<1e-10,'Measured fixed-fence grading agrees in both renderers');});
   console.log(JSON.stringify({fixedFenceParitySamples:points.length,maximumError}));

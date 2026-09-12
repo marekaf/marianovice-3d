@@ -7,7 +7,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
   page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
-  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
+  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
   await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
   assert.deepEqual(errors,[]);
@@ -27,6 +27,13 @@ try {
   restored.dimensions.forEach(d=>assert(Math.abs(d.distance-2)<1e-7,`${d.id} stays exactly 2 m`));
   assert.equal(restored.measuredFenceCount,14);assert.equal(restored.renderedFenceCount,restored.fenceModels);assert(restored.fencePostError<1e-8);
   assert.equal(restored.garageFacade,'#e2cec5','Approved HN3E facade retained');
+  const pergolaGround=await page.evaluate(()=>{
+    const t=gradingSession,p=t.pergolaModel.groundPatch,vertices=t.ground.geometry.attributes.position;
+    let count=0,error=0;
+    for(let i=0;i<vertices.count;i++)if(vertices.getX(i)>p.x+.1&&vertices.getX(i)<p.x+p.w-.1&&vertices.getZ(i)>p.y+.1&&vertices.getZ(i)<p.y+p.d-.1){count++;error=Math.max(error,Math.abs(vertices.getY(i)-p.level));}
+    return {count,error};
+  });
+  assert(pergolaGround.count>100&&pergolaGround.error<1e-5,`Rendered soil is level beneath the pergola: ${JSON.stringify(pergolaGround)}`);
   assert(restored.garageColors.length&&restored.garageColors.every(color=>color==='e2cec5'),'Actual garage facade meshes use HN3E');
   const surfaces=await page.evaluate(()=>{
     const t=gradingSession,north=t.scene.getObjectByName('north-facade-gravel').geometry.attributes.position;

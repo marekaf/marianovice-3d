@@ -172,7 +172,12 @@ const SiteTerrain = (() => {
       const sample=routeSample(route,x,z,true),distance=Math.max(0,sample.distance-route.width/2);
       const bedding=routeBedding(route,x,z);
       const blend=route.bankBlend??.5;
-      if(spec.regionalGrades){const target=Math.max(sample.level-bedding-(route.bankSlope??.4)*distance,Math.min(sample.level-bedding+(route.bankSlope??.4)*distance,h));const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z))):Infinity;h+=(target-h)*smoothstep(clear/.3);}
+      if(spec.regionalGrades){
+        let target=Math.max(sample.level-bedding-(route.bankSlope??.4)*distance,Math.min(sample.level-bedding+(route.bankSlope??.4)*distance,h));
+        for(const pad of spec.fixedFences?.levelPads??[])target=Math.max(target,pad.level-.4*rectDistance(pad,x,z));
+        const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z))):Infinity;
+        h+=(target-h)*smoothstep(clear/.3);
+      }
       else if(distance<blend) {
         const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d)):Infinity;
         const influence=(1-smoothstep(distance/blend))*(route.approachBank?smoothstep(clear/1.2):1)*smoothstep(routeBankClearance(route,x,z));
@@ -201,7 +206,9 @@ const SiteTerrain = (() => {
     for(const segment of spec.fixedFences?.segments??[]) {
       const [a,b]=[segment.start,segment.end],dx=b[0]-a[0],dz=b[1]-a[1];
       const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));
-      const bx=a[0]+t*dx,bz=a[1]+t*dz,d=Math.hypot(x-bx,z-bz),level=naturalHeight(spec,bx,bz),slope=spec.fixedFences.bankSlope;
+      const bx=a[0]+t*dx,bz=a[1]+t*dz,d=Math.hypot(x-bx,z-bz),level=naturalHeight(spec,bx,bz);
+      let slope=spec.fixedFences.bankSlope;
+      for(const pad of spec.fixedFences.levelPads??[])slope=Math.max(slope,Math.min(pad.bankSlope,Math.abs(pad.level-level)/Math.max(.001,rectDistance(pad,bx,bz))));
       h=Math.max(level-slope*d,Math.min(level+slope*d,h));
     }
     return h;
@@ -308,6 +315,7 @@ const SiteTerrain = (() => {
       const fireElement=garden.elements.find(e=>e.id==='firePit');
       const fire=fireElement.parts.find(p=>p.kind==='circle');
       const gathering=groundPatches.pergola;
+      if(spec.fixedFences&&gathering.fenceBankSlope)spec.fixedFences.levelPads=[{...patchRect(gathering),bankSlope:gathering.fenceBankSlope}];
       const fireLevel=fireElement.meta?.grading?.level??gathering.level;
       const fireFinished=fireLevel+(fireElement.meta?.grading?.surfaceOffset??0)+.008;
       spec.pond.northBankOuter=Math.max(1.3,(pond.cz-fire.cy-fire.r)/pond.rz);
@@ -329,7 +337,7 @@ const SiteTerrain = (() => {
       for(const [route,start,end]of [[dining,options.houseFFL,gathering.level+.1],[gatheringLink,gathering.level+.1,fireFinished],[pondApproach,pondStart,fireFinished]])if(route) {
         const lengths=[0];
         for(let i=1;i<route.points.length;i++)lengths.push(lengths[i-1]+Math.hypot(route.points[i][0]-route.points[i-1][0],route.points[i][1]-route.points[i-1][1]));
-        const startLanding=route===gatheringLink?.4:1.2,endLanding=route===pondApproach?lengths.at(-1)-lengths.at(-3)+1.2:route===gatheringLink?lengths.at(-1)-lengths[1]+.4:1.1,transitionLength=route===gatheringLink?.4:.8,active=lengths.at(-1)-startLanding-endLanding;
+        const startLanding=route===gatheringLink?.8:1.2,endLanding=route===pondApproach?lengths.at(-1)-lengths.at(-3)+1.2:route===gatheringLink?lengths.at(-1)-lengths[1]+.25:1.1,transitionLength=route===gatheringLink?.4:.8,active=lengths.at(-1)-startLanding-endLanding;
         const distances=[...lengths,startLanding,lengths.at(-1)-endLanding].sort((a,b)=>a-b).filter((s,i,a)=>i===0||s-a[i-1]>1e-6);
         const points=distances.map(s=>{const i=Math.max(1,lengths.findIndex(v=>v>=s)),t=(s-lengths[i-1])/(lengths[i]-lengths[i-1]);return route.points[i-1].map((v,k)=>v+t*(route.points[i][k]-v));});
         const levels=distances.map(s=>{const u=Math.max(0,Math.min(active,s-startLanding)),area=v=>v/2-transitionLength*Math.sin(Math.PI*v/transitionLength)/(2*Math.PI);

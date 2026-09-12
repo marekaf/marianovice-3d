@@ -276,7 +276,7 @@ const GARDEN = {
     {
       id: "pergola",
       name: "Pergola a gril 6 × 4 m",
-      meta: {grading: {level: 1.915, blend: 1.2}},
+      meta: {grading: {level: 1.915, blend: 1.2, fenceBankSlope: .65}},
       parts: [
         {kind: "rect", x: 22.42785414913, y: 1.68127450503, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6, 3"},
         {kind: "rect", role: "paving", x: 22.62785414913, y: 1.88127450503, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9},

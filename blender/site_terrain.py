@@ -201,6 +201,8 @@ def height(spec, x, y):
         bedding = route_bedding(route, x, y)
         if spec.get('regionalGrades'):
             target = max(level-bedding-route.get('bankSlope', .4)*distance,min(level-bedding+route.get('bankSlope', .4)*distance,h))
+            for pad in spec.get('fixedFences', {}).get('levelPads', []):
+                target = max(target, pad['level']-.4*rect_distance(pad, x, y))
             clear = min((rect_distance(p, x, y) for p in spec.get('finishPads', [])), default=math.inf) if route.get('approachBank') else math.inf
             h += (target-h)*smoothstep(clear/.3)
         elif distance < blend:
@@ -255,5 +257,7 @@ def height(spec, x, y):
         distance = math.hypot(x-bx, y-by)
         level = survey_height(spec['surveySurface'], bx, by) if spec.get('surveySurface') else max(0, plane['a']*bx+plane['b']*by+plane['c'])
         slope = spec['fixedFences']['bankSlope']
+        for pad in spec['fixedFences'].get('levelPads', []):
+            slope = max(slope, min(pad['bankSlope'], abs(pad['level']-level)/max(.001, rect_distance(pad, bx, by))))
         h = max(level-slope*distance, min(level+slope*distance, h))
     return h

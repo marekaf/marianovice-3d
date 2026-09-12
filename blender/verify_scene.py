@@ -138,6 +138,14 @@ assert abs(min((heat_body.matrix_world @ Vector(corner)).z for corner in heat_bo
 heat_rect = next(part for part in elements['heatPumpPad']['parts'] if part['kind'] == 'rect')
 terrain_mesh = bpy.data.objects['terrain']
 terrain_inverse = terrain_mesh.matrix_world.inverted()
+for pad in garden['siteTerrain'].get('fixedFences', {}).get('levelPads', []):
+    for ix in range(61):
+        for iz in range(41):
+            x = pad['x0']+(pad['x1']-pad['x0'])*ix/60
+            z = pad['z0']+(pad['z1']-pad['z0'])*iz/40
+            hit, position, _, _ = terrain_mesh.ray_cast(terrain_inverse @ Vector((x, -z, 100)),
+                terrain_inverse.to_3x3() @ Vector((0, 0, -1)))
+            assert hit and abs((terrain_mesh.matrix_world @ position).z-pad['level']) < 2e-5, ('Pergola ground mesh must be flat', x, z)
 walk_grass_samples = 0
 for vertex in terrain_mesh.data.vertices:
     point = terrain_mesh.matrix_world @ vertex.co
