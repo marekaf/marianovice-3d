@@ -9,6 +9,7 @@ import bpy
 from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from site_terrain import height as site_height
+from site_terrain import route_sample
 
 extra = sys.argv[sys.argv.index("--") + 1:]
 with open(extra[0]) as source:
@@ -64,9 +65,38 @@ for vertex in route_mesh.data.vertices:
     index = vertex.index*3
     expected = Vector((route_positions[index], -route_positions[index+2], route_positions[index+1]))
     assert ((route_mesh.matrix_world @ vertex.co)-expected).length < 1e-5, 'Saved walkway preserves the verified shared ribbon geometry'
+productive = next(route for route in garden['siteTerrain']['routeProfiles'] if route['id'] == 'Productive access')
+access_exclusions = [garden['raisedBedsModel']['surfaceFootprint']]+[
+    part for part in elements['saunaPath']['parts'] if part['kind'] == 'rect']
 route_inverse = route_mesh.matrix_world.inverted()
-hit, bend, _, _ = route_mesh.ray_cast(route_inverse @ Vector((8, -13.2, 10)), route_inverse.to_3x3() @ Vector((0, 0, -1)))
-assert hit and (route_mesh.matrix_world @ bend).z < garden['raisedBedsModel']['floorHeight']-.1, 'Walkway bend must descend from the bed court'
+access_samples = 0
+access_interpolation_error = 0
+for side in [-.499, -.25, 0, .25, .499]:
+    for segment in range(len(productive['points'])-1, 0, -1):
+        a, b = productive['points'][segment], productive['points'][segment-1]
+        dx, dz = b[0]-a[0], b[1]-a[1]
+        length = math.hypot(dx, dz)
+        previous = math.inf
+        previous_profile = math.inf
+        for index in range(1, 100):
+            x = a[0]+dx*index/100-dz/length*side*productive['width']
+            z = a[1]+dz*index/100+dx/length*side*productive['width']
+            expected = route_sample(productive, x, z)[1]
+            assert expected <= previous_profile+1e-8, ('Full-width bed to sauna profile descends or stays level', x, z)
+            previous_profile = expected
+            if any(rect['x']-1e-6 <= x <= rect['x']+rect['w']+1e-6 and rect['y']-1e-6 <= z <= rect['y']+rect['d']+1e-6 for rect in access_exclusions):
+                continue
+            hit, point, _, _ = route_mesh.ray_cast(route_inverse @ Vector((x, -z, expected+1)),
+                route_inverse.to_3x3() @ Vector((0, 0, -1)))
+            assert hit, ('Bed to sauna ribbon has continuous full-width support outside its paving exclusions', x, z)
+            actual = (route_mesh.matrix_world @ point).z
+            access_interpolation_error = max(access_interpolation_error, abs(actual-expected))
+            assert min(productive['levels'])-2e-5 <= actual <= max(productive['levels'])+2e-5, ('Bed to sauna access stays between its endpoint levels', x, z, actual)
+            assert actual <= previous+2e-5, ('Bed to sauna access descends or stays level', x, z)
+            assert site_height(garden['siteTerrain'], x, z) <= actual+2e-5, ('Soil remains below the access surface', x, z)
+            previous = actual
+            access_samples += 1
+print('BED TO SAUNA ACCESS VERIFIED', access_samples, 'rays; maximum profile interpolation', access_interpolation_error)
 
 expected_wire_instances = sum(len(group['positions']) for model in garden['fenceModels'] for part in model['parts'] if part['type'] == 'repeatedMesh' for group in part['groups'])
 wire_instances = [obj for obj in bpy.data.objects if obj.name.startswith('chain_link_mesh_')]
@@ -174,7 +204,7 @@ for strip in garden['siteTerrain'].get('drainageStrips', []):
 
 for vertex in terrain_mesh.data.vertices:
     point = terrain_mesh.matrix_world @ vertex.co
-    if 7.7 < point.x < 8.3 and 7 < -point.y < 12:
+    if route_sample(productive, point.x, -point.y)[0] < productive['width']/2-.2:
         assert terrain_mesh.data.attributes['grass_w'].data[vertex.index].value == 0, 'Grass must not grow through the walkway'
         walk_grass_samples += 1
 assert walk_grass_samples > 0
