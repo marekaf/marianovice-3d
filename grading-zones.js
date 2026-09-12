@@ -80,7 +80,7 @@ const GradingZones = (() => {
       ['F','Dům',buildingFootprints(['house']),[16,12],'#8470ad'],
       ['M','Garáž a přístřešek',buildingFootprints(['garage','carport']),[30.5,22.5],'#447fa3'],
       ['E','Západní snížený pás',west?[rect(west.x-.75,west.y,.75,west.d)]:[],[9.1,20],'#b29845'],
-      ['A','Rovný příjezd před garáží',drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100])).filter(p=>p.length),[28,28],'#848e98'],
+      ['A','Rovný příjezd a servis tepelného čerpadla',[...drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100])).filter(p=>p.length),...parts(el('heatPumpService'))],[28,28],'#848e98'],
       ['B','Sjezd k bráně',drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100],false)).filter(p=>p.length),[39,29],'#bd946e'],
       ['D','Východní terasa',parts(el('eastTerrace')),[22.8,14],'#cfb174'],
       ['K','Západní terasa a atrium',parts(el('westTerrace')),[12.5,17.5],'#c07c4f'],
