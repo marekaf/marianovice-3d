@@ -76,6 +76,8 @@ const GradingZones = (() => {
     const garageEast=garage?garage.x+garage.w:34.13;
     const drivewayParts=parts(el('driveway'));
     const buildingFootprints=ids=>ids.flatMap(id=>parts({parts:(el(id)?.parts??[]).filter(p=>p.kind==='polygon'||p.kind==='rect').slice(0,1)}));
+    const terraceBankWidth=1.05;
+    const terraceBanks=east?[rect(east.x,east.y-terraceBankWidth,east.w,terraceBankWidth),rect(east.x+east.w,east.y,terraceBankWidth,east.d),[[east.x+east.w,east.y],...Array.from({length:33},(_,i)=>{const angle=-Math.PI/2+i*Math.PI/64;return [east.x+east.w+terraceBankWidth*Math.cos(angle),east.y+terraceBankWidth*Math.sin(angle)];})]]:[];
     const masks=[
       ['F','Dům',buildingFootprints(['house']),[16,12],'#8470ad'],
       ['M','Garáž a přístřešek',buildingFootprints(['garage','carport']),[30.5,22.5],'#447fa3'],
@@ -83,6 +85,7 @@ const GradingZones = (() => {
       ['A','Rovný příjezd a servis tepelného čerpadla',[...drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100])).filter(p=>p.length),...parts(el('heatPumpService'))],[28,28],'#848e98'],
       ['B','Sjezd k bráně',drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100],false)).filter(p=>p.length),[39,29],'#bd946e'],
       ['D','Východní terasa',parts(el('eastTerrace')),[22.8,14],'#cfb174'],
+      ['N','Svahy kolem východní terasy',terraceBanks,[24.1,17],'#b15c64'],
       ['K','Západní terasa a atrium',parts(el('westTerrace')),[12.5,17.5],'#c07c4f'],
       ['J','Zahrada severně od domu',[rect(house[0],-10,house[2]-house[0],house[1]+10)],[12,4],'#669f9d'],
       ['G','Sauna a užitková zahrada',[rect(productiveMinX,1.8,9.48-productiveMinX,productiveMaxZ-1.8)],[4,8],'#8fac75'],
