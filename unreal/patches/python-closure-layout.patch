@@ -1,0 +1,33 @@
+diff --git a/Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PyMethodWithClosure.h b/Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PyMethodWithClosure.h
+index a04c746..48195e9 100644
+--- a/Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PyMethodWithClosure.h
++++ b/Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PyMethodWithClosure.h
+@@ -78,2 +78,5 @@ struct FPyCFunctionWithClosureObject
+ 
++	PyObject* WeakRefList;
++	vectorcallfunc VectorCall;
++
+ 	/** New this instance */
+@@ -94,2 +97,6 @@ struct FPyCFunctionWithClosureObject
+ 
++static_assert(sizeof(FPyCFunctionWithClosureObject) == sizeof(PyCFunctionObject));
++static_assert(offsetof(FPyCFunctionWithClosureObject, WeakRefList) == offsetof(PyCFunctionObject, m_weakreflist));
++static_assert(offsetof(FPyCFunctionWithClosureObject, VectorCall) == offsetof(PyCFunctionObject, vectorcall));
++
+ /** Python object for the descriptor of a method with a closure (equivalent to PyMethodDescrObject) */
+diff --git a/Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PyMethodWithClosure.cpp b/Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PyMethodWithClosure.cpp
+index d966aea..283fac2 100644
+--- a/Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PyMethodWithClosure.cpp
++++ b/Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PyMethodWithClosure.cpp
+@@ -230,2 +230,4 @@ FPyCFunctionWithClosureObject* FPyCFunctionWithClosureObject::New(FPyMethodWithC
+ 		Self->ModuleAttr = InModule;
++		Self->WeakRefList = nullptr;
++		Self->VectorCall = nullptr;
+ 
+@@ -240,2 +242,6 @@ void FPyCFunctionWithClosureObject::Free(FPyCFunctionWithClosureObject* InSelf)
+ 	PyObject_GC_UnTrack(InSelf);
++	if (InSelf->WeakRefList)
++	{
++		PyObject_ClearWeakRefs((PyObject*)InSelf);
++	}
+ 
