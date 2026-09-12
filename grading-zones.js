@@ -79,7 +79,7 @@ const GradingZones = (() => {
     const masks=[
       ['F','Dům',buildingFootprints(['house']),[16,12],'#8470ad'],
       ['M','Garáž a přístřešek',buildingFootprints(['garage','carport']),[30.5,22.5],'#447fa3'],
-      ['E','Západní snížený pás',west?[rect(west.x-.75,west.y,.75,west.d)]:[],[9.1,20],'#b29845'],
+      ['E','Západní snížený pás',parts(el('westDrainageStrip')),[9.1,20],'#b29845'],
       ['A','Rovný příjezd a servis tepelného čerpadla',[...drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100])).filter(p=>p.length),...parts(el('heatPumpService'))],[28,28],'#848e98'],
       ['B','Sjezd k bráně',drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100],false)).filter(p=>p.length),[39,29],'#bd946e'],
       ['D','Východní terasa',parts(el('eastTerrace')),[22.8,14],'#cfb174'],
@@ -105,7 +105,7 @@ const GradingZones = (() => {
     const groups=[['buildings','Dům, garáž a ostatní stavby',['house','garage','sauna','saunaShelter','greenhouse','toolStore']],['driveway','Příjezd včetně přístřešku',['driveway','carport']],['eastTerrace','Východní terasa',['eastTerrace']],['westTerrace','Západní terasa včetně atria',['westTerrace']],['pergola','Pergola',['pergola']],['service','Servisní plocha čerpadla včetně podstavce',['heatPumpService','heatPumpPad']],['paths','Pevné pěší plochy',['saunaPath']],['productive','Plošina záhonů',['raisedBedsPad']],['drainage','Západní snížený pás',[]]];
     remaining=plot;const surfaces=[];
     for(const [id,name,ids] of groups) {
-      const clips=id==='drainage'&&west?triangles(rect(west.x-.75,west.y,.75,west.d)):ids.flatMap(elementId=>parts(id==='buildings'?{parts:(el(elementId)?.parts??[]).filter(p=>p.kind==='polygon'||p.kind==='rect').slice(0,1)}:el(elementId)));
+      const clips=id==='drainage'?parts(el('westDrainageStrip')):ids.flatMap(elementId=>parts(id==='buildings'?{parts:(el(elementId)?.parts??[]).filter(p=>p.kind==='polygon'||p.kind==='rect').slice(0,1)}:el(elementId)));
       const polygons=[];
       for(const clip of clips){for(const p of remaining){const q=split(p,clip).inside;if(q.length)polygons.push(q);}remaining=subtract(remaining,[clip]);}
       surfaces.push({id,name,polygons,area:sum(polygons)});

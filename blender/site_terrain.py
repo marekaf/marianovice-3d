@@ -6,6 +6,11 @@ else:
     from survey_surface import height as survey_height
 
 
+def drainage_level(strip, x, z):
+    dx = max(0, min(strip.get('xEnd', strip['x1']), x)-strip.get('xStart', strip['x0']))
+    dz = max(0, min(strip.get('zEnd', strip['z1']), z)-strip.get('zStart', strip['z0']))
+    return strip['level']+strip.get('fallX', 0)*dx+strip.get('fallZ', 0)*dz
+
 def smoothstep(t):
     t = max(0.0, min(1.0, t))
     return t * t * (3.0 - 2.0 * t)
@@ -222,7 +227,7 @@ def height(spec, x, y):
             for pad in spec.get('fixedFences', {}).get('levelPads', []):
                 target = max(target, pad['level']-.4*rect_distance(pad, x, y))
             for strip in spec.get('drainageStrips', []):
-                target = min(target, strip['level']+.4*rect_distance(strip, x, y))
+                target = min(target, drainage_level(strip, x, y)+strip.get('bankSlope', .45)*rect_distance(strip, x, y))
             clear = min((rect_distance(p, x, y) for p in spec.get('finishPads', [])), default=math.inf) if route.get('approachBank') else math.inf
             h += (target-h)*smoothstep(clear/.3)
         elif distance < blend:
@@ -232,6 +237,8 @@ def height(spec, x, y):
             h += (level-bedding-h)*influence
             if route.get('approachBank'):
                 h = min(h, h+(level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(route_bank_clearance(route, x, y)/.6))
+    for strip in spec.get('drainageStrips', []):
+        h = min(h, drainage_level(strip, x, y)+strip.get('bankSlope', .45)*rect_distance(strip, x, y))
     outer = pond.get('bankOuter', 1.3)
     if spec.get('regionalGrades'):
         h = max(h, pond['edge']-.4*max(0, math.hypot(x-pond['cx'], y-pond['cz'])-max(pond['rx'], pond['rz'])))
@@ -271,6 +278,10 @@ def height(spec, x, y):
             greenhouse_weight = 1-smoothstep(rect_distance(court['greenhouse'], x, y)/.3)
             bedding = .06-.02*greenhouse_weight+.06*smoothstep((x-(court['x1']-.68))/.68)
             h += (finish-bedding-h)*weight
+    if any(strip.get('fallX') or strip.get('fallZ') for strip in spec.get('drainageStrips', [])):
+        p = next((p for p in spec.get('protectedPads', []) if p.get('id') == 'north-facade'), None)
+        if p:
+            h = max(h, p['level']+p.get('fallX', 0)*min(p['x1']-p['x0'], max(0, x-p['x0']))-.4*rect_distance(p, x, y))
     for segment in spec.get('fixedFences', {}).get('segments', []):
         a, b = segment['start'], segment['end']
         dx, dy = b[0]-a[0], b[1]-a[1]

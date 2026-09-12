@@ -18,7 +18,7 @@ if(existsSync('docs/survey-terrain.js')){
 for(const mark of require('./grading-zones.js').GradingZones.create(GARDEN).levelMarks)near(site.height(...mark.position)+(mark.id==='raisedBeds'?.06:mark.id==='C'?.04:site.spec.drivewayProfile.surfaceOffset),TERRAIN.houseFFLInternal+mark.relativeLevel,'Map elevation marks match their actual finished surfaces');
 for(const point of [[22,21],[25,24],[30,28],[33,28]])near(site.height(...point),site.spec.drivewayProfile.startLevel,'Level vehicle court');
 for(const point of [[28,15],[28,17],[30,18]])near(site.height(...point),site.spec.drivewayProfile.startLevel,'Northern lawn plateau');
-for(const z of [18,20,23])near(site.height(9,z),TERRAIN.houseFFLInternal-.3,'Lowered west strip');
+for(const z of [18,20,23])near(site.height(9,z),TERRAIN.houseFFLInternal-.3-.004*(z-7.18),'Lowered west strip drains south');
 for(const x of [17.2,17.7,18.2,20])near(site.height(x,27),site.spec.drivewayProfile.startLevel,'Heat-pump service spur');
 near(site.spec.deckTop,TERRAIN.houseFFLInternal,'Terrace datum');
 const bedCourt=GARDEN.elements.find(e=>e.id==='raisedBedsPad'),bedRect=bedCourt.parts.find(p=>p.kind==='rect');
@@ -82,7 +82,7 @@ for(const bank of GARDEN.gradingBanks) {
   for(let i=0;i<=100;i++){const t=i/100,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;if(x>=34.13&&z<=19.38)near(site.height(x,z),site.baseHeight(x,z),'Unmown bank foot preserves existing fence terrain');}
 }
 assert(site.spec.bankReview.some(r=>r.id==='north-fill'));
-console.log(JSON.stringify({vehicleCourt:'level',westStrip:'300 mm below terrace',heatPump:'level spur',measurements}));
+console.log(JSON.stringify({vehicleCourt:'level',westStrip:'starts 300 mm below terrace and drains south',heatPump:'level spur',measurements}));
 
 if(site.spec.fixedFences?.segments.length) {
   const points=site.spec.fixedFences.segments.flatMap(segment=>Array.from({length:101},(_,i)=>segment.start.map((v,axis)=>v+(segment.end[axis]-v)*i/100)));

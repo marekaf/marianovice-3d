@@ -19,7 +19,7 @@
     const grading = zonesModel.create(garden);
     const tableDimensions = grading.dimensions.filter(dim=>dim.table!==false&&!['saunaDepth','pergolaDepth'].includes(dim.id));
     const zoneExtra = Math.max(0, grading.zones.length - 9) * 18;
-    const footerShift = Math.max(0, zoneExtra + 665 + (tableDimensions.length - 1) * 15 + 115 - 792);
+    const footerShift = Math.max(0, zoneExtra + 665 + (tableDimensions.length - 1) * 15 + 145 - 792);
     const pageHeight = 880 + footerShift;
     const S = garden.m2px;
     const px = (m) => Math.round(m * S * 100) / 100;
@@ -156,6 +156,7 @@
     out.push(`<text y="${456+zoneExtra}" font-weight="700" font-size="11">HLAVNÍ ROZMĚRY</text>`);
     tableDimensions.forEach((dim,i)=>out.push(`<text y="${475+zoneExtra+i*15}">${esc(dim.name)}</text><text x="470" y="${475+zoneExtra+i*15}" text-anchor="end">${esc(dim.value.replace(/\./g,','))}</text>`));
     out.push(presentation.svgTerrainLegend(10,495+zoneExtra+tableDimensions.length*15));
+    out.push(`<text x="10" y="${565+zoneExtra+tableDimensions.length*15}" font-size="10">Modrý obrys: zakrytý průchod · modrý bod: podzemní odvodnění</text>`);
     out.push(`  </g>`);
     out.push(`<g transform="translate(0,${footerShift})">`);
     out.push(renderLegend());

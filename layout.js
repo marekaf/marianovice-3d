@@ -41,7 +41,7 @@ const GARDEN = {
     {id:"Bed access",points:[[3.5,10.6],[3.5,13.2],[1.8,13.2]],width:1,bankSlope:.48},
     {id:"Greenhouse access",points:[[2.5,5.7],[2.5,6.9]],width:.8,bankSlope:.35,startRelativeLevel:0,levelAxis:{axis:"z",start:6.2,end:6.9}},
     {"id":"Daily dining","levelAxis":{"axis":"z","start":11.4,"end":6.2},"points":[[23,12],[24.4,12],[24.4,8],[25.42785414913,5.38127450503]],"width":1.2},
-    {id:"Quiet garden approach",points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
+    {id:"Quiet garden approach",surfaceStep:.03,points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
     {"id":"Gathering connection","points":[[27.9,4.6],[28.8,4.6],[30.15,5.75]],"width":1.2,"startLanding":1.2,"endLanding":.5},
     {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[29,8.8],[29,6.3],[30.25,5.75]],width:1.2},
     {id:"Service connection",points:[[38.7,17.8],[37,20],[37,26.3]],width:1.2}
@@ -50,7 +50,11 @@ const GARDEN = {
   elements: [
     {id:'heatPumpService',name:'Rovná servisní odbočka k tepelnému čerpadlu',short:'Servis TČ',meta:{grading:{relativeLevel:-.54}},parts:[{kind:'rect',x:17.125,y:26.7,w:4.155,d:.6,fill:'#c8c2b0',opacity:.65,stroke:'#77715f',sw:.7},{kind:'text',x:19.3,y:27.15,text:'servis TČ',cls:'lbl-sm'}]},
     {id:'heatPumpPad',name:'Základ pod venkovní jednotkou TČ',short:'Základ TČ',parts:[{kind:'rect',x:17.125,y:26.7,w:1.15,d:.6,fill:'#8d8a84',opacity:.9,stroke:'#666',sw:.7}]},
-    {id:'westDrainageStrip',name:'Snížený pás zeleně u západní terasy',short:'Západní pás zeleně',meta:{plant:'perennials',palette:'bedTerrace',maxHeight:.45,grading:{relativeLevel:-.3}},parts:[{kind:'rect',x:8.73,y:7.18,w:.75,d:19.25,fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8}]},
+    {id:'westDrainageStrip',name:'Snížený pás zeleně kolem západní terasy',short:'Západní průleh',meta:{plant:'perennials',palette:'bedTerrace',maxHeight:.45,grading:{relativeLevel:-.3,coveredCrossings:[{x:9.48,y:6.43,w:1,d:.75,routeId:"Wellness access"},{x:8.73,y:18.1,w:.75,d:1,routeId:"Quiet garden approach",surfaceReference:{relativeLevel:-.3,bankSlope:.4}}],outlet:{position:[10.48,28.675],kind:'buried-proposal'}}},parts:[
+      {kind:'rect',x:8.73,y:7.18,w:.75,d:21.87,grading:{relativeLevel:-.3,fallZ:-.004,zEnd:28.3},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
+      {kind:'rect',x:8.73,y:6.43,w:1.75,d:.75,grading:{relativeLevel:-.3,fallX:.01,xStart:9.48},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
+      {kind:'rect',x:9.48,y:28.3,w:1,d:.75,grading:{relativeLevel:-.38448,fallX:-.012},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8}
+    ]},
     {id:'arrivalStrip',name:'Kvetoucí pás podél jižní hranice příjezdu',meta:{palette:'arrivalStrip',plant:'perennials',maxHeight:.9},parts:[{kind:'polygon',points:[[21.4,30.1],[38.9,32.3],[38.9,33.5],[21.4,31.8]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},
     {id:'tankCover',name:'Nízká zeleň nad nádrží: mocnost zeminy a zatížení k ověření',meta:{plant:'perennials',utilityCover:true,maxHeight:.25},parts:[{kind:'polygon',points:[[35.63,16.7],[38.63,16.7],[38.63,20.2],[35.63,20.2]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},
     {id:'dressingNorthShrubs',name:'Stálezelená výsadba před šatnou',meta:{plant:'shrubs',leafHabit:'evergreen',proposal:true},parts:[

@@ -51,15 +51,27 @@ try {
     return {count,error};
   });
   assert(pergolaGround.count>100&&pergolaGround.error<1e-5,`Rendered soil is level beneath the pergola: ${JSON.stringify(pergolaGround)}`);
-  const drainageGround=await page.evaluate(()=>{
+  const drainageGround=await page.evaluate(async()=>{
     const t=gradingSession,ray=new t.THREE.Raycaster();let samples=0,missing=0,maximumError=0;
+    const {createMeshHeightQuery}=await import('./mesh-height-query.js'),groundHeight=createMeshHeightQuery(t.ground);
+    const covered=GARDEN.elements.find(e=>e.id==='westDrainageStrip').meta.grading.coveredCrossings;
     for(const strip of t.siteTerrain.spec.drainageStrips??[])for(let x=strip.x0+.0001;x<strip.x1;x+=.1)for(let z=strip.z0+.0001;z<strip.z1;z+=.1){
+      if(covered.some(p=>x>=p.x&&x<=p.x+p.w&&z>=p.y&&z<=p.y+p.d))continue;
       ray.set(new t.THREE.Vector3(x,strip.level+1,z),new t.THREE.Vector3(0,-1,0));
-      const hit=ray.intersectObject(t.ground,false)[0];samples++;
-      if(!hit)missing++;else maximumError=Math.max(maximumError,Math.abs(hit.point.y-strip.level));
+      const actual=groundHeight(x,z);samples++;
+      if(actual===null)missing++;else maximumError=Math.max(maximumError,Math.abs(actual-t.siteTerrain.height(x,z)));
     }
-    return {samples,missing,maximumError};
+    let coveredSamples=0,coveredMissing=0,coveredError=0;
+    const slabs=[];t.scene.traverse(o=>{if(o.name==='garden-stepping-slab'||o.name==='paving-joint-shoulder')slabs.push(o);});
+    for(const p of covered)for(let i=1;i<20;i++){
+      const x=p.x+p.w*i/20,z=p.y+p.d/2;
+      ray.set(new t.THREE.Vector3(x,t.siteTerrain.spec.deckTop+1,z),new t.THREE.Vector3(0,-1,0));
+      const hits=p.routeId==='Quiet garden approach'?ray.intersectObject(t.gardenRoutes,false):ray.intersectObjects(slabs,false);
+      coveredSamples++;if(!hits.length)coveredMissing++;else {const support=hits[0].object.userData.support,edge=support&&(x<support.x0||x>support.x1||z<support.z0||z>support.z1);if(edge){if(hits[0].point.y<t.siteTerrain.height(x,z)-.002||hits[0].point.y>t.siteTerrain.spec.deckTop+.002)coveredError=Infinity;}else coveredError=Math.max(coveredError,p.routeId==='Quiet garden approach'?Math.abs(hits[0].point.y-t.siteTerrain.routeHeight(x,z)):Math.max(0,hits[0].point.y-t.siteTerrain.spec.deckTop,t.siteTerrain.spec.deckTop-.018-hits[0].point.y));}
+    }
+    return {samples,missing,maximumError,coveredSamples,coveredMissing,coveredError};
   });
+  assert(drainageGround.coveredSamples>=38&&!drainageGround.coveredMissing&&drainageGround.coveredError<.002,`Covered crossings preserve their walkway surfaces: ${JSON.stringify(drainageGround)}`);
   assert(drainageGround.samples>1000&&!drainageGround.missing&&drainageGround.maximumError<2e-5,`Actual drainage mesh stays below the terrace: ${JSON.stringify(drainageGround)}`);
   assert(restored.garageColors.length&&restored.garageColors.every(color=>color==='e2cec5'),'Actual garage facade meshes use HN3E');
   const firepitSurface=await page.evaluate(()=>{
