@@ -115,3 +115,7 @@ for(const zone of quantities.zones){
   assert.equal((result.mapSVG.match(new RegExp(`data-zone-label="${zone.id}"`,'g'))??[]).length,1);
 }
 assert(!result.mapSVG.includes('data-zone-secondary'));
+
+const paintedBoundaries=[...result.mapSVG.matchAll(/data-zone-boundary="([A-Z])"/g)].map(m=>m[1]);
+assert(paintedBoundaries.lastIndexOf('I')<paintedBoundaries.indexOf('A'),'Arrival outline remains visible above adjoining garden borders');
+assert(paintedBoundaries.lastIndexOf('A')<paintedBoundaries.indexOf('F'),'House outline remains visible above arrival boundary');

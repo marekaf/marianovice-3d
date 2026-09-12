@@ -120,7 +120,7 @@
       out.push(`<polyline data-route="${esc(route.id)}" points="${points}" fill="none" stroke="#c8bea5" stroke-width="${px(route.width)}" stroke-linecap="round" stroke-linejoin="round"><title>${esc(routeName)}</title></polyline>`);
     }
     garden.elements.filter(el=>!el.meta?.plant).forEach(renderElement);
-    for(const zone of grading.zones)for(const [a,b] of zone.boundaries??[])out.push(`<path d="M${px(a[0])},${px(a[1])}L${px(b[0])},${px(b[1])}" fill="none" stroke="white" stroke-width="4"/><path d="M${px(a[0])},${px(a[1])}L${px(b[0])},${px(b[1])}" fill="none" stroke="${presentation.colorFor(zone)}" stroke-width="2.1"/>`);
+    for(const zone of presentation.boundaryOrder(grading.zones))for(const [a,b] of zone.boundaries??[])out.push(`<path d="M${px(a[0])},${px(a[1])}L${px(b[0])},${px(b[1])}" fill="none" stroke="white" stroke-width="4"/><path data-zone-boundary="${zone.id}" d="M${px(a[0])},${px(a[1])}L${px(b[0])},${px(b[1])}" fill="none" stroke="${presentation.colorFor(zone)}" stroke-width="2.1"/>`);
     for(const dim of grading.dimensions.filter(d=>d.from&&d.to)) {
       const [x1,y1]=dim.from.map(px),[x2,y2]=dim.to.map(px);
       const length=Math.hypot(x2-x1,y2-y1)||1,nx=-(y2-y1)/length,ny=(x2-x1)/length,offset=-7;

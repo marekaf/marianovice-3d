@@ -1,6 +1,7 @@
 const GradingOverlay = (() => {
   const palette={A:'#667785',B:'#b37943',C:'#2f845b',D:'#c7992e',E:'#a66081',F:'#8470ad',G:'#758c36',H:'#397f9b',I:'#9a9381',J:'#468d8d',K:'#ba753c',L:'#a86642',M:'#346d9c'};
   const colorFor=zone=>palette[zone.id]??zone.color;
+  const boundaryOrder=zones=>zones.slice().sort((a,b)=>({I:0,A:2,E:2,F:3,M:3}[a.id]??1)-({I:0,A:2,E:2,F:3,M:3}[b.id]??1));
   function svgLabels(zones,px,pz,fontSize=11) {
     return zones.map(zone=>{const x=px(zone.label[0]),y=pz(zone.label[1]),color=colorFor(zone);return `<g data-zone-label="${zone.id}" class="grading-zone-label"><circle cx="${x}" cy="${y}" r="11" fill="#fffef9" stroke="${color}" stroke-width="2.5"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fontSize+2}" font-weight="700" style="fill:${color}">${zone.id}</text></g>`;}).join('');
   }
@@ -78,7 +79,7 @@ const GradingOverlay = (() => {
     }
     geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
     group.add(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.78,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2})));
-    for(const zone of zones) {
+    for(const [order,zone] of boundaryOrder(zones).entries()) {
       const strip=[];
       for(const [a,b] of zone.boundaries) {
         const length=Math.hypot(b[0]-a[0],b[1]-a[1]),steps=Math.max(1,Math.ceil(length/.25));
@@ -90,7 +91,7 @@ const GradingOverlay = (() => {
         }
       }
       const borderGeometry=new THREE.BufferGeometry();borderGeometry.setAttribute('position',new THREE.Float32BufferAttribute(strip,3));
-      const border=new THREE.Mesh(borderGeometry,new THREE.MeshBasicMaterial({color:colorFor(zone),side:THREE.DoubleSide,depthTest:false,depthWrite:false,fog:false}));border.name='grading-zone-border-'+zone.id;border.renderOrder=22;group.add(border);
+      const border=new THREE.Mesh(borderGeometry,new THREE.MeshBasicMaterial({color:colorFor(zone),side:THREE.DoubleSide,depthTest:false,depthWrite:false,fog:false}));border.name='grading-zone-border-'+zone.id;border.renderOrder=22+order*.01;group.add(border);
     }
     function label(text,x,z,width,color='#ffffff',badge=false) {
       const canvas=document.createElement('canvas');canvas.width=badge==='level'?256:badge?128:512;canvas.height=96;
@@ -154,6 +155,6 @@ const GradingOverlay = (() => {
     wrapper.append(toggleLabel,dimensionLabel,legend);panel.append(wrapper);
     return {group,data,toggle,dimensionToggle};
   }
-  return {create,colorFor,svgLabels,svgLevelMarks,bankSpots,svgBankSpots,terrainMarks,terrainLegend,svgTerrainLegend,svgTerrainMarks};
+  return {create,colorFor,boundaryOrder,svgLabels,svgLevelMarks,bankSpots,svgBankSpots,terrainMarks,terrainLegend,svgTerrainLegend,svgTerrainMarks};
 })();
 if(typeof module!=='undefined')module.exports={GradingOverlay};
