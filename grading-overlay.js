@@ -133,10 +133,11 @@ const GradingOverlay = (() => {
     for(const spot of spots)label(spot.id,...spot.position,.021,'#49595f',true).name='grading-bank-spot-'+spot.id;
     const dimensions=new THREE.Group();dimensions.visible=false;group.add(dimensions);
     for(const dimension of data.dimensions.filter(d=>d.from&&d.to)){
+      const from=dimension.from.map((v,i)=>v+(dimension.displayOffset?.[i]??0)),to=dimension.to.map((v,i)=>v+(dimension.displayOffset?.[i]??0));
       const points=[];
-      for(let i=0;i<=20;i++){const t=i/20,x=dimension.from[0]+(dimension.to[0]-dimension.from[0])*t,z=dimension.from[1]+(dimension.to[1]-dimension.from[1])*t;points.push(new THREE.Vector3(x,height(x,z)+.12,z));}
+      for(let i=0;i<=20;i++){const t=i/20,x=from[0]+(to[0]-from[0])*t,z=from[1]+(to[1]-from[1])*t;points.push(new THREE.Vector3(x,height(x,z)+.12,z));}
       const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:'#273a31',depthTest:false}));line.renderOrder=21;dimensions.add(line);
-      label(dimension.value,(dimension.from[0]+dimension.to[0])/2,(dimension.from[1]+dimension.to[1])/2,.09);
+      label(dimension.value,(from[0]+to[0])/2,(from[1]+to[1])/2,.09);
       dimensions.add(group.children.at(-1));
     }
     scene.add(group);
