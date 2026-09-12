@@ -75,6 +75,8 @@ const GradingZones = (() => {
     const plot=triangles(garden.plot.vertices), plotArea=sum(plot), bounds=rect(-100,-100,300,300);
     const garageEast=garage?garage.x+garage.w:34.13;
     const drivewayParts=parts(el('driveway'));
+    const rampNorthEdge=(el('driveway')?.parts??[]).filter(p=>p.kind==='polygon').flatMap(p=>p.points.map((a,i)=>[a,p.points[(i+1)%p.points.length]])).find(([a,b])=>Math.abs(a[0]-garageEast)<1e-7&&b[0]>a[0]);
+    const eastGarden=rect(garageEast,-100,200,300);
     const buildingFootprints=ids=>ids.flatMap(id=>parts({parts:(el(id)?.parts??[]).filter(p=>p.kind==='polygon'||p.kind==='rect').slice(0,1)}));
     const terraceBankWidth=1.05;
     const terraceBanks=east?[rect(east.x,east.y-terraceBankWidth,east.w,terraceBankWidth),rect(east.x+east.w,east.y,terraceBankWidth,east.d),[[east.x+east.w,east.y],...Array.from({length:33},(_,i)=>{const angle=-Math.PI/2+i*Math.PI/64;return [east.x+east.w+terraceBankWidth*Math.cos(angle),east.y+terraceBankWidth*Math.sin(angle)];})]]:[];
@@ -92,7 +94,9 @@ const GradingZones = (() => {
       ['L','Strmý svah u plotu bez sečení',(garden.gradingBanks??[]).map(b=>b.points),[41,9],'#a86642'],
       ['H','Nízká část pro násyp',[rect(garageEast,-10,30,29.38)],[36,10],'#78aeb4'],
       ['C','Rovná zahrada nad garáží a přístřeškem',[rect(house[2],-10,garageEast-house[2],29.38)],[28,12],'#9aba93'],
-      ['I','Okrajová zahrada a svahy',[bounds],[5,28],'#c4c3a7']
+      ['O','Západní zahrada',[rect(-100,-100,house[0]+100,house[3]+100)],[5,23],'#7c9674'],
+      ['P','Východní zahrada u vodovodní šachty',[rampNorthEdge?half(eastGarden,...rampNorthEdge,false):eastGarden],[39,21.5],'#9b7d99'],
+      ['I','Jižní zahrada a svahy',[bounds],[14,30],'#c4c3a7']
     ];
     let remaining=plot;
     const zones=[];
