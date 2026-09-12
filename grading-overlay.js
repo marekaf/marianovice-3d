@@ -21,10 +21,10 @@ const GradingOverlay = (() => {
   }
   function terrainMarks(garden,quantities) {
     const banks=(garden.gradingBanks??[]).map(bank=>({...bank,from:bank.id==='north'&&bank.spotCrest&&bank.spotFoot?bank.spotCrest.map((v,i)=>v+(bank.spotFoot[i]-v)*.25):bank.spotCrest,to:bank.spotFoot}));
-    const flats=(quantities.levelMarks??[]).map(mark=>({id:mark.id,position:mark.id==='C'?[28,12]:mark.position}));
+    const flats=(quantities.levelMarks??[]).map(mark=>({id:mark.id,position:mark.id==='C'?[29.5,12.9]:mark.id==='raisedBeds'?[mark.position[0]+1.3,mark.position[1]]:[mark.position[0],mark.position[1]+.9]}));
     const pergola=garden.elements.find(e=>e.id==='pergola')?.parts.find(p=>p.kind==='rect');
-    if(pergola)flats.push({id:'pergola',position:[pergola.x+pergola.w/2,pergola.y+pergola.d/2]});
-    if(garden.elements.some(e=>e.id==='sauna'))flats.push({id:'sauna',position:[7,5.5]});
+    if(pergola)flats.push({id:'pergola',position:[pergola.x+pergola.w/2,pergola.y+pergola.d/2+.9]});
+    if(garden.elements.some(e=>e.id==='sauna'))flats.push({id:'sauna',position:[7.6,5.7]});
     const slopes=[
       {id:'north-house',from:[12,6.95],to:[20,6.95]},
       {id:'south-house',from:[12,27.5],to:[16,27.5]},
@@ -61,7 +61,7 @@ const GradingOverlay = (() => {
       const start=[a[0]+ux*inset,a[1]+uy*inset],end=[b[0]-ux*inset,b[1]-uy*inset];
       out+=`<path data-terrain-downhill="${bank.id}" d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#93502e" stroke-width="2.3"/>`;
     }
-    for(const mark of marks.flats)out+=`<g data-terrain-flat="${mark.id}">${svgTerrainSymbol('flat',px(mark.position[0])+(mark.id==='C'?25:0),pz(mark.position[1])+17)}</g>`;
+    for(const mark of marks.flats)out+=`<g data-terrain-flat="${mark.id}">${svgTerrainSymbol('flat',px(mark.position[0]),pz(mark.position[1]))}</g>`;
     for(const [i,segment] of marks.fences.entries())out+=`<g data-terrain-preserve="${i}">${svgTerrainSymbol('fixed',px((segment.start[0]+segment.end[0])/2),pz((segment.start[1]+segment.end[1])/2))}</g>`;
     return out;
   }
@@ -128,7 +128,7 @@ const GradingOverlay = (() => {
       }
       if(bank.from&&bank.to){const a=bank.from,b=bank.to,length=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/length,uz=(b[1]-a[1])/length;terrainLine([a,b],'grading-downhill-'+bank.id);terrainLine([[b[0]-.4*ux-.2*uz,b[1]-.4*uz+.2*ux],b,[b[0]-.4*ux+.2*uz,b[1]-.4*uz-.2*ux]],'grading-downhill-tip-'+bank.id);}
     }
-    for(const mark of terrain.flats){const [x,z]=mark.position;for(const offset of [.6,.8])terrainLine([[x-.3,z+offset],[x+.3,z+offset]],'grading-flat-'+mark.id,'#17649e');}
+    for(const mark of terrain.flats){const [x,z]=mark.position;for(const offset of [-.1,.1])terrainLine([[x-.3,z+offset],[x+.3,z+offset]],'grading-flat-'+mark.id,'#17649e');}
     for(const [i,segment] of terrain.fences.entries()){const x=(segment.start[0]+segment.end[0])/2,z=(segment.start[1]+segment.end[1])/2;for(const sign of [-1,1])terrainLine([[x-.2,z-sign*.2],[x+.2,z+sign*.2]],'grading-preserve-'+i,'#243b32');}
     const spots=bankSpots(garden);
     for(const spot of spots)label(spot.id,...spot.position,.021,'#49595f',true).name='grading-bank-spot-'+spot.id;
