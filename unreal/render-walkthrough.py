@@ -1,15 +1,18 @@
 import json
 import math
+import runpy
 from pathlib import Path
 import time
 import unreal
 
 
 ROOT = Path(__file__).resolve().parent
+RendererCallbacks = runpy.run_path(str(ROOT / 'render-session.py'))['RendererCallbacks']
 STATUS = ROOT / 'generated' / 'video-render.json'
 FPS = 24
 QUEUE = None
 EXECUTOR = None
+CALLBACKS = None
 STATE = {}
 
 
@@ -26,7 +29,6 @@ def on_error(executor, pipeline, fatal, error):
 
 
 def on_finished(executor, success):
-    global QUEUE, EXECUTOR
     folder = ROOT / 'generated' / 'video-frames'
     missing = []
     for frame in STATE['expected_indices']:
@@ -36,9 +38,6 @@ def on_finished(executor, success):
     write_status(state='completed' if success and not missing else 'failed',
                  executor_success=success, missing_frames=missing,
                  finished_at=time.time())
-    QUEUE = None
-    EXECUTOR = None
-    unreal._walkthrough_video_session = None
 
 
 def read_route():
@@ -118,7 +117,7 @@ def build_sequence(shots):
 
 
 def render():
-    global QUEUE, EXECUTOR
+    global QUEUE, EXECUTOR, CALLBACKS
     if not hasattr(unreal, 'MoviePipelinePIEExecutor'):
         raise RuntimeError('Enable MovieRenderPipeline and restart the editor before rendering')
     levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
@@ -192,17 +191,22 @@ def render():
                  sequence=sequence.get_path_name(), map=map_path,
                  output_directory=str(folder), started_at=time.time(), errors=[])
     EXECUTOR = unreal.MoviePipelinePIEExecutor()
-    EXECUTOR.on_executor_finished_delegate.add_callable_unique(on_finished)
-    EXECUTOR.on_executor_errored_delegate.add_callable_unique(on_error)
-    unreal._walkthrough_video_session = (QUEUE, EXECUTOR, on_finished, on_error)
-    EXECUTOR.execute(QUEUE)
+    CALLBACKS = RendererCallbacks(unreal, globals(), EXECUTOR)
+    unreal._walkthrough_video_session = (QUEUE, EXECUTOR, CALLBACKS.finished, CALLBACKS.error)
+    callbacks = CALLBACKS
+    try:
+        EXECUTOR.execute(QUEUE)
+    except Exception:
+        callbacks.close()
+        raise
 
 
-try:
-    render()
-except Exception as error:
-    session = getattr(unreal, '_walkthrough_video_session', None)
-    if session and session[1] is EXECUTOR:
-        unreal._walkthrough_video_session = None
-    write_status(state='failed', error=str(error)[:2000], finished_at=time.time())
-    raise
+if __name__ == '__main__':
+    try:
+        render()
+    except Exception as error:
+        session = getattr(unreal, '_walkthrough_video_session', None)
+        if session and session[1] is EXECUTOR:
+            unreal._walkthrough_video_session = None
+        write_status(state='failed', error=str(error)[:2000], finished_at=time.time())
+        raise
