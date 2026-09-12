@@ -313,6 +313,8 @@ const SiteTerrain = (() => {
       spec.productiveCourt={...beds,mode:'level',finish:groundPatches.raisedBeds.level+.06,greenhouseFinish:groundPatches.greenhouse.level+.04,aisles:[],greenhouse};
       spec.protectedPads.push(...[groundPatches.greenhouse,groundPatches.raisedBeds].map(p=>({...patchRect(p),blend:.3,bankSlope:p.bankSlope??.4})));
       const service=garden.elements.find(e=>e.id==='heatPumpService')?.parts.find(p=>p.kind==='rect');
+      spec.southGravel={x0:10.48,x1:21.28,startDepth:.07,endDepth:.04,service:service?patchRect(service):null,serviceBlend:.15};
+      spec.protectedPads.push({id:'south-facade',x0:10.48,z0:26.43,x1:21.28,z1:27.45,level:options.houseFFL-.07,fallX:-.47/10.8,blend:1,bankSlope:.4});
       if(service)spec.protectedPads.push({...patchRect({...service,level:groundPatches.garage.level}),blend:1.2,bankSlope:.4});
       spec.protectedPads.push({id:'north-facade',x0:10.48,z0:6.73,x1:21.28,z1:7.18,level:options.houseFFL-.07,fallX:-.5/10.8,blend:1,bankSlope:.4});
       const fireElement=garden.elements.find(e=>e.id==='firePit');
@@ -430,6 +432,12 @@ const SiteTerrain = (() => {
     return { spec, height: (x, z) => height(spec, x, z), baseHeight: (x, z) => baseHeight(plane, x, z) };
   }
 
-  return { create, height, productiveFinish };
+  function southGravelDepth(spec,x,z) {
+    const p=spec.southGravel;if(!p)return .07;
+    const t=Math.max(0,Math.min(1,(x-p.x0)/(p.x1-p.x0)));
+    const service=p.service?1-smoothstep(rectDistance(p.service,x,z)/p.serviceBlend):0;
+    return p.startDepth+(p.endDepth-p.startDepth)*t*(1-service);
+  }
+  return { create, height, productiveFinish, southGravelDepth };
 })();
 if (typeof module !== 'undefined') module.exports = { SiteTerrain };
