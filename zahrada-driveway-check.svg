@@ -35,6 +35,7 @@
       <rect x="436.46" y="56.36" width="43.2" height="19.8"/>
     </g>
     <polygon points="383.04,349.2 497.34,349.2 497.34,475.74 614.34,475.74 775.28,512.57 767.27,584.13 614.34,547.74 383.04,547.74" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>
+<g data-feature="sewerInspection"><circle cx="757.8" cy="522" r="3.6" fill="#444" stroke="#222"/><text x="748.8" y="514" class="dim" text-anchor="end">kanalizační šachta DN400</text></g>
     <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#e7f3ea" stroke="#3f8f52" stroke-width="1.6"/>
     <rect x="497.34" y="348.84" width="117" height="126.9" fill="#efe9dd" stroke="#9a9074" stroke-width="1.6"/>
     <line x1="510.84" y1="475.74" x2="600.84" y2="475.74" stroke="#3a2a18" stroke-width="3"/>

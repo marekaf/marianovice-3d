@@ -154,6 +154,8 @@ function renderDrivewayCheckSVG(garden) {
 
   // Driveway + bays
   out.push(`    <polygon points="${dw.map(([x, y]) => `${px(x)},${px(y)}`).join(" ")}" fill="#e7edf2" stroke="#8aa0b4" stroke-width="1"/>`);
+  const sewer=EL.sewerInspection?.parts.find(p=>p.kind==='circle');
+  if(sewer)out.push(`<g data-feature="sewerInspection"><circle cx="${px(sewer.cx)}" cy="${px(sewer.cy)}" r="${px(sewer.r)}" fill="#444" stroke="#222"/><text x="${px(sewer.cx-.5)}" y="${px(sewer.cy)-8}" class="dim" text-anchor="end">kanalizační šachta DN400</text></g>`);
   out.push(`    <rect x="${px(cp.x)}" y="${px(cp.y)}" width="${px(cp.w)}" height="${px(cp.d)}" fill="#e7f3ea" stroke="#3f8f52" stroke-width="1.6"/>`);
   out.push(`    <rect x="${px(ga.x)}" y="${px(ga.y)}" width="${px(ga.w)}" height="${px(ga.d)}" fill="#efe9dd" stroke="#9a9074" stroke-width="1.6"/>`);
   // Garage door opening (5 m) marked on the S wall

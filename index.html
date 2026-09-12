@@ -153,7 +153,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=8d3c48ecb3f5"></script>
+<script src="layout.js?v=71c7766f0ccf"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=247b8a579711"></script>
@@ -189,6 +189,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-overlay.js?v=5bb5c0755bda"></script>
 <script type="module">
 import * as THREE from 'three';
+import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=2271bf3f980e';
 import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
@@ -1459,25 +1460,36 @@ scene.add(driveway);
 }
 
 // Underground utilities expose only their access covers.
-for (const id of ['rainTank','waterSource']) {
+for (const id of ['rainTank','waterSource','sewerInspection']) {
   const part = EL[id].parts.find(p => p.kind === 'rect' || p.kind === 'circle');
   const cover = EL[id].meta?.accessCover;
   const cx = cover?.x ?? (part.kind === 'circle' ? part.cx : part.x + part.w / 2), cz = cover?.z ?? (part.kind === 'circle' ? part.cy : part.y + part.d / 2);
-  const baseY = terrainHeight(cx, cz);
+  const pavingHeight = id === 'sewerInspection' ? createMeshHeightQuery(driveway) : null;
+  const baseY = pavingHeight ? pavingHeight(cx,cz) : terrainHeight(cx, cz);
+  const radius = id === 'sewerInspection' ? part.r : .45;
+  const conformToPaving = geometry => {
+    if(!pavingHeight)return;
+    const position=geometry.attributes.position;
+    for(let i=0;i<position.count;i++)position.setY(i,position.getY(i)+pavingHeight(cx+position.getX(i),cz+position.getZ(i))-baseY);
+    geometry.computeVertexNormals();
+  };
   // Manhole / cover
   const manhole = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.45, 0.45, 0.05, 24),
+    new THREE.CylinderGeometry(radius, radius, 0.05, 24),
     new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6, metalness: 0.4 })
   );
-  manhole.position.set(cx, baseY + 0.01, cz);
+  conformToPaving(manhole.geometry);
+  manhole.position.set(cx, baseY + (pavingHeight ? -.023 : .01), cz);
   manhole.name = `${id}-lid`;
   scene.add(manhole);
   // Center circle
   const inner = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.32, 0.32, 0.06, 24),
+    new THREE.CylinderGeometry(radius*.32/.45, radius*.32/.45, 0.06, 24),
     new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.8 })
   );
-  inner.position.set(cx, baseY + 0.035, cz);
+  conformToPaving(inner.geometry);
+  inner.position.set(cx, baseY + (pavingHeight ? -.027 : .035), cz);
+  inner.name = `${id}-lid-center`;
   scene.add(inner);
 }
 
@@ -2331,7 +2343,7 @@ addHoverTarget(wtSidewalk.x, wtSidewalk.y, wtSidewalk.w, wtSidewalk.d, 0.4, 'Wes
   addHoverTarget(bx, by, bw, bd, 0.4, 'Raised beds (4×)');
 }
 hoverRect('rainTank', 0.1);
-for(const c of circlesOf('waterSource'))addHoverTarget(c.cx-c.r,c.cy-c.r,2*c.r,2*c.r,.1,EL.waterSource.name);
+for(const id of ['waterSource','sewerInspection'])for(const c of circlesOf(id))addHoverTarget(c.cx-c.r,c.cy-c.r,2*c.r,2*c.r,.1,EL[id].name);
 for(const c of circlesOf('orchard'))addHoverTarget(c.cx-c.r,c.cy-c.r,2*c.r,2*c.r,4,EL.orchard.name);
 hoverRect('greenhouse', 2.6);
 hoverRect('compost', 1.0);

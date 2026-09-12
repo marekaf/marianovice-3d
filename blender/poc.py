@@ -655,7 +655,7 @@ house = els["house"]
 hpoly = next(p for p in house["parts"] if p["kind"] == "polygon")["points"]
 dpoly = next(p for p in els["driveway"]["parts"] if p["kind"] == "polygon")["points"]
 utility_covers = {}
-for utility_id in ('rainTank', 'waterSource'):
+for utility_id in ('rainTank', 'waterSource', 'sewerInspection'):
     element = els[utility_id]
     part = next(part for part in element['parts'] if part['kind'] in ('rect', 'circle'))
     cover = element.get('meta', {}).get('accessCover')
@@ -1363,7 +1363,22 @@ FIRE_OBJECTS = [firepit_collection.objects[part["name"]]
 
 # ---------------- rain tank, sauna, shelter, softub ----------------
 for utility_id, (cx,cy) in utility_covers.items():
-    add_cyl(utility_id+'_manhole', cx, cy, ground_h(cx, cy)+.02, .45, .06, MAT['manhole'])
+    if utility_id == 'sewerInspection':
+        paving = bpy.data.objects['driveway']
+        inverse = paving.matrix_world.inverted()
+        def paving_height(x, y):
+            hit, point, _, _ = paving.ray_cast(inverse @ Vector((x, -y, 10)), inverse.to_3x3() @ Vector((0, 0, -1)))
+            if not hit:
+                raise ValueError('Sewer inspection cover must be supported by driveway paving')
+            return (paving.matrix_world @ point).z
+        base = paving_height(cx, cy)
+        radius = next(part['r'] for part in els[utility_id]['parts'] if part['kind'] == 'circle')
+        lid = add_cyl(utility_id+'_manhole', cx, cy, base-.028, radius, .06, MAT['manhole'])
+        for vertex in lid.data.vertices:
+            vertex.co.z += paving_height(cx+vertex.co.x, cy-vertex.co.y)-base
+        lid.data.update()
+    else:
+        add_cyl(utility_id+'_manhole', cx, cy, ground_h(cx, cy)+.02, .45, .06, MAT['manhole'])
 
 compost = first_rect(els['compost'])
 compost_x, compost_y, compost_w, compost_d = compost['x'], compost['y'], compost['w'], compost['d']

@@ -36,7 +36,7 @@ assert(result.html.includes('Legenda oblastí'));
 for(const output of [result.html,result.exportSVG])assert(!/Výšky H \/ L|Výšky vůči podlaze|data-bank-spot=/.test(output));
 for(const id of 'ABCDEFGHIJKLMNOP')assert(result.mapSVG.includes(`data-zone-label="${id}"`));
 assert(result.mapSVG.includes('viewBox="0 0 900 650"'));
-for(const id of ['driveway','carport','sauna','greenhouse','raisedBedsPad','raisedBed1','raisedBed2','raisedBed3','raisedBed4','compost','westTerrace','waterSource','rainTank']) {
+for(const id of ['driveway','carport','sauna','greenhouse','raisedBedsPad','raisedBed1','raisedBed2','raisedBed3','raisedBed4','compost','westTerrace','waterSource','rainTank','sewerInspection']) {
   assert(result.mapSVG.includes(`data-feature="${id}"`),`${id} is visible in the grading map`);
 }
 assert(!result.mapSVG.includes('data-feature="saunaPath"'));

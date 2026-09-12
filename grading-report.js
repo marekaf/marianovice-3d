@@ -30,7 +30,7 @@ const GradingReport = (() => {
     };
     const map = [`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="650" viewBox="0 0 900 650" role="img" aria-label="Pojmenované pracovní oblasti úprav terénu"><title>Koordinační situace zemních prací</title><defs><clipPath id="plotClip"><polygon points="${polygon(garden.plot.vertices)}"/></clipPath><pattern id="unmeasured" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0" stroke="#6e7772" stroke-width="1"/></pattern></defs><rect width="900" height="650" fill="#fffef9"/><g clip-path="url(#plotClip)">`];
     for(const zone of quantities.zones)map.push(`<g data-zone="${zone.id}" fill="${presentation.colorFor(zone)}" fill-opacity=".24">${zone.polygons.map(p=>`<polygon points="${polygon(p)}"/>`).join('')}</g>`);
-    const mapFeatures = new Set(['driveway','eastTerrace','westTerrace','pergola','pond','firePit','zasivarna','heatPumpService','heatPumpPad','raisedBedsPad','raisedBed1','raisedBed2','raisedBed3','raisedBed4','compost','toolStore','binStore','softub','westDrainageStrip','rainTank','waterSource']);
+    const mapFeatures = new Set(['driveway','eastTerrace','westTerrace','pergola','pond','firePit','zasivarna','heatPumpService','heatPumpPad','raisedBedsPad','raisedBed1','raisedBed2','raisedBed3','raisedBed4','compost','toolStore','binStore','softub','westDrainageStrip','rainTank','waterSource','sewerInspection']);
     for(const element of garden.elements.filter(e=>data.metadata.exclusions.includes(e.id)||mapFeatures.has(e.id))) {
       const shapes=element.parts.map(geometry).join('');
       const bed=/^raisedBed\d+$/.test(element.id);
@@ -41,7 +41,9 @@ const GradingReport = (() => {
     if(tank)map.push(`<text x="${px(tank.x+tank.w/2)}" y="${pz(tank.y+tank.d/2)}" font-size="9" text-anchor="middle" stroke="#fffef9" stroke-width="3" paint-order="stroke">dešťová nádrž · orientačně</text>`);
     const waterSource=garden.elements.find(e=>e.id==='waterSource')?.parts.find(p=>p.kind==='circle');
     if(waterSource)map.push(`<text x="${px(waterSource.cx-.8)}" y="${pz(waterSource.cy)+3}" font-size="9" text-anchor="end" stroke="#fffef9" stroke-width="3" paint-order="stroke">vodovodní šachta</text>`);
+    const sewer=garden.elements.find(e=>e.id==='sewerInspection')?.parts.find(p=>p.kind==='circle');
     map.push('</g>');
+    if(sewer)map.push(`<g data-feature-label="sewerInspection"><path d="M${px(sewer.cx)} ${pz(sewer.cy)}L${px(44.3)} ${pz(28.4)}" fill="none" stroke="#34463c" stroke-width=".8"/><text x="${px(44.5)}" y="${pz(27.5)}" font-size="9" text-anchor="start">kanalizační šachta</text><text x="${px(44.5)}" y="${pz(28.1)}" font-size="9" text-anchor="start">DN400</text></g>`);
     map.push(`<polygon points="${polygon(garden.plot.vertices)}" fill="none" stroke="#939991" stroke-width=".7"/>`);
     map.push(`<path d="M820 85V45M812 57L820 45L828 57" fill="none" stroke="#283b32" stroke-width="2"/><text x="820" y="35" text-anchor="middle" font-size="12">sever</text><path d="M50 635h${scale*5}" stroke="#283b32" stroke-width="4"/><text x="${50+scale*2.5}" y="630" text-anchor="middle" font-size="11">5 m</text></svg>`);
     const mapSVG=map.join('');
