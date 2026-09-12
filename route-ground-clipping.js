@@ -1,4 +1,4 @@
-export function cutGroundUnderRoutes(THREE, ground, routes) {
+export function cutGroundUnderRoutes(THREE, ground, routes, preserveRects = []) {
   const cross=(a,b,p)=>(b[0]-a[0])*(p[2]-a[2])-(b[2]-a[2])*(p[0]-a[0]);
   const bounds=points=>({x0:Math.min(...points.map(p=>p[0])),x1:Math.max(...points.map(p=>p[0])),z0:Math.min(...points.map(p=>p[2])),z1:Math.max(...points.map(p=>p[2]))});
   const overlaps=(a,b)=>a.x0<b.x1&&a.x1>b.x0&&a.z0<b.z1&&a.z1>b.z0;
@@ -46,6 +46,7 @@ export function cutGroundUnderRoutes(THREE, ground, routes) {
   }
   for(let i=0;i<(ground.index?.count??position.count);i+=3){
     const ids=[0,1,2].map(j=>ground.index?ground.index.getX(i+j):i+j),box=bounds(ids.map(k=>at(position,k)));
+    if(preserveRects.some(rect=>box.x0>=rect.x0-1e-6&&box.x1<=rect.x1+1e-6&&box.z0>=rect.z0-1e-6&&box.z1<=rect.z1+1e-6)){indices.push(...ids);continue;}
     const candidates=new Set();for(const key of cells(box))for(const id of bins.get(key)??[])if(overlaps(box,obstacles[id].box))candidates.add(id);
     if(!candidates.size){indices.push(...ids);continue;}
     let pieces=[ids.map(vertex)];

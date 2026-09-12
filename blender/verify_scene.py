@@ -147,6 +147,15 @@ for pad in garden['siteTerrain'].get('fixedFences', {}).get('levelPads', []):
                 terrain_inverse.to_3x3() @ Vector((0, 0, -1)))
             assert hit and abs((terrain_mesh.matrix_world @ position).z-pad['level']) < 2e-5, ('Pergola ground mesh must be flat', x, z)
 walk_grass_samples = 0
+for strip in garden['siteTerrain'].get('drainageStrips', []):
+    for ix in range(16):
+        for iz in range(386):
+            x = strip['x0']+(strip['x1']-strip['x0'])*ix/15
+            z = strip['z0']+(strip['z1']-strip['z0'])*iz/385
+            hit, position, _, _ = terrain_mesh.ray_cast(terrain_inverse @ Vector((x, -z, strip['level']+1)),
+                terrain_inverse.to_3x3() @ Vector((0, 0, -1)))
+            assert hit and abs((terrain_mesh.matrix_world @ position).z-strip['level']) < 2e-5, ('Drainage strip mesh keeps its lowered level', x, z)
+
 for vertex in terrain_mesh.data.vertices:
     point = terrain_mesh.matrix_world @ vertex.co
     if 7.7 < point.x < 8.3 and 7 < -point.y < 12:

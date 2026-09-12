@@ -32,7 +32,7 @@ const GradingOverlay = (() => {
       {id:'north-terrace',from:[22.5,11.58],to:[22.5,9.5]},
       {id:'south-driveway',from:[26,32],to:[26,30.5]},
       {id:'driveway-ramp',from:[35,29],to:[41,30]},
-      {id:'bed-sauna',from:[8,12.5],to:[8,7]},
+      {id:'bed-sauna',from:[6.6,9.8],to:[6.6,6.2]},
       {id:'west-bed',from:[-1.0436216216,12],to:[1.4,12]}
     ];
     return {banks,slopes,flats,fences:quantities.fenceSegments??[]};

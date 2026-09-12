@@ -153,7 +153,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=440902f05327"></script>
+<script src="layout.js?v=b5549d367ca5"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=247b8a579711"></script>
@@ -181,12 +181,12 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="fence-model.js?v=05c4f578f39e"></script>
 <script src="boundary-fence-model.js?v=97937679db2b"></script>
 <script src="utility-pillar-model.js"></script>
-<script src="site-terrain.js?v=46a35b5b7fd1"></script>
+<script src="site-terrain.js?v=636a2616e09e"></script>
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
 <script src="grading-zones.js?v=4efc421dbe85"></script>
-<script src="grading-overlay.js?v=980b007f89bc"></script>
+<script src="grading-overlay.js?v=1179d62cadd7"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -194,7 +194,7 @@ import { buildModel } from './model3d.js?v=2271bf3f980e';
 import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
 import { GroundSurfaceModel } from './ground-surface-model.js';
 import {levelCircularGround} from "./circular-pad-ground.js?v=7ead2a4d7b8d";
-import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=2df965840e8d';
+import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=d987e1d4cd90';
 import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 import { createWalkInteriorLoader } from './walk-interior-loading.js';
@@ -850,7 +850,7 @@ const groundGeom = (() => {
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const contactPoints = hiddenBenchModel.feet.flatMap(foot => foot.bottomCorners);
   const gradingRects = [...siteTerrain.spec.cutRects, ...siteTerrain.spec.fillPads, ...siteTerrain.spec.levelPads,
-    ...siteTerrain.spec.postCuts, ...siteTerrain.spec.finishPads ?? [], ...siteTerrain.spec.protectedPads ?? [], ...siteTerrain.spec.fixedFences?.levelPads ?? [], siteTerrain.spec.benchPad];
+    ...siteTerrain.spec.postCuts, ...siteTerrain.spec.finishPads ?? [], ...siteTerrain.spec.protectedPads ?? [], ...siteTerrain.spec.fixedFences?.levelPads ?? [], ...siteTerrain.spec.drainageStrips ?? [], siteTerrain.spec.benchPad];
   const samples = (start, end, axis) => {
     const count = Math.ceil((end - start) / 0.7);
     const boundaries = gradingRects.flatMap(rect => {
@@ -1818,7 +1818,7 @@ furnitureGroup.add(outdoorLoungeGroup);
 const gardenRoutes=GardenRouteModel.create(THREE,{routes:GARDEN.gardenRoutes,height:siteTerrain.routeHeight,garden:GARDEN,exclusions:[{kind:'rect',...hiddenBenchModel.groundPatch},raisedBedsModel.surfaceFootprint]});
 scene.add(gardenRoutes);
 await ViewerLoading.stage('Joining garden paths to the ground…');
-ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry);
+ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry,siteTerrain.spec.drainageStrips);
 const gardenRouteEdges=new THREE.Mesh(routeEdgeGeometry(THREE,ground.geometry,gardenRoutes.geometry),gardenRoutes.material);
 gardenRouteEdges.name='Mineral path edge connections';gardenRouteEdges.receiveShadow=true;scene.add(gardenRouteEdges);
 groundGeom.dispose();

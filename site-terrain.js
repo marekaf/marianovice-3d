@@ -176,6 +176,7 @@ const SiteTerrain = (() => {
       if(spec.regionalGrades){
         let target=Math.max(sample.level-bedding-(route.bankSlope??.4)*distance,Math.min(sample.level-bedding+(route.bankSlope??.4)*distance,h));
         for(const pad of spec.fixedFences?.levelPads??[])target=Math.max(target,pad.level-.4*rectDistance(pad,x,z));
+        for(const strip of spec.drainageStrips??[])target=Math.min(target,strip.level+.4*rectDistance(strip,x,z));
         const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z))):Infinity;
         h+=(target-h)*smoothstep(clear/.3);
       }
@@ -297,6 +298,7 @@ const SiteTerrain = (() => {
         {id:'north-fall',x0:10.48,z0:6.18,x1:21.28,z1:7.18,level:options.houseFFL-.04,fallX:-.5/10.8,blend:2.5},
         {id:'south-fall',x0:10.48,z0:26.43,x1:21.28,z1:27.43,level:options.houseFFL-.04,fallX:-.5/10.8,blend:3},
       ];
+      spec.drainageStrips=garden.elements.filter(e=>e.id==='westDrainageStrip').flatMap(e=>e.parts.filter(p=>p.kind==='rect').map(p=>({...patchRect(p),level:options.houseFFL+e.meta.grading.relativeLevel})));
       spec.bankReview = [
         {id:'productive-west',label:'Užitková zahrada a západní průleh',bounds:[0,10.48,7,23],status:'Čtyři záhony ve dvou řadách blíže západní hranici, 0,40 m nad západní terasou; plynulé spojení se skleníkem a saunou.'},
         {id:'south-house',label:'Jižní svah a servisní plocha',bounds:[8.3,22,26.43,31],status:'Plynulý spád od západu k východu; rovná odbočka k tepelnému čerpadlu. Ověřit povrchový odtok.'},

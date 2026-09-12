@@ -34,6 +34,16 @@ try {
     return {count,error};
   });
   assert(pergolaGround.count>100&&pergolaGround.error<1e-5,`Rendered soil is level beneath the pergola: ${JSON.stringify(pergolaGround)}`);
+  const drainageGround=await page.evaluate(()=>{
+    const t=gradingSession,ray=new t.THREE.Raycaster();let samples=0,missing=0,maximumError=0;
+    for(const strip of t.siteTerrain.spec.drainageStrips??[])for(let x=strip.x0+.0001;x<strip.x1;x+=.1)for(let z=strip.z0+.0001;z<strip.z1;z+=.1){
+      ray.set(new t.THREE.Vector3(x,strip.level+1,z),new t.THREE.Vector3(0,-1,0));
+      const hit=ray.intersectObject(t.ground,false)[0];samples++;
+      if(!hit)missing++;else maximumError=Math.max(maximumError,Math.abs(hit.point.y-strip.level));
+    }
+    return {samples,missing,maximumError};
+  });
+  assert(drainageGround.samples>1000&&!drainageGround.missing&&drainageGround.maximumError<2e-5,`Actual drainage mesh stays below the terrace: ${JSON.stringify(drainageGround)}`);
   assert(restored.garageColors.length&&restored.garageColors.every(color=>color==='e2cec5'),'Actual garage facade meshes use HN3E');
   const firepitSurface=await page.evaluate(()=>{
     const t=gradingSession,part=GARDEN.elements.find(e=>e.id==='firePit').parts.find(p=>p.kind==='circle');
