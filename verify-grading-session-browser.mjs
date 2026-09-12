@@ -162,7 +162,7 @@ try {
   });
   assert(terrainMarks.bank>=2&&terrainMarks.downhill>=9&&terrainMarks.flat>=5&&terrainMarks.preserve>=14,`Terrain instructions are present in the actual 3D overlay: ${JSON.stringify(terrainMarks)}`);
   assert.deepEqual(await page.evaluate(()=>{const names=[];gradingSession.gradingOverlay.group.traverse(object=>{if(object.name.startsWith("grading-flat-"))names.push(object.name);});return [...new Set(names)].sort();}),["grading-flat-A","grading-flat-C","grading-flat-D","grading-flat-E","grading-flat-G","grading-flat-carport"]);
-  assert.deepEqual(await page.evaluate(()=>gradingSession.gradingOverlay.data.zones.map(z=>z.id)),[...'ABCDEFGHIJKLMN']);
+  assert.deepEqual(await page.evaluate(()=>gradingSession.gradingOverlay.data.zones.map(z=>z.id)),[...'ABCDEFGHIJKLMNOP']);
   await page.check('#gradingDimensions');
   await page.selectOption('#terrainMode','existing');
   assert.equal(await page.evaluate(()=>gradingSession.gradingOverlay.group.visible),false);

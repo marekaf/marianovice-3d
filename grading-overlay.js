@@ -1,5 +1,5 @@
 const GradingOverlay = (() => {
-  const palette={A:'#667785',B:'#b37943',C:'#2f845b',D:'#c7992e',E:'#a66081',F:'#8470ad',G:'#758c36',H:'#397f9b',I:'#9a9381',J:'#468d8d',K:'#ba753c',L:'#a86642',M:'#346d9c',N:'#b15c64'};
+  const palette={A:'#667785',B:'#b37943',C:'#2f845b',D:'#c7992e',E:'#a66081',F:'#8470ad',G:'#758c36',H:'#397f9b',I:'#9a9381',J:'#468d8d',K:'#ba753c',L:'#a86642',M:'#346d9c',N:'#b15c64',O:'#7c9674',P:'#9b7d99'};
   const colorFor=zone=>palette[zone.id]??zone.color;
   const boundaryOrder=zones=>zones.slice().sort((a,b)=>({I:0,A:2,E:2,F:3,M:3}[a.id]??1)-({I:0,A:2,E:2,F:3,M:3}[b.id]??1));
   function svgLabels(zones,px,pz,fontSize=11) {

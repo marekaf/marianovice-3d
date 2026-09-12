@@ -33,7 +33,7 @@ assert(!/NaN|undefined|Infinity/.test(result.html));
 assert.equal((result.html.match(/class="sheet"/g)??[]).length,1);
 assert(!/<p[ >]|warning|Potvrdit|NEPOUŽÍVAT|Bilance|Záměr úprav/.test(result.html));
 assert(result.html.includes('Legenda oblastí'));
-for(const id of 'ABCDEFGHIJKLMN')assert(result.mapSVG.includes(`data-zone-label="${id}"`));
+for(const id of 'ABCDEFGHIJKLMNOP')assert(result.mapSVG.includes(`data-zone-label="${id}"`));
 assert(result.mapSVG.includes('viewBox="0 0 900 650"'));
 for(const id of ['driveway','carport','sauna','greenhouse','raisedBedsPad','raisedBed1','raisedBed2','raisedBed3','raisedBed4','compost','westTerrace','waterSource','rainTank']) {
   assert(result.mapSVG.includes(`data-feature="${id}"`),`${id} is visible in the grading map`);
@@ -88,12 +88,18 @@ if(existsSync('docs/survey-terrain.js')) {
   }
 }
 for(const rows of [quantities.zones,quantities.surfaces])assert(Math.abs(rows.reduce((sum,row)=>sum+row.area,0)-quantities.plotArea)<1e-7);
-assert.deepEqual(quantities.zones.map(z=>z.id),[...'ABCDEFGHIJKLMN']);
+assert.deepEqual(quantities.zones.map(z=>z.id),[...'ABCDEFGHIJKLMNOP']);
 const zoneC=quantities.zones.find(z=>z.id==='C');
 for(const polygon of zoneC.polygons)for(const [x,z] of polygon)assert(x>=21.28-1e-7&&x<=34.13+1e-7&&z<=19.38+1e-7,'C stays in the carport-plus-garage strip');
 const contains=(id,x,z)=>quantities.zones.find(q=>q.id===id).polygons.some(p=>p.every((a,i)=>{const b=p[(i+1)%p.length];return (b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0])>=-1e-7;}));
 const flatInstructions=GradingOverlay.terrainMarks(GARDEN,quantities);
 for(const id of ["A","C","D","E","G"])assert.equal(flatInstructions.flats.filter(mark=>contains(id,...mark.position)).length,1, id+" has one zone-level flat symbol");
+for(const id of ['I','O','P'])assert(contains(id,...quantities.zones.find(zone=>zone.id===id).label));
+for(const polygon of quantities.zones.find(zone=>zone.id==='O').polygons)for(const [x,z] of polygon)assert(x<=10.48+1e-7&&z<=26.43+1e-7);
+for(const polygon of quantities.zones.find(zone=>zone.id==='P').polygons)for(const [x] of polygon)assert(x>=34.13-1e-7);
+assert(contains('I',10.6,27),'The south drainage return joins the southern garden');
+assert(contains('P',41.25,23.45),'The water-supply chamber belongs to the eastern utility garden');
+assert(contains('I',39,32),'The garden south of the driveway remains in the southern area');
 const terraceZone=quantities.zones.find(zone=>zone.id==='N');
 assert.equal(terraceZone.name,'Svahy kolem východní terasy');
 assert(contains('N',...terraceZone.label));
