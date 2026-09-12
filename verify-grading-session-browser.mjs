@@ -97,6 +97,11 @@ try {
   await page.locator('#terrainPreview summary').click();
   await page.check('#gradingAreas');
   assert.equal(await page.evaluate(()=>gradingSession.gradingOverlay.group.visible),true);
+  const terrainMarks=await page.evaluate(()=>{
+    const names=[];gradingSession.gradingOverlay.group.traverse(object=>names.push(object.name));
+    return Object.fromEntries(['bank','downhill','flat','preserve'].map(kind=>[kind,names.filter(name=>name.startsWith('grading-'+kind+'-')).length]));
+  });
+  assert(terrainMarks.bank>=2&&terrainMarks.downhill>=9&&terrainMarks.flat>=5&&terrainMarks.preserve>=14,`Terrain instructions are present in the actual 3D overlay: ${JSON.stringify(terrainMarks)}`);
   assert.deepEqual(await page.evaluate(()=>gradingSession.gradingOverlay.data.zones.map(z=>z.id)),[...'ABCDEFGHIJKLM']);
   await page.check('#gradingDimensions');
   await page.selectOption('#terrainMode','existing');

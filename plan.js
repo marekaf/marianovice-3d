@@ -17,8 +17,9 @@
 
   function renderPlanSVG(garden) {
     const grading = zonesModel.create(garden);
+    const tableDimensions = grading.dimensions.filter(dim=>!['saunaDepth','pergolaDepth'].includes(dim.id));
     const zoneExtra = Math.max(0, grading.zones.length - 9) * 18;
-    const footerShift = Math.max(0, zoneExtra + 665 + (grading.dimensions.length - 1) * 15 + 24 - 792);
+    const footerShift = Math.max(0, zoneExtra + 665 + (tableDimensions.length - 1) * 15 + 115 - 792);
     const pageHeight = 880 + footerShift;
     const S = garden.m2px;
     const px = (m) => Math.round(m * S * 100) / 100;
@@ -128,6 +129,7 @@
       out.push(`<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>${esc(dim.name)}: ${esc(dim.value)}</title><path d="M${x1},${y1}L${ax+nx*3},${ay+ny*3}M${x2},${y2}L${bx+nx*3},${by+ny*3}M${ax},${ay}L${bx},${by}" fill="none"/><text x="${(ax+bx)/2}" y="${(ay+by)/2-3}" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">${value} m</text></g>`);
     }
     for(const segment of grading.fenceSegments)out.push(`<path data-measured-fence="${esc(segment.id??segment.side??'fence')}" d="M${px(segment.start[0])},${px(segment.start[1])}L${px(segment.end[0])},${px(segment.end[1])}" fill="none" stroke="#243b32" stroke-width="2" stroke-dasharray="6 3"/>`);
+    out.push(presentation.svgTerrainMarks(garden,px,px,grading));
     out.push(presentation.svgLabels(grading.zones,px,px,10));
     out.push(presentation.svgLevelMarks(grading.levelMarks,px,px));
     out.push(`  </g>`);
@@ -151,7 +153,8 @@
     grading.surfaces.forEach((surface,i)=>out.push(`<text y="${224+zoneExtra+i*18}">${esc(surface.name)}</text><text x="470" y="${224+zoneExtra+i*18}" text-anchor="end">${surface.area.toFixed(2).replace('.',',')}</text>`));
     out.push(`<text y="${397+zoneExtra}" font-weight="700">Celkem pozemek</text><text x="470" y="${397+zoneExtra}" text-anchor="end">${grading.plotArea.toFixed(2).replace('.',',')} m²</text><text y="${414+zoneExtra}">Povrchy se nepřekrývají; přístřešek je započten v příjezdu.</text><text y="${430+zoneExtra}">Oblasti ${grading.zones[0].id}–${grading.zones.at(-1).id} jsou pracovní celky, nikoli další výměra povrchů.</text>`);
     out.push(`<text y="${456+zoneExtra}" font-weight="700" font-size="11">HLAVNÍ ROZMĚRY</text>`);
-    grading.dimensions.forEach((dim,i)=>out.push(`<text y="${475+zoneExtra+i*15}">${esc(dim.name)}</text><text x="470" y="${475+zoneExtra+i*15}" text-anchor="end">${esc(dim.value.replace(/\./g,','))}</text>`));
+    tableDimensions.forEach((dim,i)=>out.push(`<text y="${475+zoneExtra+i*15}">${esc(dim.name)}</text><text x="470" y="${475+zoneExtra+i*15}" text-anchor="end">${esc(dim.value.replace(/\./g,','))}</text>`));
+    out.push(presentation.svgTerrainLegend(10,495+zoneExtra+tableDimensions.length*15));
     out.push(`  </g>`);
     out.push(`<g transform="translate(0,${footerShift})">`);
     out.push(renderLegend());
@@ -162,7 +165,7 @@
     <text x="${5 * S}" y="24" class="lbl-sm">5 m</text>
     <text x="${10 * S}" y="24" class="lbl-sm">10 m</text>
   </g>`);
-    out.push(`  <text x="300" y="850" class="note">Síť: např. 12g = sloupec 12, řádek g. Buňka ${garden.gridCellM} × ${garden.gridCellM} m.</text><text x="300" y="865" class="note">Koncepční návrh; výšky a sklony viz přehled zemních prací.</text>`);
+    out.push(`  <text x="300" y="850" class="note">Síť: např. 12g = sloupec 12, řádek g. Buňka ${garden.gridCellM} × ${garden.gridCellM} m.</text>`);
     out.push(renderTitleBlock(garden));
     out.push('</g>');
     out.push(`</svg>`);

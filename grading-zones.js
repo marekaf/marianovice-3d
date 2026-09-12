@@ -112,10 +112,13 @@ const GradingZones = (() => {
     }
     surfaces.push({id:'other',name:'Ostatní zahrada včetně vody a nezpevněných cest',polygons:remaining,area:sum(remaining)});
     const dimensions=[];
-    for(const [id,name] of [['carport','Přístřešek'],['garage','Garáž'],['eastTerrace','Východní terasa'],['westTerrace','Západní chodník'],['greenhouse','Skleník'],['raisedBedsPad','Plošina záhonů'],['compost','Kompost'],['heatPumpService','Servis čerpadla'],['heatPumpPad','Podstavec čerpadla'],['pergola','Pergola']]) {
+    for(const [id,name] of [['sauna','Sauna'],['carport','Přístřešek'],['garage','Garáž'],['eastTerrace','Východní terasa'],['westTerrace','Západní chodník'],['greenhouse','Skleník'],['raisedBedsPad','Plošina záhonů'],['compost','Kompost'],['heatPumpService','Servis čerpadla'],['heatPumpPad','Podstavec čerpadla'],['pergola','Pergola']]) {
       const p=r(id);if(p)dimensions.push({id,name,value:`${p.w.toFixed(2)} × ${p.d.toFixed(2)} m`,from:[p.x,p.y],to:[p.x+p.w,p.y]});
     }
-    if(west)dimensions.push({name:'Snížený pás, výška −0,30 m pod terasou',value:`0,75 × ${west.d.toFixed(2)} m`,from:[west.x-.75,west.y+west.d],to:[west.x,west.y+west.d]});
+    for(const id of ['sauna','pergola']) {
+      const p=r(id);if(p)dimensions.push({id:id+'Depth',name:(id==='sauna'?'Sauna':'Pergola')+' – hloubka',value:p.d.toFixed(2)+' m',from:[p.x+p.w,p.y],to:[p.x+p.w,p.y+p.d]});
+    }
+    if(west)dimensions.push({name:'Západní pás',value:`0,75 × ${west.d.toFixed(2)} m`,from:[west.x-.75,west.y+west.d],to:[west.x,west.y+west.d]});
     const driveway=el('driveway')?.parts.find(p=>p.kind==='polygon');
     if(garage&&driveway) {
       const x0=house[2],x1=garage.x+garage.w;

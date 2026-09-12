@@ -55,6 +55,29 @@ console.log(`Grading report: ${data.cells.length} samples match viewer, determin
 
 const {GradingZones}=require('./grading-zones.js');
 const quantities=GradingZones.create(GARDEN);
+for(const [id,width,depth] of [['sauna',4,3],['pergola',6,4]]) {
+  for(const [dimensionId,length] of [[id,width],[id+'Depth',depth]]) {
+    const dimension=quantities.dimensions.find(d=>d.id===dimensionId);
+    assert(Math.abs(Math.hypot(dimension.to[0]-dimension.from[0],dimension.to[1]-dimension.from[1])-length)<1e-9);
+    assert(result.mapSVG.includes(`data-dimension="${dimensionId}"`));
+  }
+}
+const {GradingOverlay}=require('./grading-overlay.js');
+for(const bank of GARDEN.gradingBanks)assert(result.mapSVG.includes(`data-terrain-bank="${bank.id}"`));
+for(const [,label] of GradingOverlay.terrainLegend)for(const output of [result.html,result.exportSVG])assert(output.includes(label));
+assert(result.mapSVG.includes('dešťová nádrž · orientačně'));
+if(existsSync('docs/survey-terrain.js')) {
+  const actual=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:require('./docs/survey-terrain.js').SURVEY_TERRAIN}).site;
+  const marks=GradingOverlay.terrainMarks(GARDEN,quantities);
+  for(const mark of [...marks.banks,...marks.slopes]) {
+    let previous=actual.height(...mark.from),first=previous;
+    for(let i=1;i<=100;i++) {
+      const t=i/100,height=actual.height(mark.from[0]+t*(mark.to[0]-mark.from[0]),mark.from[1]+t*(mark.to[1]-mark.from[1]));
+      assert(height<=previous+1e-6,`${mark.id} arrow must point downhill throughout`);previous=height;
+    }
+    assert(first>previous+.01,`${mark.id} arrow must show a measurable fall`);
+  }
+}
 for(const rows of [quantities.zones,quantities.surfaces])assert(Math.abs(rows.reduce((sum,row)=>sum+row.area,0)-quantities.plotArea)<1e-7);
 assert.deepEqual(quantities.zones.map(z=>z.id),[...'ABCDEFGHIJKLM']);
 const zoneC=quantities.zones.find(z=>z.id==='C');

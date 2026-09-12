@@ -19,6 +19,52 @@ const GradingOverlay = (() => {
   function svgBankSpots(spots,px,pz) {
     return spots.map(spot=>`<g data-bank-spot="${spot.id}"><circle cx="${px(spot.position[0])}" cy="${pz(spot.position[1])}" r="7" fill="white" stroke="#49595f" stroke-width="1.5"/><text x="${px(spot.position[0])}" y="${pz(spot.position[1])+3}" font-size="9" text-anchor="middle">${spot.id}</text></g>`).join('');
   }
+  function terrainMarks(garden,quantities) {
+    const banks=(garden.gradingBanks??[]).map(bank=>({...bank,from:bank.id==='north'&&bank.spotCrest&&bank.spotFoot?bank.spotCrest.map((v,i)=>v+(bank.spotFoot[i]-v)*.25):bank.spotCrest,to:bank.spotFoot}));
+    const flats=(quantities.levelMarks??[]).map(mark=>({id:mark.id,position:mark.id==='C'?[28,12]:mark.position}));
+    const pergola=garden.elements.find(e=>e.id==='pergola')?.parts.find(p=>p.kind==='rect');
+    if(pergola)flats.push({id:'pergola',position:[pergola.x+pergola.w/2,pergola.y+pergola.d/2]});
+    if(garden.elements.some(e=>e.id==='sauna'))flats.push({id:'sauna',position:[7,5.5]});
+    const slopes=[
+      {id:'north-house',from:[12,6.95],to:[20,6.95]},
+      {id:'south-house',from:[12,27.5],to:[16,27.5]},
+      {id:'east-terrace',from:[23.58,15],to:[25.5,15]},
+      {id:'north-terrace',from:[22.5,11.58],to:[22.5,9.5]},
+      {id:'south-driveway',from:[26,32],to:[26,30.5]},
+      {id:'driveway-ramp',from:[35,29],to:[41,30]},
+      {id:'bed-sauna',from:[8,12.5],to:[8,7]},
+      {id:'west-bed',from:[-1.0436216216,12],to:[1.4,12]}
+    ];
+    return {banks,slopes,flats,fences:quantities.fenceSegments??[]};
+  }
+  const terrainLegend=[['flat','Rovná plocha v místě značky'],['slope','Svah · šipka dolů'],['fixed','Zachovat výšku zaměřeného plotu']];
+  function svgTerrainSymbol(kind,x,y) {
+    if(kind==='flat')return `<path d="M${x-7} ${y-3}h14M${x-7} ${y+3}h14" fill="none" stroke="#17649e" stroke-width="2.2"/>`;
+    if(kind==='fixed')return `<path d="M${x-6} ${y-4}l12 8M${x-6} ${y+4}l12 -8" fill="none" stroke="#243b32" stroke-width="2"/>`;
+    return `<path d="M${x-9} ${y}h18m-5 -4l5 4l-5 4" fill="none" stroke="#93502e" stroke-width="2"/>`;
+  }
+  function svgTerrainLegend(x,y) {
+    return terrainLegend.map(([kind,label],i)=>`${svgTerrainSymbol(kind,x+10,y+i*19)}<text x="${x+26}" y="${y+i*19+4}" font-size="11">${label}</text>`).join('');
+  }
+  function svgTerrainMarks(garden,px,pz,quantities) {
+    const marks=terrainMarks(garden,quantities);
+    let out='';
+    for(const bank of [...marks.banks,...marks.slopes]) {
+      if(bank.points) {
+        const points=bank.points.map(([x,z])=>`${px(x)},${pz(z)}`).join(' '),id='bank-hatch-'+bank.id;
+        out+=`<defs><pattern id="${id}" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M-2 2L2 -2M0 9L9 0M7 11L11 7" stroke="#93502e" stroke-opacity=".48" stroke-width="1"/></pattern></defs><polygon data-terrain-bank="${bank.id}" points="${points}" fill="url(#${id})" stroke="#93502e" stroke-width=".8"/>`;
+      }
+      if(!bank.from||!bank.to)continue;
+      const a=bank.from.map((v,i)=>i?pz(v):px(v)),b=bank.to.map((v,i)=>i?pz(v):px(v));
+      const length=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/length,uy=(b[1]-a[1])/length;
+      const inset=bank.points?Math.min(13,length*.18):0;
+      const start=[a[0]+ux*inset,a[1]+uy*inset],end=[b[0]-ux*inset,b[1]-uy*inset];
+      out+=`<path data-terrain-downhill="${bank.id}" d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#93502e" stroke-width="2.3"/>`;
+    }
+    for(const mark of marks.flats)out+=`<g data-terrain-flat="${mark.id}">${svgTerrainSymbol('flat',px(mark.position[0])+(mark.id==='C'?25:0),pz(mark.position[1])+17)}</g>`;
+    for(const [i,segment] of marks.fences.entries())out+=`<g data-terrain-preserve="${i}">${svgTerrainSymbol('fixed',px((segment.start[0]+segment.end[0])/2),pz((segment.start[1]+segment.end[1])/2))}</g>`;
+    return out;
+  }
   function create({THREE,scene,ground,garden,height,panel,existingHeight,houseFFL=0}) {
     const data=GradingZones.create(garden),group=new THREE.Group();
     group.name='grading-work-areas';group.visible=false;
@@ -61,6 +107,29 @@ const GradingOverlay = (() => {
     for(const mark of data.levelMarks??[]) {
       const sprite=label((mark.relativeLevel>0?'+':'')+mark.relativeLevel.toFixed(2).replace('.',',').replace('-','−'),...mark.position,.045,'#17649e','level');sprite.name='grading-level-mark-'+mark.id;
     }
+    const terrain=terrainMarks(garden,data);
+    function terrainLine(points,name,color='#93502e') {
+      const vertices=[];
+      for(let i=1;i<points.length;i++) {
+        const a=points[i-1],b=points[i],steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/.15));
+        for(let j=0;j<=steps;j++){const t=j/steps,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;vertices.push(new THREE.Vector3(x,height(x,z)+.08,z));}
+      }
+      const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(vertices),new THREE.LineBasicMaterial({color,depthTest:false,depthWrite:false,fog:false}));line.name=name;line.renderOrder=24;group.add(line);
+    }
+    for(const bank of [...terrain.banks,...terrain.slopes]) {
+      if(bank.points) {
+        terrainLine([...bank.points,bank.points[0]],'grading-bank-'+bank.id);
+        const min=Math.min(...bank.points.map(p=>p[0]+p[1])),max=Math.max(...bank.points.map(p=>p[0]+p[1]));
+        for(let k=min+.4;k<max;k+=.55) {
+          const hits=[];
+          for(let i=0;i<bank.points.length;i++){const a=bank.points[i],b=bank.points[(i+1)%bank.points.length],da=a[0]+a[1]-k,db=b[0]+b[1]-k;if(da*db<0){const t=da/(da-db);hits.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);}}
+          if(hits.length===2)terrainLine(hits,'grading-bank-hatch-'+bank.id);
+        }
+      }
+      if(bank.from&&bank.to){const a=bank.from,b=bank.to,length=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/length,uz=(b[1]-a[1])/length;terrainLine([a,b],'grading-downhill-'+bank.id);terrainLine([[b[0]-.4*ux-.2*uz,b[1]-.4*uz+.2*ux],b,[b[0]-.4*ux+.2*uz,b[1]-.4*uz-.2*ux]],'grading-downhill-tip-'+bank.id);}
+    }
+    for(const mark of terrain.flats){const [x,z]=mark.position;for(const offset of [.6,.8])terrainLine([[x-.3,z+offset],[x+.3,z+offset]],'grading-flat-'+mark.id,'#17649e');}
+    for(const [i,segment] of terrain.fences.entries()){const x=(segment.start[0]+segment.end[0])/2,z=(segment.start[1]+segment.end[1])/2;for(const sign of [-1,1])terrainLine([[x-.2,z-sign*.2],[x+.2,z+sign*.2]],'grading-preserve-'+i,'#243b32');}
     const spots=bankSpots(garden);
     for(const spot of spots)label(spot.id,...spot.position,.021,'#49595f',true).name='grading-bank-spot-'+spot.id;
     const dimensions=new THREE.Group();dimensions.visible=false;group.add(dimensions);
@@ -78,6 +147,7 @@ const GradingOverlay = (() => {
     const legend=document.createElement('div');legend.hidden=true;legend.style.cssText='font-size:11px;line-height:1.6;margin-top:6px';
     for(const zone of zones){const row=document.createElement('div');row.textContent=`${zone.id} · ${zone.name} · ${zone.area.toLocaleString('cs-CZ',{maximumFractionDigits:1})} m²`;row.style.cssText=`border-left:4px solid ${colorFor(zone)};padding-left:6px;margin:3px 0`;legend.append(row);}
     const levelKey=document.createElement('div');levelKey.textContent='Výšky vůči podlaze domu ±0,00 m';legend.append(levelKey);
+    for(const [kind,text] of terrainLegend){const row=document.createElement('div');row.textContent=({flat:'═ ',slope:'↘ ',fixed:'× '})[kind]+text;legend.append(row);}
     if(existingHeight)for(const spot of spots){const before=existingHeight(...spot.position)-houseFFL,after=height(...spot.position)-houseFFL,row=document.createElement('div');row.textContent=`${spot.id} · ${spot.name}: ${before.toFixed(2).replace('.',',')} → ${after.toFixed(2).replace('.',',')} m · +${Math.max(0,after-before).toFixed(2).replace('.',',')} m`;legend.append(row);}
     const terrainMode=document.getElementById('terrainMode');
     const sync=()=>{group.visible=toggle.checked&&terrainMode.value!=='existing';legend.hidden=!group.visible;dimensions.visible=dimensionToggle.checked;};
@@ -86,6 +156,6 @@ const GradingOverlay = (() => {
     wrapper.append(toggleLabel,dimensionLabel,legend);panel.append(wrapper);
     return {group,data,toggle,dimensionToggle};
   }
-  return {create,colorFor,svgLabels,svgLevelMarks,bankSpots,svgBankSpots};
+  return {create,colorFor,svgLabels,svgLevelMarks,bankSpots,svgBankSpots,terrainMarks,terrainLegend,svgTerrainLegend,svgTerrainMarks};
 })();
 if(typeof module!=='undefined')module.exports={GradingOverlay};
