@@ -180,11 +180,12 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="raised-beds-model.js?v=17f54a471ed2"></script>
 <script src="firepit-model.js?v=0c2fe11b26a7"></script>
 <script src="hidden-bench-model.js?v=cd83b90f23d3"></script>
-<script src="gate-model.js?v=6ab2796976ec"></script>
+<script src="gate-runback-model.js?v=f656d5875039"></script>
+<script src="gate-model.js?v=3b26730796e4"></script>
 <script src="fence-model.js?v=05c4f578f39e"></script>
-<script src="boundary-fence-model.js?v=7cfcac58f099"></script>
+<script src="boundary-fence-model.js?v=f07d2961573f"></script>
 <script src="utility-pillar-model.js"></script>
-<script src="site-terrain.js?v=c9985eff6c96"></script>
+<script src="site-terrain.js?v=43207814978f"></script>
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
@@ -2026,41 +2027,21 @@ const entranceGateModel=boundaryFence.gateModel;
 }
 let entranceGate=buildModel(THREE,entranceGateModel),entranceGateOpen=true;scene.add(entranceGate);
 {
-  const strip=siteTerrain.spec.gateRunback,[ux,uz]=strip.direction,nx=-uz,nz=ux;
-  const at=(t,d)=>[strip.start[0]+ux*t+nx*d,strip.start[1]+uz*t+nz*d];
-  const points=[at(strip.from,0),at(0,0),at(0,strip.width),at(strip.from,strip.width)];
-  const geometry=new THREE.ExtrudeGeometry(makePolyShape(points),{depth:strip.finishedLevel-strip.level,bevelEnabled:false});
-  geometry.rotateX(-Math.PI/2);geometry.translate(0,strip.level,0);
-  const surface=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());
-  surface.name='gate-runback-gravel';surface.receiveShadow=true;surface.castShadow=true;scene.add(surface);
+  const strip=siteTerrain.spec.gateRunback,points=strip.points;
+  const runback=buildModel(THREE,GateRunbackModel.build(strip,siteTerrain.baseHeight));
+  scene.add(runback);
+  const surface=runback.getObjectByName('Gate runback_surface_gravel');
   const {GravelSurfaceModel}=await import('./gravel-surface-model.js');
   const stones=GravelSurfaceModel.create(THREE,{surface,bounds:{x0:Math.min(...points.map(p=>p[0])),x1:Math.max(...points.map(p=>p[0])),z0:Math.min(...points.map(p=>p[1])),z1:Math.max(...points.map(p=>p[1]))},seed:129});
-  const transform=new THREE.Object3D();
+  const transform=new THREE.Object3D(),[ux,uz]=strip.direction;
   for(const [i,p] of stones.userData.parts.entries()){
-    const inset=(p.x-strip.start[0])*nx+(p.z-strip.start[1])*nz;
+    const inset=-(p.x-strip.start[0])*uz+(p.z-strip.start[1])*ux;
     transform.position.set(p.x,p.y,p.z);transform.rotation.set(0,p.rotation,0);
     transform.scale.set(p.radius,p.halfHeight,p.radius);
-    if(inset<.35)transform.scale.setScalar(0);
+    if(Math.abs(inset-entranceGateModel.dims.railOffset)<.17)transform.scale.setScalar(0);
     transform.updateMatrix();stones.setMatrixAt(i,transform.matrix);
   }
   stones.instanceMatrix.needsUpdate=true;stones.name='gate-runback-gravel-stones';scene.add(stones);
-  const edgeParts=[];
-  for(const [edge,a,b,inside] of [
-    ['outer',at(strip.from,0),at(0,0),[nx,nz]],
-    ['inner',at(strip.from,strip.width),at(0,strip.width),[-nx,-nz]],
-    ['end',at(strip.from,0),at(strip.from,strip.width),[ux,uz]],
-  ]){
-    const count=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/.3);
-    for(let i=0;i<count;i++){
-      const p=lerp2(a,b,i/count),q=lerp2(a,b,(i+1)/count),r=[q[0]+inside[0]*.06,q[1]+inside[1]*.06],s=[p[0]+inside[0]*.06,p[1]+inside[1]*.06];
-      const bottom=(v)=>Math.min(strip.level,siteTerrain.baseHeight(v[0]-inside[0]*.45,v[1]-inside[1]*.45))-.12;
-      const bp=bottom(p),bq=bottom(q),top=strip.finishedLevel-.002;
-      const faces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
-      if((q[0]-p[0])*inside[1]-(q[1]-p[1])*inside[0]<0)faces.forEach(face=>face.reverse());
-      edgeParts.push({name:`gate_runback_edge_${edge}_${i}`,type:'mesh',vertices:[[...p,bp],[...q,bq],[...r,bq],[...s,bp],[...p,top],[...q,top],[...r,top],[...s,top]],faces,material:'retainedEdge',category:'structure'});
-    }
-  }
-  scene.add(buildModel(THREE,{name:'Gate runback retained edge',parts:edgeParts,lights:[],floorHeight:0,materials:{retainedEdge:{color:'#888b86',roughness:.95}}}));
   entranceGateModel.notes.push('The level gravel run-back and retained edges are a grading proposal. Their foundations, boundary position and drainage need coordination; the motor side is not an approved structural detail.');
 }
 window.toggleEntranceGate=(open=!entranceGateOpen)=>{
@@ -2069,7 +2050,7 @@ window.toggleEntranceGate=(open=!entranceGateOpen)=>{
   entranceGate.traverse(object=>{if(object.isMesh){if(object.isInstancedMesh)object.dispose();object.geometry.dispose();materials.add(object.material);}});
   for(const material of materials)material.dispose();
   scene.remove(entranceGate);entranceGateOpen=open;
-  entranceGate=buildModel(THREE,GateModel.build({openingStart:gateT,direction:[gux,guz],fixedPanelLength:entranceFixedLength,floorHeight:entranceGateModel.floorHeight,open:entranceGateOpen?1:0,wicketOpen:entranceGateOpen?1:0}));
+  entranceGate=buildModel(THREE,GateModel.build({openingStart:gateT,direction:[gux,guz],fixedPanelLength:entranceFixedLength,railOffset:entranceGateModel.dims.railOffset,floorHeight:entranceGateModel.floorHeight,open:entranceGateOpen?1:0,wicketOpen:entranceGateOpen?1:0}));
   scene.add(entranceGate);
   document.getElementById('toggleEntranceGate').checked=entranceGateOpen;
   invalidateShadows();

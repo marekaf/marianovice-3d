@@ -51,6 +51,15 @@ for(let step=0;step<=12;step++){
 assert.equal(GateModel.build({fixedPanel:false}).parts.filter(p=>p.name.endsWith('_expanded_metal')).length,2);
 assert.throws(()=>GateModel.build({direction:[0,0]}));
 assert.throws(()=>GateModel.build({open:2}));
+assert.throws(()=>GateModel.build({railOffset:NaN}));
+assert.throws(()=>GateModel.build({railOffset:.1}));
+const inward=GateModel.build({...options,railOffset:.4});
+assert.equal(inward.dims.railOffset,.4);
+for(const original of model.parts.filter(p=>p.name.startsWith('gate_post_')||p.category==='wicket'||p.category==='fixed'))assert.deepEqual(inward.parts.find(p=>p.name===original.name),original,'Rail clearance does not move fixed posts or gate openings');
+for(const name of ['motor_base','motor_housing','motor_cover','carriage_support_-1.25','carriage_support_-0.3','cantilever_runner','drive_rack']){
+  const a=model.parts.find(p=>p.name===name),b=inward.parts.find(p=>p.name===name);
+  for(let i=0;i<a.vertices.length;i++)for(let axis=0;axis<3;axis++)assert(Math.abs(b.vertices[i][axis]-a.vertices[i][axis]-(axis===1?.22:0))<1e-9,`${name} follows the rail`);
+}
 const transformed=GateModel.build({openingStart:[10,20],direction:[0,2],open:0,wicketOpen:0});
 const original=model.parts.find(p=>p.name==='cantilever_runner').vertices[0],rotated=transformed.parts.find(p=>p.name==='cantilever_runner').vertices[0];
 assert.deepEqual(rotated,[10-original[1],20+original[0],original[2]]);

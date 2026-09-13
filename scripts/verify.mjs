@@ -93,6 +93,7 @@ const checks=[
   'verify-pond-ground-mesh.mjs',
   'verify-fence-model.mjs',
   'verify-gate-model.mjs',
+  'verify-gate-runback.mjs',
   'verify-boundary-memory.mjs',
   'verify-utility-pillar.mjs',
   'verify-viewer-loading.mjs',

@@ -21,6 +21,32 @@ const existing=SurveySurface.create(require('./docs/survey-terrain.js').SURVEY_T
 let boundary=BoundaryFenceModel.build({garden:GARDEN,survey:FENCE_SURVEY,heightAt:existing});
 assert.deepEqual(boundary.segments.filter(s=>s.measured).map(({sourceIndex,start,end})=>({sourceIndex,start,end})),FENCE_SURVEY.segments);
 assert.equal(boundary.gateModel.dims.opening,4);
+const closure=boundary.segments.find(s=>!s.measured&&Math.hypot(s.end[0]-s.start[0],s.end[1]-s.start[1])<1);
+assert.deepEqual(closure.start,FENCE_SURVEY.segments[0].end,'Gate closure continues from the end of the measured stub');
+const closureModel=boundary.models[boundary.segments.indexOf(closure)];
+assert(!closureModel.parts.some(part=>part.type==='cylinder'),'Measured corner and gate post already support the closure');
+assert(boundary.gateModel.dims.railOffset>.18,'Moving gate clears the existing east fence');
+const {GateModel}=require('./gate-model.js');
+const {direction:gateDirection,openingStart:gateOrigin,railOffset}=boundary.gateModel.dims;
+const moving=GateModel.build({openingStart:gateOrigin,direction:gateDirection,railOffset,open:0}).parts.filter(p=>p.category==='sliding');
+const envelopes=moving.map(part=>{
+  if(part.type==='beam')return {points:[part.start,part.end],radius:Math.hypot(part.width,part.depth)/2};
+  if(part.vertices)return {points:part.vertices,radius:0};
+  const points=part.groups.flatMap(group=>group.positions.flatMap(position=>group.vertices.map(vertex=>vertex.map((v,i)=>v+position[i]))));
+  const local=points.map(p=>[(p[0]-gateOrigin[0])*gateDirection[0]+(p[1]-gateOrigin[1])*gateDirection[1],-(p[0]-gateOrigin[0])*gateDirection[1]+(p[1]-gateOrigin[1])*gateDirection[0]]);
+  const limits=[0,1].map(i=>local.reduce(([min,max],p)=>[Math.min(min,p[i]),Math.max(max,p[i])],[Infinity,-Infinity]));
+  return {points:limits[0].flatMap(x=>limits[1].map(y=>[gateOrigin[0]+gateDirection[0]*x-gateDirection[1]*y,gateOrigin[1]+gateDirection[1]*x+gateDirection[0]*y])),radius:0};
+});
+let minimumGateGap=Infinity;
+for(let step=0;step<=100;step++)for(const envelope of envelopes)for(const point of envelope.points){
+  const p=point.slice(0,2).map((v,i)=>v-4.1*step/100*gateDirection[i]);
+  for(const {start:a,end:b} of FENCE_SURVEY.segments){
+    const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy)));
+    minimumGateGap=Math.min(minimumGateGap,Math.hypot(p[0]-a[0]-dx*t,p[1]-a[1]-dy*t)-envelope.radius-.025);
+  }
+}
+assert(minimumGateGap>=.05,`Moving leaf and tail require 50mm from built fence: ${minimumGateGap}`);
+console.log(JSON.stringify({railOffset,minimumGateGap,gateStates:101}));
 const westEnd=FENCE_SURVEY.segments.at(-1).end;
 const southSpan=boundary.segments.find(s=>!s.measured&&Math.hypot(s.end[0]-s.start[0],s.end[1]-s.start[1])>20);
 assert.deepEqual(southSpan.end,westEnd,'South fence joins the measured west endpoint without a cadastral dogleg');
