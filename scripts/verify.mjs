@@ -43,6 +43,7 @@ const checks=[
   'verify-entrance-jamb.mjs',
   'verify-entrance-landing.mjs',
   'verify-entrance-controls.mjs',
+  'verify-entrance-drawing.mjs',
   'verify-kitchen-upper-modules.mjs',
   'verify-coffee-niche.mjs',
   'verify-dressing-room.mjs',
