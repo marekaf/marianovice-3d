@@ -21,6 +21,7 @@ const checks=[
   'verify-room-a-grading.mjs',
   'verify-planting-profiles.mjs',
   'verify-selected-planting.mjs',
+  'verify-cotoneaster.mjs',
   'verify-privacy-screens.mjs',
   'verify-portal-drain.mjs',
   'verify-climber-model.mjs',

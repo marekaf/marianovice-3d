@@ -116,6 +116,7 @@ const GradingZones = (() => {
       D:['Posezení','venkovní kuchyň'],
       G:['Dřevostavba sauny','vířivka','vyvýšené záhony','skleník'],
       H:['Podzemní dešťová nádrž'],
+      L:['Skalník (Cotoneaster)'],
       I:['Přístřešek na popelnice'],
       O:['Plastový úložný box','kompostér']
     };

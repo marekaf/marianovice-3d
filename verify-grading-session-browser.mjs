@@ -8,12 +8,25 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
   page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
-  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,gardenRoutes,firepitGroup,firepitModel,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
+  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,cotoneasterModel,cotoneasterGroup,gardenRoutes,firepitGroup,firepitModel,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
   await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
   console.log('Viewer ready in',Date.now()-started,'ms');
   assert.deepEqual(errors,[]);
   await page.waitForFunction(()=>window.gradingSession?.renderer.info.render.calls>0);
+  const bankCover=await page.evaluate(async()=>{
+    const {createMeshHeightQuery}=await import('./mesh-height-query.js'),t=gradingSession,query=createMeshHeightQuery(t.ground);
+    let minLeaf=Infinity,maxLeaf=-Infinity,samples=0;
+    t.cotoneasterGroup.updateMatrixWorld(true);
+    t.cotoneasterGroup.traverse(mesh=>{if(!mesh.isMesh||mesh.name!=='Cotoneaster leaves')return;
+      const p=mesh.geometry.attributes.position,point=new t.THREE.Vector3();
+      for(let i=0;i<p.count;i+=137){point.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);const ground=query(point.x,point.z);if(ground===null)throw new Error('Bank leaf has no rendered ground');const h=point.y-ground;minLeaf=Math.min(minLeaf,h);maxLeaf=Math.max(maxLeaf,h);samples++;}
+    });
+    return {roots:t.cotoneasterModel.anchors.length,rootError:Math.max(...t.cotoneasterModel.contacts.map(p=>Math.abs(p[2]-query(p[0],p[1])-.008))),minLeaf,maxLeaf,samples};
+  });
+  assert(bankCover.roots>150&&bankCover.rootError<1e-8,'Bank cover samples the final ground mesh');
+  assert(bankCover.samples>500&&bankCover.minLeaf>.06&&bankCover.maxLeaf<.15,'Actual Cotoneaster leaves follow the bank surface');
+  console.log('Cotoneaster rendered contact:',bankCover);
   const restored=await page.evaluate(()=>{
     const t=gradingSession,d=t.houseRoofSpec,bounds=new t.THREE.Box3();
     t.scene.updateMatrixWorld(true);
@@ -166,8 +179,8 @@ try {
   await page.locator('#panel-more > details > summary').click();
   await page.locator('#terrainPreview summary').click();
   await page.check('#gradingAreas');
-  const featureHints={B:'Brána, revizní kanalizační šachta',C:'Pergola, ohniště, jezírko, lavička',D:'Posezení, venkovní kuchyň',G:'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník',H:'Podzemní dešťová nádrž',I:'Přístřešek na popelnice',O:'Plastový úložný box, kompostér'};
-  assert.equal(await page.locator('#terrainPreview [data-zone-features]').count(),7);
+  const featureHints={B:'Brána, revizní kanalizační šachta',C:'Pergola, ohniště, jezírko, lavička',D:'Posezení, venkovní kuchyň',G:'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník',H:'Podzemní dešťová nádrž',L:'Skalník (Cotoneaster)',I:'Přístřešek na popelnice',O:'Plastový úložný box, kompostér'};
+  assert.equal(await page.locator('#terrainPreview [data-zone-features]').count(),8);
   for(const [id,hint] of Object.entries(featureHints)){
     const row=page.locator(`#terrainPreview [data-zone-features="${id}"]`);
     assert.equal(await row.textContent(),hint);assert(await row.isVisible());

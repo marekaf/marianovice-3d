@@ -1543,7 +1543,13 @@ def clears_model_planting(px, py, radius):
     return True
 
 
+def in_cotoneaster_bank(px, py):
+    return any(point_in_poly(px, py, polygon) for polygon in GARDEN["cotoneasterModel"]["polygons"])
+
+
 def place_asset(src, name, px, py, footprint=None, z=None):
+    if in_cotoneaster_bank(px, py):
+        return None
     s = 1.0
     if footprint:
         d = max(src.dimensions.x, src.dimensions.y, 0.01)
@@ -1696,7 +1702,7 @@ if not DETAILS_PATH:
 def place_plant(lib, name, px, py, footprint, zoff=0.0):
     """Linked-duplicate a staged plant, scale to a footprint (m across), seat its base on
     the terrain via the local bounding box so nothing floats or sinks, random Z-spin."""
-    if not lib:
+    if not lib or (lib is not LOG_LIB and in_cotoneaster_bank(px, py)):
         return
     src = random.choice(lib)
     d = max(src.dimensions.x, src.dimensions.y, 0.01)
@@ -1766,6 +1772,7 @@ if not DETAILS_PATH:
 
 
     build_model(GARDEN["pergolaRoses"])
+    build_model(GARDEN["cotoneasterModel"])
 
 
 # firewood pile beside the sauna
@@ -1906,6 +1913,8 @@ def place_clump(mesh, name, px, py, s, kind):
 
 if not DETAILS_PATH:
     for zid, plant, zfn, zbbox in ZONE_SHAPES:
+        original_shape = zfn
+        zfn = lambda px, py, shape=original_shape: shape(px, py) and not in_cotoneaster_bank(px, py)
         zarea = shape_area(zfn, zbbox)
         if plant == "perennials":
             scatter_perennials(zid, zfn, zbbox, zarea,
