@@ -62,4 +62,28 @@ for (const patch of [
   { x0: 7.65, z0: 15.65, x1: 7.80, z1: 18.80 },
 ]) for (const wall of walls) assert(overlap(patch, wall) < 1e-10,
   `Gap closure stays outside ${wall.id}`);
+
+const THREE = await import('three');
+const { INTERIORS3D } = require('./interiors3d.js');
+const { houseFlooringModel } = await import('./docs/house-flooring.js');
+const minimal = data => ({ ...data, extWalls: [], intWalls: [], rooms: [], furniture: null, stairs: null, fireplace: null, hatch: null, slopes: [], ceilings: null });
+const ground = INTERIORS3D.buildHouse(THREE, minimal(house));
+const upper = INTERIORS3D.buildHouse(THREE, minimal(loft), { floorY: loft.floorY });
+const hitsAt = (group, x, z) => {
+  group.updateMatrixWorld(true);
+  return new THREE.Raycaster(new THREE.Vector3(x, 6, z), new THREE.Vector3(0, -1, 0)).intersectObject(group, true);
+};
+for (const x of [5.71, 6.3, 7.7, 8.42]) {
+  assert.equal(hitsAt(ground.ceiling, x, 12.84).length, 0, 'Ceiling has no ledge between the cathedral wall and stair opening');
+  assert.equal(hitsAt(upper.floor, x, 12.84).length, 0, 'Loft floor has no ledge between the cathedral wall and stair opening');
+}
+for (const [x, z] of [[8.6, 13.4], [6.3, 14.2]]) {
+  assert(hitsAt(ground.ceiling, x, z).length > 0, 'Ceiling beside the stair opening remains solid');
+  assert(hitsAt(upper.floor, x, z).length > 0, 'Loft landing beside the stair opening remains solid');
+}
+for (const part of houseFlooringModel(loft).parts) {
+  const [x, z] = part.position, [w, d] = part.size;
+  assert(overlap({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2 },
+    { x0: 5.70, x1: 8.43, z0: 12.80, z1: 12.88 }) < 1e-10, 'Floor finish stops at the open stair edge');
+}
 console.log(`Loft ceiling: ${checked} open cells covered once; partition edges and 2.27 m height preserved`);

@@ -84,7 +84,7 @@ const HOUSE_INTERIOR = {
   // clearH, the plate spans the whole outline above them. Holes: stairwell, V1 vlez (chodba,
   // A-NADREZ rectangle), and the cathedral over the living + kitchen.
   lid: { top: HOUSE_LOFT_FLOOR - .15, holes: [
-    { x0: 5.70, z0: 12.88, x1: 8.43, z1: 13.95 },  // stairwell — opening runs to the gallery wall
+    { x0: 5.70, z0: 12.80, x1: 8.43, z1: 13.95 },  // stairwell — opening runs to the gallery wall
     { x0: 4.10, z0: 2.45, x1: 5.10, z1: 3.15 },    // V1 půdní vlez 1000×700
     { x0: 4.70, z0: 7.00, x1: 9.65, z1: 12.80 },   // cathedral — 2.03 attic floor ends at z 7.00, kitchen is under it
   ] },
@@ -495,7 +495,7 @@ const HOUSE_LOFT = {
   outline: [[0, 0], [10.8, 0], [10.8, 4.4], [10.1, 4.4], [10.1, 15.35], [10.8, 15.35], [10.8, 19.25], [0, 19.25], [0, 11.99], [4.45, 11.99], [4.45, 8.75], [0, 8.75]],
   floorHoles: [
     { x0: 4.70, z0: 7.00, x1: 9.65, z1: 12.80 },   // cathedral void (gallery edge)
-    { x0: 5.70, z0: 12.88, x1: 8.43, z1: 13.95 },  // stairwell — opening runs to the gallery wall
+    { x0: 5.70, z0: 12.80, x1: 8.43, z1: 13.95 },  // stairwell — opening runs to the gallery wall
     { x0: 4.10, z0: 2.45, x1: 5.10, z1: 3.15 },    // V1 vlez
   ],
   entryRooms: ['2.01', '2.03'],  // reached from below: stairs into 2.01, vlez ladder into 2.03
