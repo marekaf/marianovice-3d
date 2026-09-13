@@ -129,7 +129,17 @@ export async function generateGradingPDF({sourceRoot=fileURLToPath(new URL('.',i
       html.querySelectorAll('script,nav').forEach(element=>element.remove());
       return '<!doctype html>\n'+html.outerHTML;
     });
+    await page.locator('.model-sheet img').evaluateAll(async images=>{
+      for(const image of images){
+        const canvas=document.createElement('canvas');
+        canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+        canvas.getContext('2d').drawImage(image,0,0);
+        image.src=canvas.toDataURL('image/jpeg',.9);
+        await image.decode();
+      }
+    });
     const pdfBytes=await page.pdf({preferCSSPageSize:true,printBackground:true});
+    assert(pdfBytes.length<20*1024*1024,'PDF must remain below 20 MiB for email');
     assert.equal((pdfBytes.toString('latin1').match(/\/Type\s*\/Page\b/g)||[]).length,pages,'Printed PDF must contain the map and five model views');
     assert.equal(hash(await readFile(exporterPath)),exporterHash,'Exporter changed during generation');
     const manifest={exporterHash,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
