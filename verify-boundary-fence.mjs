@@ -25,6 +25,16 @@ const closure=boundary.segments.find(s=>!s.measured&&Math.hypot(s.end[0]-s.start
 assert.deepEqual(closure.start,FENCE_SURVEY.segments[0].end,'Gate closure continues from the end of the measured stub');
 const closureModel=boundary.models[boundary.segments.indexOf(closure)];
 assert(!closureModel.parts.some(part=>part.type==='cylinder'),'Measured corner and gate post already support the closure');
+const closureTopWire=closureModel.parts.find(part=>part.name==='tension_wire_0_1.99');
+assert(closureTopWire.end[2]<=boundary.gateModel.floorHeight+1.58,'Unmeasured closure wire terminates on the gate post body');
+assert(Math.abs(closureTopWire.start[2]-(existing(...closure.start)+1.99))<1e-10,'Measured-side top tension wire stays fixed');
+for(const part of closureModel.parts.filter(p=>p.type==='repeatedMesh'))for(const group of part.groups)for(const position of group.positions)for(const vertex of group.vertices){
+  const p=vertex.map((v,i)=>v+position[i]),distance=Math.hypot(p[0]-closure.end[0],p[1]-closure.end[1]);
+  if(distance<.005)assert(p[2]<=boundary.gateModel.floorHeight+1.58,'Chain-link upper tip fits the gate post body');
+  assert(p[2]<=existing(...closure.start)+2.001,'Taper never raises the measured-side fence');
+}
+const standardClosure=require('./fence-model.js').FenceModel.build({start:closure.start,end:closure.end,heightAt:existing,startPost:false,endPost:false});
+assert.deepEqual(closureModel.parts.filter(p=>p.name.startsWith('concrete_')),standardClosure.parts.filter(p=>p.name.startsWith('concrete_')),'Taper changes no concrete board geometry');
 assert(boundary.gateModel.dims.railOffset>.18,'Moving gate clears the existing east fence');
 const {GateModel}=require('./gate-model.js');
 const {direction:gateDirection,openingStart:gateOrigin,railOffset}=boundary.gateModel.dims;

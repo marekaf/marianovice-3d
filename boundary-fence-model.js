@@ -45,8 +45,12 @@ const BoundaryFenceModel=(()=>{
     const key=p=>p.map(v=>v.toFixed(7)).join(',');
     const models=visible.map((segment,i)=>{
       const startPost=!seen.has(key(segment.start)),endPost=!segment.gateJoin&&!seen.has(key(segment.end));seen.add(key(segment.start));seen.add(key(segment.end));
-      const model=Fence.build({start:segment.start,end:segment.end,heightAt,startPost,endPost});
-      model.name=`boundary-fence-${i}`;model.notes.push(segment.measured?'Surveyed fence alignment; nominal 2 m top above existing ground.':'Unmeasured boundary closure; nominal 2 m fence above existing ground.');
+      const topHeightAt=segment.gateJoin?((x,z)=>{
+        const [a,b]=[segment.start,segment.end],dx=b[0]-a[0],dz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));
+        return (heightAt(...a)+2)*(1-t)+(gateModel.floorHeight+1.56)*t;
+      }):undefined;
+      const model=Fence.build({start:segment.start,end:segment.end,heightAt,startPost,endPost,topHeightAt});
+      model.name=`boundary-fence-${i}`;model.notes.push(segment.measured?'Surveyed fence alignment; nominal 2 m top above existing ground.':segment.gateJoin?'Tapered infill joins the measured fence to the gate post.':'Unmeasured boundary closure; nominal 2 m fence above existing ground.');
       return model;
     });
     return {models,segments:visible,gateModel,nominalHeight:2,measured:measured.length>0};
