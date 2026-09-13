@@ -97,11 +97,12 @@
   <label id="rowJoinery" style="display:none"><input type="checkbox" id="toggleJoinery" checked> Joinery</label>
   <label id="rowWallIds" style="display:none"><input type="checkbox" id="toggleWallIds"> Wall IDs</label>
   <button class="export" id="exportBtn">⬇ Export PNG</button>
+  <button class="export" id="entranceDrawingBtn" hidden>⬇ Dimensioned PNG</button>
 </div>
 <div id="scalebar"><div id="scaleline"></div><span id="scaletext"></span></div>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=c71bd32870ea"></script>
+<script src="layout.js?v=90ed14706390"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
 <script src="furniture-model.js?v=7466ac5d1a2f"></script>
 <script src="privacy-screen-model.js"></script>
@@ -114,8 +115,9 @@
 <script src="docs/house-roof-windows.js"></script>
 <script type="module">
 import * as THREE from 'three';
+import {downloadEntranceDrawing} from './docs/entrance-drawing.js?v=16237a51647f';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { mountInteriorUI } from './interior-ui.js';
+import { mountInteriorUI } from './interior-ui.js?v=7c6e8e791d60';
 import { prepareLoftRoofData, attachLoftRoofWindows } from './docs/loft-roof-windows.js';
 import { attachEyeLevelWalkthrough } from './docs/eye-level-walkthrough.js?v=f53642429967';
 import { ELECTRICAL_POINTS } from './docs/electrical-points.js';
@@ -373,6 +375,7 @@ function applyVisibility() {
   document.getElementById('rowLabels').style.display = BUILDINGS[curB].labels && !camera.isPerspectiveCamera ? '' : 'none';
   for (const button of document.querySelectorAll('[data-house-focus]')) button.hidden = curB !== 'house' || !livingFitout;
   for (const button of document.querySelectorAll('[data-loft-focus]')) button.hidden = curB !== 'loft' || !loftFitout;
+  document.getElementById('entranceDrawingBtn').hidden=curB!=='house'||!['entrance','entranceSeat','entranceCoats','entranceControls'].includes(curV);
   if(document.getElementById('utilityNotes'))document.getElementById('utilityNotes').hidden=curB!=='house'||!['utility','utilityLaundry','utilityRack'].includes(curV);
   if(document.getElementById('showerNotes'))document.getElementById('showerNotes').hidden=curB!=='house'||!['bathroom','mainShower','guestShower'].includes(curV);
   const proposal = document.getElementById('fitoutProposal');
@@ -483,6 +486,11 @@ function paintScalebar(ctx, s) {
   ctx.restore();
 }
 
+document.getElementById('entranceDrawingBtn').addEventListener('click',async event=>{
+  const button=event.currentTarget;button.disabled=true;
+  try{await downloadEntranceDrawing(HOUSE_INTERIOR);}
+  finally{button.disabled=false;}
+});
 // PNG export of exactly what is on screen — render synchronously, then read the canvas
 document.getElementById('exportBtn').addEventListener('click', () => {
   renderer.render(scene, camera);

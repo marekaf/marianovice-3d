@@ -71,7 +71,7 @@ try{
         probes:{mesh:sample.name,points:[0,Math.floor(p.count/2),p.count-1].map(i=>[p.getX(i),p.getY(i),p.getZ(i)])}};
     }
     const controlPoints=s.treesGroup.children.filter(root=>root.userData.treeForm).map(root=>({kind:'tree',position:root.position.toArray(),ground:s.siteTerrain.height(root.position.x,root.position.z)}));
-    const treeAnchors=s.GARDEN.elements.filter(e=>['orchard','northTrees','eastTrees'].includes(e.id)).flatMap(e=>e.parts.filter(p=>p.kind==='circle')).filter(p=>!s.overlapsStructureAccess(p.cx,p.cy,.35));
+    const treeAnchors=s.GARDEN.elements.filter(e=>['orchard','northTrees','eastTrees','specimenMaple'].includes(e.id)).flatMap(e=>e.parts.filter(p=>p.kind==='circle')).filter(p=>!s.overlapsStructureAccess(p.cx,p.cy,.35));
     if(!treeAnchors.length||controlPoints.length!==treeAnchors.length||treeAnchors.some(a=>!controlPoints.some(p=>Math.hypot(p.position[0]-a.cx,p.position[2]-a.cy)<1e-6)))throw new Error('Garden tree anchor coverage changed');
     if(controlPoints.some(p=>Math.abs(p.position[1]-p.ground)>1e-6))throw new Error('Tree anchors differ from the shared terrain');
     const assets=[];

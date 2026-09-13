@@ -19,7 +19,7 @@ const SeasonalPlanting = (() => {
         mesh.instanceColor.array.set(colors);
         if (deciduous && season === 'autumn') {
           for (let i = 0; i < count; i++) {
-            color.fromArray(colors, i * 3).lerp(autumn, 0.45 + (i % 7) * 0.065);
+            color.fromArray(colors, i * 3).lerp(mesh.userData.autumnColor?new THREE.Color(mesh.userData.autumnColor):autumn, 0.45 + (i % 7) * 0.065);
             mesh.setColorAt(i, color);
           }
         }
