@@ -46,11 +46,30 @@ try {
     },view);
     await page.screenshot({path:`${output}/${view}.png`});
   }
+  const hoverPoints = await page.evaluate(() => {
+    const {THREE, camera, renderer} = saunaCheck;
+    const bounds = renderer.domElement.getBoundingClientRect();
+    return [3.4, 5.9].map(x => {
+      const point = new THREE.Vector3(x, saunaCheck.saunaModel.floorHeight + 2, 3.24).project(camera);
+      return {x: bounds.left + (point.x + 1) * bounds.width / 2, y: bounds.top + (1 - point.y) * bounds.height / 2};
+    });
+  });
+  for (const point of hoverPoints) {
+    await page.mouse.move(point.x, point.y);
+    assert.equal(await page.locator('#tooltip').textContent(), 'Sauna + Softub · 5 × 2,5 m');
+    assert.equal(await page.locator('#tooltip').evaluate(el => el.style.opacity), '1');
+  }
   await page.goto(new URL('interior.html#sauna-plan',process.env.MODEL_URL||'http://127.0.0.1:8765/index.html').href);
   await page.locator('#interiorToolbar').waitFor({timeout:120000});
   assert.match(await page.locator('#dims').textContent(),/5\.00 × 2\.50 m overall/);
   assert.match(await page.locator('#viewlabel').textContent(),/SAUNA \+ SOFTUB/);
   await page.screenshot({path:`${output}/interior-plan.png`});
+  await page.goto(new URL('grading.html', process.env.MODEL_URL || 'http://127.0.0.1:8765/index.html').href);
+  for (const id of ['sauna', 'saunaShelter', 'softub']) {
+    const title = page.locator(`[data-feature="${id}"] > title`);
+    await title.waitFor({state: 'attached'});
+    assert.equal(await title.textContent(), 'Sauna + Softub · 5 × 2,5 m');
+  }
   assert.deepEqual(errors,[]);
   console.log('Actual compact sauna:',JSON.stringify(result));
 } finally {await browser.close();}

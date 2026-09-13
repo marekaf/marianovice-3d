@@ -153,7 +153,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=cebb215da76e"></script>
+<script src="layout.js?v=a35a95f2711b"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=247b8a579711"></script>
@@ -2289,8 +2289,12 @@ const hoverRect = (id, h) => { const r = rectOf(id); addHoverTarget(r.x, r.y, r.
 addHoverTarget(HB[0], HB[1], HB[2] - HB[0], HB[3] - HB[1], 6, EL.house.name);
 addHoverTarget(GA.x, GA.y, GA.w, GA.d, 3.5, EL.garage.name, garageFloorY);
 hoverRect('carport', 3);
-hoverRect('sauna', 3);
-hoverRect('saunaShelter', 2.5);
+{
+  const x = Math.min(SA.x, SH.x), y = Math.min(SA.y, SH.y);
+  const w = Math.max(SA.x + SA.w, SH.x + SH.w) - x;
+  const d = Math.max(SA.y + SA.d, SH.y + SH.d) - y;
+  addHoverTarget(x, y, w, d, 3, EL.sauna.name, saunaFloorY);
+}
 hoverRect('pergola', 2.5);
 hoverRect('eastTerrace', 0.4);
 addHoverTarget(wtSidewalk.x, wtSidewalk.y, wtSidewalk.w, wtSidewalk.d, 0.4, 'West terrace — sidewalk');
