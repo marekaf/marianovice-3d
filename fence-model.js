@@ -1,5 +1,5 @@
 const FenceModel=(()=>{
-  function build({start,end,heightAt,startPost=true,endPost=true}){
+  function build({start,end,heightAt,startPost=true,endPost=true,topHeightAt}){
     const length=Math.hypot(end[0]-start[0],end[1]-start[1]);
     if(!Number.isFinite(length)||length<.001||typeof heightAt!=='function')throw new Error('Fence requires a finite segment and terrain sampler');
     const u=[(end[0]-start[0])/length,(end[1]-start[1])/length],n=[-u[1],u[0]],parts=[],bays=[],spacing=length/Math.ceil(length/2.5);
@@ -23,7 +23,7 @@ const FenceModel=(()=>{
         const vertices=[],faces=[];
         for(let row=0;row<=rows;row++){
           const t=from+Math.max(.004,Math.min(spacing-.004,col*.035+((row+col+2)%2)*.035));
-          const height=base(t)+.2+row*rise,depth=(col%2?.0015:-.0015);
+          const height=topHeightAt?base(t)+.2+row/rows*(topHeightAt(...point(t,0,0).slice(0,2))-base(t)-.2):base(t)+.2+row*rise,depth=(col%2?.0015:-.0015);
           for(let ring=0;ring<6;ring++){
             const angle=ring*Math.PI/3;
             vertices.push(point(t+Math.cos(angle)*radius,depth+Math.sin(angle)*radius,height));
@@ -36,7 +36,8 @@ const FenceModel=(()=>{
         groups.get(key).positions.push(position);
       }
       parts.push({name:`chain_link_mesh_${bay}`,type:'repeatedMesh',groups:[...groups.values()],smooth:true,material:'fenceWire',category:'structure'});
-      for(const h of [.21,1.1,1.99])beam(`tension_wire_${bay}_${h}`,point(from,.003,ha+h),point(to,.003,hb+h),.003,'fenceWire');
+      const wireHeight=(t,h,ground)=>topHeightAt?ground+.2+(h-.2)/1.8*(topHeightAt(...point(t,0,0).slice(0,2))-ground-.2):ground+h;
+      for(const h of [.21,1.1,1.99])beam(`tension_wire_${bay}_${h}`,point(from,.003,wireHeight(from,h,ha)),point(to,.003,wireHeight(to,h,hb)),.003,'fenceWire');
       for(const [endIndex,t] of [from,to].entries())beam(`board_retainer_${bay}_${endIndex}`,point(t,0,base(t)+.02),point(t,0,base(t)+.22),.018);
       bays.push({from,to,bottom,top:[ha+.2,hb+.2],samples,height:2});
     }
