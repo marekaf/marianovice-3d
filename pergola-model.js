@@ -85,7 +85,7 @@ const PergolaModel = (() => {
       box(`rafter_${i}`, x + 0.1 + i * (w - 0.28) / (rafterCount - 1), y - 0.08, beamTop,
         0.08, d + 0.16, 0.16, 'frame_y', 'roof');
     }
-    const slatCount = 21;
+    const slatCount = 11;
     for (let i = 0; i < slatCount; i++) {
       box(`roof_slat_${i}`, x - 0.08, y - 0.055 + i * (d + 0.05) / (slatCount - 1), beamTop + 0.16,
         w + 0.16, 0.065, 0.045, 'frame_x', 'roof');
