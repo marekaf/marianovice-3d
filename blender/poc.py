@@ -1976,6 +1976,8 @@ build_routes(GARDEN)
 for fence_model in GARDEN["fenceModels"]:
     build_model(fence_model)
 build_model(GARDEN["entranceGateModel"])
+if not DETAILS_PATH:
+    build_model(GARDEN["gateRunbackModel"])
 
 if DETAILS_PATH:
     detail_manifest, detail_objects = import_details(DETAILS_PATH, GARDEN, DETAILS_SOURCE)

@@ -1,6 +1,6 @@
 const GateModel = (() => {
-  function build({openingStart=[0,0],direction=[1,0],floorHeight=0,open=1,wicketOpen=1,fixedPanel=true,fixedPanelLength=1.5}={}) {
-    if(![...openingStart,...direction,floorHeight,open,wicketOpen].every(Number.isFinite)||Math.hypot(...direction)<1e-8)throw new Error('Gate placement must be finite with a nonzero direction');
+  function build({openingStart=[0,0],direction=[1,0],floorHeight=0,open=1,wicketOpen=1,fixedPanel=true,fixedPanelLength=1.5,railOffset=.18}={}) {
+    if(![...openingStart,...direction,floorHeight,open,wicketOpen,railOffset].every(Number.isFinite)||Math.hypot(...direction)<1e-8||railOffset<.18)throw new Error('Gate placement must be finite with a nonzero direction and inward rail clearance');
     if(open<0||open>1||wicketOpen<0||wicketOpen>1)throw new Error('Gate opening fractions must be between 0 and 1');
     const length=Math.hypot(...direction),u=direction.map(v=>v/length),n=[-u[1],u[0]],parts=[];
     const point=([x,y,z])=>[openingStart[0]+u[0]*x+n[0]*y,openingStart[1]+u[1]*x+n[1]*y,z];
@@ -9,7 +9,7 @@ const GateModel = (() => {
     };
     const box=(name,x,y,z,w,d,h,material,category)=>prism(name,[[x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z],[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]],material,category);
     const beam=(name,a,b,width=.06,depth=.06,material='gatePaint',category='structure')=>parts.push({name,type:'beam',start:point(a),end:point(b),width,depth,material,category});
-    const shift=-4.10*open,railY=.18,bottom=.035,top=1.50,frame=.06;
+    const shift=-4.10*open,railY=railOffset,bottom=.035,top=1.50,frame=.06;
     function infill(name,x0,x1,z0,z1,transform,category) {
       const groups=new Map(),pitchX=.042,pitchZ=.012,strand=.003,thickness=.002;
       const faces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]].map(face=>face.toReversed());
@@ -74,17 +74,21 @@ const GateModel = (() => {
       box(`gate_post_cap_${i}`,x-.074,-.074,1.58,.148,.148,.015);
       box(`gate_post_base_${i}`,x-.105,-.105,-.012,.21,.21,.024,'gateHardware');
     }
-    box('motor_base',-.61,.31,-.06,.42,.35,.10,'gateConcrete');
-    box('motor_housing',-.57,.34,.04,.32,.26,.24,'gatePaint');
-    box('motor_cover',-.58,.33,.28,.34,.28,.032,'gateHardware');
-    beam('motor_pinion_shaft',[-.43,.245,.154],[-.43,.38,.154],.025,.025,'gateHardware');
+    box('motor_base',-.61,railY+.13,-.06,.42,.35,.10,'gateConcrete');
+    box('motor_housing',-.57,railY+.16,.04,.32,.26,.24,'gatePaint');
+    box('motor_cover',-.58,railY+.15,.28,.34,.28,.032,'gateHardware');
+    beam('motor_pinion_shaft',[-.43,railY+.065,.154],[-.43,railY+.20,.154],.025,.025,'gateHardware');
+    for(const [i,x] of [-.07,4.07].entries()){
+      beam(`rail_guide_arm_${i}`,[x,0,1.55],[x,railY+.075,1.55],.04,.04,'gateHardware');
+      for(const side of [-1,1])box(`rail_guide_${i}_${side}`,x-.025,railY+side*.055-.012,1.40,.05,.024,.10,'gateHardware');
+    }
     for(const x of [-1.25,-.30])box(`carriage_support_${x}`,x-.06,railY-.04,-.06,.12,.08,.095,'gateHardware');
     for(const x of [-.07,4.07])box(`photocell_${x}`,x-.025,.073,.52,.05,.035,.085,'gateBlack');
     box('warning_beacon_base',-.105,-.035,1.60,.07,.07,.022,'gateBlack');
     box('warning_beacon_lens',-.102,-.032,1.622,.064,.064,.055,'gateAmber');
     return {name:'Expanded-metal entrance gate',floorHeight,parts,lights:[],materials:{
       gatePaint:{color:'#383e42',roughness:.48,metalness:.45},gateMesh:{color:'#383e42',roughness:.52,metalness:.45},gateHardware:{color:'#4b5052',roughness:.4,metalness:.65},gateBlack:{color:'#111619',roughness:.35},gateConcrete:{color:'#858580',roughness:.9},gateAmber:{color:'#d99a38',roughness:.3},
-    },dims:{opening:4,leafLength:5.5,tail:1.5,height:top,bottomGap:bottom,wicketOpening:1,wicketHinge:point([5.10,0,0]),slideTravel:4.10,mesh,openingStart,direction:u,wicketEnd:point([5.28,0,0]),fixedPanelStart:point([-fixedPanelLength-.28,0,0])},notes:[
+    },dims:{opening:4,leafLength:5.5,tail:1.5,height:top,bottomGap:bottom,wicketOpening:1,wicketHinge:point([5.10,0,0]),slideTravel:4.10,railOffset,mesh,openingStart,direction:u,wicketEnd:point([5.28,0,0]),fixedPanelStart:point([-fixedPanelLength-.28,0,0])},notes:[
       'Selected: 4000mm clear opening, 5500mm cantilever leaf, 1500mm height, TR42×12 expanded metal, duplex galvanised and RAL7016-coated steel.',
       'Frame profiles, 3mm strand, 2mm sheet, fittings and motor housing are illustrative fabrication dimensions. Height is shown to the leaf top from paving; confirm the supplier height datum.',
       'Selected wicket clear opening:1000mm, with a948mm leaf. The north fixed panel meets the model boundary-fence end; its final measured span and the surveyed fence-face registration require confirmation.',

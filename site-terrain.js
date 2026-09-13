@@ -403,6 +403,21 @@ const SiteTerrain = (() => {
       spec.gateRunback={start,direction,from:-5.8,to:.2,inset:0,width:.8,level:spec.drivewayProfile.gateLevel,blend:.4,
         finishedLevel:spec.drivewayProfile.gateLevel+spec.drivewayProfile.surfaceOffset,
         points:[gatePoint(-5.8,0),gatePoint(.2,0),gatePoint(.2,.8),gatePoint(-5.8,.8)]};
+      for(const fence of options.fixedFences??[]){
+        const [a,b]=[fence.start,fence.end],dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
+        const local=p=>[(p[0]-start[0])*direction[0]+(p[1]-start[1])*direction[1],-(p[0]-start[0])*direction[1]+(p[1]-start[1])*direction[0]];
+        const [p,q]=[local(a),local(b)];
+        if(length<1||Math.abs((dx*direction[0]+dz*direction[1])/length)<.9||Math.max(p[0],q[0])<-5.8||Math.min(p[0],q[0])>.2||Math.min(Math.abs(p[1]),Math.abs(q[1]))>2)continue;
+        const center=gatePoint(-2,2),sign=Math.sign(dx*(center[1]-a[1])-dz*(center[0]-a[0]));
+        const side=p=>sign*(dx*(p[1]-a[1])-dz*(p[0]-a[0]))/length-.06;
+        const clipped=[],points=spec.gateRunback.points;
+        for(let i=0;i<points.length;i++){
+          const p=points[i],q=points[(i+1)%points.length],dp=side(p),dq=side(q);
+          if(dp>=0)clipped.push(p);
+          if((dp>=0)!==(dq>=0)){const t=dp/(dp-dq);clipped.push(p.map((v,j)=>v+(q[j]-v)*t));}
+        }
+        spec.gateRunback.points=clipped;
+      }
       spec.wicketLanding={start,direction,from:4.02,to:5.30,inset:0,width:1.20,level:spec.drivewayProfile.gateLevel,blend:.3,
         finishedLevel:spec.gateRunback.finishedLevel,boundary:garden.plot.vertices.map(p=>p.slice()),
         points:[gatePoint(4.02,0),gatePoint(5.30,0),gatePoint(5.30,1.20),gatePoint(4.02,1.20)]};
