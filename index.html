@@ -153,13 +153,14 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=24984eea81e5"></script>
+<script src="layout.js?v=c71bd32870ea"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=247b8a579711"></script>
 <script src="vehicle-model.js"></script>
 <script src="exterior-furniture-model.js"></script>
 <script src="portal-drain-model.js"></script>
+<script src="house-plinth.js?v=040c4551c729"></script>
 <script src="planting-preview.js"></script>
 <script src="tree-model.js"></script>
 <script src="planting-profiles.js"></script>
@@ -186,7 +187,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
 <script src="grading-zones.js?v=8247605208e0"></script>
-<script src="grading-overlay.js?v=5bb5c0755bda"></script>
+<script src="grading-overlay.js?v=6056e5c22083"></script>
 <script type="module">
 import * as THREE from 'three';
 import { entranceLanding } from './entrance-landing.js?v=234bdc4d4f88';
@@ -211,7 +212,7 @@ import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=17bbd6cc230
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=310ed953d126';
+  script.src = './house-interior.js?v=a1892b81a1fb';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
@@ -908,7 +909,7 @@ const ground = new THREE.Mesh(groundGeom, groundSurface.material);
 ground.receiveShadow = true;
 scene.add(ground);
 const terrainPreview=TerrainPreview.create({THREE,scene,ground,existingHeight:existingGround,proposedHeight:terrainHeight,surveyed:!!surveySurface});
-const gradingOverlay=GradingOverlay.create({THREE,scene,ground,garden:GARDEN,height:terrainHeight,existingHeight:existingGround,houseFFL:TERRAIN.houseFFLInternal,panel:terrainPreview.panel});
+const gradingOverlay=GradingOverlay.create({THREE,scene,ground,garden:GARDEN,height:terrainHeight,panel:terrainPreview.panel});
 
 // ───────────────────────── HOUSE ─────────────────────────
 await ViewerLoading.stage('Building the house and terraces…');
@@ -1429,35 +1430,15 @@ scene.add(driveway);
   }
   // Marmolit sokl band — level top above floor, bottom follows the dug grade under the gravel
   const soklMat = createMarmolitMaterial(THREE);
-  const soklTop = houseBaseY + 0.25;
-  const runs = [
-    { a0: 10.48, a1: 21.28, c: 7.18, axis: 'x', dir: -1 },   // N wall
-    { a0: 10.48, a1: 21.28, c: 26.43, axis: 'x', dir: 1 },   // S wall
-    { a0: 7.18, a1: 11.58, c: 21.28, axis: 'z', dir: 1 },    // E wall, north of the terrace notch
-    { a0: 22.53, a1: 26.43, c: 21.28, axis: 'z', dir: 1 },   // E wall of the technical room facing the carport (starts at the notch south edge, so it clads a real wall, not the open recessed entrance)
-  ];
-  for (const r of runs) {
-    const len = r.a1 - r.a0;
-    const n = Math.ceil(len);
-    for (let i = 0; i < n; i++) {
-      const mid = r.a0 + len * (i + 0.5) / n;
-      const sx = r.axis === 'x' ? mid : r.c + r.dir * 0.25;
-      const sz = r.axis === 'x' ? r.c + r.dir * 0.25 : mid;
-      const gy = terrainHeight(sx, sz) - 0.15;
-      const h = Math.max(0.2, soklTop - gy);
-      const seg = new THREE.Mesh(
-        r.axis === 'x' ? new THREE.BoxGeometry(len / n + 0.02, h, 0.05) : new THREE.BoxGeometry(0.05, h, len / n + 0.02),
-        soklMat
-      );
-      seg.position.set(
-        r.axis === 'x' ? mid : r.c + r.dir * 0.025,
-        soklTop - h / 2,
-        r.axis === 'x' ? r.c + r.dir * 0.025 : mid
-      );
-      marmolitUVs(seg.geometry);
-      scene.add(seg);
-    }
+  const model=HousePlinth.build(localHouseData,houseBaseY,terrainHeight);
+  const plinth=new THREE.Group();plinth.name='house_plinth';
+  for(const part of model.parts) {
+    const [x,z,y]=part.position,[w,d,h]=part.size;
+    const seg=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),soklMat);
+    seg.name=part.name;seg.position.set(x,y,z);
+    marmolitUVs(seg.geometry);plinth.add(seg);
   }
+  scene.add(plinth);
 }
 
 // Underground utilities expose only their access covers.
