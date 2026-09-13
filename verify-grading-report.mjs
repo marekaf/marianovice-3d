@@ -29,6 +29,7 @@ const rainTank=GARDEN.elements.find(e=>e.id==='rainTank');
 assert.equal(rainTank.meta.capacityM3,12);
 assert.deepEqual(rainTank.meta.accessCover,{x:37.13,z:17.8},'Tank capacity does not move the drawing-based cover');
 const generalPlan=require('./plan.js').renderPlanSVG(GARDEN);
+for(const output of [result.html,result.mapSVG,result.exportSVG,generalPlan])assert(!output.includes('data-measured-fence='),'Plans must not draw a separate dashed fence overlay');
 assert(generalPlan.includes('12 m³')&&!generalPlan.includes('8–10 m³'),'Plan labels show the selected tank capacity');
 const changedFinish=structuredClone(data);
 changedFinish.sections.find(s=>Number.isFinite(s.maxFinishSlope)).samples[0].finished+=.01;
