@@ -9,7 +9,7 @@ assert(Math.abs(landing.x0-20.2575)<1e-9);
 assert.equal(landing.x1,20.58);
 assert(Math.abs(landing.z0-21.1275)<1e-9);
 assert(Math.abs(landing.z1-22.5525)<1e-9);
-assert.equal(landing.y,2.465);
+assert(Math.abs(landing.y-2.466)<1e-12,"Finish sits 1mm above the existing floor backing without coplanar faces");
 assert.equal(landing.bottom,1.965);
 const threshold=entry.model.parts.find(p=>p.name.endsWith('_threshold'));
 assert(Math.abs(landing.x0-(house.originPlot.x+threshold.position[0]+threshold.size[0]/2))<1e-9,'Landing meets the physical threshold edge');
