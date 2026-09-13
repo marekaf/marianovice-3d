@@ -16,15 +16,17 @@ try {
   await page.waitForFunction(()=>window.gradingSession?.renderer.info.render.calls>0);
   const bankCover=await page.evaluate(async()=>{
     const {createMeshHeightQuery}=await import('./mesh-height-query.js'),t=gradingSession,query=createMeshHeightQuery(t.ground);
-    let minLeaf=Infinity,maxLeaf=-Infinity,samples=0;
+    let minLeaf=Infinity,maxLeaf=-Infinity,samples=0,leafMeshes=0;
     t.cotoneasterGroup.updateMatrixWorld(true);
-    t.cotoneasterGroup.traverse(mesh=>{if(!mesh.isMesh||mesh.name!=='Cotoneaster leaves')return;
+    t.cotoneasterGroup.traverse(mesh=>{if(!mesh.isMesh||mesh.material.name!=='leaf')return;
+      leafMeshes++;
       const p=mesh.geometry.attributes.position,point=new t.THREE.Vector3();
       for(let i=0;i<p.count;i+=137){point.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);const ground=query(point.x,point.z);if(ground===null)throw new Error('Bank leaf has no rendered ground');const h=point.y-ground;minLeaf=Math.min(minLeaf,h);maxLeaf=Math.max(maxLeaf,h);samples++;}
     });
-    return {roots:t.cotoneasterModel.anchors.length,rootError:Math.max(...t.cotoneasterModel.contacts.map(p=>Math.abs(p[2]-query(p[0],p[1])-.008))),minLeaf,maxLeaf,samples};
+    return {roots:t.cotoneasterModel.anchors.length,rootError:Math.max(...t.cotoneasterModel.contacts.map(p=>Math.abs(p[2]-query(p[0],p[1])-.008))),minLeaf,maxLeaf,samples,leafMeshes};
   });
   assert(bankCover.roots>150&&bankCover.rootError<1e-8,'Bank cover samples the final ground mesh');
+  assert(bankCover.leafMeshes>0,'Cotoneaster material selects actual rendered leaf meshes');
   assert(bankCover.samples>500&&bankCover.minLeaf>.06&&bankCover.maxLeaf<.15,'Actual Cotoneaster leaves follow the bank surface');
   console.log('Cotoneaster rendered contact:',bankCover);
   const restored=await page.evaluate(()=>{
