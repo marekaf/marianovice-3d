@@ -102,11 +102,11 @@
 <div id="scalebar"><div id="scaleline"></div><span id="scaletext"></span></div>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=c8726687739c"></script>
+<script src="layout.js?v=37534abb0d89"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
 <script src="furniture-model.js?v=8971e7aa0b42"></script>
 <script src="privacy-screen-model.js"></script>
-<script src="sauna-model.js?v=83f8bbbddba2"></script>
+<script src="sauna-model.js?v=0c458f15aea9"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=247b8a579711"></script>
 <script src="vehicle-model.js"></script>
@@ -152,10 +152,12 @@ scene.add(garRoot);
 const saunaModel = SaunaModel.build(GARDEN, 0);
 const saunaRoot = buildModel(THREE, { ...saunaModel, floorHeight: 0 });
 const saunaCategories = saunaRoot.userData.categories;
-saunaCategories.outdoor.visible = false;
+saunaCategories.outdoor.visible = true;
 for (const light of saunaRoot.userData.lights) light.intensity = Math.min(0.35, light.userData.night);
 scene.add(saunaRoot);
 const SA = GARDEN.elements.find(e => e.id === 'sauna').parts.find(p => p.kind === 'rect');
+const saunaBay = GARDEN.elements.find(e => e.id === 'saunaShelter').parts.find(p => p.kind === 'rect');
+const saunaFootprint = {x: saunaBay.x, y: SA.y, w: SA.x + SA.w - saunaBay.x, d: SA.d};
 
 const hasHouse = typeof HOUSE_INTERIOR !== 'undefined';
 let officeIntegration = null;
@@ -291,7 +293,7 @@ function mkViews(cx, cz, midY, w, d, wallH, label) {
 const garageViews = mkViews(GA.x + GA.w / 2, GA.y + GA.d / 2, -0.5 + 1.6, GA.w, GA.d, 4.4, 'GARAGE');
 garageViews.cut3d.fitH += 1;
 garageViews.cut3d.target[1] = 1.1;
-const saunaViews = mkViews(SA.x + SA.w / 2, SA.y + SA.d / 2, 1.1, SA.w, SA.d, 4.4, 'SAUNA');
+const saunaViews = mkViews(saunaFootprint.x + saunaFootprint.w / 2, SA.y + SA.d / 2, 1.1, saunaFootprint.w, SA.d, 4.4, 'SAUNA + SOFTUB');
 saunaViews.cut3d.fitH = 5.2;
 saunaViews.cut3d.target[1] = 1;
 const BUILDINGS = {
@@ -306,7 +308,7 @@ const BUILDINGS = {
     ceiling: saunaCategories.roof,
     furniture: saunaCategories.furniture,
     views: saunaViews,
-    dims: `sauna · ${SA.w.toFixed(2)} × ${SA.d.toFixed(2)} m outside · clear height 2.50 m`,
+    dims: `sauna + Softub · ${saunaFootprint.w.toFixed(2)} × ${saunaFootprint.d.toFixed(2)} m overall · entrance hall and sauna inside`,
   },
 };
 if (hasHouse) {
@@ -568,7 +570,7 @@ window.addEventListener('hashchange', applyHash);
 
 window.DEBUG = { scene, get camera() { return camera; }, walkthrough, electrical, gar, livingFitout,utilityFitout,loftFitout,loftRoofFitout,stairFitout,ledFitout,entranceFitout,kitchenWindowFitout,cathedralFitout,
   sau: { root: saunaRoot, model: saunaModel, categories: saunaCategories, walls: BUILDINGS.sauna.walls,
-    ceiling: saunaCategories.roof, furniture: saunaCategories.furniture, dims: { rect: SA, floorY: 0, clearH: 2.5 } },
+    ceiling: saunaCategories.roof, furniture: saunaCategories.furniture, dims: { rect: saunaFootprint, floorY: 0, clearH: 2.4 } },
   hou: hasHouse ? hou : null, loft: hasLoft ? loft : null };
 renderer.setAnimationLoop(time => {
   walkthrough?.update(time);

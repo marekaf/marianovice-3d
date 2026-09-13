@@ -153,7 +153,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=c8726687739c"></script>
+<script src="layout.js?v=37534abb0d89"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=247b8a579711"></script>
@@ -171,7 +171,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="seasonal-planting.js?v=73a125d14e5a"></script>
 <script src="privacy-preview.js"></script>
 <script src="privacy-screen-model.js"></script>
-<script src="sauna-model.js?v=83f8bbbddba2"></script>
+<script src="sauna-model.js?v=0c458f15aea9"></script>
 <script src="pergola-model.js?v=bad8cd6d266a"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
 <script src="house-roof.js?v=4ddba03ad9f4"></script>
@@ -189,7 +189,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
-<script src="grading-zones.js?v=ca5ebb124620"></script>
+<script src="grading-zones.js?v=07d9c0fb764e"></script>
 <script src="grading-overlay.js?v=718d458e8d3a"></script>
 <script type="module">
 import * as THREE from 'three';
@@ -2083,7 +2083,7 @@ window.setPreset = function(name) {
     south:  [22, 8, 60],
     ground: [22, 1.7, 17],
     garage: [28.0, garageFloorY + 1.6, 26.0],
-    sauna: [SH.x - 3.2, saunaFloorY + 3.0, SA.y + SA.d + 7.2],
+    sauna: [SA.x + SA.w + 2, saunaFloorY + 3.3, SA.y + SA.d + 4.8],
     tubSeat: [SH.x + SH.w / 2, saunaFloorY + 1.1, SH.y + SH.d / 2 + 0.45],
     pergolaSeat: [PG.x + PG.w / 2, pergolaModel.floorHeight + 1.2, PG.y + PG.d - 1.1],
     westPath: [9.98, deckTop + 1.65, 10.5],
@@ -2109,7 +2109,7 @@ window.setPreset = function(name) {
     south:  [22, 5, 22],
     ground: [22, 1.7, 30],
     garage: [33.2, garageFloorY + 0.7, 20.0],
-    sauna: [SA.x + 0.5, saunaFloorY + 1.35, SA.y + SA.d / 2],
+    sauna: [(SH.x + SA.x + SA.w) / 2, saunaFloorY + 1.1, SA.y + SA.d / 2],
     tubSeat: [SH.x + SH.w / 2 - 0.5, saunaFloorY + 1.1, SH.y],
     pergolaSeat: [FPC.cx, pergolaModel.floorHeight + 1.2, FPC.cy],
     westPath: [9.98, deckTop + 1.1, 5.2],

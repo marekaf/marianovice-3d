@@ -12,7 +12,7 @@ for (const [model, count] of [[sauna, 2], [pergola, 1]]) {
   for (const screen of model.privacyScreens) {
     assert.ok(screen.top >= 2 && screen.bottom <= 0.1);
     const slats = model.parts.filter(p => p.name.startsWith(screen.name + '_slat_'));
-    assert.ok(slats.length >= 20, 'Privacy requires overlapping blades, not widely spaced rails');
+    assert.ok(slats.length >= 20, 'Privacy screens need continuous seated-height coverage');
     const bands = slats.map(p => [Math.min(...p.vertices.map(v => v[2])), Math.max(...p.vertices.map(v => v[2]))]);
     for (let h = 0.9; h <= 1.8; h += 0.005)
       assert.ok(bands.some(([lo, hi]) => h >= lo && h <= hi), `${screen.name}: direct sight gap at ${h}`);
@@ -25,4 +25,4 @@ for (const [model, count] of [[sauna, 2], [pergola, 1]]) {
 }
 assert.deepEqual(sauna.privacyScreens.map(s => s.side), ['north', 'west']);
 assert.deepEqual(pergola.privacyScreens.map(s => s.side), ['north']);
-console.log('Privacy: three framed screens; overlapping coverage at seated/bathing heights; garden-facing access open');
+console.log('Privacy: three screens; continuous coverage at seated/bathing heights; garden-facing access open');

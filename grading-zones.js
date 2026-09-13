@@ -150,8 +150,8 @@ const GradingZones = (() => {
     const sauna=r('sauna'),shelter=r('saunaShelter');
     if(sauna&&shelter) {
       const x0=Math.min(sauna.x,shelter.x),x1=Math.max(sauna.x+sauna.w,shelter.x+shelter.w),z0=Math.min(sauna.y,shelter.y),z1=Math.max(sauna.y+sauna.d,shelter.y+shelter.d);
-      dimensions.push({id:'saunaFacility',name:'Sauna a přístřešek pro vířivku',value:`${(x1-x0).toFixed(2)} × ${(z1-z0).toFixed(2)} m`,from:[x0,z0],to:[x1,z0],displayOffset:[0,-1]});
-      dimensions.push({id:'saunaFacilityDepth',name:'Sauna s přístřeškem – hloubka',value:(z1-z0).toFixed(2)+' m',from:[x0,z0],to:[x0,z1],displayOffset:[-.6,0],table:false});
+      dimensions.push({id:'saunaFacility',name:'Sauna se zádveřím a krytou vířivkou',value:`${(x1-x0).toFixed(2)} × ${(z1-z0).toFixed(2)} m`,from:[x0,z0],to:[x1,z0],displayOffset:[0,-1]});
+      dimensions.push({id:'saunaFacilityDepth',name:'Sauna s vířivkou – hloubka',value:(z1-z0).toFixed(2)+' m',from:[x0,z0],to:[x0,z1],displayOffset:[-.6,0],table:false});
     }
     if(west)dimensions.push({name:'Západní pás',value:`0,75 × ${west.d.toFixed(2)} m`,from:[west.x-.75,west.y+west.d],to:[west.x,west.y+west.d]});
     const driveway=el('driveway')?.parts.find(p=>p.kind==='polygon');
