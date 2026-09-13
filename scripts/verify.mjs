@@ -13,6 +13,7 @@ const checks=[
   'validate-layout.js',
   'verify-garden-details.mjs',
   'verify-exterior.mjs',
+  'verify-exterior-transitions.mjs',
   'verify-exterior-furniture.mjs',
   'verify-room-layout.mjs',
   'verify-room-a-grading.mjs',

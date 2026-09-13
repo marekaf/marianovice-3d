@@ -20,6 +20,8 @@ const { GradingSite } = require("./grading-site.js");
 const { SurveySurface } = require("./survey-surface.js");
 const VehicleModel = require("./vehicle-model.js");
 const { ExteriorFurnitureModel } = require("./exterior-furniture-model.js");
+const {HousePlinth}=require('./house-plinth.js');
+const {HOUSE_INTERIOR}=require('./house-interior.js');
 const { buildHouseRoofExport } = require("./house-roof-export.js");
 const { GradingZones } = require("./grading-zones.js");
 const { GardenRouteModel } = require("./garden-route-model.js");
@@ -50,6 +52,7 @@ if (surveySurface || fenceSurvey) {
 }
 fs.writeFileSync(out, JSON.stringify({
   ...GARDEN,
+  housePlinth: HousePlinth.build(HOUSE_INTERIOR,siteTerrain.spec.houseBaseY,siteTerrain.height),
   houseRoof: buildHouseRoofExport(GARDEN,siteTerrain.spec.houseBaseY),
   fenceModels: boundaryFence.models,
   entranceGateModel: boundaryFence.gateModel,

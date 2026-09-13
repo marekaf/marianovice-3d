@@ -9,11 +9,20 @@ function insidePolygon(points, x, z) {
 
 export function houseFlooringModel(house, officeOutlines = [], { regions = null } = {}) {
   const rectPolygon = room => [[room.x0, room.z0], [room.x1, room.z0], [room.x1, room.z1], [room.x0, room.z1]];
-  const exteriorThresholds=(house.extWalls||[]).filter(w=>w.openings.some(o=>o.door||!(o.sill>0))&&['N','S','E','W'].includes(w.face)).map(w=>{
-    const [x0,z0]=w.a,[x1,z1]=w.b,midX=(x0+x1)/2,midZ=(z0+z1)/2;
-    return rectPolygon({x0:w.face==='E'?midX-.05:x0,x1:w.face==='W'?midX+.05:x1,
-      z0:w.face==='S'?midZ-.05:z0,z1:w.face==='N'?midZ+.05:z1});
-  });
+  const exteriorThresholds=(house.extWalls||[]).flatMap(wall=>(wall.openings||[]).flatMap((opening,index)=>{
+    const model=house.buildOpening?.(wall,opening,index),spec=model?.opening;
+    if(!spec||spec.sill>0)return [];
+    const axis=wall.b[0]-wall.a[0]>wall.b[1]-wall.a[1]?0:1,cross=1-axis;
+    const inward=['E','S'].includes(wall.face)?-1:1;
+    const frame=model.parts.find(p=>p.name.endsWith(spec.kind==='entrance'?'_threshold':'_frame_sill'));
+    if(!frame)return [];
+    const inside=frame.position[cross]+inward*frame.size[cross]/2;
+    const lower=wall.a.slice(),upper=wall.b.slice();
+    lower[axis]=spec.center-Math.max(opening.reveal?.width??opening.w,spec.width)/2;
+    upper[axis]=spec.center+Math.max(opening.reveal?.width??opening.w,spec.width)/2;
+    if(inward===1)upper[cross]=inside;else lower[cross]=inside;
+    return [rectPolygon({x0:lower[0],z0:lower[1],x1:upper[0],z1:upper[1]})];
+  }));
   const excluded = [...officeOutlines, ...exteriorThresholds, ...(house.floorHoles || []).map(rectPolygon), ...house.rooms.filter(room => ['1.10', '1.03', 'sprcha'].includes(room.id))
     .map(room => [[room.x0, room.z0], [room.x1, room.z0], [room.x1, room.z1], [room.x0, room.z1]])];
   const bounds = {
