@@ -15,8 +15,9 @@ try {
   for(const id of zoneIds){const label=page.locator(`[data-zone-label="${id}"]`);assert.equal(await label.count(),1);assert(await label.isVisible());assert.equal((await label.locator('text').allTextContents()).join(''),id);}
   assert.equal(await page.locator('[data-zone-secondary]').count(),0);
   assert(await page.locator('[data-terrain-downhill="east-garage"]').isVisible());
-  assert.equal(await page.locator('aside [data-zone-features]').count(),7);
+  assert.equal(await page.locator('aside [data-zone-features]').count(),8);
   assert.equal(await page.locator('[data-zone-features="G"]').textContent(),'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník');
+  assert.equal(await page.locator('[data-zone-features="L"]').textContent(),'Skalník (Cotoneaster)');
   assert.equal(await page.locator('[data-level-mark]').count(),4);
   for(const value of await page.locator('[data-level-mark]:not([data-level-mark="raisedBeds"]) text').allTextContents())assert.equal(value,'−0,50');
   assert.equal(await page.locator('[data-bank-spot]').count(),0);
