@@ -9,6 +9,7 @@ const { gradingGroundBoundaries, gradingGroundRefinement } = require("./circular
 const { TERRAIN } = require("./terrain.js");
 const { SaunaModel } = require("./sauna-model.js");
 const { PergolaModel } = require("./pergola-model.js");
+const {buildRoseModel}=require("./selected-planting-export.js");
 const { GarageModel } = require("./garage-model.js");
 const { FurnitureModel } = require("./furniture-model.js");
 const { FIXTURE_SAMPLES } = require("./fixture-samples.js");
@@ -55,6 +56,7 @@ fs.writeFileSync(out, JSON.stringify({
   ...GARDEN,
   houseEntranceStairs:buildEntranceStairs(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,TERRAIN.houseFFLInternal-.5),
   housePlinth: HousePlinth.build(HOUSE_INTERIOR,siteTerrain.spec.houseBaseY,siteTerrain.height),
+  pergolaRoses: buildRoseModel(GARDEN.elements.find(e=>e.id==='pergola')),
   houseRoof: buildHouseRoofExport(GARDEN,siteTerrain.spec.houseBaseY),
   fenceModels: boundaryFence.models,
   entranceGateModel: boundaryFence.gateModel,

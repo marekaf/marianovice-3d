@@ -26,6 +26,7 @@ const checks=[
   'verify-climber-model.mjs',
   'verify-sauna.mjs',
   'verify-pergola.mjs',
+  'verify-pergola-climbing-roof.mjs',
   'verify-pergola-approach.mjs',
   'verify-pergola-bedroom-view.mjs',
   'verify-pond-approach.mjs',

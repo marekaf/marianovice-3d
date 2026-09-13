@@ -1765,41 +1765,7 @@ if not DETAILS_PATH:
         place_plant(ROSE_LIB, "rose%d" % i, px, py, 0.9 + random.random() * 0.4, zoff=-0.02)
 
 
-    # climbing roses trained up the pergola posts and spilling over the top slats: stacked rose
-    # clumps up each corner post (bulging inward toward the frame) form a rough vertical column,
-    # plus a run of clumps along the two long top beams so the roof reads as rose-covered.
-    def put_rose(name, px, py, z, smin, smax):
-        ob = random.choice(ROSE_LIB).copy()
-        bpy.context.collection.objects.link(ob)
-        ob.hide_render = False
-        s = (smin + random.random() * (smax - smin)) / max(ob.dimensions.x, ob.dimensions.y, 0.01)
-        ob.scale = (s, s, s)
-        ob.rotation_euler = (0, 0, random.random() * 6.283)
-        ob.location = (px, -py, z)
-        ob.name = name
-
-
-    if ROSE_LIB:
-        pg = first_rect(els["pergola"])
-        px0, py0, pw, pdp = pg["x"], pg["y"], pg["w"], pg["d"]
-        pgz = GARDEN["pergolaModel"]["floorHeight"]
-        top = pgz + 2.35
-        ri = 0
-        for qx, qy in [(px0 + 0.16, py0 + 0.16), (px0 + pw - 0.16, py0 + 0.16),
-                       (px0 + 0.16, py0 + pdp - 0.16), (px0 + pw - 0.16, py0 + pdp - 0.16)]:
-            ox = 0.12 if qx < px0 + pw / 2 else -0.12
-            oy = 0.12 if qy < py0 + pdp / 2 else -0.12
-            for h in (0.7, 1.25, 1.8, 2.25):
-                put_rose("pergrose%d" % ri, qx + ox + (random.random() - 0.5) * 0.1,
-                         qy + oy + (random.random() - 0.5) * 0.1, pgz + h, 0.5, 0.85)
-                ri += 1
-        for edge_y in (py0 + 0.15, py0 + pdp - 0.15):
-            for k in range(6):
-                put_rose("pergrose%d" % ri,
-                         px0 + 0.4 + (pw - 0.8) * k / 5.0 + (random.random() - 0.5) * 0.2,
-                         edge_y + (random.random() - 0.5) * 0.15, top - 0.15, 0.55, 0.95)
-                ri += 1
-        print("PERGOLA ROSES:", ri)
+    build_model(GARDEN["pergolaRoses"])
 
 
 # firewood pile beside the sauna
