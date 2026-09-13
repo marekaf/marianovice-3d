@@ -104,7 +104,7 @@
 <script src="terrain.js?v=f11b9d65254d"></script>
 <script src="layout.js?v=90ed14706390"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
-<script src="furniture-model.js?v=7466ac5d1a2f"></script>
+<script src="furniture-model.js?v=8971e7aa0b42"></script>
 <script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=83f8bbbddba2"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
@@ -178,7 +178,7 @@ if (hasHouse) {
     document.getElementById('fitoutStatus').textContent = `Office fit-out unavailable: ${error.message}`;
   }
   try {
-    livingIntegration = await import('./docs/living-interior.js?v=3b3279089eb4');
+    livingIntegration = await import('./docs/living-interior.js?v=4f1e987ebddd');
     const {createBathroomFinishes}=await import('./docs/bathroom-finishes.js');
     bathroomFinishes=createBathroomFinishes(THREE,HOUSE_INTERIOR);
     utilityIntegration=await import('./docs/utility-equipment.js');

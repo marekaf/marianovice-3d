@@ -174,7 +174,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="pergola-model.js?v=aa2ee0f82530"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
 <script src="house-roof.js?v=4ddba03ad9f4"></script>
-<script src="furniture-model.js?v=7466ac5d1a2f"></script>
+<script src="furniture-model.js?v=8971e7aa0b42"></script>
 <script src="greenhouse-model.js?v=a365b6d0fc21"></script>
 <script src="raised-beds-model.js?v=17f54a471ed2"></script>
 <script src="firepit-model.js?v=13aeea817164"></script>
@@ -188,7 +188,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
 <script src="grading-zones.js?v=8247605208e0"></script>
-<script src="grading-overlay.js?v=6056e5c22083"></script>
+<script src="grading-overlay.js?v=987f4780f502"></script>
 <script type="module">
 import * as THREE from 'three';
 import { entranceLanding } from './entrance-landing.js?v=234bdc4d4f88';
@@ -2405,7 +2405,7 @@ document.addEventListener('keydown',event=>{
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
     if(!localHouseData)throw new Error('House drawings unavailable');
-    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=9a7039d900cd');
+    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=96db2a3fd85c');
     const loftData=typeof HOUSE_LOFT==='undefined'?null:HOUSE_LOFT;
     const o=localHouseData.originPlot,localRect=r=>[r[0]-o.x,r[1]-o.z,r[2]-o.x,r[3]-o.z],gable=GABLE.map(x=>x-o.x);
     const loftRoof=loftData?HouseRoof.describe({bbox:localRect(HB),atrium:localRect(HA),gable}):null;

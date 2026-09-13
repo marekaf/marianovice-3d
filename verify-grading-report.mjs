@@ -80,6 +80,7 @@ for(const [id,width,depth] of [['sauna',4,3],['pergola',6,4]]) {
 const {GradingOverlay}=require('./grading-overlay.js');
 for(const bank of GARDEN.gradingBanks)assert(result.mapSVG.includes(`data-terrain-bank="${bank.id}"`));
 for(const [,label] of GradingOverlay.terrainLegend)for(const output of [result.html,result.exportSVG])assert(output.includes(label));
+for(const output of [result.html,result.exportSVG])assert(!/data-terrain-preserve|Zachovat výšku zaměřeného plotu/.test(output));
 assert(result.mapSVG.includes('dešťová nádrž · orientačně'));
 if(existsSync('docs/survey-terrain.js')) {
   const actual=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:require('./docs/survey-terrain.js').SURVEY_TERRAIN}).site;
