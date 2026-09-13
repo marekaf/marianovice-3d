@@ -67,6 +67,18 @@ const FurnitureModel = (() => {
         const carc = mat(f.cmat, 'carc'), frontMat = mat(f.fmat, 'front');
         const interior = mat(f.imat, carc);
         const base = z + plinth, bodyH = h - plinth;
+        const vent = alongX && f.endGrille ? {
+          y0:y+(d-f.endGrille.width)/2,y1:y+(d+f.endGrille.width)/2,
+          z1:z+h-f.endGrille.topInset,z0:z+h-f.endGrille.topInset-f.endGrille.height,
+        } : null;
+        const endPanel = (name, at, thickness, lowY, highY, material) => {
+          const lowZ=base+panel,highZ=z+h-panel;
+          if(!vent)return box(name,at,lowY,lowZ,thickness,highY-lowY,highZ-lowZ,material);
+          for(const [suffix,a,b,c,e] of [
+            ['north',lowY,vent.y0,lowZ,highZ],['south',vent.y1,highY,lowZ,highZ],
+            ['bottom',vent.y0,vent.y1,lowZ,vent.z0],['top',vent.y0,vent.y1,vent.z1,highZ],
+          ])box(`${name}_${suffix}`,at,a,c,thickness,b-a,e-c,material,0);
+        };
         if (plinth > 0) {
           const west = fronts.includes('W') ? 0.05 : 0, east = fronts.includes('E') ? 0.05 : 0;
           const north = fronts.includes('N') ? 0.05 : 0, south = fronts.includes('S') ? 0.05 : 0;
@@ -80,7 +92,24 @@ const FurnitureModel = (() => {
           else box(name, x + (fronts.includes('W') ? inset : 0), at, base + panel, w-inset, thickness, bodyH-2*panel, material);
         };
         section(`${prefix}_side_0`, alongX ? x : y, panel);
-        section(`${prefix}_side_1`, (alongX ? x + w : y + d) - panel, panel);
+        if(vent)endPanel(`${prefix}_side_1`,x+w-panel,panel,y,y+d,carc);
+        else section(`${prefix}_side_1`, (alongX ? x + w : y + d) - panel, panel);
+        if(vent){
+          const rail=.006,outer=x+w;
+          for(const [suffix,a,b,c,e] of [
+            ['north',vent.y0-rail,vent.y0,vent.z0-rail,vent.z1+rail],
+            ['south',vent.y1,vent.y1+rail,vent.z0-rail,vent.z1+rail],
+            ['bottom',vent.y0,vent.y1,vent.z0-rail,vent.z0],
+            ['top',vent.y0,vent.y1,vent.z1,vent.z1+rail],
+          ])box(`${prefix}_return_grille_${suffix}`,outer-.003,a,c,.003,b-a,e-c,carc,0);
+          for(let i=0;i<5;i++){
+            const height=vent.z0+.009+i*.019;
+            const vertices=[[outer-panel,vent.y0,height+.012],[outer,vent.y0,height],
+              [outer,vent.y1,height],[outer-panel,vent.y1,height+.012]];
+            parts.push({name:`${prefix}_return_grille_louver_${i}`,type:'mesh',vertices,
+              faces:[[0,1,2,3],[3,2,1,0]],material:carc,category:'furniture'});
+          }
+        }
         const runStart = alongX ? x : y;
         let cursor = runStart;
         for (const [i, width] of modules.entries()) {
@@ -118,6 +147,7 @@ const FurnitureModel = (() => {
             if (face === 'N' || face === 'S') box(`${prefix}_inner_${face}`, x + panel,
               face === 'N' ? y + panel : y + d - panel - skin, base + panel,
               innerW, skin, bodyH - 2 * panel, interior, 0);
+            else if(face==='E'&&vent)endPanel(`${prefix}_inner_E`,x+w-panel-skin,skin,y+panel,y+d-panel,interior);
             else box(`${prefix}_inner_${face}`, face === 'W' ? x + panel : x + w - panel - skin,
               y + panel, base + panel, skin, innerD, bodyH - 2 * panel, interior, 0);
           }
