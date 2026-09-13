@@ -33,6 +33,16 @@ try {
   for(const id of ['driveway','raisedBed1','raisedBed2','raisedBed3','raisedBed4','greenhouse','sauna','compost','waterSource','rainTank'])assert(await page.locator(`[data-feature="${id}"]`).isVisible(),`${id} visible on plan`);
   assert.equal(await page.locator('[data-feature="saunaPath"]').count(),0);
   assert.equal(await page.locator('#printPlan').isVisible(),true);
+  assert.equal(await page.locator('#printPlan').getAttribute('href'), 'docs/terrain-works.pdf');
+  if (existsSync('docs/terrain-works.pdf')) {
+    const downloadPending = page.waitForEvent('download');
+    await page.locator('#printPlan').click();
+    const download = await downloadPending;
+    const bytes = readFileSync(await download.path());
+    assert(bytes.equals(readFileSync('docs/terrain-works.pdf')), 'Download must be the complete generated PDF');
+    assert.equal((bytes.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length, 2);
+    assert.match(bytes.toString('latin1'), /\/Subtype\s*\/Image\b/);
+  }
   await page.emulateMedia({media:'print'});
   const overflow=await page.locator('.sheet').evaluateAll(sheets=>sheets.map(e=>[e.scrollHeight-e.clientHeight,e.scrollWidth-e.clientWidth]));
   assert(overflow.every(d=>d.every(v=>v<=1)),`Print sheet overflow: ${JSON.stringify(overflow)}`);
