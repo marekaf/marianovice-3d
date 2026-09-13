@@ -164,6 +164,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="planting-preview.js"></script>
 <script src="tree-model.js"></script>
 <script src="planting-profiles.js?v=8cb64402df59"></script>
+<script src="cotoneaster-model.js?v=3c1409a56a2d"></script>
 <script src="selected-planting.js?v=1ca7d8673921"></script>
 <script src="planting-guide.js"></script>
 <script src="perennial-model.js?v=ab389727ee00"></script>
@@ -177,7 +178,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="furniture-model.js?v=8971e7aa0b42"></script>
 <script src="greenhouse-model.js?v=a365b6d0fc21"></script>
 <script src="raised-beds-model.js?v=17f54a471ed2"></script>
-<script src="firepit-model.js?v=13aeea817164"></script>
+<script src="firepit-model.js?v=0c2fe11b26a7"></script>
 <script src="hidden-bench-model.js?v=cd83b90f23d3"></script>
 <script src="gate-model.js?v=6ab2796976ec"></script>
 <script src="fence-model.js?v=05c4f578f39e"></script>
@@ -187,7 +188,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
-<script src="grading-zones.js?v=ae6d5fd8b0c7"></script>
+<script src="grading-zones.js?v=ca5ebb124620"></script>
 <script src="grading-overlay.js?v=718d458e8d3a"></script>
 <script type="module">
 import * as THREE from 'three';
@@ -748,7 +749,7 @@ scene.add(furnitureGroup);
 
 // Rooted shrub canopy.
 function addBush(plotX, plotY, size = 1, color = 0x5f8452, leafHabit='deciduous') {
-  if (overlapsStructureAccess(plotX, plotY, size * .72)) return;
+  if (CotoneasterModel.contains(cotoneasterBank,plotX,plotY)||overlapsStructureAccess(plotX, plotY, size * .72)) return;
   const bush = ShrubModel.create(THREE,{x:plotX,z:plotY,groundY:terrainHeight(plotX,plotY),size,color});
   bush.userData.leafHabit=leafHabit;
   bush.traverse(object=>{if(object.userData.leafHabit)object.userData.leafHabit=leafHabit;});
@@ -909,6 +910,7 @@ const groundSurface = GroundSurfaceModel.create(THREE, { garden: GARDEN, clearan
 const ground = new THREE.Mesh(groundGeom, groundSurface.material);
 ground.receiveShadow = true;
 scene.add(ground);
+const cotoneasterBank=GradingZones.create(GARDEN).zones.find(zone=>zone.id==='L').polygons;
 const terrainPreview=TerrainPreview.create({THREE,scene,ground,existingHeight:existingGround,proposedHeight:terrainHeight,surveyed:!!surveySurface});
 const gradingOverlay=GradingOverlay.create({THREE,scene,ground,garden:GARDEN,height:terrainHeight,panel:terrainPreview.panel});
 
@@ -1586,7 +1588,7 @@ function addPerennial(zoneId, x, z, kind) {
     const waterCover = circlesOf('waterSource')[0];
     if(Math.hypot(x-waterCover.cx,z-waterCover.cy)<waterCover.r+spec.spread+.3)return;
   }
-  if (!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread,zone?.utilityCover===true)) return;
+  if (CotoneasterModel.contains(cotoneasterBank,x,z)||!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread,zone?.utilityCover===true)) return;
   const root = PerennialModel.createShared(THREE, spec);
   root.name = spec.name;
   root.position.set(x, terrainHeight(x, z), z);
@@ -1808,6 +1810,10 @@ ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry,site
 const gardenRouteEdges=new THREE.Mesh(routeEdgeGeometry(THREE,ground.geometry,gardenRoutes.geometry),gardenRoutes.material);
 gardenRouteEdges.name='Mineral path edge connections';gardenRouteEdges.receiveShadow=true;scene.add(gardenRouteEdges);
 groundGeom.dispose();
+const cotoneasterModel=CotoneasterModel.build(GARDEN,createMeshHeightQuery(ground));
+const cotoneasterGroup=buildModel(THREE,cotoneasterModel);
+Object.assign(cotoneasterGroup.userData,{species:cotoneasterModel.species,zoneId:'L'});
+treesGroup.add(cotoneasterGroup);
 
 // Zašívárna — hidden red bench off the garage north wall (Flera-style)
 const hiddenBenchGroup = buildModel(THREE, hiddenBenchModel);

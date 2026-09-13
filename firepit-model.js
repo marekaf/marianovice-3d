@@ -10,16 +10,14 @@ const FirepitModel = (() => {
       gravel:{color:'#a6a39a',roughness:0.99},gravelLight:{color:'#bbb8af',roughness:0.98},
       corten:{color:'#a75e36',roughness:0.88,metalness:0.12,finish:'corten'},
       ash:{color:'#514d45',roughness:1},charcoal:{color:'#252622',roughness:0.99},charEnd:{color:'#514233',roughness:0.96},
-      wood:{color:'#94714e',roughness:0.83,grain:'z'},woodLight:{color:'#a47e55',roughness:0.83,grain:'z'},
-      steel:{color:'#555854',roughness:0.49,metalness:0.75},
+      oak:{color:'#a48b68',roughness:.91,grain:'x'},oakEnd:{color:'#b49b76',roughness:.94},oakCheck:{color:'#67543e',roughness:.98},
       coal:{color:'#aa3d17',roughness:0.8,emissive:'#ec4b12',emissiveIntensity:1.1},
       flame:{color:'#ffb344',roughness:0.55,emissive:'#ff761b',emissiveIntensity:1.8},
     };
-    for(const axis of ['x','y']) materials[`wood_${axis}`]={...materials.wood,grain:axis};
+    materials.oak_y={...materials.oak,grain:'y'};
     const random=seed=>{const n=Math.sin(seed*127.1+311.7)*43758.5453;return n-Math.floor(n);};
     const mesh=(name,vertices,faces,material,category='structure',smooth=false)=>parts.push({name,type:'mesh',vertices,faces,material,category,smooth});
     const beam=(name,start,end,width,depth,material,category='furniture')=>parts.push({name,type:'beam',start,end,width,depth,material,category,bevel:0.003});
-    const prismFaces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
     const drapedDisk=(name,radius,bottom,top,material)=>{
       const vertices=[],faces=[],segments=64;
       for(const z of [bottom,top]) {
@@ -75,33 +73,41 @@ const FirepitModel = (() => {
           [end[0]-dy*side,end[1]+dx*side,ground(...end)+z],0.007,0.007,j===1?'charEnd':'charcoal','structure');
       }
     }
-    const pergola=garden.elements.find(e=>e.id==='pergola').parts.find(p=>p.kind==='rect');
-    const approachAngle=Math.atan2(pergola.y+pergola.d/2-cy,pergola.x+pergola.w/2-cx)*180/Math.PI;
-    for(const [i,degrees] of [60,120,180,240,300].map(a=>a+approachAngle).entries()) {
+    const house=garden.elements.find(e=>e.id==='house').meta.bbox;
+    const approachAngle=Math.atan2((house[1]+house[3])/2-cy,(house[0]+house[2])/2-cx)*180/Math.PI;
+    const gravelHeight=(x,y)=>{
+      const angle=(Math.atan2(y-cy,x-cx)+Math.PI*2)%(Math.PI*2),sector=Math.floor(angle*64/(Math.PI*2));
+      const a=sector*Math.PI/32,b=(sector+1)*Math.PI/32,ax=r*Math.cos(a),ay=r*Math.sin(a),bx=r*Math.cos(b),by=r*Math.sin(b);
+      const det=ax*by-ay*bx,u=((x-cx)*by-(y-cy)*bx)/det,v=(ax*(y-cy)-ay*(x-cx))/det;
+      return ground(cx,cy)*(1-u-v)+ground(cx+ax,cy+ay)*u+ground(cx+bx,cy+by)*v+.008;
+    };
+    for(const [i,degrees] of [-55,0,55].map(a=>a+approachAngle+180).entries()) {
       const angle=degrees*Math.PI/180,radial=[Math.cos(angle),Math.sin(angle)],tangent=[-radial[1],radial[0]];
-      const center=[cx+radial[0]*1.42,cy+radial[1]*1.42],seatHeight=ground(...center)+0.45,feet=[];
+      const center=[cx+radial[0]*1.45,cy+radial[1]*1.45],seatHeight=gravelHeight(...center)+.45,length=1.2,depth=.42;
       const point=(u,v,z)=>[center[0]+tangent[0]*u+radial[0]*v,center[1]+tangent[1]*u+radial[1]*v,z];
-      const timber=(name,u,v,length,depth,bottom,top,drape=false)=>{
-        const corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>point(u+a*length/2,v+b*depth/2,0));
-        const direction=length>=depth?tangent:radial;
-        const material=drape?'wood':Math.abs(direction[0])>Math.abs(direction[1])?'wood_x':'wood_y';
-        mesh(name,[...corners.map(p=>[p[0],p[1],drape?ground(p[0],p[1]):bottom]),...corners.map(p=>[p[0],p[1],top])],prismFaces.map(face=>face.slice().reverse()),material,'furniture');
-      };
-      for(let j=0;j<3;j++) timber(`bench_${i}_seat_${j}`,0,(j-1)*0.116,1.14,0.108,seatHeight-0.04,seatHeight);
-      for(const [j,[u,v]] of [[-0.43,-0.105],[-0.43,0.105],[0.43,-0.105],[0.43,0.105]].entries()) {
-        const p=point(u,v,0);feet.push({center:p.slice(0,2),groundHeight:ground(p[0],p[1]),topHeight:seatHeight-0.04});
-        timber(`bench_${i}_leg_${j}`,u,v,0.07,0.07,0,seatHeight-0.04,true);
-        beam(`bench_${i}_brace_${j}`,point(u,v,seatHeight-0.19),point(u-Math.sign(u)*0.17,v,seatHeight-0.065),0.035,0.035,'wood');
+      const vertices=[],faces=[],nx=12,ny=6,count=(nx+1)*(ny+1);
+      for(let layer=0;layer<2;layer++)for(let row=0;row<=ny;row++)for(let column=0;column<=nx;column++){
+        const p=point(length*(column/nx-.5),depth*(row/ny-.5),seatHeight);
+        if(!layer)p[2]=gravelHeight(p[0],p[1]);
+        vertices.push(p);
       }
-      for(const [j,v] of [-0.105,0.105].entries()) timber(`bench_${i}_apron_${j}`,0,v,0.93,0.035,seatHeight-0.13,seatHeight-0.04);
-      for(const [j,u] of [-0.43,0.43].entries()) {
-        timber(`bench_${i}_crossrail_${j}`,u,0,0.05,0.30,seatHeight-0.09,seatHeight-0.04);
-        for(const [k,v] of [-0.105,0.105].entries()) {
-          const p=point(u,v,seatHeight+0.001);
-          parts.push({name:`bench_${i}_bolt_${j}_${k}`,type:'cylinder',position:p,radiusTop:0.007,radiusBottom:0.007,height:0.003,segments:12,material:'steel',category:'furniture'});
-        }
+      for(let row=0;row<ny;row++)for(let column=0;column<nx;column++){
+        const a=row*(nx+1)+column,b=a+1,c=b+nx+1,d=a+nx+1;
+        faces.push([a,b,c,d],[a+count,d+count,c+count,b+count]);
       }
-      benches.push({id:`bench_${i}`,angle:degrees,center,length:1.14,depth:0.34,seatHeight,feet});
+      const boundary=[...Array.from({length:nx},(_,j)=>j),...Array.from({length:ny},(_,j)=>j*(nx+1)+nx),...Array.from({length:nx},(_,j)=>ny*(nx+1)+nx-j),...Array.from({length:ny},(_,j)=>(ny-j)*(nx+1))];
+      for(let j=0;j<boundary.length;j++){const a=boundary[j],b=boundary[(j+1)%boundary.length];faces.push([a,a+count,b+count,b]);}
+      const material=Math.abs(tangent[0])>=Math.abs(tangent[1])?'oak':'oak_y';
+      mesh(`bench_${i}_block`,vertices,faces,material,'furniture');
+      for(const side of [-1,1])for(let ring=1;ring<=3;ring++)for(let segment=0;segment<12;segment++){
+        const end=(a)=>point(side*(length/2+.001),Math.cos(a)*ring*.048,seatHeight-.215+Math.sin(a)*ring*.05);
+        beam(`bench_${i}_endgrain_${side}_${ring}_${segment}`,end(segment*Math.PI/6),end((segment+1)*Math.PI/6),.002,.002,'oakEnd');
+      }
+      for(let check=0;check<3;check++){
+        const side=check%2?1:-1,v=(check-1)*.105;
+        beam(`bench_${i}_check_${check}`,point(side*(length/2-.015),v,seatHeight+.001),point(side*(length/2-.12-.045*check),v+.006,seatHeight+.001),.002,.002,'oakCheck');
+      }
+      benches.push({id:`bench_${i}`,angle:degrees,center,length,depth,seatHeight,material,contacts:vertices.slice(0,count)});
     }
     for(let i=0;i<5;i++) {
       const x=cx+(i-2)*0.045,y=cy+Math.sin(i*2)*0.06,z=ground(x,y)+0.095,height=0.17+random(i)*0.14;

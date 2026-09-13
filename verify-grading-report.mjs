@@ -78,8 +78,8 @@ for(const [id,width,depth] of [['sauna',4,3],['pergola',6,4]]) {
   }
 }
 const {GradingOverlay}=require('./grading-overlay.js');
-const featureHints={B:'Brána, revizní kanalizační šachta',C:'Pergola, ohniště, jezírko, lavička',D:'Posezení, venkovní kuchyň',G:'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník',H:'Podzemní dešťová nádrž',I:'Přístřešek na popelnice',O:'Plastový úložný box, kompostér'};
-assert.equal(quantities.zones.filter(zone=>zone.features.length).length,7);
+const featureHints={B:'Brána, revizní kanalizační šachta',C:'Pergola, ohniště, jezírko, lavička',D:'Posezení, venkovní kuchyň',G:'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník',H:'Podzemní dešťová nádrž',L:'Skalník (Cotoneaster)',I:'Přístřešek na popelnice',O:'Plastový úložný box, kompostér'};
+assert.equal(quantities.zones.filter(zone=>zone.features.length).length,8);
 for(const [id,hint] of Object.entries(featureHints)){
   const zone=quantities.zones.find(zone=>zone.id===id);
   assert.equal(zone.features.join(', '),hint);
