@@ -28,6 +28,7 @@ const checks=[
   'verify-pergola-approach.mjs',
   'verify-pergola-bedroom-view.mjs',
   'verify-pond-approach.mjs',
+  'verify-rainwater-path.mjs',
   'verify-perennial-sharing.mjs',
   'verify-garage.mjs',
   'verify-garage-roof-ends.mjs',

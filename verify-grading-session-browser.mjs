@@ -146,6 +146,17 @@ try {
   assert(Math.abs(surfaces.lidOffset-.01)<1e-6,'Water lid follows the filled terrain');
   assert.deepEqual(surfaces.waterLocation,[41.25,23.45]);
   assert.deepEqual(surfaces.tankLocation,[37.13,17.8],'Rainwater tank lid is separate from the water-supply lid');
+  const lidClearance=await page.evaluate(async()=>{
+    const {createMeshHeightQuery}=await import('./mesh-height-query.js'),t=gradingSession;
+    const pathHeight=createMeshHeightQuery(t.gardenRoutes),lid=t.scene.getObjectByName('rainTank-lid');
+    let samples=0,overlaps=0;
+    for(let r=0;r<=.6;r+=.05)for(let i=0;i<72;i++){
+      samples++;if(pathHeight(lid.position.x+Math.cos(i*Math.PI/36)*r,lid.position.z+Math.sin(i*Math.PI/36)*r)!==null)overlaps++;
+    }
+    return {samples,overlaps};
+  });
+  assert(lidClearance.samples>=900&&lidClearance.overlaps===0,`Actual paths clear the rainwater lid and its margin: ${JSON.stringify(lidClearance)}`);
+  console.log('Actual rainwater lid path clearance:',JSON.stringify(lidClearance));
   const compost=GARDEN.elements.find(e=>e.id==='compost').parts.find(p=>p.kind==='rect');
   assert.deepEqual([compost.x,compost.y,compost.w,compost.d],[-1.25,.7,1,2]);
   const toolStore=GARDEN.elements.find(e=>e.id==="toolStore").parts.find(p=>p.kind==="rect");
