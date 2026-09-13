@@ -1011,6 +1011,7 @@ hp_fan.rotation_euler.x = math.pi / 2
 # marmolit sokl band: level top above floor, bottom under the gravel grade
 MAT["sokl"] = mat_pbr("sokl", "plastered_wall_02", scale=2.0,
                       tint=hexc("#453f38"), tint_fac=0.85, tint_mode="MIX")  # marmolit MAR2 M092, dark
+build_model(GARDEN["houseEntranceStairs"])
 for part in GARDEN["housePlinth"]["parts"]:
     px, py, pz = part["position"]
     width, depth, height = part["size"]
