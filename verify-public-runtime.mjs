@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import {runtimeAssetReferences} from './runtime-asset-references.mjs';
 import { createFloorTexture, plankSamples, waitForFloorReference } from './docs/floor-texture.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -17,8 +18,7 @@ while (pending.length) {
   if (!/\.(?:m?js|html|css)$/.test(file)) continue;
   const source = readFileSync(file, 'utf8');
   assert(!/\/Users\/|\.\.\/marianovice\/|BEGIN [A-Z ]*PRIVATE KEY/.test(source), `Private source reference: ${relative(root, file)}`);
-  for (const match of source.matchAll(/(['"])([^'"`\s]+\.(?:m?js|html|css|jpg|png|svg)(?:[?#][^'"]*)?)\1/g)) {
-    const path = match[2];
+  for (const path of runtimeAssetReferences(source)) {
     if (/^(?:https?:|data:|three\/)/.test(path)) continue;
     const version=path.match(/\?v=([^&#]+)/)?.[1];
     if(version){
