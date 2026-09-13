@@ -164,20 +164,21 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="planting-preview.js"></script>
 <script src="tree-model.js"></script>
 <script src="planting-profiles.js?v=8cb64402df59"></script>
-<script src="selected-planting.js?v=efae876c1fc3"></script>
+<script src="cotoneaster-model.js?v=3c1409a56a2d"></script>
+<script src="selected-planting.js?v=1ca7d8673921"></script>
 <script src="planting-guide.js"></script>
 <script src="perennial-model.js?v=ab389727ee00"></script>
 <script src="seasonal-planting.js?v=73a125d14e5a"></script>
 <script src="privacy-preview.js"></script>
 <script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=83f8bbbddba2"></script>
-<script src="pergola-model.js?v=aa2ee0f82530"></script>
+<script src="pergola-model.js?v=bad8cd6d266a"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
 <script src="house-roof.js?v=4ddba03ad9f4"></script>
 <script src="furniture-model.js?v=8971e7aa0b42"></script>
 <script src="greenhouse-model.js?v=a365b6d0fc21"></script>
 <script src="raised-beds-model.js?v=17f54a471ed2"></script>
-<script src="firepit-model.js?v=13aeea817164"></script>
+<script src="firepit-model.js?v=0c2fe11b26a7"></script>
 <script src="hidden-bench-model.js?v=cd83b90f23d3"></script>
 <script src="gate-model.js?v=6ab2796976ec"></script>
 <script src="fence-model.js?v=05c4f578f39e"></script>
@@ -187,11 +188,11 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
-<script src="grading-zones.js?v=ae6d5fd8b0c7"></script>
+<script src="grading-zones.js?v=ca5ebb124620"></script>
 <script src="grading-overlay.js?v=718d458e8d3a"></script>
 <script type="module">
 import * as THREE from 'three';
-import { entranceLanding } from './entrance-landing.js?v=234bdc4d4f88';
+import { buildEntranceStairs } from './entrance-landing.js?v=1cb023b3f393';
 import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=2271bf3f980e';
@@ -748,7 +749,7 @@ scene.add(furnitureGroup);
 
 // Rooted shrub canopy.
 function addBush(plotX, plotY, size = 1, color = 0x5f8452, leafHabit='deciduous') {
-  if (overlapsStructureAccess(plotX, plotY, size * .72)) return;
+  if (CotoneasterModel.contains(cotoneasterBank,plotX,plotY)||overlapsStructureAccess(plotX, plotY, size * .72)) return;
   const bush = ShrubModel.create(THREE,{x:plotX,z:plotY,groundY:terrainHeight(plotX,plotY),size,color});
   bush.userData.leafHabit=leafHabit;
   bush.traverse(object=>{if(object.userData.leafHabit)object.userData.leafHabit=leafHabit;});
@@ -909,6 +910,7 @@ const groundSurface = GroundSurfaceModel.create(THREE, { garden: GARDEN, clearan
 const ground = new THREE.Mesh(groundGeom, groundSurface.material);
 ground.receiveShadow = true;
 scene.add(ground);
+const cotoneasterBank=GradingZones.create(GARDEN).zones.find(zone=>zone.id==='L').polygons;
 const terrainPreview=TerrainPreview.create({THREE,scene,ground,existingHeight:existingGround,proposedHeight:terrainHeight,surveyed:!!surveySurface});
 const gradingOverlay=GradingOverlay.create({THREE,scene,ground,garden:GARDEN,height:terrainHeight,panel:terrainPreview.panel});
 
@@ -1586,7 +1588,7 @@ function addPerennial(zoneId, x, z, kind) {
     const waterCover = circlesOf('waterSource')[0];
     if(Math.hypot(x-waterCover.cx,z-waterCover.cy)<waterCover.r+spec.spread+.3)return;
   }
-  if (!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread,zone?.utilityCover===true)) return;
+  if (CotoneasterModel.contains(cotoneasterBank,x,z)||!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread,zone?.utilityCover===true)) return;
   const root = PerennialModel.createShared(THREE, spec);
   root.name = spec.name;
   root.position.set(x, terrainHeight(x, z), z);
@@ -1724,33 +1726,10 @@ const exteriorWalkingDoors=[];
     d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
     scene.add(d2);
   }
-  // Just a staircase from the door threshold (FFL) down to the carport — NO soil fill, NO paving.
-  // Each tread is a solid box running down to the carport level, so the treads cover the descent
-  // and nothing shows through beneath them.
-  const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
-  const groundY = terrainHeight(HB[2] + 0.7, doorZ);   // carport slab (−0.50)
-  const rise = Math.max(0.3, ty - groundY), nSteps = 3, tread = 0.34;
-  const stairN = 19.4, stairS = 22.6, stepW = stairS - stairN, zc = (stairN + stairS) / 2; // wide enough to touch the terrace deck (its S edge is z=19.4)
-  const entranceEntry=exteriorOpenings.find(entry=>entry.model.opening.kind==='entrance');
-  if(entranceEntry){
-    const landing=entranceLanding(entranceEntry,localHouseData.originPlot,EN[0],ty,groundY);
-    const mesh=new THREE.Mesh(new THREE.BoxGeometry(landing.x1-landing.x0,landing.y-landing.bottom,landing.z1-landing.z0),stepMat);
-    mesh.name='entrance_reveal_landing';
-    mesh.position.set((landing.x0+landing.x1)/2,(landing.y+landing.bottom)/2,(landing.z0+landing.z1)/2);
-    mesh.receiveShadow=true;mesh.castShadow=true;
-    scene.add(mesh);
-  }
-  entranceWalkSurfaces.push({x0:EN[0]-.45,x1:EN[0],z0:stairN,z1:stairS,y:ty});
-  let x0 = EN[0];
-  for (let i = 1; i <= nSteps; i++) {
-    const depth = i === 1 ? tread * 2 : tread;   // top tread doubled — a comfortable landing at the door
-    const top = ty - (rise * i) / (nSteps + 1), h = top - groundY;   // 3 treads; the carport is the last level
-    const st = new THREE.Mesh(new THREE.BoxGeometry(depth, h, stepW), stepMat);
-    st.position.set(x0 + depth / 2, top - h / 2, zc);
-    st.receiveShadow = true; st.castShadow = true;
-    scene.add(st);
-    entranceWalkSurfaces.push({x0,x1:x0+depth,z0:stairN,z1:stairS,y:top});
-    x0 += depth;
+  if(localHouseData){
+    const stairs=buildEntranceStairs(localHouseData,GARDEN,ty,garageFloorY);
+    scene.add(buildModel(THREE,stairs));
+    entranceWalkSurfaces.push(...stairs.walkSurfaces);
   }
 }
 
@@ -1831,6 +1810,10 @@ ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry,site
 const gardenRouteEdges=new THREE.Mesh(routeEdgeGeometry(THREE,ground.geometry,gardenRoutes.geometry),gardenRoutes.material);
 gardenRouteEdges.name='Mineral path edge connections';gardenRouteEdges.receiveShadow=true;scene.add(gardenRouteEdges);
 groundGeom.dispose();
+const cotoneasterModel=CotoneasterModel.build(GARDEN,createMeshHeightQuery(ground));
+const cotoneasterGroup=buildModel(THREE,cotoneasterModel);
+Object.assign(cotoneasterGroup.userData,{species:cotoneasterModel.species,zoneId:'L'});
+treesGroup.add(cotoneasterGroup);
 
 // Zašívárna — hidden red bench off the garage north wall (Flera-style)
 const hiddenBenchGroup = buildModel(THREE, hiddenBenchModel);

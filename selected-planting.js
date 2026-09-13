@@ -24,16 +24,17 @@ const SelectedPlanting = (() => {
       geometry.applyMatrix4(new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(.5),new THREE.Quaternion().setFromUnitVectors(up,direction.normalize()),new THREE.Vector3(1,1,1)));
       positions.push(...geometry.attributes.position.array);geometry.dispose();
     }
-    function shoot(point,seed){
-      for(let i=0;i<5;i++){
+    function shoot(point,seed,roof=false){
+      const spread=roof?.18+.11*(.5+.5*Math.sin(seed*1.73)): .09;
+      for(let i=0;i<(roof?7+seed%4:5);i++){
         const angle=seed+i*2.4;
-        const end=point.clone().add(new THREE.Vector3(Math.cos(angle)*.09,.04+i*.013,Math.sin(angle)*.09));
+        const end=point.clone().add(new THREE.Vector3(Math.cos(angle)*spread,(roof?.13:.04)+i*.013,Math.sin(angle)*(roof?spread*.8:.09)));
         stem(point,end,.0025);
-        transform.position.copy(end);transform.rotation.set(.3,angle,.4);transform.scale.set(.037,.06,.025);transform.updateMatrix();
+        transform.position.copy(end);transform.rotation.set(.3,angle,.4);transform.scale.set(roof?.07:.037,roof?.11:.06,roof?.035:.025);transform.updateMatrix();
         leafTransforms.push(transform.matrix.clone());
       }
       transform.position.copy(point).add(new THREE.Vector3(0,.09,0));transform.rotation.set(.6,seed,0);transform.scale.setScalar(.065);transform.updateMatrix();
-      flowerTransforms.push(transform.matrix.clone());
+      if(!roof||seed%3===0)flowerTransforms.push(transform.matrix.clone());
     }
     const corners=[[x+.27,y+.27],[x+w-.27,y+.27],[x+.27,y+d-.27],[x+w-.27,y+d-.27]];
     for(const [i,[px,pz]] of corners.entries()){
@@ -53,6 +54,18 @@ const SelectedPlanting = (() => {
       for(let n=1;n<=30;n++){
         const point=new THREE.Vector3(x+.32+(w-.64)*n/30,floor+2.44+.025*Math.sin(n),pz);
         stem(previous,point);shoot(point,n);previous=point;
+      }
+    }
+    for(let cane=0;cane<5;cane++){
+      const px=x+[.6,1.7,2.9,4.05,5.35][cane],reverse=cane%2===1;
+      const startZ=reverse?y+d-.32:y+.32,endZ=reverse?y+.6:y+d-(cane%3===0?.9:.55);
+      let previous=new THREE.Vector3(px,floor+2.44,startZ);
+      const rise=new THREE.Vector3(px,floor+2.83,startZ);stem(previous,rise);previous=rise;
+      for(let n=1;n<=36;n++){
+        const t=n/36,point=new THREE.Vector3(px+(.12+cane%3*.055)*Math.sin(t*7+cane)*Math.sin(t*Math.PI),floor+2.83+.025*Math.sin(t*8),startZ+(endZ-startZ)*t);
+        stem(previous,point);
+        if((n+cane*7)%23<18)shoot(point,cane*36+n,true);
+        previous=point;
       }
     }
     const branches=new THREE.BufferGeometry();branches.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));branches.computeVertexNormals();

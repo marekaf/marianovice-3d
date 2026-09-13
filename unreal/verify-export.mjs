@@ -72,4 +72,4 @@ for(const shot of route.shots)for(const key of ['start','end','targetStart','tar
 console.log('Separate loft export preserves alignment and source state; 120-second route verified');
 
 const houseExporter=readFileSync(new URL("./export.mjs",import.meta.url),"utf8");
-assert.equal((houseExporter.match(/roots\.push\(\{name:"entrance_reveal_landing"/g)||[]).length,1,"House export includes the physical entrance landing exactly once");
+assert.equal((houseExporter.match(/roots\.push\(\{name:"house_entrance_stairs"/g)||[]).length,1,"House export includes the physical entrance stairs exactly once");

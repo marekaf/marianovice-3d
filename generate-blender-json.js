@@ -9,6 +9,8 @@ const { gradingGroundBoundaries, gradingGroundRefinement } = require("./circular
 const { TERRAIN } = require("./terrain.js");
 const { SaunaModel } = require("./sauna-model.js");
 const { PergolaModel } = require("./pergola-model.js");
+const {CotoneasterModel}=require("./cotoneaster-model.js");
+const {buildRoseModel}=require("./selected-planting-export.js");
 const { GarageModel } = require("./garage-model.js");
 const { FurnitureModel } = require("./furniture-model.js");
 const { FIXTURE_SAMPLES } = require("./fixture-samples.js");
@@ -20,6 +22,7 @@ const { GradingSite } = require("./grading-site.js");
 const { SurveySurface } = require("./survey-surface.js");
 const VehicleModel = require("./vehicle-model.js");
 const { ExteriorFurnitureModel } = require("./exterior-furniture-model.js");
+const {buildEntranceStairs}=require('./entrance-landing.js');
 const {HousePlinth}=require('./house-plinth.js');
 const {HOUSE_INTERIOR}=require('./house-interior.js');
 const { buildHouseRoofExport } = require("./house-roof-export.js");
@@ -52,7 +55,10 @@ if (surveySurface || fenceSurvey) {
 }
 fs.writeFileSync(out, JSON.stringify({
   ...GARDEN,
+  houseEntranceStairs:buildEntranceStairs(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,TERRAIN.houseFFLInternal-.5),
   housePlinth: HousePlinth.build(HOUSE_INTERIOR,siteTerrain.spec.houseBaseY,siteTerrain.height),
+  cotoneasterModel:CotoneasterModel.build(GARDEN,siteTerrain.height),
+  pergolaRoses: buildRoseModel(GARDEN.elements.find(e=>e.id==='pergola')),
   houseRoof: buildHouseRoofExport(GARDEN,siteTerrain.spec.houseBaseY),
   fenceModels: boundaryFence.models,
   entranceGateModel: boundaryFence.gateModel,
