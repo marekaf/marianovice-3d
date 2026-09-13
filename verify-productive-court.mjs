@@ -19,7 +19,8 @@ for(const z of [court.z0,court.z1,court.z0-court.blend,court.z1+court.blend])for
 const builtGreenhouse=GreenhouseModel.build(GARDEN,site.baseHeight,{floorHeight:site.spec.productiveCourt.greenhouseFinish});
 close(builtGreenhouse.floorHeight,2.385,'Greenhouse stays level at chosen finish');
 const entrance=builtGreenhouse.parts.find(p=>p.name==='entrance_pad');
-close(entrance.position[2]+entrance.size[2]/2+builtGreenhouse.floorHeight,site.routeHeight(entrance.position[0],entrance.position[1]),'Greenhouse entrance joins route');
+for(const x of [entrance.position[0]-.39,entrance.position[0],entrance.position[0]+.39])for(let z=entrance.position[1]-entrance.size[1]/2;z<=entrance.position[1]+entrance.size[1]/2+1e-9;z+=.025)
+  close(entrance.position[2]+entrance.size[2]/2+builtGreenhouse.floorHeight,site.routeHeight(x,z),'Greenhouse entrance joins route across its width');
 const beds=RaisedBedsModel.build(GARDEN,{surfaceHeight:site.routeHeight,groundHeight:site.height,court:site.spec.productiveCourt});
 for(const bed of beds.beds) {
   const expected=2.865;

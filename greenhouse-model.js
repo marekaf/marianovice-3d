@@ -92,7 +92,8 @@ const GreenhouseModel = (() => {
     for(const pz of [0.25,1,1.75]) cylinder(`door_hinge_${pz}`,[doorX+0.009,y+0.034,pz],0.009,0.06,'hardware');
     cylinder('door_handle',[doorX+doorW-0.08,y+0.048,0.98],0.009,0.13,'hardware','structure','x');
     for(const [i,px] of [doorX+doorW-0.13,doorX+doorW-0.03].entries()) cylinder(`door_handle_mount_${i}`,[px,y+0.032,0.98],0.008,0.032,'hardware','structure','y');
-    box('entrance_pad',doorX-0.12,y-0.38,-0.3,doorW+0.24,0.38,0.3,'floor');
+    const entrancePadDepth=element.meta?.entrancePadDepth??.38;
+    box('entrance_pad',doorX-0.12,y-entrancePadDepth,-0.3,doorW+0.24,entrancePadDepth,0.3,'floor');
 
     beam('ridge_bar',[cx,y,ridge],[cx,y+d,ridge],0.045,0.045,'aluminum','roof');
     const ventBay = 2;

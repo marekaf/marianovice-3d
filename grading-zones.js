@@ -3,6 +3,18 @@ const GradingZones = (() => {
   const signedArea = p => p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a[0]*b[1]-b[0]*a[1];},0)/2;
   const area = p => Math.abs(signedArea(p));
   const rect = (x,z,w,d) => [[x,z],[x+w,z],[x+w,z+d],[x,z+d]];
+  function nearestFence(polygons,fenceEdges) {
+    const closestPoint=(p,a,b)=>{const dx=b[0]-a[0],dz=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dz)/(dx*dx+dz*dz)));return [a[0]+t*dx,a[1]+t*dz];};
+    let distance=Infinity,roofPoint,fencePoint;
+    for(const [a,b] of fenceEdges)for(const roof of polygons)for(let j=0;j<roof.length;j++) {
+      const u=roof[j],v=roof[(j+1)%roof.length];
+      for(const [r,fence] of [[u,closestPoint(u,a,b)],[v,closestPoint(v,a,b)],[closestPoint(a,u,v),a],[closestPoint(b,u,v),b]]) {
+        const d=Math.hypot(r[0]-fence[0],r[1]-fence[1]);
+        if(d<distance){distance=d;roofPoint=r;fencePoint=fence;}
+      }
+    }
+    return {distance,roofPoint,fencePoint};
+  }
   function measuredFence() {
     if(typeof FENCE_SURVEY!=='undefined')return FENCE_SURVEY;
     if(typeof module!=='undefined') {
@@ -144,6 +156,11 @@ const GradingZones = (() => {
     }
     const pergola=r('pergola');
     const fenceSegments=measuredFence()?.segments??[];
+    if(sauna&&shelter&&fenceSegments.length) {
+      const model=typeof module!=='undefined'?require('./sauna-model.js').SaunaModel:SaunaModel;
+      const gap=nearestFence(model.roofFootprints(garden),fenceSegments.map(s=>[s.start,s.end]));
+      dimensions.push({id:'saunaFenceGap',name:'Sauna s vířivkou – plot',value:gap.distance.toFixed(2)+' m',from:gap.roofPoint,to:gap.fencePoint});
+    }
     if(pergola) {
       const model=typeof module!=='undefined'?require('./pergola-model.js').PergolaModel:PergolaModel;
       const pergolaParts=model.build(garden).parts;
@@ -151,15 +168,7 @@ const GradingZones = (() => {
       const roofPolygons=roofs.map(p=>rect(p.position[0]-p.size[0]/2,p.position[1]-p.size[1]/2,p.size[0],p.size[1]));
       const vertices=garden.plot.vertices;
       const fenceEdges=fenceSegments.length?fenceSegments.map(s=>[s.start,s.end]):vertices.map((a,i)=>[a,vertices[(i+1)%vertices.length]]);
-      const closestPoint=(p,a,b)=>{const dx=b[0]-a[0],dz=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dz)/(dx*dx+dz*dz)));return [a[0]+t*dx,a[1]+t*dz];};
-      let distance=Infinity,roofPoint,fencePoint;
-      for(const [a,b] of fenceEdges)for(const roof of roofPolygons)for(let j=0;j<roof.length;j++) {
-        const u=roof[j],v=roof[(j+1)%roof.length];
-        for(const [r,fence] of [[u,closestPoint(u,a,b)],[v,closestPoint(v,a,b)],[closestPoint(a,u,v),a],[closestPoint(b,u,v),b]]) {
-          const d=Math.hypot(r[0]-fence[0],r[1]-fence[1]);
-          if(d<distance){distance=d;roofPoint=r;fencePoint=fence;}
-        }
-      }
+      const {distance,roofPoint,fencePoint}=nearestFence(roofPolygons,fenceEdges);
       dimensions.push({id:'pergolaFenceGap',name:'Střecha pergoly – plot',value:distance.toFixed(2)+' m',from:roofPoint,to:fencePoint});
       const houseCorner=[house[2],house[1]];
       const postCorners=pergolaParts.filter(p=>/^post_\d+$/.test(p.name)&&p.type==='box').flatMap(p=>rect(p.position[0]-p.size[0]/2,p.position[1]-p.size[1]/2,p.size[0],p.size[1]));
