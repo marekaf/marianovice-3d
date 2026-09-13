@@ -2771,10 +2771,10 @@
       <g clip-path="url(#plotShape)"><rect x="720" y="583.2" width="14.76" height="25.38" fill="#5a5e64" opacity="0.92" stroke="#33363a" stroke-width="1"/></g>
       <text x="718.2" y="599.4" class="lbl-sm" fill="#333" text-anchor="end">popelnice</text>
     </g>
-    <g class="el" data-id="rainTank"><title>Podzemní dešťová nádrž 8–10 m³ dle C.3; poloha orientační</title>
+    <g class="el" data-id="rainTank"><title>Podzemní dešťová nádrž 12 m³</title>
       <rect x="650.34" y="309.6" width="36" height="45" fill="#3a7ab8" opacity="0.35" stroke="#1f3a5f" stroke-width="1.5" stroke-dasharray="4,3"/>
       <text x="668.34" y="328.5" class="lbl-sm" font-weight="700">dešťová nádrž</text>
-      <text x="668.34" y="342" class="dim">8–10 m³ · orientačně</text>
+      <text x="668.34" y="342" class="dim">12 m³</text>
     </g>
     <g class="el" data-id="sewerInspection"><title>Kanalizační šachta DN400 · poloha orientační</title>
       <circle cx="757.8" cy="522" r="3.6" fill="#444444" stroke="#222222" stroke-width="1.2"/>

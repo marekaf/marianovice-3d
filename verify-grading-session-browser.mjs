@@ -163,6 +163,8 @@ try {
   assert(terrainMarks.bank>=2&&terrainMarks.downhill>=9&&terrainMarks.flat>=5&&terrainMarks.preserve>=14,`Terrain instructions are present in the actual 3D overlay: ${JSON.stringify(terrainMarks)}`);
   assert.deepEqual(await page.evaluate(()=>{const names=[];gradingSession.gradingOverlay.group.traverse(object=>{if(object.name.startsWith("grading-flat-"))names.push(object.name);});return [...new Set(names)].sort();}),["grading-flat-A","grading-flat-C","grading-flat-D","grading-flat-E","grading-flat-G","grading-flat-carport"]);
   assert.deepEqual(await page.evaluate(()=>gradingSession.gradingOverlay.data.zones.map(z=>z.id)),[...'ABCDEFGHIJKLMNOP']);
+  assert.equal(await page.evaluate(()=>{let count=0;gradingSession.gradingOverlay.group.traverse(o=>{if(o.name.startsWith('grading-bank-spot-'))count++;});return count;}),0,'Removed height references must not remain in the 3D overlay');
+  assert(!/\d · (Severní|Východní) (pata|hrana)/.test(await page.locator('#terrainPreview').textContent()),'The 3D legend must not retain the removed height rows');
   await page.check('#gradingDimensions');
   await page.selectOption('#terrainMode','existing');
   assert.equal(await page.evaluate(()=>gradingSession.gradingOverlay.group.visible),false);
