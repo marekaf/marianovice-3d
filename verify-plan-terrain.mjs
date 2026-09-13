@@ -16,7 +16,9 @@ for(const [,label] of GradingOverlay.terrainLegend)assert(svg.includes(label),'T
 assert(svg.includes('data-terrain-flat='));
 assert(!svg.includes('data-terrain-preserve='),'The fixed fence has no selective preservation marks');
 for(const dimension of data.dimensions.filter(d=>d.from&&d.to))assert(svg.includes(`<title>${dimension.name}: ${dimension.value}</title>`),'Dimension is drawn on the map, not only listed');
-for(const id of ['saunaDepth','pergolaDepth','saunaFacilityDepth']){
+assert.deepEqual(data.dimensions.filter(d=>d.id?.startsWith('sauna')).map(d=>d.id).sort(),['saunaFacility','saunaFacilityDepth','saunaFenceGap']);
+for(const id of ['sauna','saunaDepth','compost','toolStore'])assert(!data.dimensions.some(d=>d.id===id));
+for(const id of ['pergolaDepth','saunaFacilityDepth']){
   const dimension=data.dimensions.find(d=>d.id===id);
   assert(dimension&&svg.includes(`<title>${dimension.name}: ${dimension.value}</title>`));
   assert(!new RegExp(`<text[^>]*>${dimension.name}</text>`).test(svg),'Depth dimension does not duplicate the footprint table row');
