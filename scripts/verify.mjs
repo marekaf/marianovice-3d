@@ -10,6 +10,7 @@ function run(command,args,stdio='inherit') {
 }
 
 const checks=[
+  'verify-kitchen-return-grille.mjs',
   'validate-layout.js',
   'verify-garden-details.mjs',
   'verify-exterior.mjs',
