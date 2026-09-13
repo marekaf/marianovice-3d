@@ -105,7 +105,7 @@ export function mountInteriorUI() {
   else panels.get('walk').button.hidden = true;
   const electrical = document.getElementById('electrical') || document.getElementById('electricalError');
   if (electrical) panels.get('more').panel.append(electrical);
-  panels.get('more').panel.append(document.getElementById('exportBtn'), document.getElementById('info'));
+  panels.get('more').panel.append(document.getElementById('exportBtn'), document.getElementById('entranceDrawingBtn'), document.getElementById('info'));
   const hide = document.createElement('button'); hide.textContent = 'Hide UI'; hide.id = 'hideInteriorUI';
   toolbar.append(hide);
   const restore = document.createElement('button'); restore.id = 'restoreInteriorUI'; restore.textContent = 'Show controls'; restore.hidden = true;
