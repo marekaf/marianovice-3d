@@ -189,6 +189,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-overlay.js?v=5bb5c0755bda"></script>
 <script type="module">
 import * as THREE from 'three';
+import { entranceLanding } from './entrance-landing.js?v=eef225832a63';
 import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=2271bf3f980e';
@@ -1743,6 +1744,15 @@ const exteriorWalkingDoors=[];
   const groundY = terrainHeight(HB[2] + 0.7, doorZ);   // carport slab (−0.50)
   const rise = Math.max(0.3, ty - groundY), nSteps = 3, tread = 0.34;
   const stairN = 19.4, stairS = 22.6, stepW = stairS - stairN, zc = (stairN + stairS) / 2; // wide enough to touch the terrace deck (its S edge is z=19.4)
+  const entranceEntry=exteriorOpenings.find(entry=>entry.model.opening.kind==='entrance');
+  if(entranceEntry){
+    const landing=entranceLanding(entranceEntry,localHouseData.originPlot,EN[0],ty,groundY);
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(landing.x1-landing.x0,landing.y-landing.bottom,landing.z1-landing.z0),stepMat);
+    mesh.name='entrance_reveal_landing';
+    mesh.position.set((landing.x0+landing.x1)/2,(landing.y+landing.bottom)/2,(landing.z0+landing.z1)/2);
+    mesh.receiveShadow=true;mesh.castShadow=true;
+    scene.add(mesh);
+  }
   entranceWalkSurfaces.push({x0:EN[0]-.45,x1:EN[0],z0:stairN,z1:stairS,y:ty});
   let x0 = EN[0];
   for (let i = 1; i <= nSteps; i++) {
