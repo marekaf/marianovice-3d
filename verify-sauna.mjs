@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
@@ -98,3 +99,25 @@ for (const fixture of GARDEN.elements.filter(e => e.meta?.light).flatMap(e => e.
 assert.ok(model.plantingClearances.some(r => r.x <= landing.x && r.y <= landing.y && r.x + r.w >= landing.x + landing.w),
   'Landing must be excluded from planting');
 console.log(`Sauna: ${model.parts.length} parts; openings, access, footing, roof joins and tub clearance pass`);
+
+const {GradingZones}=require('./grading-zones.js');
+
+const facility=[rect('sauna'),rect('saunaShelter')];
+near(Math.max(...facility.map(p=>p.x+p.w))-Math.min(...facility.map(p=>p.x)),7);
+near(Math.max(...facility.map(p=>p.y+p.d))-Math.min(...facility.map(p=>p.y)),3);
+if(existsSync(new URL('./docs/fence-survey.js',import.meta.url))) {
+const {FENCE_SURVEY}=require('./docs/fence-survey.js');
+const gap=GradingZones.create(GARDEN).dimensions.find(d=>d.id==='saunaFenceGap');
+assert.equal(gap.value,'2,00 m');
+assert(Math.abs(Math.hypot(gap.from[0]-gap.to[0],gap.from[1]-gap.to[1])-2)<1e-9,'Complete building roof sits exactly2m from measured fence');
+assert(FENCE_SURVEY.segments.some(s=>{const [a,b]=[s.start,s.end];return Math.abs(Math.hypot(gap.to[0]-a[0],gap.to[1]-a[1])+Math.hypot(gap.to[0]-b[0],gap.to[1]-b[1])-Math.hypot(a[0]-b[0],a[1]-b[1]))<1e-9;}),'Clearance endpoint lies on an actual measured fence segment');
+for(const p of SaunaModel.roofFootprints(GARDEN))for(const point of p)for(const segment of FENCE_SURVEY.segments){
+  const [a,b]=[segment.start,segment.end],dx=b[0]-a[0],dz=b[1]-a[1],t=Math.max(0,Math.min(1,((point[0]-a[0])*dx+(point[1]-a[1])*dz)/(dx*dx+dz*dz)));
+  assert(Math.hypot(point[0]-a[0]-t*dx,point[1]-a[1]-t*dz)>=2-1e-9,'Every sauna and shelter roof corner clears the fixed fence');
+}
+const moved=structuredClone(GARDEN);
+for(const id of ['sauna','saunaShelter'])for(const p of moved.elements.find(e=>e.id===id).parts)if(p.y!==undefined)p.y+=.1;
+const movedGap=GradingZones.create(moved).dimensions.find(d=>d.id==='saunaFenceGap');
+assert(Math.hypot(movedGap.from[0]-movedGap.to[0],movedGap.from[1]-movedGap.to[1])>2.09,'Dimension follows model geometry rather than a fixed2m label');
+
+}

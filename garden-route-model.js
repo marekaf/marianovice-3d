@@ -16,8 +16,8 @@ const GardenRouteModel = (() => {
   function surfaceExclusions(garden) {
     const ids=new Set(['house','garage','carport','eastTerrace','westTerrace','sauna','saunaShelter','saunaPath','driveway','greenhouse','raisedBedsPad','pond']);
     const parts=garden.elements.flatMap(e=>e.parts.filter(p=>ids.has(e.id)?['rect','polygon','ellipse'].includes(p.kind):e.id==='pergola'?p.role==='paving':e.id==='firePit'?p.kind==='circle'&&p.r>1:false));
-    const greenhouse=garden.elements.find(e=>e.id==='greenhouse')?.parts.find(p=>p.kind==='rect');
-    if(greenhouse)parts.push({kind:'rect',x:greenhouse.x+greenhouse.w/2-.57,y:greenhouse.y-.38,w:1.14,d:.38});
+    const element=garden.elements.find(e=>e.id==='greenhouse'),greenhouse=element?.parts.find(p=>p.kind==='rect'),depth=element?.meta?.entrancePadDepth??.38;
+    if(greenhouse)parts.push({kind:'rect',x:greenhouse.x+greenhouse.w/2-.57,y:greenhouse.y-depth,w:1.14,d:depth});
     return parts;
   }
   function outlines(parts) {

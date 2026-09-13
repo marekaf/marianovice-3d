@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {BufferGeometry,Float32BufferAttribute} from 'three';
+import {createMeshHeightQuery} from './mesh-height-query.js';
 import { createRequire } from 'node:module';
 const require=createRequire(import.meta.url);
 const {GardenRouteModel}=require('./garden-route-model.js');
@@ -48,3 +50,8 @@ for(let i=0;i<concave.positions.length;i+=9){
   assert(!inside(lShape.points,x,z));
 }
 console.log(`Garden routes: ${result.positions.length/3} rooted vertices, bounded union, deterministic generation pass`);
+
+const approachGeometry=new BufferGeometry();
+approachGeometry.setAttribute('position',new Float32BufferAttribute(exclusive.positions,3));
+const approachHeight=createMeshHeightQuery(approachGeometry);
+for(let z=6.72;z<=6.94;z+=.01)for(const x of [2.2,2.5,2.8])assert.equal(approachHeight(x,z),2,'Greenhouse approach mesh reaches the entrance pad without a gap');

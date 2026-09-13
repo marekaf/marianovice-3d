@@ -290,6 +290,13 @@ const SaunaModel = (() => {
     }
     return { name: 'Sauna, shelter and hot tub', materials, parts, lights, openings, floorHeight, privacyScreens, plantingClearances: plantingClearances(garden) };
   }
-  return { build, plantingClearances };
+  function roofFootprints(garden) {
+    return build(garden,0).parts.filter(p=>(p.category==='roof'||/^shelter_(roof|rafter_|front_roof_trim|wall_flashing)/.test(p.name))&&(p.type==='box'||p.type==='mesh')).map(p=>{
+      const points=p.vertices??[[p.position[0]-p.size[0]/2,p.position[1]-p.size[1]/2],[p.position[0]+p.size[0]/2,p.position[1]+p.size[1]/2]];
+      const x0=Math.min(...points.map(p=>p[0])),x1=Math.max(...points.map(p=>p[0])),z0=Math.min(...points.map(p=>p[1])),z1=Math.max(...points.map(p=>p[1]));
+      return [[x0,z0],[x1,z0],[x1,z1],[x0,z1]];
+    });
+  }
+  return { build, plantingClearances, roofFootprints };
 })();
 if (typeof module !== 'undefined') module.exports = { SaunaModel };

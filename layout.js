@@ -36,10 +36,10 @@ const GARDEN = {
     { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#462482", cx: 33.1,  noseZ: 20.95, moto: true }
   ],
   gardenRoutes: [
-    {id:"Wellness access",points:[[9.98,7.2],[9.98,5.7],[8,5.7]],width:1},
-    {id:"Productive access",points:[[8,5.7],[6.6,6.2],[6.6,13.2],[5.6,13.2],[3.5,13.2]],width:1,levelAxis:{axis:"z",start:6.2,end:9.8},levelFractions:[0,0,1,1,1]},
+    {"id":"Wellness access","points":[[9.98,7.2],[9.98,5.8208596399847545],[8,5.8208596399847545]],"width":1},
+    {"id":"Productive access","points":[[8,5.8208596399847545],[6.6,6.3208596399847545],[6.6,13.2],[5.6,13.2],[3.5,13.2]],"width":1,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":9.8},"levelFractions":[0,0,1,1,1]},
     {id:"Bed access",points:[[3.5,10.6],[3.5,13.2],[1.8,13.2]],width:1,bankSlope:.48},
-    {id:"Greenhouse access",points:[[2.5,5.7],[2.5,6.9]],width:.8,bankSlope:.35,startRelativeLevel:0,levelAxis:{axis:"z",start:6.2,end:6.9}},
+    {"id":"Greenhouse access","points":[[2.5,5.8208596399847545],[2.5,6.95]],"width":0.8,"bankSlope":0.35,"startRelativeLevel":0,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":6.95}},
     {"id":"Daily dining","levelAxis":{"axis":"z","start":11.4,"end":6.2},"points":[[23,12],[24.4,12],[24.4,8],[25.42785414913,5.38127450503]],"width":1.2},
     {id:"Quiet garden approach",surfaceStep:.03,points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
     {"id":"Gathering connection","points":[[27.9,4.6],[28.8,4.6],[30.15,5.75]],"width":1.2,"startLanding":1.2,"endLanding":.5},
@@ -115,8 +115,8 @@ const GARDEN = {
       id: "saunaPath",
       name: "Bezbariérové propojení domu a sauny",
       parts: [
-        {kind: "rect", role: "saunaLanding", x: 2.3, y: 5, w: 7, d: 1.2, fill: "#cdc1ad", opacity: 0.7},
-        {kind: "rect", x: 9.3, y: 5.2, w: 1.18, d: 1, fill: "#cdc1ad", opacity: 0.7},
+        {kind: "rect", role: "saunaLanding", x: 2.3, y: 5.120859639984754, w: 7, d: 1.2, fill: "#cdc1ad", opacity: 0.7},
+        {kind: "rect", x: 9.3, y: 5.3208596399847545, w: 1.18, d: 1, fill: "#cdc1ad", opacity: 0.7},
         {kind: "rect", x: 9.48, y: 5.7, w: 1, d: 1.48, fill: "#cdc1ad", opacity: 0.7}
       ]
     },
@@ -255,18 +255,18 @@ const GARDEN = {
       id: "sauna",
       name: "Sauna 4 × 3 m",
       parts: [
-        {kind: "rect", x: 5.3, y: 2, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2},
-        {kind: "text", x: 7.3, y: 3.33, text: "SAUNA", cls: "lbl-w"},
-        {kind: "text", x: 7.3, y: 4.22, text: "4 × 3 m", cls: "dim", fill: "#fff"}
+        {kind: "rect", x: 5.3, y: 2.1208596399847544, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2},
+        {kind: "text", x: 7.3, y: 3.4508596399847544, text: "SAUNA", cls: "lbl-w"},
+        {kind: "text", x: 7.3, y: 4.340859639984754, text: "4 × 3 m", cls: "dim", fill: "#fff"}
       ]
     },
     {
       id: "saunaShelter",
       name: "Přístřešek nad vířivkou 3 × 3 m",
       parts: [
-        {kind: "rect", x: 2.3, y: 2, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4, 3"},
-        {kind: "text", x: 3.8, y: 5.67, text: "přístřešek", cls: "lbl-sm", fill: "#5a4828"},
-        {kind: "text", x: 3.8, y: 6.4, text: "3 × 3 m", cls: "dim"}
+        {kind: "rect", x: 2.3, y: 2.1208596399847544, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4, 3"},
+        {kind: "text", x: 3.8, y: 5.790859639984754, text: "přístřešek", cls: "lbl-sm", fill: "#5a4828"},
+        {kind: "text", x: 3.8, y: 6.520859639984755, text: "3 × 3 m", cls: "dim"}
       ]
     },
     {
@@ -282,8 +282,8 @@ const GARDEN = {
       id: "softub",
       name: "Vířivka Softub ø 1,8 m",
       parts: [
-        {kind: "circle", cx: 3.8, cy: 3.5, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5},
-        {kind: "text", x: 3.8, y: 3.72, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f"}
+        {kind: "circle", cx: 3.8, cy: 3.6208596399847544, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5},
+        {kind: "text", x: 3.8, y: 3.8408596399847545, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f"}
       ]
     },
     {
@@ -378,7 +378,7 @@ const GARDEN = {
       id: "greenhouse",
       name: "Skleník 2 × 2 m (návrh)",
       short: "Skleník",
-      meta: {grading: {finishedLevel: 2.385}},
+      meta: {entrancePadDepth: .15, grading: {finishedLevel: 2.385}},
       parts: [
         {kind: "rect", x: 1.5, y: 7.1, w: 2, d: 2, clipToPlot: true, fill: "#cfe8ef", opacity: 0.8, stroke: "#5f93a8", sw: 1.2},
         {kind: "text", x: 2.5, y: 8.1, text: "skleník", cls: "lbl-sm", fill: "#245a6a", rotate: -90}
@@ -449,7 +449,7 @@ const GARDEN = {
       short: "Osvětlení cest",
       meta: { light: "bollard" },
       parts: [
-        { kind: "circle", cx: 8, cy: 6.8, r: 0.18, route: "Wellness access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
+        { kind: "circle", cx: 8, cy: 6.920859639984754, r: 0.18, route: "Wellness access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 7.7, cy: 14.2, r: 0.18, route: "Productive access", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 7.7, cy: 20.1, r: 0.18, route: "Quiet garden approach", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
         { kind: "circle", cx: 23.1, cy: 10.5, r: 0.18, route: "Daily dining", fill: "#ffd54a", stroke: "#8a6a1a", sw: 0.8 },
