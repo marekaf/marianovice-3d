@@ -90,6 +90,11 @@ assert(!result.mapSVG.includes('data-zone-features='),'Feature hints belong only
 for(const bank of GARDEN.gradingBanks)assert(result.mapSVG.includes(`data-terrain-bank="${bank.id}"`));
 for(const [,label] of GradingOverlay.terrainLegend)for(const output of [result.html,result.exportSVG])assert(output.includes(label));
 for(const output of [result.html,result.exportSVG])assert(!/data-terrain-preserve|Zachovat výšku zaměřeného plotu/.test(output));
+for(const output of [result.html,result.exportSVG]){
+  assert(!output.includes('Tmavá přerušovaná čára: zaměřený plot'));
+  assert(!output.includes('Hnědé obdélníky: vyvýšené záhony'));
+  assert(output.includes('Čárkovaný obrys: podzemní nádrž'));
+}
 assert(result.mapSVG.includes('dešťová nádrž · orientačně'));
 if(existsSync('docs/survey-terrain.js')) {
   const actual=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:require('./docs/survey-terrain.js').SURVEY_TERRAIN}).site;
