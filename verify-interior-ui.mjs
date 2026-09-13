@@ -10,13 +10,20 @@ try {
     await page.locator('#interiorToolbar').waitFor({ timeout:120000 });
     assert.equal(await page.locator('.interior-panel:visible').count(), 0);
     await page.click('[data-panel=rooms]');
-    assert.equal(await page.locator('[data-view]').count(), 32);
+    const views = await page.locator('[data-view]').evaluateAll(buttons => buttons.map(button => button.dataset.view));
+    assert.equal(new Set(views).size, views.length, 'Each view has one control');
+    assert(views.includes('roofWindow'), 'Stair roof window has a view control');
     for (const building of ['garage','sauna','loft','house']) {
       await page.click(`[data-building=${building}]`);
       assert.equal(await page.locator(`[data-building=${building}]`).getAttribute('aria-pressed'), 'true');
       assert.equal(await page.locator('[data-house-focus]:visible').count(), building === 'house' ? 21 : 0);
-      assert.equal(await page.locator('[data-loft-focus]:visible').count(), building === 'loft' ? 5 : 0);
+      assert.equal(await page.locator('[data-loft-focus]:visible').count(), building === 'loft' ? 6 : 0);
       assert.equal(await page.locator('[data-panel=walk]').isVisible(), building === 'house');
+      if (building === 'loft') {
+        await page.click('[data-view=roofWindow]');
+        assert.equal(new URL(page.url()).hash, '#loft-roofWindow');
+        await page.click('[data-panel=rooms]');
+      }
     }
     await page.click('[data-view=kitchen]');
     assert.equal(new URL(page.url()).hash, '#house-kitchen');
