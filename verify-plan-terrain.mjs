@@ -14,7 +14,7 @@ for(const bank of GARDEN.gradingBanks){
 }
 for(const [,label] of GradingOverlay.terrainLegend)assert(svg.includes(label),'Terrain symbols have a Czech legend');
 assert(svg.includes('data-terrain-flat='));
-assert.equal(svg.includes('data-terrain-preserve='),data.fenceSegments.length>0,'Preservation marks require measured fence data');
+assert(!svg.includes('data-terrain-preserve='),'The fixed fence has no selective preservation marks');
 for(const dimension of data.dimensions.filter(d=>d.from&&d.to))assert(svg.includes(`<title>${dimension.name}: ${dimension.value}</title>`),'Dimension is drawn on the map, not only listed');
 for(const id of ['saunaDepth','pergolaDepth','saunaFacilityDepth']){
   const dimension=data.dimensions.find(d=>d.id===id);
