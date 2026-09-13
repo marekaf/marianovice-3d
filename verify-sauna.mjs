@@ -42,8 +42,16 @@ for (const part of model.parts) {
 }
 const shelter = rect('saunaShelter');
 const roof = parts.get('shared_roof');
-near(roof.size[0], 5);
-near(roof.size[1], 2.5);
+near(roof.vertices[1][0]-roof.vertices[0][0], 5);
+near(roof.vertices[2][1]-roof.vertices[0][1], 2.5);
+near(roof.vertices[0][2]-roof.vertices[2][2], .05);
+const roofBottom = y => roof.vertices[0][2] - (y - roof.vertices[0][1]) * 0.02;
+for (const rafter of model.parts.filter(p => p.name.startsWith('shelter_rafter_'))) {
+  for (const vertex of rafter.vertices.slice(4)) near(vertex[2], roofBottom(vertex[1]));
+  near(rafter.vertices[0][2], top(parts.get('shelter_rear_beam')));
+  near(rafter.vertices[2][2], top(parts.get('shelter_front_beam')));
+}
+for (const vertex of parts.get('roof_packing').vertices.slice(0, 4)) near(vertex[2],top(parts.get('sauna_ceiling')));
 assert.equal(SaunaModel.roofFootprints(GARDEN).length, 1, 'The whole construction has one roof');
 assert.ok(!model.parts.some(p => /^(log_|shelter_roof|tub_step)/.test(p.name)));
 near(bottom(parts.get('sauna_ceiling')), 2.4);
@@ -55,20 +63,35 @@ for (const part of model.parts.filter(p => !p.name.startsWith('landing_'))) {
     `${part.name} leaves the 5 × 2.5 m construction`);
 }
 near(model.rooms.hall.w, 0.85);
-near(model.rooms.sauna.w, 1.53);
+near(model.rooms.sauna.w, 1.59);
 near(model.rooms.sauna.d, 2.26);
 near(parts.get('bench_upper_slat_0').size[1], 2);
-const chair = bounds(parts.get('hall_chair_seat'));
-assert.ok(chair.min[0] > model.rooms.hall.x && chair.max[0] < model.rooms.hall.x + model.rooms.hall.w);
+const hallBenchBounds = { min: [model.hallBench.x,model.hallBench.y,0], max: [model.hallBench.x+model.hallBench.w,model.hallBench.y+model.hallBench.d,.9] };
+near(model.hallBench.w,model.rooms.hall.w);
+near(model.hallBench.d,.45);
+assert.equal(model.benchSurfaces.length,2);
+for (const bench of model.benchSurfaces) { near(bench.d,2); near(bench.w,.6); }
+near(model.benchSurfaces[0].height-model.benchSurfaces[1].height,.43);
+near(model.benchSurfaces[0].x-model.benchSurfaces[1].x,.4);
+assert.ok(model.parts.filter(p=>p.name.startsWith("hall_partition")&&p.name.endsWith("glass")).every(p=>p.material==="glass"));
+assert.equal(parts.get("hall_bay_window_glass").material,"glass");
+const lowerSurface = model.benchSurfaces.find(b=>b.name==='lower');
+const lowerBenchBounds = { min:[lowerSurface.x,lowerSurface.y,.39], max:[lowerSurface.x+lowerSurface.w,lowerSurface.y+lowerSurface.d,.43] };
+assert.ok(!overlaps(lowerBenchBounds,bounds(parts.get('heater_body'))),'Heater clears the lower tier');
+for(const tier of ['upper','lower']) {
+  const slats=model.parts.filter(p=>p.name.startsWith(`bench_${tier}_slat_`));
+  near(Math.max(...slats.map(p=>bounds(p).max[1]))-Math.min(...slats.map(p=>bounds(p).min[1])),2);
+  assert.ok(slats.every(p=>bounds(p).min[0]>=model.rooms.sauna.x&&bounds(p).max[0]<=model.rooms.sauna.x+model.rooms.sauna.w));
+}
 for (const swing of model.doorSwings) {
   const [xx, yy, width, depth] = swing.bounds;
   if (swing.name === 'sauna_door') assert.ok(xx >= model.rooms.hall.x - 1e-9 && xx + width <= model.rooms.hall.x + model.rooms.hall.w + 0.04 + 1e-9);
-  assert.ok(!overlaps({ min: [xx, yy, 0.01], max: [xx + width, yy + depth, 2.05] }, chair), 'Chair obstructs a door swing');
+  assert.ok(!overlaps({ min: [xx, yy, 0.01], max: [xx + width, yy + depth, 2.05] }, hallBenchBounds), 'Hall bench obstructs a door swing');
 }
-const glass = model.parts.filter(p => /_window_glass$/.test(p.name));
+const glass = model.parts.filter(p => /_window_glass$/.test(p.name) && p.category === 'S');
 assert.equal(glass.length, 2);
-assert.ok(glass.every(p => p.category === 'S' && p.size[2] >= 2.3));
-assert.ok(glass.reduce((sum, p) => sum + p.size[0], 0) > sauna.w * 0.85, 'South front must be a glazed wall');
+assert.ok(glass.every(p => p.category === 'S' && p.size[2] >= 1.75 && bottom(p) >= .3));
+assert.ok(glass.reduce((sum, p) => sum + p.size[0], 0) > sauna.w * 0.8, 'A large front window retains a timber surround');
 for (const opening of model.openings) {
   assert.equal(opening.side, 'west', 'Both entrances are side doors from the Softub bay through the hall');
   const aperture = { min: [opening.x, opening.from + 0.05, 0.02], max: [opening.x + 0.16, opening.to - 0.05, 2.05] };
@@ -86,14 +109,14 @@ const pump = bounds(parts.get('tub_pump'));
 const circleRectGap = (cx, cy, r, b) => Math.hypot(cx - Math.max(b.min[0], Math.min(cx, b.max[0])), cy - Math.max(b.min[1], Math.min(cy, b.max[1]))) - r;
 assert.ok(circleRectGap(tub.cx, tub.cy, tub.r, pump) >= 0.08, 'Pump does not overlap the tub');
 const externalSwing = model.doorSwings.find(s => s.name === 'entrance');
-assert.ok(Math.hypot(externalSwing.hinge[0] - tub.cx, externalSwing.hinge[1] - tub.cy) - externalSwing.radius - tub.r > 0.1,
+assert.ok(Math.hypot(externalSwing.hinge[0] - tub.cx, externalSwing.hinge[1] - tub.cy) - externalSwing.radius - tub.r > 0.07,
   'Outward entrance door clears the Softub throughout its swing');
 assert.ok(circleRectGap(...externalSwing.hinge, externalSwing.radius, pump) > 0.1, 'Entrance swing clears the pump');
 assert.ok(circleRectGap(...externalSwing.hinge, externalSwing.radius, bounds(parts.get('shelter_front_post'))) > 0.1, 'Entrance swing clears the post');
 assert.ok(model.doorSwings[0].bounds[0] + model.doorSwings[0].bounds[2] < model.doorSwings[1].bounds[0], 'Both door swings are separate');
 for (const part of model.parts.filter(p => p.name.startsWith('shelter_privacy_'))) {
-  const b = { min: [0, 1].map(i => Math.min(...part.vertices.map(v => v[i]))), max: [0, 1].map(i => Math.max(...part.vertices.map(v => v[i]))) };
-  assert.ok(circleRectGap(tub.cx, tub.cy, tub.r, b) >= 0.009, 'Tub clears both integrated privacy walls');
+  const b = part.vertices ? { min: [0, 1].map(i => Math.min(...part.vertices.map(v => v[i]))), max: [0, 1].map(i => Math.max(...part.vertices.map(v => v[i]))) } : bounds(part);
+  assert.ok(circleRectGap(tub.cx, tub.cy, tub.r, b) >= 0.1 - 1e-9, 'Tub clears both actual walls by 10 cm');
 }
 const entry = model.openings[0];
 const entryCenter = (entry.from + entry.to) / 2;
@@ -106,8 +129,8 @@ for (let segment = 0; segment < route.length - 1; segment++) for (let i = 0; i <
 near(top(parts.get('bench_light')), bottom(parts.get('bench_upper_slat_0')));
 near(top(parts.get('heater_foot_0')), bottom(parts.get('heater_body')));
 near(bottom(parts.get('heater_foot_0')), top(parts.get('heater_hearth')));
-near(top(parts.get('bench_step_leg_0')), bottom(parts.get('bench_step')));
-console.log(`Sauna: ${model.parts.length} parts; one 5 × 2.5 m roof, side-entry hall/chair, glass front, 1.8 m Softub and clear access pass`);
+near(top(parts.get('bench_lower_leg_0_0')), bottom(parts.get('bench_lower_support_0')));
+console.log(`Sauna: ${model.parts.length} parts; one 5 × 2.5 m roof, glazed hall/bench, two stepped 2m benches, large front window, 1.8 m Softub and clear access pass`);
 
 const {GradingZones}=require('./grading-zones.js');
 

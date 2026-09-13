@@ -26,11 +26,13 @@ try {
     });
     return {roof:[bounds.max.x-bounds.min.x,bounds.max.z-bounds.min.z],minimum,vertices,
       dimensions:t.gradingOverlay.data.dimensions.filter(d=>['saunaFacility','saunaFenceGap'].includes(d.id)).map(d=>({id:d.id,value:d.value})),
-      chairs:t.saunaModel.parts.filter(p=>p.name.includes('chair')).length};
+      hallBenchParts:t.saunaModel.parts.filter(p=>p.name.startsWith('hall_bench')).length,
+      upperBenchParts:t.saunaModel.parts.filter(p=>p.name.startsWith('bench_upper_slat')).length,
+      lowerBenchParts:t.saunaModel.parts.filter(p=>p.name.startsWith('bench_lower_slat')).length};
   });
   assert(Math.abs(result.roof[0]-5)<1e-4&&Math.abs(result.roof[1]-2.5)<1e-4,'Rendered continuous roof must be 5 × 2.5 m');
   assert(result.minimum>=2-1e-4&&result.minimum<2.001,'Rendered roof must retain 2 m measured-fence clearance');
-  assert(result.vertices>100&&result.chairs>0,'Roof and hallway chair must be built');
+  assert(result.vertices>100&&result.hallBenchParts>0&&result.upperBenchParts>0&&result.lowerBenchParts>0,'Roof, hall bench and both sauna bench tiers must be built');
   assert.equal(result.dimensions.find(d=>d.id==='saunaFacility').value,'5,00 × 2,50 m');
   assert.equal(result.dimensions.find(d=>d.id==='saunaFenceGap').value,'2,00 m');
   for(const view of ['front','plan']){

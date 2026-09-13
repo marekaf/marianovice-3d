@@ -283,8 +283,8 @@ const GARDEN = {
       id: "softub",
       name: "Vířivka Softub ø 1,8 m",
       parts: [
-        {kind: "circle", cx: 3.25, cy: 2.938663694038809, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5},
-        {kind: "text", x: 3.25, y: 3.158663694038809, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f"}
+        {kind: "circle", cx: 3.34, cy: 3.028663694038809, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5},
+        {kind: "text", x: 3.34, y: 3.248663694038809, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f"}
       ]
     },
     {
