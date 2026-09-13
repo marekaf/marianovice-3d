@@ -109,6 +109,10 @@ const zoneC=quantities.zones.find(z=>z.id==='C');
 for(const polygon of zoneC.polygons)for(const [x,z] of polygon)assert(x>=21.28-1e-7&&x<=34.13+1e-7&&z<=19.38+1e-7,'C stays in the carport-plus-garage strip');
 const contains=(id,x,z)=>quantities.zones.find(q=>q.id===id).polygons.some(p=>p.every((a,i)=>{const b=p[(i+1)%p.length];return (b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0])>=-1e-7;}));
 const flatInstructions=GradingOverlay.terrainMarks(GARDEN,quantities);
+const eastGarageArrow=flatInstructions.slopes.find(mark=>mark.id==='east-garage');
+assert(eastGarageArrow,'P has a downhill instruction');
+for(let i=0;i<=100;i++){const t=i/100;assert(contains('P',eastGarageArrow.from[0]+t*(eastGarageArrow.to[0]-eastGarageArrow.from[0]),eastGarageArrow.from[1]+t*(eastGarageArrow.to[1]-eastGarageArrow.from[1])),'P arrow stays within its zone');}
+assert(result.mapSVG.includes('data-terrain-downhill="east-garage"'));
 for(const id of ["A","C","D","E","G"])assert.equal(flatInstructions.flats.filter(mark=>contains(id,...mark.position)).length,1, id+" has one zone-level flat symbol");
 for(const id of ['I','O','P'])assert(contains(id,...quantities.zones.find(zone=>zone.id===id).label));
 for(const polygon of quantities.zones.find(zone=>zone.id==='O').polygons)for(const [x,z] of polygon)assert(x<=10.48+1e-7&&z<=26.43+1e-7);
