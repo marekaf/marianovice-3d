@@ -16,13 +16,9 @@ const BoundaryFenceModel=(()=>{
     if(measured.length){
       const south=plot.map((a,i)=>({start:a,end:plot[(i+1)%plot.length]})).sort((a,b)=>(b.start[1]+b.end[1])-(a.start[1]+a.end[1]))[0];
       const southLength=Math.hypot(south.end[0]-south.start[0],south.end[1]-south.start[1]);
-      segments.push({start:south.start.map((v,i)=>v+(south.end[i]-v)*.6/southLength),end:south.end,measured:false});
       const endpoint=measured.at(-1).end;
-      const nearest=distance(endpoint,south.start,south.end)<.001?null:[south.start,south.end].sort((a,b)=>Math.hypot(a[0]-endpoint[0],a[1]-endpoint[1])-Math.hypot(b[0]-endpoint[0],b[1]-endpoint[1]))[0];
-      if(nearest)segments.push({start:endpoint,end:nearest,measured:false});
+      segments.push({start:south.start.map((v,i)=>v+(south.end[i]-v)*.6/southLength),end:endpoint,measured:false});
       segments.push({start:measured[0].start,end:gateModel.dims.fixedPanelStart.slice(0,2),measured:false});
-      const afterWicket=start.map((v,i)=>v+direction[i]*5.35);
-      segments.push({start:afterWicket,end:plot[(gateEdge+1)%plot.length],measured:false});
     }
     const cutFrom=-fixedPanelLength-.14,cutTo=5.35;
     function outsideEntrance(segment){
