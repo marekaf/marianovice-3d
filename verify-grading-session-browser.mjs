@@ -173,6 +173,7 @@ try {
     assert.equal(await row.textContent(),hint);assert(await row.isVisible());
   }
   assert.equal(await page.evaluate(()=>gradingSession.gradingOverlay.group.visible),true);
+  assert(await page.evaluate(()=>!!gradingSession.gradingOverlay.group.getObjectByName('grading-downhill-east-garage')),'P has its downhill arrow in the 3D overlay');
   const terrainMarks=await page.evaluate(()=>{
     const names=[];gradingSession.gradingOverlay.group.traverse(object=>names.push(object.name));
     return Object.fromEntries(['bank','downhill','flat','preserve'].map(kind=>[kind,names.filter(name=>name.startsWith('grading-'+kind+'-')).length]));

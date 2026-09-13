@@ -25,6 +25,7 @@ const GradingOverlay = (() => {
       {id:'north-terrace',from:[22.5,11.5],to:[22.5,10.6]},
       {id:'south-driveway',from:[26,32],to:[26,30.5]},
       {id:'driveway-ramp',from:[35,29],to:[41,30]},
+      {id:'east-garage',from:[38,24],to:[40,26]},
       {id:'west-bed',from:[-1.0436216216,12],to:[1.4,12]}
     ];
     const drainage=garden.elements.find(e=>e.id==='westDrainageStrip');
