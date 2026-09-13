@@ -355,7 +355,7 @@ const SiteTerrain = (() => {
         status:'Lowered pergola pad follows the northern terrain. Bank slopes, north boundary drainage, foundations and retaining remain proposals requiring engineering review.'});
       spec.routeProfiles=[];
       const pondWalk=(garden.gardenRoutes??[]).find(r=>r.id==='Pond walk');
-      const pondApproach=pondWalk?{...pondWalk,id:'Pond approach',points:pondWalk.points.slice(3)}:null;
+      const pondApproach=pondWalk?{...pondWalk,id:'Pond approach',points:pondWalk.points.slice(pondWalk.approachStart)}:null;
       const pondStart=pondApproach?height(spec,...pondApproach.points[0])+.02:0;
       for(const [route,start,end]of [[dining,options.houseFFL,gathering.level+.1],[gatheringLink,gathering.level+.1,fireFinished],[pondApproach,pondStart,fireFinished]])if(route) {
         const lengths=[0];

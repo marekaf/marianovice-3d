@@ -43,8 +43,8 @@ const GARDEN = {
     {"id":"Daily dining","levelAxis":{"axis":"z","start":11.4,"end":6.2},"points":[[23,12],[24.4,12],[24.4,8],[25.42785414913,5.38127450503]],"width":1.2},
     {id:"Quiet garden approach",surfaceStep:.03,points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
     {"id":"Gathering connection","points":[[27.9,4.6],[28.8,4.6],[30.15,5.75]],"width":1.2,"startLanding":1.2,"endLanding":.5},
-    {id:"Pond walk",points:[[24.2,17.8],[28,17.8],[32,17.8],[38.7,17.8],[39.6,13.5],[38.8,11.3],[31.7,11.3],[29,8.8],[29,6.3],[30.25,5.75]],width:1.2},
-    {id:"Service connection",points:[[38.7,17.8],[37,20],[37,26.3]],width:1.2}
+    {id:"Pond walk",approachStart:4,points:[[24.2,17.8],[28,17.8],[32,17.8],[35.5,16.2],[38.9,16.2],[39.6,13.5],[38.8,11.3],[31.7,11.3],[29,8.8],[29,6.3],[30.25,5.75]],width:1.2},
+    {id:"Service connection",points:[[38.9,16.2],[38.7,17.8],[37,20],[37,26.3]],width:1.2}
   ],
   gardenReserves: [{"id":"Eastern utilities: verify extent","kind":"rect","x":38,"y":19,"w":5,"d":7,"type":"reserve"},{"id":"Low ground: drainage investigation","kind":"rect","x":37.8,"y":0.2,"w":4.1,"d":5.8,"type":"reserve"}],
   elements: [

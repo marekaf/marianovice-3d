@@ -7,8 +7,8 @@ const surveys=[undefined];
 if(existsSync(new URL('./docs/survey-terrain.js',import.meta.url)))surveys.push(require('./docs/survey-terrain.js').SURVEY_TERRAIN);
 for(const survey of surveys){
 const {site}=require('./grading-site.js').GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey});
-const route=GARDEN.gardenRoutes.find(r=>r.id==='Pond walk'),points=route.points.slice(3);
-assert.deepEqual(points[0],[38.7,17.8],'Pond grading starts at the south garden junction');
+const route=GARDEN.gardenRoutes.find(r=>r.id==='Pond walk'),points=route.points.slice(route.approachStart);
+assert.deepEqual(points[0],GARDEN.gardenRoutes.find(r=>r.id==='Service connection').points[0],'Pond grading starts at the service junction');
 const profile=site.spec.routeProfiles.find(r=>r.id==='Pond approach');
 assert.deepEqual(profile.points[0],points[0]);
 assert.equal(profile.startBedding,.02);
