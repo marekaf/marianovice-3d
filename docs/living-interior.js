@@ -71,6 +71,7 @@ export function prepareLivingData(data) {
     }
     if(typeof f.worktop==='number')next.wmat='stone';
     if(f.y0>0)next.golaEdge='bottom';
+    if(f.label==='kuchyň uppers 1050')next.endGrille={width:.24,height:.10,topInset:.08};
     if(f.label.startsWith('kuchyň base run')){
       next.tags=[...f.tags];next.tags[1]='s';next.tags[3]='a';
       next.appliances=f.modules.map((_,i)=>i===3?'oven':null);
