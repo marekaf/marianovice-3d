@@ -83,7 +83,7 @@ export function mountInteriorUI() {
     ['Bathrooms',['bathroom','mainShower','guestShower','mirror']],
     ['Entrance',['entrance','entranceSeat','entranceCoats','entranceControls']],
     ['Utility & stairs',['utilityLaundry','utilityRack','utility','stairs']],
-    ['Loft',['room','sim','trainer','landing','attic']],
+    ['Loft',['room','sim','trainer','landing','roofWindow','attic']],
   ];
   const sections = [];
   for (const [title, names] of groups) {
