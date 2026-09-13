@@ -29,6 +29,7 @@ const { buildHouseRoofExport } = require("./house-roof-export.js");
 const { GradingZones } = require("./grading-zones.js");
 const { GardenRouteModel } = require("./garden-route-model.js");
 
+const {GateRunbackModel}=require('./gate-runback-model.js');
 const { BoundaryFenceModel } = require("./boundary-fence-model.js");
 const fenceSurveyPath = path.join(__dirname, "docs", "fence-survey.js");
 const fenceSurvey = fs.existsSync(fenceSurveyPath) ? require(fenceSurveyPath).FENCE_SURVEY : null;
@@ -62,6 +63,7 @@ fs.writeFileSync(out, JSON.stringify({
   houseRoof: buildHouseRoofExport(GARDEN,siteTerrain.spec.houseBaseY),
   fenceModels: boundaryFence.models,
   entranceGateModel: boundaryFence.gateModel,
+  gateRunbackModel: GateRunbackModel.build(siteTerrain.spec.gateRunback,siteTerrain.baseHeight),
   gradingAreas: GradingZones.create(GARDEN),
   gardenRouteGeometry: GardenRouteModel.geometry(GARDEN.gardenRoutes,siteTerrain.routeHeight,.12,[...GardenRouteModel.surfaceExclusions(GARDEN),{kind:"rect",...raisedBedsModel.surfaceFootprint},{kind:"rect",...HiddenBenchModel.build(GARDEN,siteTerrain.height).groundPatch}]),
   saunaModel: SaunaModel.build(GARDEN, siteTerrain.spec.deckTop),
