@@ -191,7 +191,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-overlay.js?v=718d458e8d3a"></script>
 <script type="module">
 import * as THREE from 'three';
-import { entranceLanding } from './entrance-landing.js?v=234bdc4d4f88';
+import { buildEntranceStairs } from './entrance-landing.js?v=1cb023b3f393';
 import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=2271bf3f980e';
@@ -1724,33 +1724,10 @@ const exteriorWalkingDoors=[];
     d2.position.set(EN[0] + 0.03, ty + 1.05, doorZ);
     scene.add(d2);
   }
-  // Just a staircase from the door threshold (FFL) down to the carport — NO soil fill, NO paving.
-  // Each tread is a solid box running down to the carport level, so the treads cover the descent
-  // and nothing shows through beneath them.
-  const stepMat = new THREE.MeshStandardMaterial({ color: 0xb9b4ab, roughness: 0.9 });
-  const groundY = terrainHeight(HB[2] + 0.7, doorZ);   // carport slab (−0.50)
-  const rise = Math.max(0.3, ty - groundY), nSteps = 3, tread = 0.34;
-  const stairN = 19.4, stairS = 22.6, stepW = stairS - stairN, zc = (stairN + stairS) / 2; // wide enough to touch the terrace deck (its S edge is z=19.4)
-  const entranceEntry=exteriorOpenings.find(entry=>entry.model.opening.kind==='entrance');
-  if(entranceEntry){
-    const landing=entranceLanding(entranceEntry,localHouseData.originPlot,EN[0],ty,groundY);
-    const mesh=new THREE.Mesh(new THREE.BoxGeometry(landing.x1-landing.x0,landing.y-landing.bottom,landing.z1-landing.z0),stepMat);
-    mesh.name='entrance_reveal_landing';
-    mesh.position.set((landing.x0+landing.x1)/2,(landing.y+landing.bottom)/2,(landing.z0+landing.z1)/2);
-    mesh.receiveShadow=true;mesh.castShadow=true;
-    scene.add(mesh);
-  }
-  entranceWalkSurfaces.push({x0:EN[0]-.45,x1:EN[0],z0:stairN,z1:stairS,y:ty});
-  let x0 = EN[0];
-  for (let i = 1; i <= nSteps; i++) {
-    const depth = i === 1 ? tread * 2 : tread;   // top tread doubled — a comfortable landing at the door
-    const top = ty - (rise * i) / (nSteps + 1), h = top - groundY;   // 3 treads; the carport is the last level
-    const st = new THREE.Mesh(new THREE.BoxGeometry(depth, h, stepW), stepMat);
-    st.position.set(x0 + depth / 2, top - h / 2, zc);
-    st.receiveShadow = true; st.castShadow = true;
-    scene.add(st);
-    entranceWalkSurfaces.push({x0,x1:x0+depth,z0:stairN,z1:stairS,y:top});
-    x0 += depth;
+  if(localHouseData){
+    const stairs=buildEntranceStairs(localHouseData,GARDEN,ty,garageFloorY);
+    scene.add(buildModel(THREE,stairs));
+    entranceWalkSurfaces.push(...stairs.walkSurfaces);
   }
 }
 

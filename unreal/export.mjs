@@ -79,9 +79,9 @@ try{
     const plinth=s.scene.children.find(object=>object.name==='house_plinth');
     if(!plinth)throw new Error('House plinth is missing');
     roots.push({name:'house_plinth',object:plinth});
-    const entranceLanding=s.scene.children.find(object=>object.name==="entrance_reveal_landing");
-    if(!entranceLanding)throw new Error("Missing entrance reveal landing");
-    roots.push({name:"entrance_reveal_landing",object:entranceLanding});
+    const entranceStairs=s.scene.children.find(object=>object.name==="house_entrance_stairs");
+    if(!entranceStairs)throw new Error("Missing house entrance stairs");
+    roots.push({name:"house_entrance_stairs",object:entranceStairs});
     const decks=s.scene.children.filter(o=>o.name==='east-cedar-deck');
     if(!decks.length)throw new Error('Missing east terrace');
     roots.push(...decks.map((object,i)=>({name:`east_deck_${i}`,object})),{name:'portal_drains',object:s.portalDrainGroup});
