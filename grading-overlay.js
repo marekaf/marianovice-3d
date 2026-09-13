@@ -8,18 +8,6 @@ const GradingOverlay = (() => {
   function svgLevelMarks(marks,px,pz) {
     return (marks??[]).map(mark=>{const x=px(mark.position[0]),y=pz(mark.position[1]),value=(mark.relativeLevel>0?'+':'')+mark.relativeLevel.toFixed(2).replace('.',',').replace('-','−');return `<g data-level-mark="${mark.id}"><path d="M${x-5} ${y}H${x+5}L${x} ${y+5}Z" fill="#17649e"/><text x="${x}" y="${y-5}" text-anchor="middle" font-size="11" font-weight="700" style="fill:#17649e" stroke="white" stroke-width="3" paint-order="stroke">${value}</text></g>`;}).join('');
   }
-  function bankSpots(garden) {
-    if(!garden.gradingBanks?.length)return [];
-    const result=[];
-    for(const [id,name] of [['north','Severní'],['east','Východní']]) {
-      const bank=garden.gradingBanks.find(b=>b.id===id);if(!bank?.spotFoot||!bank?.spotCrest)continue;
-      result.push({id:String(result.length+1),name:name+' pata',position:bank.spotFoot},{id:String(result.length+2),name:name+' hrana',position:bank.spotCrest});
-    }
-    return result;
-  }
-  function svgBankSpots(spots,px,pz) {
-    return spots.map(spot=>`<g data-bank-spot="${spot.id}"><circle cx="${px(spot.position[0])}" cy="${pz(spot.position[1])}" r="7" fill="white" stroke="#49595f" stroke-width="1.5"/><text x="${px(spot.position[0])}" y="${pz(spot.position[1])+3}" font-size="9" text-anchor="middle">${spot.id}</text></g>`).join('');
-  }
   function terrainMarks(garden,quantities) {
     const banks=(garden.gradingBanks??[]).map(bank=>({...bank,from:bank.id==='north'&&bank.spotCrest&&bank.spotFoot?bank.spotCrest.map((v,i)=>v+(bank.spotFoot[i]-v)*.25):bank.spotCrest,to:bank.spotFoot}));
     const flats=(quantities.levelMarks??[]).filter(mark=>mark.id!=='raisedBeds').map(mark=>({id:mark.id,position:mark.id==='C'?[29.5,12.9]:[mark.position[0],mark.position[1]+.9]}));
@@ -72,7 +60,7 @@ const GradingOverlay = (() => {
     for(const [i,segment] of marks.fences.entries())out+=`<g data-terrain-preserve="${i}">${svgTerrainSymbol('fixed',px((segment.start[0]+segment.end[0])/2),pz((segment.start[1]+segment.end[1])/2))}</g>`;
     return out;
   }
-  function create({THREE,scene,ground,garden,height,panel,existingHeight,houseFFL=0}) {
+  function create({THREE,scene,ground,garden,height,panel}) {
     const data=GradingZones.create(garden),group=new THREE.Group();
     group.name='grading-work-areas';group.visible=false;
     const zones=data.zones.map(zone=>({...zone,colorValue:new THREE.Color(colorFor(zone)),bounds:zone.polygons.map(points=>({points,x0:Math.min(...points.map(p=>p[0])),x1:Math.max(...points.map(p=>p[0])),z0:Math.min(...points.map(p=>p[1])),z1:Math.max(...points.map(p=>p[1]))}))}));
@@ -137,8 +125,6 @@ const GradingOverlay = (() => {
     }
     for(const mark of terrain.flats){const [x,z]=mark.position;for(const offset of [-.1,.1])terrainLine([[x-.3,z+offset],[x+.3,z+offset]],'grading-flat-'+mark.id,'#17649e');}
     for(const [i,segment] of terrain.fences.entries()){const x=(segment.start[0]+segment.end[0])/2,z=(segment.start[1]+segment.end[1])/2;for(const sign of [-1,1])terrainLine([[x-.2,z-sign*.2],[x+.2,z+sign*.2]],'grading-preserve-'+i,'#243b32');}
-    const spots=bankSpots(garden);
-    for(const spot of spots)label(spot.id,...spot.position,.021,'#49595f',true).name='grading-bank-spot-'+spot.id;
     const dimensions=new THREE.Group();dimensions.visible=false;group.add(dimensions);
     for(const dimension of data.dimensions.filter(d=>d.from&&d.to)){
       const from=dimension.from.map((v,i)=>v+(dimension.displayOffset?.[i]??0)),to=dimension.to.map((v,i)=>v+(dimension.displayOffset?.[i]??0));
@@ -156,7 +142,6 @@ const GradingOverlay = (() => {
     for(const zone of zones){const row=document.createElement('div');row.textContent=`${zone.id} · ${zone.name} · ${zone.area.toLocaleString('cs-CZ',{maximumFractionDigits:1})} m²`;row.style.cssText=`border-left:4px solid ${colorFor(zone)};padding-left:6px;margin:3px 0`;legend.append(row);}
     const levelKey=document.createElement('div');levelKey.textContent='Výšky vůči podlaze domu ±0,00 m';legend.append(levelKey);
     for(const [kind,text] of terrainLegend){const row=document.createElement('div');row.textContent=({flat:'═ ',slope:'↘ ',fixed:'× '})[kind]+text;legend.append(row);}
-    if(existingHeight)for(const spot of spots){const before=existingHeight(...spot.position)-houseFFL,after=height(...spot.position)-houseFFL,row=document.createElement('div');row.textContent=`${spot.id} · ${spot.name}: ${before.toFixed(2).replace('.',',')} → ${after.toFixed(2).replace('.',',')} m · +${Math.max(0,after-before).toFixed(2).replace('.',',')} m`;legend.append(row);}
     const terrainMode=document.getElementById('terrainMode');
     const sync=()=>{group.visible=toggle.checked&&terrainMode.value!=='existing';legend.hidden=!group.visible;dimensions.visible=dimensionToggle.checked;};
     terrainMode.addEventListener('change',sync);
@@ -164,6 +149,6 @@ const GradingOverlay = (() => {
     wrapper.append(toggleLabel,dimensionLabel,legend);panel.append(wrapper);
     return {group,data,toggle,dimensionToggle};
   }
-  return {create,colorFor,boundaryOrder,svgLabels,svgLevelMarks,bankSpots,svgBankSpots,terrainMarks,terrainLegend,svgTerrainLegend,svgTerrainMarks};
+  return {create,colorFor,boundaryOrder,svgLabels,svgLevelMarks,terrainMarks,terrainLegend,svgTerrainLegend,svgTerrainMarks};
 })();
 if(typeof module!=='undefined')module.exports={GradingOverlay};
