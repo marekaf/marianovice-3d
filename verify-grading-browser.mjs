@@ -9,7 +9,16 @@ try {
   if(!existsSync('docs/survey-terrain.js'))await page.route('**/docs/survey-terrain.js',route=>route.fulfill({contentType:'text/javascript',body:'const SURVEY_TERRAIN={points:[[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5]]};'}));
   await page.goto(new URL('grading.html',base).href);
   await page.locator('#report[data-revision]').waitFor({timeout:30000});
-  assert.equal(await page.locator('.sheet').count(),1);
+  await page.waitForFunction(() => document.getElementById('report').dataset.views);
+  const hasViews = await page.locator('#report').getAttribute('data-views') === 'ready';
+  assert.equal(await page.locator('.sheet').count(), hasViews ? 6 : 2);
+  if (hasViews) {
+    assert.deepEqual(await page.locator('[data-model-view]').evaluateAll(views => views.map(view => view.dataset.modelView)), ['top', 'north', 'east', 'south', 'west']);
+    for (const image of await page.locator('[data-model-view] img').all()) {
+      assert(await image.evaluate(image => image.complete && image.naturalWidth > 1000 && image.naturalHeight > 500));
+    }
+  }
+  if (process.env.REQUIRE_GRADING_VIEWS) assert(hasViews, 'All five model views must load');
   assert.equal(await page.locator('#report p, #report .warning').count(),0);
   const zoneIds=await page.evaluate(()=>GradingZones.create(GARDEN).zones.map(zone=>zone.id));
   for(const id of zoneIds){const label=page.locator(`[data-zone-label="${id}"]`);assert.equal(await label.count(),1);assert(await label.isVisible());assert.equal((await label.locator('text').allTextContents()).join(''),id);}
@@ -40,13 +49,24 @@ try {
     const download = await downloadPending;
     const bytes = readFileSync(await download.path());
     assert(bytes.equals(readFileSync('docs/terrain-works.pdf')), 'Download must be the complete generated PDF');
-    assert.equal((bytes.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length, 2);
+    assert.equal((bytes.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length, 6);
     assert.match(bytes.toString('latin1'), /\/Subtype\s*\/Image\b/);
   }
   await page.emulateMedia({media:'print'});
   const overflow=await page.locator('.sheet').evaluateAll(sheets=>sheets.map(e=>[e.scrollHeight-e.clientHeight,e.scrollWidth-e.clientWidth]));
   assert(overflow.every(d=>d.every(v=>v<=1)),`Print sheet overflow: ${JSON.stringify(overflow)}`);
   if(process.env.GRADING_PDF)await page.pdf({path:process.env.GRADING_PDF,preferCSSPageSize:true,printBackground:true});
+  if (hasViews) {
+    const standalone = await browser.newPage();
+    await standalone.goto(new URL('docs/terrain-works.html', base).href);
+    assert.equal(await standalone.locator('.sheet').count(), 6);
+    assert.equal(await standalone.locator('script').count(), 0);
+    for (const image of await standalone.locator('[data-model-view] img').all()) {
+      await image.evaluate(image => image.decode());
+      assert.match(await image.getAttribute('src'), /^data:image\/png;base64,/);
+    }
+    await standalone.close();
+  }
   if(existsSync('docs/survey-ground.html')) {
     await page.goto(new URL('docs/survey-ground.html',base).href);
     assert((await page.locator('#datum').textContent()).includes('397.000'));

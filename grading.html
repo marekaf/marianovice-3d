@@ -2,9 +2,10 @@
 <html lang="cs">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Zemní práce · přehled úprav terénu</title></head>
 <body>
-<nav><a href="index.html">Zpět do modelu</a><a id="printPlan" href="docs/terrain-works.pdf" download="terenni-upravy.pdf" hidden>Stáhnout PDF · mapa a 3D pohled</a></nav>
+<nav><a href="index.html">Zpět do modelu</a><a id="printPlan" href="docs/terrain-works.pdf" download="terenni-upravy.pdf" hidden>Stáhnout PDF · mapa a 3D pohledy</a></nav>
 <main id="report" aria-busy="true"></main>
 <script src="layout.js?v=a35a95f2711b"></script><script src="terrain.js"></script><script src="privacy-screen-model.js"></script><script src="sauna-model.js"></script><script src="garage-model.js"></script><script src="pergola-model.js"></script><script src="greenhouse-model.js"></script><script src="raised-beds-model.js"></script><script src="hidden-bench-model.js"></script><script src="site-terrain.js?v=43207814978f"></script><script src="survey-surface.js"></script><script src="grading-site.js"></script><script src="docs/fence-survey.js"></script><script src="grading-zones.js?v=39c5fc53e38a"></script><script src="grading-data.js"></script><script src="grading-overlay.js?v=718d458e8d3a"></script><script src="grading-report.js?v=8406983b8c65"></script>
+<script src="grading-views.js"></script>
 <script type="module">
 const main=document.getElementById('report');
 try {
@@ -17,9 +18,21 @@ try {
   const baseline=undefined;
   const data=GradingData.createGradingData({garden:GARDEN,terrain:TERRAIN,site,survey,baseline});
   const report=GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data,baseline});
-  const style=document.createElement('style');style.textContent=report.css;document.head.append(style);
+  const style=document.createElement('style');style.textContent=report.css+GradingViews.css;document.head.append(style);
   main.innerHTML=report.html;main.dataset.revision=report.revision;main.setAttribute('aria-busy','false');
   document.getElementById('printPlan').hidden=false;
+  if (!new URLSearchParams(location.search).has('export')) {
+    try {
+      await GradingViews.load(main, new URL('docs/terrain-works-export.json', location.href), report.revision);
+      main.dataset.views = 'ready';
+    } catch (error) {
+      const status = document.createElement('div');
+      status.className = 'sheet';
+      status.textContent = error.message;
+      main.append(status);
+      main.dataset.views = 'unavailable';
+    }
+  }
 } catch(error) {
   main.replaceChildren();const heading=document.createElement('h1');heading.textContent='Plán terénu není dostupný';
   main.append(heading);main.dataset.state='error';main.setAttribute('aria-busy','false');
