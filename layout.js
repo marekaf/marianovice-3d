@@ -178,12 +178,12 @@ const GARDEN = {
     },
     {
       id: "rainTank",
-      name: "Podzemní dešťová nádrž 8–10 m³ dle C.3; poloha orientační",
-      meta: {source: "Projekt C.3, str. 1: 2 m od východní stěny garáže; severojižní poloha a délka odměřeny z výkresu", positionApproximate: true, accessCover: {x:37.13,z:17.8}},
+      name: "Podzemní dešťová nádrž 12 m³",
+      meta: {capacityM3: 12, source: "Projekt C.3, str. 1: 2 m od východní stěny garáže; severojižní poloha a délka odměřeny z výkresu", positionApproximate: true, accessCover: {x:37.13,z:17.8}},
       parts: [
         { kind: "rect", x: 36.13, y: 17.2, w: 2, d: 2.5, fill: "#3a7ab8", opacity: 0.35, stroke: "#1f3a5f", sw: 1.5, dash: "4,3" },
         { kind: "text", x: 37.13, y: 18.25, text: "dešťová nádrž", cls: "lbl-sm", weight: 700 },
-        { kind: "text", x: 37.13, y: 19, text: "8–10 m³ · orientačně", cls: "dim" }
+        { kind: "text", x: 37.13, y: 19, text: "12 m³", cls: "dim" }
       ]
     },
     {

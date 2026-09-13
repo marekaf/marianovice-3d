@@ -25,6 +25,11 @@ for(const id of ['Productive access','Greenhouse access','Bed access'])assert(da
 for(const section of data.sections.filter(s=>Number.isFinite(s.maxFinishSlope)))for(const sample of section.samples)assert.equal(sample.finished,viewer.routeHeight(sample.x,sample.z));
 for(const cell of data.cells)assert.equal(cell.proposed,viewer.height(cell.x,cell.z));
 const result=GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data});
+const rainTank=GARDEN.elements.find(e=>e.id==='rainTank');
+assert.equal(rainTank.meta.capacityM3,12);
+assert.deepEqual(rainTank.meta.accessCover,{x:37.13,z:17.8},'Tank capacity does not move the drawing-based cover');
+const generalPlan=require('./plan.js').renderPlanSVG(GARDEN);
+assert(generalPlan.includes('12 m³')&&!generalPlan.includes('8–10 m³'),'Plan labels show the selected tank capacity');
 const changedFinish=structuredClone(data);
 changedFinish.sections.find(s=>Number.isFinite(s.maxFinishSlope)).samples[0].finished+=.01;
 assert.notEqual(result.revision,GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data:changedFinish}).revision,'A changed walking sampler must produce a different report revision even with the same grading spec');
