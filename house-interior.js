@@ -80,6 +80,7 @@ const HOUSE_INTERIOR = {
   ],
   fireplace: { x0: 5.80, z0: 12.20, x1: 6.65, z1: 12.80 },  // Hoxter BLOX H60 insert + chimney casing
   stairs: { x0: 5.70, z0: 13.05, x1: 8.43, z1: 13.95, steps: 13, rise: HOUSE_LOFT_FLOOR / 14, toward: 'E' },  // The 14th rise is the loft floor edge, not another tread.
+  stairWallClosure: { x0: 5.70, x1: 8.43, z0: 12.801, z1: 12.88, y0: 2.53, y1: HOUSE_LOFT_FLOOR },
   // Ceiling = one continuous lid (the loft floor plate) RESTING ON the walls — walls stop at
   // clearH, the plate spans the whole outline above them. Holes: stairwell, V1 vlez (chodba,
   // A-NADREZ rectangle), and the cathedral over the living + kitchen.

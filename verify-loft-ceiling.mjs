@@ -86,4 +86,22 @@ for (const part of houseFlooringModel(loft).parts) {
   assert(overlap({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2 },
     { x0: 5.70, x1: 8.43, z0: 12.80, z1: 12.88 }) < 1e-10, 'Floor finish stops at the open stair edge');
 }
+const lowerWall = INTERIORS3D.buildHouse(THREE, { ...minimal(house),
+  intWalls: [{ ...house.intWalls.find(wall => wall.id === 'W25'), id: undefined }] });
+const galleryWall = INTERIORS3D.buildHouse(THREE, { ...minimal(loft),
+  intWalls: [{ ...loft.intWalls.find(wall => wall.id === 'P9'), id: undefined }] }, { floorY: loft.floorY });
+const wallHits = (group, x, y) => {
+  group.updateMatrixWorld(true);
+  return new THREE.Raycaster(new THREE.Vector3(x, y, 13.6), new THREE.Vector3(0, 0, -1)).intersectObject(group, true);
+};
+for (const x of [5.71, 6.3, 7.7, 8.42]) {
+  for (const y of [2.54, 2.7, 2.919, 2.921, 3.05]) {
+    const group = y < loft.floorY ? lowerWall.int : galleryWall.int;
+    const hits = wallHits(group, x, y);
+    assert(hits.length > 0, 'The stair-facing wall closes continuously across the loft floor height');
+    assert(Math.abs(hits[0].point.z - 12.88) < 1e-6, 'Closure and gallery have the same stair-facing plane');
+  }
+  assert(Math.abs(wallHits(lowerWall.int, x, 2.5)[0].point.z - 13.05) < 1e-6,
+    'The ground-floor wall retains its measured face and 170 mm setback to the gallery');
+}
 console.log(`Loft ceiling: ${checked} open cells covered once; partition edges and 2.27 m height preserved`);
