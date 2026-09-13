@@ -56,18 +56,14 @@ const SaunaModel = (() => {
         box(`landing_board_${i}`, landing.x, landing.y + i * pitch, -0.1, landing.w, pitch - 0.005, 0.1, 'timber_x');
       }
     }
-    const wall = 0.16, hallWidth = 0.85, partition = 0.04, partitionX = x + wall + hallWidth;
+    const wall = 0.16, hallWidth = 0.85, partition = 0.08, partitionX = x + wall + hallWidth;
     const hotX = partitionX + partition, front = y + d, doorFrom = y + 1.5, doorTo = y + 2.4;
     category = 'N';
     box('wall_north', x + 0.025, y + 0.025, 0, w - 0.05, wall - 0.025, 2.4, 'interior_x');
     category = 'E';
     box('wall_east', x + w - wall, y + wall, 0, wall - 0.025, d - wall - 0.08, 2.4, 'interior_y');
     category = 'W';
-    box('wall_west_rear_sill', x + 0.025, y + wall, 0, wall - 0.025, doorFrom - y - wall, 0.16, 'interior_y');
-    box('wall_west_rear_head', x + 0.025, y + wall, 2.1, wall - 0.025, doorFrom - y - wall, 0.3, 'interior_y');
-    box('hall_bay_window_glass', x + 0.07, y + wall + 0.04, 0.2, 0.012, doorFrom-y-wall-0.08, 1.86, 'glass', 0);
-    for (const [i, yy] of [y+wall,doorFrom-0.04].entries()) box(`hall_bay_window_jamb_${i}`,x+0.05,yy,0.16,0.05,0.04,1.94,'trim');
-    for (const [i, z] of [0.16,2.06].entries()) box(`hall_bay_window_rail_${i}`,x+0.05,y+wall,z,0.05,doorFrom-y-wall,0.04,'trim');
+    box('wall_west_rear', x + 0.025, y + wall, 0, wall - 0.025, doorFrom - y - wall, 2.4, 'interior_y');
     box('wall_west_front', x + 0.025, doorTo, 0, wall - 0.025, front - doorTo - 0.08, 2.4, 'interior_y');
     box('wall_west_lintel', x + 0.025, doorFrom, 2.1, wall - 0.025, doorTo - doorFrom, 0.3, 'interior_y');
     for (let row = 0; row < 24; row++) {
@@ -77,18 +73,15 @@ const SaunaModel = (() => {
       category = 'E';
       box(`cladding_east_${row}`, x + w - 0.025, y + 0.025, z, 0.025, d - 0.025, h, `cedar_y_${row % 3}`);
       category = 'W';
-      for (const [i, a, b] of row >= 21 ? [[0, y, front]] : row < 1 ? [[0, y, doorFrom], [1, doorTo, front]] : [[0,y,y+wall],[1,doorTo,front]])
+      for (const [i, a, b] of row >= 21 ? [[0, y, front]] : [[0, y, doorFrom], [1, doorTo, front]])
         box(`cladding_west_${row}_${i}`, x, a, z, 0.025, b - a, h, `cedar_y_${row % 3}`);
     }
     category = 'furniture';
     for (const [name, start, end] of [['rear', y + wall, doorFrom], ['front', doorTo, front - 0.04]]) {
-      box(`hall_partition_${name}_glass`, partitionX + 0.014, start + 0.025, 0.025, 0.012, end - start - 0.05, 2.35, 'glass', 0);
-      for (const [i, yy] of [start, end - 0.025].entries()) box(`hall_partition_${name}_jamb_${i}`, partitionX, yy, 0, partition, 0.025, 2.4, 'trim');
-      for (const [i, z] of [0, 2.375].entries()) box(`hall_partition_${name}_rail_${i}`, partitionX, start, z, partition, end - start, 0.025, 'trim');
+      box(`hall_partition_${name}`, partitionX, start, 0, partition, end - start, 2.4, 'interior_y');
     }
-    box('hall_partition_transom_glass', partitionX + 0.014, doorFrom, 2.12, 0.012, doorTo - doorFrom, 0.255, 'glass', 0);
-    box('hall_partition_top', partitionX, doorFrom, 2.375, partition, doorTo - doorFrom, 0.025, 'trim');
-    for (const [name, xx, owner] of [['entrance', x + 0.07, 'W'], ['sauna_door', partitionX + 0.02, 'furniture']]) {
+    box('hall_partition_lintel', partitionX, doorFrom, 2.1, partition, doorTo - doorFrom, 0.3, 'interior_y');
+    for (const [name, xx, owner] of [['entrance', x + 0.07, 'W'], ['sauna_door', partitionX + partition / 2, 'furniture']]) {
       category = owner;
       for (const [i, yy] of [doorFrom, doorTo - 0.04].entries()) box(`${name}_jamb_${i}`, xx - 0.025, yy, 0, 0.05, 0.04, 2.1, 'trim');
       box(`${name}_head`, xx - 0.025, doorFrom, 2.06, 0.05, doorTo - doorFrom, 0.04, 'trim');
@@ -97,16 +90,16 @@ const SaunaModel = (() => {
       for (const [i, z] of [0.35, 1.75].entries()) box(`${name}_hinge_${i}`, xx - 0.018, doorTo - 0.065, z, 0.04, 0.035, 0.09, 'trim');
     }
     category = 'S';
-    const windowLeft = x + 0.18, windowRight = x + w - 0.18, windowBottom = 0.32, windowTop = 2.18;
+    const windowLeft = hotX + 0.08, windowRight = x + w - 0.18, windowBottom = 0.32, windowTop = 2.18;
     for (const [name, xx, zz, width, height] of [['sill', x, 0, w, windowBottom], ['head', x, windowTop, w, 2.4-windowTop],
-      ['west', x, windowBottom, 0.18, windowTop-windowBottom], ['east', windowRight, windowBottom, 0.18, windowTop-windowBottom]])
+      ['west', x, windowBottom, windowLeft-x, windowTop-windowBottom], ['east', windowRight, windowBottom, 0.18, windowTop-windowBottom]])
       box(`wall_front_${name}`, xx, front - 0.08, zz, width, 0.055, height, 'interior_x');
     for (let row = 0; row < 24; row++) {
       const z = row * 0.1, end = z + 0.096;
       const runs = end <= windowBottom || z >= windowTop ? [[x, x+w]] : [[x,windowLeft],[windowRight,x+w]];
       for (const [i, [a,b]] of runs.entries()) box(`cladding_front_${row}_${i}`, a, front-0.025,z,b-a,0.025,0.096,`cedar_x_${row%3}`);
     }
-    for (const [name, xx, width] of [['hall', windowLeft, partitionX-windowLeft], ['sauna', partitionX, windowRight-partitionX]]) {
+    for (const [name, xx, width] of [['sauna', windowLeft, windowRight-windowLeft]]) {
       for (const [i, px] of [xx, xx + width - 0.04].entries()) box(`${name}_window_jamb_${i}`, px, front - 0.08, windowBottom, 0.04, 0.08, windowTop-windowBottom, 'trim');
       for (const [i, z] of [windowBottom, windowTop-0.04].entries()) box(`${name}_window_rail_${i}`, xx, front - 0.08, z, width, 0.08, 0.04, 'trim');
       box(`${name}_window_glass`, xx + 0.04, front - 0.035, windowBottom+0.04, width - 0.08, 0.012, windowTop-windowBottom-0.08, 'glass', 0);
@@ -193,7 +186,7 @@ const SaunaModel = (() => {
       rooms: { hall: { x: x + wall, y: y + wall, w: hallWidth, d: d - wall - 0.08 },
         sauna: { x: hotX, y: y + wall, w: w - wall - (hotX - x), d: d - wall - 0.08 } },
       doorSwings: [{ name: 'entrance', hinge: [x + 0.07, doorTo - 0.04], radius: 0.82, bounds: [x + 0.07 - 0.82, doorFrom + 0.04, 0.82, 0.82] },
-        { name: 'sauna_door', hinge: [partitionX + 0.02, doorTo - 0.04], radius: 0.82, bounds: [partitionX + 0.02 - 0.82, doorFrom + 0.04, 0.82, 0.82] }],
+        { name: 'sauna_door', hinge: [partitionX + partition / 2, doorTo - 0.04], radius: 0.82, bounds: [partitionX + partition / 2 - 0.82, doorFrom + 0.04, 0.82, 0.82] }],
       plantingClearances: plantingClearances(garden) };
   }
   function roofFootprints(garden) {

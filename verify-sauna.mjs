@@ -63,7 +63,7 @@ for (const part of model.parts.filter(p => !p.name.startsWith('landing_'))) {
     `${part.name} leaves the 5 × 2.5 m construction`);
 }
 near(model.rooms.hall.w, 0.85);
-near(model.rooms.sauna.w, 1.59);
+near(model.rooms.sauna.w, 1.55);
 near(model.rooms.sauna.d, 2.26);
 near(parts.get('bench_upper_slat_0').size[1], 2);
 const hallBenchBounds = { min: [model.hallBench.x,model.hallBench.y,0], max: [model.hallBench.x+model.hallBench.w,model.hallBench.y+model.hallBench.d,.9] };
@@ -73,8 +73,8 @@ assert.equal(model.benchSurfaces.length,2);
 for (const bench of model.benchSurfaces) { near(bench.d,2); near(bench.w,.6); }
 near(model.benchSurfaces[0].height-model.benchSurfaces[1].height,.43);
 near(model.benchSurfaces[0].x-model.benchSurfaces[1].x,.4);
-assert.ok(model.parts.filter(p=>p.name.startsWith("hall_partition")&&p.name.endsWith("glass")).every(p=>p.material==="glass"));
-assert.equal(parts.get("hall_bay_window_glass").material,"glass");
+assert.ok(model.parts.filter(p=>p.name.startsWith('hall_partition')).every(p=>p.material==='interior_y'));
+assert.ok(!model.parts.some(p=>p.name.startsWith('hall_')&&p.material==='glass'));
 const lowerSurface = model.benchSurfaces.find(b=>b.name==='lower');
 const lowerBenchBounds = { min:[lowerSurface.x,lowerSurface.y,.39], max:[lowerSurface.x+lowerSurface.w,lowerSurface.y+lowerSurface.d,.43] };
 assert.ok(!overlaps(lowerBenchBounds,bounds(parts.get('heater_body'))),'Heater clears the lower tier');
@@ -89,9 +89,10 @@ for (const swing of model.doorSwings) {
   assert.ok(!overlaps({ min: [xx, yy, 0.01], max: [xx + width, yy + depth, 2.05] }, hallBenchBounds), 'Hall bench obstructs a door swing');
 }
 const glass = model.parts.filter(p => /_window_glass$/.test(p.name) && p.category === 'S');
-assert.equal(glass.length, 2);
+assert.equal(glass.length, 1);
+assert.deepEqual(model.parts.filter(p=>p.material==='glass').map(p=>p.name).sort(),['entrance_glass','sauna_door_glass','sauna_window_glass']);
 assert.ok(glass.every(p => p.category === 'S' && p.size[2] >= 1.75 && bottom(p) >= .3));
-assert.ok(glass.reduce((sum, p) => sum + p.size[0], 0) > sauna.w * 0.8, 'A large front window retains a timber surround');
+assert.ok(glass[0].size[0] > model.rooms.sauna.w * 0.8, 'The sauna south window retains a timber surround');
 for (const opening of model.openings) {
   assert.equal(opening.side, 'west', 'Both entrances are side doors from the Softub bay through the hall');
   const aperture = { min: [opening.x, opening.from + 0.05, 0.02], max: [opening.x + 0.16, opening.to - 0.05, 2.05] };
@@ -130,7 +131,7 @@ near(top(parts.get('bench_light')), bottom(parts.get('bench_upper_slat_0')));
 near(top(parts.get('heater_foot_0')), bottom(parts.get('heater_body')));
 near(bottom(parts.get('heater_foot_0')), top(parts.get('heater_hearth')));
 near(top(parts.get('bench_lower_leg_0_0')), bottom(parts.get('bench_lower_support_0')));
-console.log(`Sauna: ${model.parts.length} parts; one 5 × 2.5 m roof, glazed hall/bench, two stepped 2m benches, large front window, 1.8 m Softub and clear access pass`);
+console.log(`Sauna: ${model.parts.length} parts; one 5 × 2.5 m roof, timber hall/bench, two stepped 2m benches, south window, 1.8 m Softub and clear access pass`);
 
 const {GradingZones}=require('./grading-zones.js');
 
