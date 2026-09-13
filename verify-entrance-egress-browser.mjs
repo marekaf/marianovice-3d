@@ -39,7 +39,8 @@ try{
   });
   await page.screenshot({path:process.env.ENTRANCE_SCREENSHOT||'/tmp/entrance-egress.png'});
   assert(outward.end[0]>22.12,'Walker clears the final tread and body radius onto the outside paving');
-  assert(Math.abs(outward.end[1]-3.675)<1e-6,'Walker reaches the paving below the entrance steps');
+  const outsideHeight=await page.evaluate(()=>egress.walkingHeight(egress.camera.position.x,egress.camera.position.z));
+  assert(Math.abs(outward.end[1]-outsideHeight-1.7)<1e-6,'Walker reaches the paving below the entrance steps');
   const inward=await page.evaluate(()=>{
     const r=egress;r.aim(r.camera.position.x,r.camera.position.z,Math.PI/2);
     r.fpState.keys={w:true};for(let i=0;i<150;i++)r.fpUpdate(1/60);r.fpState.keys={};

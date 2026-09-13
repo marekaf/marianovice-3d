@@ -76,6 +76,9 @@ try{
       if(!object)throw new Error('Missing exterior opening '+model.name);
       roots.push({name:model.name,object});
     }
+    const entranceLanding=s.scene.children.find(object=>object.name==="entrance_reveal_landing");
+    if(!entranceLanding)throw new Error("Missing entrance reveal landing");
+    roots.push({name:"entrance_reveal_landing",object:entranceLanding});
     const decks=s.scene.children.filter(o=>o.name==='east-cedar-deck');
     if(!decks.length)throw new Error('Missing east terrace');
     roots.push(...decks.map((object,i)=>({name:`east_deck_${i}`,object})),{name:'portal_drains',object:s.portalDrainGroup});

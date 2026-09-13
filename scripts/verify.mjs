@@ -40,6 +40,7 @@ const checks=[
   'verify-house-chimney.mjs',
   'verify-house-wall-backing.mjs',
   'verify-entrance-jamb.mjs',
+  'verify-entrance-landing.mjs',
   'verify-entrance-controls.mjs',
   'verify-kitchen-upper-modules.mjs',
   'verify-coffee-niche.mjs',

@@ -70,3 +70,6 @@ assert.equal(route.shots.reduce((sum,shot)=>sum+shot.duration,0),120);
 assert.equal(route.shots.length,22);
 for(const shot of route.shots)for(const key of ['start','end','targetStart','targetEnd'])assert(shot[key].length===3&&shot[key].every(Number.isFinite));
 console.log('Separate loft export preserves alignment and source state; 120-second route verified');
+
+const houseExporter=readFileSync(new URL("./export.mjs",import.meta.url),"utf8");
+assert.equal((houseExporter.match(/roots\.push\(\{name:"entrance_reveal_landing"/g)||[]).length,1,"House export includes the physical entrance landing exactly once");
