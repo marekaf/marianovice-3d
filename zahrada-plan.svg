@@ -2690,7 +2690,7 @@
     <g class="el" data-id="productiveBorder"><title>Výsadba u užitkové zahrady</title>
       <polygon points="37.8,158.4 90,153 162,158.4 162,171 93.6,169.2 37.8,171" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
     </g>
-    <g class="el" data-id="quietGardenBorder"><title>Výsadba u klidové zahrady</title>
+    <g class="el" data-id="quietGardenBorder"><title>Květiny k řezu u užitkové zahrady</title>
       <polygon points="27,293.4 59.4,293.4 118.8,298.8 145.8,313.2 138.6,320.4 111.6,311.4 63,309.6 41.4,324 45,369 90,383.4 126,374.4 147.6,387 108,396 27,390.6" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
     </g>
     <g class="el" data-id="eastGatheringBorder"><title>Výsadba u posezení a jezírka</title>
@@ -2864,6 +2864,9 @@
     </g>
     <g class="el" data-id="screenSouth"><title>Severní clona u sauny</title>
       <rect x="41.4" y="32.04" width="126" height="2.52" fill="#4a4a4e"/>
+    </g>
+    <g class="el" data-id="specimenMaple"><title>Solitérní javor</title>
+      <circle cx="581.4" cy="252" r="6.3" fill="#618447"/>
     </g>
     <g class="el" data-id="orchard"><title>Ovocné stromy</title>
       <circle cx="54" cy="450" r="9" fill="#4d7a4d"/>

@@ -29,12 +29,20 @@ const PlantingProfiles = (() => {
       spread:Math.min(.48,Math.max(.28,height*.4)),seed,
       bloom:source.bloom??[6,7,8],winterInterest:!!source.winterInterest};
   }
+  function selectedDaisy(selection,x,z) {
+    if(!selection)return null;
+    if(selection==='daisy-drifts'&&hash(Math.floor(x/2.5),Math.floor(z/2.5))>.55)return null;
+    if(selection==='meadow-daisies'&&hash(Math.floor(x),Math.floor(z))>.55)return null;
+    const colors=['#eee9df','#db8dac','#b5384f'];
+    const index=((Math.floor(x/1.7)+Math.floor(z/2.5))%3+3)%3;
+    return {name:['White daisies','Pink daisies','Red daisies'][index],profile:'daisy',color:colors[index],height:selection==='meadow-daisies'?.45:.65,spread:.32,seed:Math.round(hash(x,z)*1e8),bloom:[6,7,8,9],winterInterest:false};
+  }
   function clearsTankAccess(tank,x,z,radius){
     const cx=tank.x+tank.w/2,cz=tank.y+tank.d/2;
     if(Math.hypot(x-cx,z-cz)<.75+radius)return false;
     const dx=Math.max(cx-.45-x,0,x-cx-.45),dz=Math.max(cz-z,0,z-tank.y-tank.d-.5);
     return Math.hypot(dx,dz)>radius;
   }
-  return {sample,hash,clearsTankAccess};
+  return {sample,hash,selectedDaisy,clearsTankAccess};
 })();
 if(typeof module!=='undefined')module.exports={PlantingProfiles};
