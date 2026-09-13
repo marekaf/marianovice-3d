@@ -12,8 +12,10 @@ const {site,survey} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:S
 const baseline = undefined;
 const data = createGradingData({garden:GARDEN,terrain:TERRAIN,site,survey,baseline});
 const report = GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data,baseline});
-const html = `<!doctype html><html lang="cs"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Zemní práce · přehled úprav terénu · ${report.revision}</title><style>${report.css}</style><body>${report.html}</body></html>`;
-for(const [file,contents] of [['terrain-works.html',html],['terrain-works.svg',report.exportSVG]]) {
-  fs.writeFileSync(path.join(__dirname,'docs',file),contents);
-  console.log(`Generated local docs/${file} · snapshot ${report.revision}`);
-}
+fs.writeFileSync(path.join(__dirname,'docs/terrain-works.svg'),report.exportSVG);
+import('./generate-grading-pdf.mjs').then(({generateGradingPDF}) => generateGradingPDF()).then(result => {
+  console.log(`Generated local HTML, SVG and PDF with five model views · ${result.pages} pages`);
+}).catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});
