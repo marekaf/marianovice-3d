@@ -18,7 +18,8 @@
   function renderPlanSVG(garden) {
     const grading = zonesModel.create(garden);
     const tableDimensions = grading.dimensions.filter(dim=>dim.table!==false&&!['saunaDepth','pergolaDepth'].includes(dim.id));
-    const zoneExtra = Math.max(0, grading.zones.length - 9) * 18;
+    const featureExtra = grading.zones.reduce((sum,zone)=>sum+presentation.featureLines(zone).length*13,0);
+    const zoneExtra = Math.max(0, grading.zones.length - 9) * 18 + featureExtra;
     const footerShift = Math.max(0, zoneExtra + 665 + (tableDimensions.length - 1) * 15 + 145 - 792);
     const pageHeight = 880 + footerShift;
     const S = garden.m2px;
@@ -146,9 +147,12 @@
   </g>`);
     out.push(`  <g transform="translate(950, 190)" font-size="8.5" fill="#2a2a2a">`);
     out.push(`<text font-weight="700" font-size="11">OBLASTI ZEMNÍCH PRACÍ</text><text x="470" y="0" text-anchor="end">m²</text>`);
-    grading.zones.forEach((zone,i)=>{
-      const y=22+i*18;
+    let zoneY=22;
+    grading.zones.forEach(zone=>{
+      const y=zoneY;
       out.push(`<rect x="0" y="${y-9}" width="11" height="11" fill="${presentation.colorFor(zone)}"/><text x="18" y="${y}">${zone.id} · ${esc(zone.name)}</text><text x="470" y="${y}" text-anchor="end">${zone.area.toFixed(2).replace('.',',')}</text>`);
+      for(const line of presentation.featureLines(zone)){zoneY+=13;out.push(`<text data-zone-features="${zone.id}" x="18" y="${zoneY}" font-size="8" fill="#52614f">${esc(line)}</text>`);}
+      zoneY+=18;
     });
     out.push(`<text y="${202+zoneExtra}" font-weight="700" font-size="11">VÝMĚRY POVRCHŮ</text>`);
     grading.surfaces.forEach((surface,i)=>out.push(`<text y="${224+zoneExtra+i*18}">${esc(surface.name)}</text><text x="470" y="${224+zoneExtra+i*18}" text-anchor="end">${surface.area.toFixed(2).replace('.',',')}</text>`));

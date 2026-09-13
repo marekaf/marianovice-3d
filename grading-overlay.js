@@ -1,6 +1,11 @@
 const GradingOverlay = (() => {
   const palette={A:'#667785',B:'#b37943',C:'#2f845b',D:'#c7992e',E:'#a66081',F:'#8470ad',G:'#758c36',H:'#397f9b',I:'#9a9381',J:'#468d8d',K:'#ba753c',L:'#a86642',M:'#346d9c',N:'#b15c64',O:'#7c9674',P:'#9b7d99'};
   const colorFor=zone=>palette[zone.id]??zone.color;
+  function featureLines(zone) {
+    const lines=[];
+    for(const feature of zone.features??[]){const last=lines.at(-1);if(last&&last.length+feature.length+2<=44)lines[lines.length-1]+=', '+feature;else lines.push(feature);}
+    return lines;
+  }
   const boundaryOrder=zones=>zones.slice().sort((a,b)=>({I:0,A:2,E:2,F:3,M:3}[a.id]??1)-({I:0,A:2,E:2,F:3,M:3}[b.id]??1));
   function svgLabels(zones,px,pz,fontSize=11) {
     return zones.map(zone=>{const x=px(zone.label[0]),y=pz(zone.label[1]),color=colorFor(zone);return `<g data-zone-label="${zone.id}" class="grading-zone-label"><circle cx="${x}" cy="${y}" r="11" fill="#fffef9" stroke="${color}" stroke-width="2.5"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fontSize+2}" font-weight="700" style="fill:${color}">${zone.id}</text></g>`;}).join('');
@@ -136,7 +141,7 @@ const GradingOverlay = (() => {
     toggle.type='checkbox';toggle.id='gradingAreas';toggleLabel.append(toggle,` Work areas ${zones[0].id}–${zones.at(-1).id}`);
     const dimensionToggle=document.createElement('input'),dimensionLabel=document.createElement('label');dimensionToggle.type='checkbox';dimensionToggle.id='gradingDimensions';dimensionLabel.append(dimensionToggle,' Plan dimensions');dimensionLabel.style.display='block';
     const legend=document.createElement('div');legend.hidden=true;legend.style.cssText='font-size:11px;line-height:1.6;margin-top:6px';
-    for(const zone of zones){const row=document.createElement('div');row.textContent=`${zone.id} · ${zone.name} · ${zone.area.toLocaleString('cs-CZ',{maximumFractionDigits:1})} m²`;row.style.cssText=`border-left:4px solid ${colorFor(zone)};padding-left:6px;margin:3px 0`;legend.append(row);}
+    for(const zone of zones){const row=document.createElement('div');row.textContent=`${zone.id} · ${zone.name} · ${zone.area.toLocaleString('cs-CZ',{maximumFractionDigits:1})} m²`;row.style.cssText=`border-left:4px solid ${colorFor(zone)};padding-left:6px;margin:3px 0`;if(zone.features.length){const hint=document.createElement('div');hint.dataset.zoneFeatures=zone.id;hint.textContent=zone.features.join(', ');hint.style.cssText='font-size:10px;color:#52614f';row.append(hint);}legend.append(row);}
     const levelKey=document.createElement('div');levelKey.textContent='Výšky vůči podlaze domu ±0,00 m';legend.append(levelKey);
     for(const [kind,text] of terrainLegend){const row=document.createElement('div');row.textContent=({flat:'═ ',slope:'↘ '})[kind]+text;legend.append(row);}
     const terrainMode=document.getElementById('terrainMode');
@@ -146,6 +151,6 @@ const GradingOverlay = (() => {
     wrapper.append(toggleLabel,dimensionLabel,legend);panel.append(wrapper);
     return {group,data,toggle,dimensionToggle};
   }
-  return {create,colorFor,boundaryOrder,svgLabels,svgLevelMarks,terrainMarks,terrainLegend,svgTerrainLegend,svgTerrainMarks};
+  return {create,colorFor,featureLines,boundaryOrder,svgLabels,svgLevelMarks,terrainMarks,terrainLegend,svgTerrainLegend,svgTerrainMarks};
 })();
 if(typeof module!=='undefined')module.exports={GradingOverlay};
