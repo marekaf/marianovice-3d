@@ -77,7 +77,8 @@ const GARDEN = {
     {"id":"westBackbone","name":"Západní doprovodná výsadba","meta":{"palette":"saunaBed","plant":"mixed"},"parts":[{"kind":"polygon","points":[[-0.9,1],[1.7,1],[1.7,6.6],[1.7,12.5],[1.6,15.5],[1.5,21.7],[0.2,22],[-0.9,12]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"productiveBorder","name":"Výsadba u užitkové zahrady","meta":{"palette":"prairieIsland","plant":"mixed"},"parts":[{"kind":"polygon","points":[[2.1,8.8],[5,8.5],[9,8.8],[9,9.5],[5.2,9.4],[2.1,9.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"quietGardenBorder","name":"Květiny k řezu u užitkové zahrady","meta":{"palette":"prairieIsland","plant":"perennials","purpose":"cutting-bed","selectedFlowers":"cutting-daisies"},"parts":[{"kind":"polygon","points":[[1.5,16.3],[3.3,16.3],[6.6,16.6],[8.1,17.4],[7.7,17.8],[6.2,17.3],[3.5,17.2],[2.3,18],[2.5,20.5],[5,21.3],[7,20.8],[8.2,21.5],[6,22],[1.5,21.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
-    {"id":"eastGatheringBorder","name":"Výsadba u posezení a jezírka","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond","selectedFlowers":"daisy-drifts"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[36.8,0.3],[37.4,6.5],[41.6,6.5],[42.3,17.7],[37.7,18.5],[34.8,18.2],[31.7,18.7],[27.8,18.5],[26.8,17.2],[31,16.7],[31.6,14],[30.8,11.9],[32.4,10.8],[32.4,5.2],[28,5],[24,6],[22.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"eastGatheringBorder","name":"Výsadba u posezení a jezírka","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond","selectedFlowers":"daisy-drifts"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[36.8,0.3],[37.4,6.5],[41.6,6.5],[41.86875,10.8],[32.4,10.8],[32.4,5.2],[28,5],[24,6],[22.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {id:"compactPondBorder",name:"Nízký lem jezírka",meta:{palette:"pondFringe",plant:"perennials",exclude:"pond",maxHeight:.45,maxSpread:.22},parts:[{kind:"ellipse",cx:30,cy:16,rx:1.85,ry:1.45,fill:"#8fa05a",opacity:.4,stroke:"#6a7a3a",sw:1}]},
     {"id":"terraceFrontage","name":"Nízká výsadba před terasou","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[25,11.8],[25.6,12.8],[25.6,15.8],[25,16.6],[24.6,16],[24.6,12.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {
       id: "house",
@@ -209,9 +210,9 @@ const GARDEN = {
       name: "Jezírko: půdorys 2,4 × 1,6 m",
       meta: {proposal:true},
       parts: [
-        {kind: "ellipse", cx: 35.6, cy: 14, rx: 1.2, ry: .8, fill: "#3a7ab8", opacity: 0.65, stroke: "#5a4a30", sw: 1.5},
-        {kind: "text", x: 35.6, y: 13.89, text: "jezírko", cls: "lbl-sm", fill: "#fff", weight: 700},
-        {kind: "text", x: 35.6, y: 14.56, text: "2,4 × 1,6 m", cls: "dim", fill: "#fff"}
+        {kind: "ellipse", cx: 30, cy: 16, rx: 1.2, ry: .8, fill: "#3a7ab8", opacity: 0.65, stroke: "#5a4a30", sw: 1.5},
+        {kind: "text", x: 30, y: 15.89, text: "jezírko", cls: "lbl-sm", fill: "#fff", weight: 700},
+        {kind: "text", x: 30, y: 16.56, text: "2,4 × 1,6 m", cls: "dim", fill: "#fff"}
       ]
     },
     {

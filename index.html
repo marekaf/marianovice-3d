@@ -153,7 +153,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=90ed14706390"></script>
+<script src="layout.js?v=c87e5921a965"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=247b8a579711"></script>
@@ -1577,6 +1577,7 @@ function addPerennial(zoneId, x, z, kind) {
   const zone=EL[zoneId]?.meta;
   const spec = PlantingProfiles.selectedDaisy(zone?.selectedFlowers,x,z) ?? PlantingProfiles.sample(zone?.palette ?? zoneId, x, z, kind, localPalette ?? {});
   if(zone?.maxHeight)spec.height=Math.min(spec.height,zone.maxHeight);
+  if(zone?.maxSpread)spec.spread=Math.min(spec.spread,zone.maxSpread);
   if(zone?.utilityCover){
     Object.assign(spec,{profile:'broadleaf',height:.18,spread:.22,name:'Low tank-cover planting proposal'});
     if(!PlantingProfiles.clearsTankAccess(rectOf('rainTank'),x,z,spec.spread))return;
