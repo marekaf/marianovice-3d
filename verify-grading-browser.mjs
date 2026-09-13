@@ -14,6 +14,7 @@ try {
   const zoneIds=await page.evaluate(()=>GradingZones.create(GARDEN).zones.map(zone=>zone.id));
   for(const id of zoneIds){const label=page.locator(`[data-zone-label="${id}"]`);assert.equal(await label.count(),1);assert(await label.isVisible());assert.equal((await label.locator('text').allTextContents()).join(''),id);}
   assert.equal(await page.locator('[data-zone-secondary]').count(),0);
+  assert.equal(await page.locator('[data-measured-fence]').count(),0);
   assert(await page.locator('[data-terrain-downhill="east-garage"]').isVisible());
   assert.equal(await page.locator('aside [data-zone-features]').count(),8);
   assert.equal(await page.locator('[data-zone-features="G"]').textContent(),'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník');

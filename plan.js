@@ -130,7 +130,6 @@
       const value=Math.hypot(dim.to[0]-dim.from[0],dim.to[1]-dim.from[1]).toFixed(2).replace('.',',');
       out.push(`<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>${esc(dim.name)}: ${esc(dim.value)}</title><path d="M${x1},${y1}L${ax+nx*3},${ay+ny*3}M${x2},${y2}L${bx+nx*3},${by+ny*3}M${ax},${ay}L${bx},${by}" fill="none"/><text x="${(ax+bx)/2}" y="${(ay+by)/2-3}" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">${value} m</text></g>`);
     }
-    for(const segment of grading.fenceSegments)out.push(`<path data-measured-fence="${esc(segment.id??segment.side??'fence')}" d="M${px(segment.start[0])},${px(segment.start[1])}L${px(segment.end[0])},${px(segment.end[1])}" fill="none" stroke="#243b32" stroke-width="2" stroke-dasharray="6 3"/>`);
     out.push(presentation.svgTerrainMarks(garden,px,px,grading));
     out.push(presentation.svgLabels(grading.zones,px,px,10));
     out.push(presentation.svgLevelMarks(grading.levelMarks,px,px));
