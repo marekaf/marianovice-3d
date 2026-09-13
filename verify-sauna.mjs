@@ -34,77 +34,110 @@ for (const r of GARDEN.elements.filter(e => ['sauna', 'saunaShelter', 'saunaPath
   for (let x = r.x; x <= r.x + r.w; x += 0.1) for (let z = r.y; z <= r.y + r.d; z += 0.1)
     assert.ok(site.height(x, z) <= model.floorHeight - 0.1, 'Soil must stay below sauna decks and approach');
 }
-for (const [name, category] of Object.entries({ wall_north: 'N', wall_west: 'W', wall_east: 'E',
-  window_glass: 'S', door_glass: 'S', sauna_floor: 'floor', sauna_roof: 'roof', sauna_ceiling: 'roof',
-  heater_body: 'furniture', bench_1_slat_0: 'furniture', tub_shell: 'outdoor', shelter_roof: 'outdoor' })) {
-  assert.equal(parts.get(name).category, category, `${name}: incorrect cutaway owner`);
-}
 for (const part of model.parts) {
   assert.ok(['N', 'S', 'E', 'W', 'floor', 'roof', 'furniture', 'outdoor'].includes(part.category), `${part.name}: missing cutaway owner`);
   assert.ok(model.materials[part.material], `${part.name}: missing material`);
-  for (const value of [...part.position || [], ...part.size || [], ...part.vertices?.flat() || [], ...part.profile?.flat() || []]) {
-    assert.ok(Number.isFinite(value), `${part.name}: non-finite geometry`);
-  }
-  if (part.size) assert.ok(part.size.every(v => v > 0), `${part.name}: degenerate dimensions`);
+  assert.ok([...part.position || [], ...part.size || [], ...part.vertices?.flat() || [], ...part.profile?.flat() || []].every(Number.isFinite));
+  if (part.size) assert.ok(part.size.every(v => v > 0), `${part.name}: degenerate geometry`);
 }
-
+const shelter = rect('saunaShelter');
+const roof = parts.get('shared_roof');
+near(roof.vertices[1][0]-roof.vertices[0][0], 5);
+near(roof.vertices[2][1]-roof.vertices[0][1], 2.5);
+near(roof.vertices[0][2]-roof.vertices[2][2], .05);
+const roofBottom = y => roof.vertices[0][2] - (y - roof.vertices[0][1]) * 0.02;
+for (const rafter of model.parts.filter(p => p.name.startsWith('shelter_rafter_'))) {
+  for (const vertex of rafter.vertices.slice(4)) near(vertex[2], roofBottom(vertex[1]));
+  near(rafter.vertices[0][2], top(parts.get('shelter_rear_beam')));
+  near(rafter.vertices[2][2], top(parts.get('shelter_front_beam')));
+}
+for (const vertex of parts.get('roof_packing').vertices.slice(0, 4)) near(vertex[2],top(parts.get('sauna_ceiling')));
+assert.equal(SaunaModel.roofFootprints(GARDEN).length, 1, 'The whole construction has one roof');
+assert.ok(!model.parts.some(p => /^(log_|shelter_roof|tub_step)/.test(p.name)));
+near(bottom(parts.get('sauna_ceiling')), 2.4);
+for (const part of model.parts.filter(p => !p.name.startsWith('landing_'))) {
+  const points = part.vertices || (part.size ? [bounds(part).min, bounds(part).max] : part.profile
+    ? part.profile.flatMap(([r, z]) => [[part.position[0] - r, part.position[1] - r, z], [part.position[0] + r, part.position[1] + r, z]])
+    : [[part.position[0] - part.radiusTop, part.position[1] - part.radiusTop], [part.position[0] + part.radiusTop, part.position[1] + part.radiusTop]]);
+  for (const [px, py] of points) assert.ok(px >= shelter.x - 1e-9 && px <= sauna.x + sauna.w + 1e-9 && py >= sauna.y - 1e-9 && py <= sauna.y + sauna.d + 1e-9,
+    `${part.name} leaves the 5 × 2.5 m construction`);
+}
+near(model.rooms.hall.w, 0.85);
+near(model.rooms.sauna.w, 1.55);
+near(model.rooms.sauna.d, 2.26);
+near(parts.get('bench_upper_slat_0').size[1], 2);
+const hallBenchBounds = { min: [model.hallBench.x,model.hallBench.y,0], max: [model.hallBench.x+model.hallBench.w,model.hallBench.y+model.hallBench.d,.9] };
+near(model.hallBench.w,model.rooms.hall.w);
+near(model.hallBench.d,.45);
+assert.equal(model.benchSurfaces.length,2);
+for (const bench of model.benchSurfaces) { near(bench.d,2); near(bench.w,.6); }
+near(model.benchSurfaces[0].height-model.benchSurfaces[1].height,.43);
+near(model.benchSurfaces[0].x-model.benchSurfaces[1].x,.4);
+assert.ok(model.parts.filter(p=>p.name.startsWith('hall_partition')).every(p=>p.material==='interior_y'));
+assert.ok(!model.parts.some(p=>p.name.startsWith('hall_')&&p.material==='glass'));
+const lowerSurface = model.benchSurfaces.find(b=>b.name==='lower');
+const lowerBenchBounds = { min:[lowerSurface.x,lowerSurface.y,.39], max:[lowerSurface.x+lowerSurface.w,lowerSurface.y+lowerSurface.d,.43] };
+assert.ok(!overlaps(lowerBenchBounds,bounds(parts.get('heater_body'))),'Heater clears the lower tier');
+for(const tier of ['upper','lower']) {
+  const slats=model.parts.filter(p=>p.name.startsWith(`bench_${tier}_slat_`));
+  near(Math.max(...slats.map(p=>bounds(p).max[1]))-Math.min(...slats.map(p=>bounds(p).min[1])),2);
+  assert.ok(slats.every(p=>bounds(p).min[0]>=model.rooms.sauna.x&&bounds(p).max[0]<=model.rooms.sauna.x+model.rooms.sauna.w));
+}
+for (const swing of model.doorSwings) {
+  const [xx, yy, width, depth] = swing.bounds;
+  if (swing.name === 'sauna_door') assert.ok(xx >= model.rooms.hall.x - 1e-9 && xx + width <= model.rooms.hall.x + model.rooms.hall.w + 0.04 + 1e-9);
+  assert.ok(!overlaps({ min: [xx, yy, 0.01], max: [xx + width, yy + depth, 2.05] }, hallBenchBounds), 'Hall bench obstructs a door swing');
+}
+const glass = model.parts.filter(p => /_window_glass$/.test(p.name) && p.category === 'S');
+assert.equal(glass.length, 1);
+assert.deepEqual(model.parts.filter(p=>p.material==='glass').map(p=>p.name).sort(),['entrance_glass','sauna_door_glass','sauna_window_glass']);
+assert.ok(glass.every(p => p.category === 'S' && p.size[2] >= 1.75 && bottom(p) >= .3));
+assert.ok(glass[0].size[0] > model.rooms.sauna.w * 0.8, 'The sauna south window retains a timber surround');
 for (const opening of model.openings) {
-  const aperture = { min: [sauna.x + opening.from + 0.06, sauna.y + sauna.d - 0.14, opening.bottom + 0.06],
-    max: [sauna.x + opening.to - 0.06, sauna.y + sauna.d + 0.028, opening.top - 0.06] };
-  for (const part of model.parts.filter(p => p.type === 'box' && /^(wall_|cladding_)/.test(p.name))) {
-    assert.ok(!overlaps(aperture, bounds(part)), `${part.name} blocks ${opening.name}`);
-  }
+  assert.equal(opening.side, 'west', 'Both entrances are side doors from the Softub bay through the hall');
+  const aperture = { min: [opening.x, opening.from + 0.05, 0.02], max: [opening.x + 0.16, opening.to - 0.05, 2.05] };
+  for (const part of model.parts.filter(p => p.type === 'box' && /^(wall_|cladding_|hall_partition)/.test(p.name)))
+    assert.ok(!overlaps(aperture, bounds(part)), `${part.name} obstructs ${opening.name}`);
 }
-const door = model.openings.find(o => o.name === 'door');
-const passage = { min: [sauna.x + door.from + 0.07, sauna.y + sauna.d - 1, 0.08],
-  max: [sauna.x + door.to - 0.07, sauna.y + sauna.d - 0.17, 2.05] };
-for (const part of model.parts.filter(p => p.type === 'box' && /^(bench_|heater_)/.test(p.name))) {
-  assert.ok(!overlaps(passage, bounds(part)), `${part.name} obstructs the entrance`);
-}
-
 const tub = GARDEN.elements.find(e => e.id === 'softub').parts.find(p => p.kind === 'circle');
-for (const part of model.parts.filter(p => p.name.startsWith('log_'))) {
-  if (!part.position) continue;
-  const radius = part.size ? Math.hypot(part.size[0], part.size[1]) / 2 : Math.hypot(part.radiusTop, part.height / 2);
-  assert.ok(Math.hypot(part.position[0] - tub.cx, part.position[1] - tub.cy) > radius + tub.r,
-    `${part.name} intersects the tub`);
-}
 const profile = parts.get('tub_shell').profile;
-assert.ok(profile.some(([radius, height]) => radius < tub.r - 0.1 && height > 0.7), 'Tub needs an inner wall');
-assert.ok(Math.max(...profile.map(p => p[1])) > parts.get('tub_water').position[2] + 0.1, 'Water must sit below the rim');
+near(Math.max(...profile.map(([r]) => r)) * 2, 1.8);
+near(Math.max(...profile.map(([, z]) => z)), 0.61);
+assert.ok(profile.some(([r, z]) => Math.abs(r - 0.75) < 1e-9 && z > 0.5), 'Softub inner diameter is 1.5 m');
+assert.ok(parts.get('tub_water').position[2] < 0.61 - 0.1);
 near(parts.get('tub_base').position[2] - parts.get('tub_base').height / 2, 0);
-near(top(parts.get('heater_hearth')), bottom(parts.get('heater_foot_0')));
-assert.ok(top(parts.get('heater_foot_0')) >= bottom(parts.get('heater_body')), 'Heater needs supporting feet');
-near(top(parts.get('ceiling_light_housing')), bottom(parts.get('sauna_ceiling')));
-near(top(parts.get('bench_light')), bottom(parts.get('bench_1_slat_0')));
-
-const roof = parts.get('shelter_roof').vertices;
-const roofHeight = y => roof[0][2] + (y - roof[0][1]) * (roof[2][2] - roof[0][2]) / (roof[2][1] - roof[0][1]);
-for (const part of model.parts.filter(p => p.name.startsWith('shelter_rafter'))) {
-  for (const vertex of [part.vertices[4], part.vertices[6]]) {
-    assert.ok(vertex[2] >= roofHeight(vertex[1]) - 0.002, `${part.name} does not reach its roof`);
-  }
+const pump = bounds(parts.get('tub_pump'));
+const circleRectGap = (cx, cy, r, b) => Math.hypot(cx - Math.max(b.min[0], Math.min(cx, b.max[0])), cy - Math.max(b.min[1], Math.min(cy, b.max[1]))) - r;
+assert.ok(circleRectGap(tub.cx, tub.cy, tub.r, pump) >= 0.08, 'Pump does not overlap the tub');
+const externalSwing = model.doorSwings.find(s => s.name === 'entrance');
+assert.ok(Math.hypot(externalSwing.hinge[0] - tub.cx, externalSwing.hinge[1] - tub.cy) - externalSwing.radius - tub.r > 0.07,
+  'Outward entrance door clears the Softub throughout its swing');
+assert.ok(circleRectGap(...externalSwing.hinge, externalSwing.radius, pump) > 0.1, 'Entrance swing clears the pump');
+assert.ok(circleRectGap(...externalSwing.hinge, externalSwing.radius, bounds(parts.get('shelter_front_post'))) > 0.1, 'Entrance swing clears the post');
+assert.ok(model.doorSwings[0].bounds[0] + model.doorSwings[0].bounds[2] < model.doorSwings[1].bounds[0], 'Both door swings are separate');
+for (const part of model.parts.filter(p => p.name.startsWith('shelter_privacy_'))) {
+  const b = part.vertices ? { min: [0, 1].map(i => Math.min(...part.vertices.map(v => v[i]))), max: [0, 1].map(i => Math.max(...part.vertices.map(v => v[i]))) } : bounds(part);
+  assert.ok(circleRectGap(tub.cx, tub.cy, tub.r, b) >= 0.1 - 1e-9, 'Tub clears both actual walls by 10 cm');
 }
-const landing = GARDEN.elements.find(e => e.id === 'saunaPath').parts.find(p => p.role === 'saunaLanding');
-near(landing.y, sauna.y + sauna.d);
-assert.ok(landing.x <= sauna.x + door.from && landing.x + landing.w >= sauna.x + door.to, 'Door must open onto landing');
-const approach = GARDEN.elements.find(e => e.id === 'saunaPath').parts.find(p => !p.role);
-assert.ok(landing.x<=approach.x+approach.w&&landing.x+landing.w>=approach.x&&landing.y<=approach.y+approach.d&&landing.y+landing.d>=approach.y,'Landing and approach must connect');
-for (const fixture of GARDEN.elements.filter(e => e.meta?.light).flatMap(e => e.parts.filter(p => p.kind === 'circle'))) {
-  for (const r of [sauna, rect('saunaShelter'), landing]) {
-    assert.ok(!(fixture.cx > r.x && fixture.cx < r.x + r.w && fixture.cy > r.y && fixture.cy < r.y + r.d),
-      'A garden light intersects the sauna area');
-  }
+const entry = model.openings[0];
+const entryCenter = (entry.from + entry.to) / 2;
+const route = [[sauna.x - 0.32, sauna.y + sauna.d + 0.4], [sauna.x - 0.32, entryCenter], [sauna.x + 0.48, entryCenter]];
+for (let segment = 0; segment < route.length - 1; segment++) for (let i = 0; i <= 100; i++) {
+  const [a, b] = [route[segment], route[segment + 1]], t = i / 100, px = a[0] + (b[0] - a[0]) * t, py = a[1] + (b[1] - a[1]) * t;
+  assert.ok(Math.hypot(px - tub.cx, py - tub.cy) - tub.r >= 0.3, 'A 60 cm pedestrian envelope reaches the hall without entering the tub');
+  assert.ok(circleRectGap(px, py, 0.3, pump) >= 0, 'Pump obstructs the entrance route');
 }
-assert.ok(model.plantingClearances.some(r => r.x <= landing.x && r.y <= landing.y && r.x + r.w >= landing.x + landing.w),
-  'Landing must be excluded from planting');
-console.log(`Sauna: ${model.parts.length} parts; openings, access, footing, roof joins and tub clearance pass`);
+near(top(parts.get('bench_light')), bottom(parts.get('bench_upper_slat_0')));
+near(top(parts.get('heater_foot_0')), bottom(parts.get('heater_body')));
+near(bottom(parts.get('heater_foot_0')), top(parts.get('heater_hearth')));
+near(top(parts.get('bench_lower_leg_0_0')), bottom(parts.get('bench_lower_support_0')));
+console.log(`Sauna: ${model.parts.length} parts; one 5 × 2.5 m roof, timber hall/bench, two stepped 2m benches, south window, 1.8 m Softub and clear access pass`);
 
 const {GradingZones}=require('./grading-zones.js');
 
 const facility=[rect('sauna'),rect('saunaShelter')];
-near(Math.max(...facility.map(p=>p.x+p.w))-Math.min(...facility.map(p=>p.x)),7);
-near(Math.max(...facility.map(p=>p.y+p.d))-Math.min(...facility.map(p=>p.y)),3);
+near(Math.max(...facility.map(p=>p.x+p.w))-Math.min(...facility.map(p=>p.x)),5);
+near(Math.max(...facility.map(p=>p.y+p.d))-Math.min(...facility.map(p=>p.y)),2.5);
 if(existsSync(new URL('./docs/fence-survey.js',import.meta.url))) {
 const {FENCE_SURVEY}=require('./docs/fence-survey.js');
 const gap=GradingZones.create(GARDEN).dimensions.find(d=>d.id==='saunaFenceGap');

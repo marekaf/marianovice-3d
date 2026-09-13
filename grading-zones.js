@@ -141,17 +141,17 @@ const GradingZones = (() => {
     }
     surfaces.push({id:'other',name:'Ostatní zahrada včetně vody a nezpevněných cest',polygons:remaining,area:sum(remaining)});
     const dimensions=[];
-    for(const [id,name] of [['sauna','Sauna'],['carport','Přístřešek'],['garage','Garáž'],['eastTerrace','Východní terasa'],['westTerrace','Západní chodník'],['greenhouse','Skleník'],['raisedBedsPad','Plošina záhonů'],['compost','Kompost'],['heatPumpService','Servis čerpadla'],['heatPumpPad','Podstavec čerpadla'],['pergola','Pergola']]) {
+    for(const [id,name] of [['carport','Přístřešek'],['garage','Garáž'],['eastTerrace','Východní terasa'],['westTerrace','Západní chodník'],['greenhouse','Skleník'],['raisedBedsPad','Plošina záhonů'],['heatPumpService','Servis čerpadla'],['heatPumpPad','Podstavec čerpadla'],['pergola','Pergola']]) {
       const p=r(id);if(p)dimensions.push({id,name,value:`${p.w.toFixed(2)} × ${p.d.toFixed(2)} m`,from:[p.x,p.y],to:[p.x+p.w,p.y]});
     }
-    for(const id of ['sauna','pergola']) {
-      const p=r(id);if(p)dimensions.push({id:id+'Depth',name:(id==='sauna'?'Sauna':'Pergola')+' – hloubka',value:p.d.toFixed(2)+' m',from:[p.x+p.w,p.y],to:[p.x+p.w,p.y+p.d]});
+    for(const id of ['pergola']) {
+      const p=r(id);if(p)dimensions.push({id:id+'Depth',name:'Pergola – hloubka',value:p.d.toFixed(2)+' m',from:[p.x+p.w,p.y],to:[p.x+p.w,p.y+p.d]});
     }
     const sauna=r('sauna'),shelter=r('saunaShelter');
     if(sauna&&shelter) {
       const x0=Math.min(sauna.x,shelter.x),x1=Math.max(sauna.x+sauna.w,shelter.x+shelter.w),z0=Math.min(sauna.y,shelter.y),z1=Math.max(sauna.y+sauna.d,shelter.y+shelter.d);
-      dimensions.push({id:'saunaFacility',name:'Sauna a přístřešek pro vířivku',value:`${(x1-x0).toFixed(2)} × ${(z1-z0).toFixed(2)} m`,from:[x0,z0],to:[x1,z0],displayOffset:[0,-1]});
-      dimensions.push({id:'saunaFacilityDepth',name:'Sauna s přístřeškem – hloubka',value:(z1-z0).toFixed(2)+' m',from:[x0,z0],to:[x0,z1],displayOffset:[-.6,0],table:false});
+      dimensions.push({id:'saunaFacility',name:'Sauna se zádveřím a krytou vířivkou',value:`${(x1-x0).toFixed(2)} × ${(z1-z0).toFixed(2)} m`,from:[x0,z1],to:[x1,z1],displayOffset:[0,.55]});
+      dimensions.push({id:'saunaFacilityDepth',name:'Sauna s vířivkou – hloubka',value:(z1-z0).toFixed(2)+' m',from:[x1,z0],to:[x1,z1],displayOffset:[.5,0],table:false});
     }
     if(west)dimensions.push({name:'Západní pás',value:`0,75 × ${west.d.toFixed(2)} m`,from:[west.x-.75,west.y+west.d],to:[west.x,west.y+west.d]});
     const driveway=el('driveway')?.parts.find(p=>p.kind==='polygon');
@@ -169,7 +169,7 @@ const GradingZones = (() => {
     if(sauna&&shelter&&fenceSegments.length) {
       const model=typeof module!=='undefined'?require('./sauna-model.js').SaunaModel:SaunaModel;
       const gap=nearestFence(model.roofFootprints(garden),fenceSegments.map(s=>[s.start,s.end]));
-      dimensions.push({id:'saunaFenceGap',name:'Sauna s vířivkou – plot',value:gap.distance.toFixed(2)+' m',from:gap.roofPoint,to:gap.fencePoint});
+      dimensions.push({id:'saunaFenceGap',name:'Sauna s vířivkou – plot',value:gap.distance.toFixed(2)+' m',from:gap.roofPoint,to:gap.fencePoint,displayOffset:[1.5,0]});
     }
     if(pergola) {
       const model=typeof module!=='undefined'?require('./pergola-model.js').PergolaModel:PergolaModel;

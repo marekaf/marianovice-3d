@@ -16,8 +16,8 @@ assert.equal(createHash('sha256').update(JSON.stringify(fixed)).digest('hex'),
   '7f1304141d56f59131c50ea630f1e9348a71472b2008b095bf89f6600227afde',
   'The approved garden layout must not change buildings, terraces or the north passage');
 assert.deepEqual(footprint('pergola'), [22.42785414913, 1.68127450503, 6, 4]);
-assert.deepEqual(footprint('sauna'), [5.3, 2.1208596399847544, 4, 3]);
-assert.deepEqual(footprint('saunaShelter'), [2.3, 2.1208596399847544, 3, 3]);
+assert.deepEqual(footprint('sauna'), [4.5, 1.988663694038809, 2.8, 2.5]);
+assert.deepEqual(footprint('saunaShelter'), [2.3, 1.988663694038809, 2.2, 2.5]);
 assert.deepEqual(footprint('greenhouse'), [1.5, 7.1, 2, 2]);
 const greenhouse = rect('greenhouse');
 for (const tree of ['northTrees', 'orchard'].flatMap(id => element(id).parts).filter(part => part.kind === 'circle')) {

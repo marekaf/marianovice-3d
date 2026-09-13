@@ -36,10 +36,10 @@ const GARDEN = {
     { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#462482", cx: 33.1,  noseZ: 20.95, moto: true }
   ],
   gardenRoutes: [
-    {"id":"Wellness access","points":[[9.98,7.2],[9.98,5.8208596399847545],[8,5.8208596399847545]],"width":1},
-    {"id":"Productive access","points":[[8,5.8208596399847545],[6.6,6.3208596399847545],[6.6,13.2],[5.6,13.2],[3.5,13.2]],"width":1,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":9.8},"levelFractions":[0,0,1,1,1]},
+    {"id":"Wellness access","points":[[9.98,7.2],[9.98,5.188663694038809],[6.6,5.188663694038809]],"width":1},
+    {"id":"Productive access","points":[[6.6,5.188663694038809],[6.6,6.3208596399847545],[6.6,13.2],[5.6,13.2],[3.5,13.2]],"width":1,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":9.8},"levelFractions":[0,0,1,1,1]},
     {id:"Bed access",points:[[3.5,10.6],[3.5,13.2],[1.8,13.2]],width:1,bankSlope:.48},
-    {"id":"Greenhouse access","points":[[2.5,5.8208596399847545],[2.5,6.95]],"width":0.8,"bankSlope":0.35,"startRelativeLevel":0,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":6.95}},
+    {"id":"Greenhouse access","points":[[2.5,5.188663694038809],[2.5,6.95]],"width":0.8,"bankSlope":0.35,"startRelativeLevel":0,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":6.95}},
     {"id":"Daily dining","levelAxis":{"axis":"z","start":11.4,"end":6.2},"points":[[23,12],[24.4,12],[24.4,8],[25.42785414913,5.38127450503]],"width":1.2},
     {id:"Quiet garden approach",surfaceStep:.03,points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
     {"id":"Gathering connection","points":[[27.9,4.6],[28.8,4.6],[30.15,5.75]],"width":1.2,"startLanding":1.2,"endLanding":.5},
@@ -116,9 +116,9 @@ const GARDEN = {
       id: "saunaPath",
       name: "Bezbariérové propojení domu a sauny",
       parts: [
-        {kind: "rect", role: "saunaLanding", x: 2.3, y: 5.120859639984754, w: 7, d: 1.2, fill: "#cdc1ad", opacity: 0.7},
-        {kind: "rect", x: 9.3, y: 5.3208596399847545, w: 1.18, d: 1, fill: "#cdc1ad", opacity: 0.7},
-        {kind: "rect", x: 9.48, y: 5.7, w: 1, d: 1.48, fill: "#cdc1ad", opacity: 0.7}
+        {kind: "rect", role: "saunaLanding", x: 2.3, y: 4.488663694038809, w: 5, d: 1.2, fill: "#cdc1ad", opacity: 0.7},
+        {kind: "rect", x: 7.3, y: 4.688663694038809, w: 3.18, d: 1, fill: "#cdc1ad", opacity: 0.7},
+        {kind: "rect", x: 9.48, y: 5.188663694038809, w: 1, d: 1.991336305961191, fill: "#cdc1ad", opacity: 0.7}
       ]
     },
     {
@@ -254,20 +254,20 @@ const GARDEN = {
     },
     {
       id: "sauna",
-      name: "Sauna 4 × 3 m",
+      name: "Sauna se zádveřím 2,8 × 2,5 m",
       parts: [
-        {kind: "rect", x: 5.3, y: 2.1208596399847544, w: 4, d: 3, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2},
-        {kind: "text", x: 7.3, y: 3.4508596399847544, text: "SAUNA", cls: "lbl-w"},
-        {kind: "text", x: 7.3, y: 4.340859639984754, text: "4 × 3 m", cls: "dim", fill: "#fff"}
+        {kind: "rect", x: 4.5, y: 1.988663694038809, w: 2.8, d: 2.5, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2},
+        {kind: "text", x: 5.9, y: 3.038663694038809, text: "SAUNA", cls: "lbl-w"},
+        {kind: "text", x: 5.9, y: 3.788663694038809, text: "2,8 × 2,5 m", cls: "dim", fill: "#fff"}
       ]
     },
     {
       id: "saunaShelter",
-      name: "Přístřešek nad vířivkou 3 × 3 m",
+      name: "Krytá část s vířivkou 2,2 × 2,5 m",
       parts: [
-        {kind: "rect", x: 2.3, y: 2.1208596399847544, w: 3, d: 3, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4, 3"},
-        {kind: "text", x: 3.8, y: 5.790859639984754, text: "přístřešek", cls: "lbl-sm", fill: "#5a4828"},
-        {kind: "text", x: 3.8, y: 6.520859639984755, text: "3 × 3 m", cls: "dim"}
+        {kind: "rect", x: 2.3, y: 1.988663694038809, w: 2.2, d: 2.5, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4, 3"},
+        {kind: "text", x: 3.4, y: 4.988663694038809, text: "krytá vířivka", cls: "lbl-sm", fill: "#5a4828"},
+        {kind: "text", x: 3.4, y: 5.488663694038809, text: "2,2 × 2,5 m", cls: "dim"}
       ]
     },
     {
@@ -283,8 +283,8 @@ const GARDEN = {
       id: "softub",
       name: "Vířivka Softub ø 1,8 m",
       parts: [
-        {kind: "circle", cx: 3.8, cy: 3.6208596399847544, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5},
-        {kind: "text", x: 3.8, y: 3.8408596399847545, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f"}
+        {kind: "circle", cx: 3.34, cy: 3.028663694038809, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5},
+        {kind: "text", x: 3.34, y: 3.248663694038809, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f"}
       ]
     },
     {
@@ -339,22 +339,6 @@ const GARDEN = {
         {kind: "rect", x: 4, y: 13.7, w: 1, d: 2, fill: "#7a5a3a", opacity: 0.78},
         {kind: "text", x: 4.5, y: 14.7, text: "záhon 4", cls: "lbl-sm-w", rotate: -90},
         {kind: "text", x: 1.4, y: 16.7, text: "4× záhon 1 × 2 m, výška 0,6 m", cls: "dim", anchor: "start"}
-      ]
-    },
-    {
-      id: "screenWest",
-      name: "Západní clona u sauny",
-      meta: {screen: {h: 2}},
-      parts: [
-        {kind: "rect", x: 2.08, y: 2, w: 0.14, d: 3, fill: "#4a4a4e"}
-      ]
-    },
-    {
-      id: "screenSouth",
-      name: "Severní clona u sauny",
-      meta: {screen: {h: 2}},
-      parts: [
-        {kind: "rect", x: 2.3, y: 1.78, w: 7, d: 0.14, fill: "#4a4a4e"}
       ]
     },
     {

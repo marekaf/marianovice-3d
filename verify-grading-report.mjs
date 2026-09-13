@@ -65,13 +65,15 @@ const quantities=GradingZones.create(GARDEN);
 const facility=quantities.dimensions.find(d=>d.id==='saunaFacility');
 const facilityDepth=quantities.dimensions.find(d=>d.id==='saunaFacilityDepth');
 assert(facility&&facilityDepth,'The sauna and hot-tub shelter have overall footprint dimensions');
-assert.deepEqual(facility.from,[2.3,2.1208596399847544]);
-assert.deepEqual(facility.to,[9.3,2.1208596399847544]);
-assert.equal(facility.value,'7,00 × 3,00 m');
-assert.deepEqual(facilityDepth.from,[2.3,2.1208596399847544]);
-assert.deepEqual(facilityDepth.to,[2.3,5.1208596399847544]);
+assert.deepEqual(facility.from,[2.3,4.488663694038809]);
+assert.deepEqual(facility.to,[7.3,4.488663694038809]);
+assert.equal(facility.value,'5,00 × 2,50 m');
+assert.deepEqual(facilityDepth.from,[7.3,1.988663694038809]);
+assert.deepEqual(facilityDepth.to,[7.3,4.488663694038809]);
 for(const dimension of [facility,facilityDepth])assert(result.mapSVG.includes(`data-dimension="${dimension.id}"`));
-for(const [id,width,depth] of [['sauna',4,3],['pergola',6,4]]) {
+assert.deepEqual(quantities.dimensions.filter(d=>d.id?.startsWith('sauna')).map(d=>d.id).sort(),['saunaFacility','saunaFacilityDepth','saunaFenceGap']);
+for(const id of ['sauna','saunaDepth','compost','toolStore'])assert(!quantities.dimensions.some(d=>d.id===id));
+for(const [id,width,depth] of [['pergola',6,4]]) {
   for(const [dimensionId,length] of [[id,width],[id+'Depth',depth]]) {
     const dimension=quantities.dimensions.find(d=>d.id===dimensionId);
     assert(Math.abs(Math.hypot(dimension.to[0]-dimension.from[0],dimension.to[1]-dimension.from[1])-length)<1e-9);

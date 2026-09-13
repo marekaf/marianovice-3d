@@ -15,6 +15,13 @@ try {
   for(const id of zoneIds){const label=page.locator(`[data-zone-label="${id}"]`);assert.equal(await label.count(),1);assert(await label.isVisible());assert.equal((await label.locator('text').allTextContents()).join(''),id);}
   assert.equal(await page.locator('[data-zone-secondary]').count(),0);
   assert.equal(await page.locator('[data-measured-fence]').count(),0);
+  const saunaDimensions=page.locator('[data-dimension-label^="sauna"]');
+  assert.equal(await saunaDimensions.count(),3);
+  const labelBoxes=await page.locator('[data-dimension-label]').evaluateAll(labels=>labels.map(label=>({id:label.dataset.dimensionLabel,rect:label.getBoundingClientRect().toJSON()})));
+  for(const a of labelBoxes.filter(label=>label.id.startsWith('sauna')))for(const b of labelBoxes.filter(label=>label.id!==a.id)){
+    assert(!(a.rect.left<b.rect.right&&a.rect.right>b.rect.left&&a.rect.top<b.rect.bottom&&a.rect.bottom>b.rect.top),`${a.id} overlaps ${b.id}`);
+  }
+  for(const id of ['sauna','saunaDepth','compost','toolStore'])assert.equal(await page.locator(`[data-dimension="${id}"]`).count(),0);
   assert(await page.locator('[data-terrain-downhill="east-garage"]').isVisible());
   assert.equal(await page.locator('aside [data-zone-features]').count(),8);
   assert.equal(await page.locator('[data-zone-features="G"]').textContent(),'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník');

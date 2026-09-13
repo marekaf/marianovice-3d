@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1450" height="1426" viewBox="0 0 1450 1426" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1450" height="1396" viewBox="0 0 1450 1396" font-family="-apple-system, BlinkMacSystemFont, sans-serif">
   <defs>
     <pattern id="cellgrid" width="36" height="36" patternUnits="userSpaceOnUse">
       <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#d8d8d8" stroke-width="0.6"/>
@@ -31,7 +31,7 @@
     .leg { font-size: 8.5px; }
     .note { font-size: 8.5px; fill: #888; }
   </style>
-  <rect x="0" y="0" width="1450" height="1426" fill="white"/>
+  <rect x="0" y="0" width="1450" height="1396" fill="white"/>
   <text x="550" y="28" class="title">Zahrada · situace a terénní úpravy</text>
   <text x="550" y="46" class="subtitle">Pozemek 1433.66 m² · síť 2 × 2 m (sloupce 1–22, řádky a–q)</text>
   <g transform="translate(80, 110)">
@@ -2710,10 +2710,10 @@
       <circle cx="244.8" cy="297" r="10.8" fill="#6a8e5a" opacity="0.8"/>
       <circle cx="250.2" cy="333" r="6.3" fill="#6a8e5a" opacity="0.8"/>
     </g>
-<polyline data-route="Wellness access" points="179.64,129.6 179.64,104.78 144,104.78" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Wellness access</title></polyline>
-<polyline data-route="Productive access" points="144,104.78 118.8,113.78 118.8,237.6 100.8,237.6 63,237.6" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Productive access</title></polyline>
+<polyline data-route="Wellness access" points="179.64,129.6 179.64,93.4 118.8,93.4" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Wellness access</title></polyline>
+<polyline data-route="Productive access" points="118.8,93.4 118.8,113.78 118.8,237.6 100.8,237.6 63,237.6" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Productive access</title></polyline>
 <polyline data-route="Bed access" points="63,190.8 63,237.6 32.4,237.6" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Bed access</title></polyline>
-<polyline data-route="Greenhouse access" points="45,104.78 45,125.1" fill="none" stroke="#c8bea5" stroke-width="14.4" stroke-linecap="round" stroke-linejoin="round"><title>Greenhouse access</title></polyline>
+<polyline data-route="Greenhouse access" points="45,93.4 45,125.1" fill="none" stroke="#c8bea5" stroke-width="14.4" stroke-linecap="round" stroke-linejoin="round"><title>Greenhouse access</title></polyline>
 <polyline data-route="Daily dining" points="414,216 439.2,216 439.2,144 457.7,96.86" fill="none" stroke="#c8bea5" stroke-width="21.6" stroke-linecap="round" stroke-linejoin="round"><title>Cesta k pergole</title></polyline>
 <polyline data-route="Quiet garden approach" points="179.64,334.8 144,334.8 122.4,342" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Quiet garden approach</title></polyline>
 <polyline data-route="Gathering connection" points="502.2,82.8 518.4,82.8 542.7,103.5" fill="none" stroke="#c8bea5" stroke-width="21.6" stroke-linecap="round" stroke-linejoin="round"><title>Spojení pergoly a ohniště</title></polyline>
@@ -2744,9 +2744,9 @@
       <text x="397.44" y="316.8" class="dim" fill="#fff">3 × 7.82 m</text>
     </g>
     <g class="el" data-id="saunaPath"><title>Bezbariérové propojení domu a sauny</title>
-      <rect x="41.4" y="92.18" width="126" height="21.6" fill="#cdc1ad" opacity="0.7"/>
-      <rect x="167.4" y="95.78" width="21.24" height="18" fill="#cdc1ad" opacity="0.7"/>
-      <rect x="170.64" y="102.6" width="18" height="26.64" fill="#cdc1ad" opacity="0.7"/>
+      <rect x="41.4" y="80.8" width="90" height="21.6" fill="#cdc1ad" opacity="0.7"/>
+      <rect x="131.4" y="84.4" width="57.24" height="18" fill="#cdc1ad" opacity="0.7"/>
+      <rect x="170.64" y="93.4" width="18" height="35.84" fill="#cdc1ad" opacity="0.7"/>
     </g>
     <g class="el" data-id="carport"><title>Přístřešek pro auta 6,35 × 7,05 m</title>
       <rect x="383.04" y="349.2" width="114.3" height="126.9" fill="#bdbdbd" opacity="0.5" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
@@ -2816,23 +2816,23 @@
       <circle cx="711" cy="144" r="9" fill="#4d7a4d"/>
       <circle cx="738" cy="190.8" r="9" fill="#4d7a4d"/>
     </g>
-    <g class="el" data-id="sauna"><title>Sauna 4 × 3 m</title>
-      <rect x="95.4" y="38.18" width="72" height="54" fill="#8b6f47" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>
-      <text x="131.4" y="62.12" class="lbl-w">SAUNA</text>
-      <text x="131.4" y="78.14" class="dim" fill="#fff">4 × 3 m</text>
+    <g class="el" data-id="sauna"><title>Sauna se zádveřím 2,8 × 2,5 m</title>
+      <rect x="81" y="35.8" width="50.4" height="45" fill="#8b6f47" opacity="0.9" stroke="#5a3e25" stroke-width="1.2"/>
+      <text x="106.2" y="54.7" class="lbl-w">SAUNA</text>
+      <text x="106.2" y="68.2" class="dim" fill="#fff">2,8 × 2,5 m</text>
     </g>
-    <g class="el" data-id="saunaShelter"><title>Přístřešek nad vířivkou 3 × 3 m</title>
-      <rect x="41.4" y="38.18" width="54" height="54" fill="#cdc1ad" opacity="0.4" stroke="#7a5e3e" stroke-width="1" stroke-dasharray="4, 3"/>
-      <text x="68.4" y="104.24" class="lbl-sm" fill="#5a4828">přístřešek</text>
-      <text x="68.4" y="117.38" class="dim">3 × 3 m</text>
+    <g class="el" data-id="saunaShelter"><title>Krytá část s vířivkou 2,2 × 2,5 m</title>
+      <rect x="41.4" y="35.8" width="39.6" height="45" fill="#cdc1ad" opacity="0.4" stroke="#7a5e3e" stroke-width="1" stroke-dasharray="4, 3"/>
+      <text x="61.2" y="89.8" class="lbl-sm" fill="#5a4828">krytá vířivka</text>
+      <text x="61.2" y="98.8" class="dim">2,2 × 2,5 m</text>
     </g>
     <g class="el" data-id="toolStore"><title>Box na nářadí a sekačku 1,905 × 1,09 m</title>
       <g clip-path="url(#plotShape)"><rect x="4.5" y="12.6" width="34.29" height="19.62" fill="#5a5e64" opacity="0.92" stroke="#33363a" stroke-width="1"/></g>
       <text x="21.6" y="25.2" class="lbl-sm" fill="#fff">sekačka</text>
     </g>
     <g class="el" data-id="softub"><title>Vířivka Softub ø 1,8 m</title>
-      <circle cx="68.4" cy="65.18" r="16.2" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
-      <text x="68.4" y="69.14" class="lbl-sm" fill="#1f3a5f" font-weight="700">Softub</text>
+      <circle cx="60.12" cy="54.52" r="16.2" fill="#5dade2" opacity="0.7" stroke="#1f618d" stroke-width="1.5"/>
+      <text x="60.12" y="58.48" class="lbl-sm" fill="#1f3a5f" font-weight="700">Softub</text>
     </g>
     <g class="el" data-id="pergola"><title>Pergola a gril 6 × 4 m</title>
       <rect x="403.7" y="30.26" width="108" height="72" fill="#c8a878" opacity="0.55" stroke="#7a5e3e" stroke-width="1.5" stroke-dasharray="6, 3"/>
@@ -2861,12 +2861,6 @@
       <rect x="72" y="246.6" width="18" height="36" fill="#7a5a3a" opacity="0.78"/>
       <text x="81" y="264.6" class="lbl-sm-w" transform="rotate(-90, 81, 264.6)">záhon 4</text>
       <text x="25.2" y="300.6" class="dim" text-anchor="start">4× záhon 1 × 2 m, výška 0,6 m</text>
-    </g>
-    <g class="el" data-id="screenWest"><title>Západní clona u sauny</title>
-      <rect x="37.44" y="36" width="2.52" height="54" fill="#4a4a4e"/>
-    </g>
-    <g class="el" data-id="screenSouth"><title>Severní clona u sauny</title>
-      <rect x="41.4" y="32.04" width="126" height="2.52" fill="#4a4a4e"/>
     </g>
     <g class="el" data-id="specimenMaple"><title>Solitérní javor</title>
       <circle cx="581.4" cy="252" r="6.3" fill="#618447"/>
@@ -3823,27 +3817,24 @@
 <path d="M383.1,476.1L383.04,476.1" fill="none" stroke="white" stroke-width="4"/><path data-zone-boundary="M" d="M383.1,476.1L383.04,476.1" fill="none" stroke="#346d9c" stroke-width="2.1"/>
 <path d="M497.34,475.74L497.34,476.1" fill="none" stroke="white" stroke-width="4"/><path data-zone-boundary="M" d="M497.34,475.74L497.34,476.1" fill="none" stroke="#346d9c" stroke-width="2.1"/>
 <path d="M497.34,476.1L402.23,476.1" fill="none" stroke="white" stroke-width="4"/><path data-zone-boundary="M" d="M497.34,476.1L402.23,476.1" fill="none" stroke="#346d9c" stroke-width="2.1"/>
-<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Sauna: 4,00 × 3,00 m</title><path d="M95.4,38.18L95.4,34.18M167.4,38.18L167.4,34.18M95.4,31.18L167.4,31.18" fill="none"/><text x="131.4" y="28.18" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">4,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Přístřešek: 6,35 × 7,05 m</title><path d="M383.04,349.2L383.04,345.2M497.34,349.2L497.34,345.2M383.04,342.2L497.34,342.2" fill="none"/><text x="440.19" y="339.2" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">6,35 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Garáž: 6,50 × 7,05 m</title><path d="M497.34,348.84L497.34,344.84M614.34,348.84L614.34,344.84M497.34,341.84L614.34,341.84" fill="none"/><text x="555.84" y="338.84" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">6,50 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Východní terasa: 3,00 × 7,82 m</title><path d="M370.44,208.44L370.44,204.44M424.44,208.44L424.44,204.44M370.44,201.44L424.44,201.44" fill="none"/><text x="397.44" y="198.44" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">3,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Západní chodník: 1,00 × 19,25 m</title><path d="M170.64,129.24L170.64,125.24000000000001M188.64,129.24L188.64,125.24000000000001M170.64,122.24000000000001L188.64,122.24000000000001" fill="none"/><text x="179.64" y="119.24000000000001" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">1,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Skleník: 2,00 × 2,00 m</title><path d="M27,127.8L27,123.8M63,127.8L63,123.8M27,120.8L63,120.8" fill="none"/><text x="45" y="117.8" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">2,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Plošina záhonů: 4,20 × 6,20 m</title><path d="M25.2,181.8L25.2,177.8M100.8,181.8L100.8,177.8M25.2,174.8L100.8,174.8" fill="none"/><text x="63" y="171.8" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">4,20 m</text></g>
-<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Kompost: 1,00 × 2,00 m</title><path d="M-22.5,12.6L-22.5,8.6M-4.5,12.6L-4.5,8.6M-22.5,5.6L-4.5,5.6" fill="none"/><text x="-13.5" y="2.5999999999999996" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">1,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Servis čerpadla: 4,16 × 0,60 m</title><path d="M308.25,480.6L308.25,476.6M383.04,480.6L383.04,476.6M308.25,473.6L383.04,473.6" fill="none"/><text x="345.645" y="470.6" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">4,16 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Podstavec čerpadla: 1,15 × 0,60 m</title><path d="M308.25,480.6L308.25,476.6M328.95,480.6L328.95,476.6M308.25,473.6L328.95,473.6" fill="none"/><text x="318.6" y="470.6" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">1,15 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Pergola: 6,00 × 4,00 m</title><path d="M403.7,30.26L403.7,26.26M511.7,30.26L511.7,26.26M403.7,23.26L511.7,23.26" fill="none"/><text x="457.7" y="20.26" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">6,00 m</text></g>
-<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Sauna – hloubka: 3,00 m</title><path d="M167.4,38.18L171.4,38.18M167.4,92.18L171.4,92.18M174.4,38.18L174.4,92.18" fill="none"/><text x="174.4" y="62.18000000000001" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">3,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Pergola – hloubka: 4,00 m</title><path d="M511.7,30.26L515.7,30.26M511.7,102.26L515.7,102.26M518.7,30.26L518.7,102.26" fill="none"/><text x="518.7" y="63.260000000000005" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">4,00 m</text></g>
-<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Sauna a přístřešek pro vířivku: 7,00 × 3,00 m</title><path d="M41.4,38.18L41.4,16.18M167.4,38.18L167.4,16.18M41.4,13.18L167.4,13.18" fill="none"/><text x="104.4" y="10.18" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">7,00 m</text></g>
-<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Sauna s přístřeškem – hloubka: 3,00 m</title><path d="M41.4,38.18L34.599999999999994,38.18M41.4,92.18L34.599999999999994,92.18M37.599999999999994,38.18L37.599999999999994,92.18" fill="none"/><text x="37.599999999999994" y="62.18000000000001" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">3,00 m</text></g>
+<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Sauna se zádveřím a krytou vířivkou: 5,00 × 2,50 m</title><path d="M41.4,80.8L41.4,86.7M131.4,80.8L131.4,86.7M41.4,83.7L131.4,83.7" fill="none"/><text x="86.4" y="80.7" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">5,00 m</text></g>
+<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Sauna s vířivkou – hloubka: 2,50 m</title><path d="M131.4,35.8L144.4,35.8M131.4,80.8L144.4,80.8M147.4,35.8L147.4,80.8" fill="none"/><text x="147.4" y="55.3" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">2,50 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Západní pás: 0,75 × 19,25 m</title><path d="M157.14,475.74L157.14,471.74M170.64,475.74L170.64,471.74M157.14,468.74L170.64,468.74" fill="none"/><text x="163.89" y="465.74" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">0,75 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Rovný příjezd podél domu a garáže: 12,85 m</title><path d="M383.04,532.8L383.04,528.8M614.34,532.8L614.34,528.8M383.04,525.8L614.34,525.8" fill="none"/><text x="498.69000000000005" y="522.8" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">12,85 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Šířka příjezdu u brány: 4,00 m</title><path d="M775.28,512.57L779.25517458124,513.0149573560053M767.27,584.13L771.24517458124,584.5749573560053M782.23655551717,513.3486753730092L774.22655551717,584.9086753730091" fill="none"/><text x="778.23155551717" y="546.1286753730092" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">4,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Hloubka rovné příjezdové plochy: 4,00 m</title><path d="M614.34,475.74L618.34,475.74M614.34,547.74L618.34,547.74M621.34,475.74L621.34,547.74" fill="none"/><text x="621.34" y="508.74" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">4,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Rovná plocha před garáží: 6,50 m podél průčelí</title><path d="M497.34,475.74L497.34,471.74M614.34,475.74L614.34,471.74M497.34,468.74L614.34,468.74" fill="none"/><text x="555.84" y="465.74" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">6,50 m</text></g>
-<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Sauna s vířivkou – plot: 2,00 m</title><path d="M39.06,35.84L35.0605741047728,35.90776804989135M38.45,-0.16L34.4505741047728,-0.0922319501086502M32.061004683352394,35.95859408730986L31.451004683352394,-0.04140591269013785" fill="none"/><text x="31.756004683352394" y="14.958594087309862" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">2,00 m</text></g>
+<g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Sauna s vířivkou – plot: 2,00 m</title><path d="M41.4,35.8L64.40057410477279,35.867768049891346M40.79,-0.2L63.790574104772794,-0.13223195010865021M61.40100468335239,35.918594087309856L60.79100468335239,-0.08140591269013786" fill="none"/><text x="61.09600468335239" y="14.91859408730986" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">2,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Střecha pergoly – plot: 2,00 m</title><path d="M405.5,28.82L401.5007349279771,28.896673878846787M404.81,-7.17L400.8107349279771,-7.093326121153215M398.50128612395986,28.954179287981876L397.81128612395986,-7.0358207120181255" fill="none"/><text x="398.15628612395983" y="7.9591792879818755" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">2,00 m</text></g>
 <g class="grading-dimension" stroke="#78412c" stroke-width=".7"><title>Roh domu – sloup pergoly: 2,00 m</title><path d="M383.04,129.24L379.88235183906977,126.78454523727805M405.14,100.82L401.98235183906974,98.36454523727804M377.5141157183721,124.94295416523659L399.6141157183721,96.52295416523657" fill="none"/><text x="388.56411571837214" y="107.73295416523658" font-size="8" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="2">2,00 m</text></g>
 <defs><pattern id="bank-hatch-north" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M-2 2L2 -2M0 9L9 0M7 11L11 7" stroke="#93502e" stroke-opacity=".48" stroke-width="1"/></pattern></defs><polygon data-terrain-bank="north" points="614.34,-11.36 747.54,-13.68 749.11,76.31 614.34,78.65" fill="url(#bank-hatch-north)" stroke="#93502e" stroke-width=".8"/><path data-terrain-downhill="north" d="M643.5794,43.4918L642.8306,0.2981999999999996M646.9686654460179 8.227664948183602L642.8306,0.2981999999999996L638.9698673090638 8.36633132572451" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M643.5794,43.4918L642.8306,0.2981999999999996M646.9686654460179 8.227664948183602L642.8306,0.2981999999999996L638.9698673090638 8.36633132572451" fill="none" stroke="#93502e" stroke-width="2.3"/><defs><pattern id="bank-hatch-east" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M-2 2L2 -2M0 9L9 0M7 11L11 7" stroke="#93502e" stroke-opacity=".48" stroke-width="1"/></pattern></defs><polygon data-terrain-bank="east" points="747.54,-13.68 755.82,89.1 768.24,241.92 777.28,348.84 695.99,348.84 687.52,248.61 675.08,95.63 666.8,-7.18" fill="url(#bank-hatch-east)" stroke="#93502e" stroke-width=".8"/><path data-terrain-downhill="east" d="M689.2872922300548,109.88710966147454L744.1027077699451,105.43289033852545M736.4529557325346 110.0676820022503L744.1027077699451,105.43289033852545L735.8050232165189 102.09396370683193" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M689.2872922300548,109.88710966147454L744.1027077699451,105.43289033852545M736.4529557325346 110.0676820022503L744.1027077699451,105.43289033852545L735.8050232165189 102.09396370683193" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="north-house" d="M216,125.1L360,125.1M352 129.1L360,125.1L352 121.1" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M216,125.1L360,125.1M352 129.1L360,125.1L352 121.1" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="south-house" d="M216,495L288,495M280 499L288,495L280 491" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M216,495L288,495M280 499L288,495L280 491" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="east-terrace" d="M425.7,270L441.9,270M433.9 274L441.9,270L433.9 266" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M425.7,270L441.9,270M433.9 274L441.9,270L433.9 266" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="north-terrace" d="M405,207L405,190.8M409 198.8L405,190.8L401 198.8" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M405,207L405,190.8M409 198.8L405,190.8L401 198.8" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="south-driveway" d="M468,576L468,549M472 557L468,549L464 557" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M468,576L468,549M472 557L468,549L464 557" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="driveway-ramp" d="M630,522L738,540M729.4512526601214 542.6303837968857L738,540L730.7664445585643 534.7392324062286" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M630,522L738,540M729.4512526601214 542.6303837968857L738,540L730.7664445585643 534.7392324062286" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="east-garage" d="M684,432L720,468M711.5147186257614 465.17157287525384L720,468L717.1715728752538 459.5147186257614" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M684,432L720,468M711.5147186257614 465.17157287525384L720,468L717.1715728752538 459.5147186257614" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="west-bed" d="M-18.79,216L25.2,216M17.2 220L25.2,216L17.2 212" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M-18.79,216L25.2,216M17.2 220L25.2,216L17.2 212" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="drainage-1" d="M170.64,122.49L188.64,122.49M180.64 126.49L188.64,122.49L180.64 118.49" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M170.64,122.49L188.64,122.49M180.64 126.49L188.64,122.49L180.64 118.49" fill="none" stroke="#93502e" stroke-width="2.3"/><path data-terrain-downhill="drainage-2" d="M170.64,482.49L188.64,482.49M180.64 486.49L188.64,482.49L180.64 478.49" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M170.64,482.49L188.64,482.49M180.64 486.49L188.64,482.49L180.64 478.49" fill="none" stroke="#93502e" stroke-width="2.3"/><g data-terrain-flat="carport"><path d="M433.19 425.85h14M433.19 431.85h14" fill="none" stroke="#17649e" stroke-width="2.2"/></g><g data-terrain-flat="A"><path d="M525.8 501h14M525.8 507h14" fill="none" stroke="#17649e" stroke-width="2.2"/></g><g data-terrain-flat="C"><path d="M524 229.2h14M524 235.2h14" fill="none" stroke="#17649e" stroke-width="2.2"/></g><g data-terrain-flat="D"><path d="M403.4 274.2h14M403.4 280.2h14" fill="none" stroke="#17649e" stroke-width="2.2"/></g><g data-terrain-flat="G"><path d="M93.8 141h14M93.8 147h14" fill="none" stroke="#17649e" stroke-width="2.2"/></g><g data-terrain-flat="E"><path d="M156.89 393h14M156.89 399h14" fill="none" stroke="#17649e" stroke-width="2.2"/></g>
@@ -3887,42 +3878,40 @@
 <text data-zone-features="O" x="18" y="391" font-size="8" fill="#52614f">Plastový úložný box, kompostér</text>
 <rect x="0" y="400" width="11" height="11" fill="#9b7d99"/><text x="18" y="409">P · Východní zahrada u vodovodní šachty</text><text x="470" y="409" text-anchor="end">75,92</text>
 <text y="445" font-weight="700" font-size="11">VÝMĚRY POVRCHŮ</text>
-<text y="467">Dům, garáž a ostatní stavby</text><text x="470" y="467" text-anchor="end">258,67</text>
+<text y="467">Dům, garáž a ostatní stavby</text><text x="470" y="467" text-anchor="end">250,17</text>
 <text y="485">Příjezd včetně přístřešku</text><text x="470" y="485" text-anchor="end">131,26</text>
 <text y="503">Východní terasa</text><text x="470" y="503" text-anchor="end">23,46</text>
 <text y="521">Západní terasa včetně atria</text><text x="470" y="521" text-anchor="end">33,71</text>
 <text y="539">Pergola</text><text x="470" y="539" text-anchor="end">24,00</text>
 <text y="557">Servisní plocha čerpadla včetně podstavce</text><text x="470" y="557" text-anchor="end">2,49</text>
-<text y="575">Pevné pěší plochy</text><text x="470" y="575" text-anchor="end">10,44</text>
+<text y="575">Pevné pěší plochy</text><text x="470" y="575" text-anchor="end">10,67</text>
 <text y="593">Plošina záhonů</text><text x="470" y="593" text-anchor="end">26,04</text>
 <text y="611">Západní snížený pás</text><text x="470" y="611" text-anchor="end">16,31</text>
-<text y="629">Ostatní zahrada včetně vody a nezpevněných cest</text><text x="470" y="629" text-anchor="end">907,27</text>
+<text y="629">Ostatní zahrada včetně vody a nezpevněných cest</text><text x="470" y="629" text-anchor="end">915,54</text>
 <text y="640" font-weight="700">Celkem pozemek</text><text x="470" y="640" text-anchor="end">1433,66 m²</text><text y="657">Povrchy se nepřekrývají; přístřešek je započten v příjezdu.</text><text y="673">Oblasti A–P jsou pracovní celky, nikoli další výměra povrchů.</text>
 <text y="699" font-weight="700" font-size="11">HLAVNÍ ROZMĚRY</text>
-<text y="718">Sauna</text><text x="470" y="718" text-anchor="end">4,00 × 3,00 m</text>
-<text y="733">Přístřešek</text><text x="470" y="733" text-anchor="end">6,35 × 7,05 m</text>
-<text y="748">Garáž</text><text x="470" y="748" text-anchor="end">6,50 × 7,05 m</text>
-<text y="763">Východní terasa</text><text x="470" y="763" text-anchor="end">3,00 × 7,82 m</text>
-<text y="778">Západní chodník</text><text x="470" y="778" text-anchor="end">1,00 × 19,25 m</text>
-<text y="793">Skleník</text><text x="470" y="793" text-anchor="end">2,00 × 2,00 m</text>
-<text y="808">Plošina záhonů</text><text x="470" y="808" text-anchor="end">4,20 × 6,20 m</text>
-<text y="823">Kompost</text><text x="470" y="823" text-anchor="end">1,00 × 2,00 m</text>
-<text y="838">Servis čerpadla</text><text x="470" y="838" text-anchor="end">4,16 × 0,60 m</text>
-<text y="853">Podstavec čerpadla</text><text x="470" y="853" text-anchor="end">1,15 × 0,60 m</text>
-<text y="868">Pergola</text><text x="470" y="868" text-anchor="end">6,00 × 4,00 m</text>
-<text y="883">Sauna a přístřešek pro vířivku</text><text x="470" y="883" text-anchor="end">7,00 × 3,00 m</text>
-<text y="898">Západní pás</text><text x="470" y="898" text-anchor="end">0,75 × 19,25 m</text>
-<text y="913">Rovný příjezd podél domu a garáže</text><text x="470" y="913" text-anchor="end">12,85 m</text>
-<text y="928">Šířka příjezdu u brány</text><text x="470" y="928" text-anchor="end">4,00 m</text>
-<text y="943">Hloubka rovné příjezdové plochy</text><text x="470" y="943" text-anchor="end">4,00 m</text>
-<text y="958">Rovná plocha před garáží</text><text x="470" y="958" text-anchor="end">6,50 m podél průčelí</text>
-<text y="973">Sauna s vířivkou – plot</text><text x="470" y="973" text-anchor="end">2,00 m</text>
-<text y="988">Střecha pergoly – plot</text><text x="470" y="988" text-anchor="end">2,00 m</text>
-<text y="1003">Roh domu – sloup pergoly</text><text x="470" y="1003" text-anchor="end">2,00 m</text>
-<path d="M13 1035h14M13 1041h14" fill="none" stroke="#17649e" stroke-width="2.2"/><text x="36" y="1042" font-size="11">Rovná plocha</text><path d="M11 1057h18m-5 -4l5 4l-5 4" fill="none" stroke="#93502e" stroke-width="2"/><text x="36" y="1061" font-size="11">Svah · šipka dolů</text>
-<text x="10" y="1108" font-size="10">Modrý obrys: zakrytý průchod · modrý bod: podzemní odvodnění</text>
+<text y="718">Přístřešek</text><text x="470" y="718" text-anchor="end">6,35 × 7,05 m</text>
+<text y="733">Garáž</text><text x="470" y="733" text-anchor="end">6,50 × 7,05 m</text>
+<text y="748">Východní terasa</text><text x="470" y="748" text-anchor="end">3,00 × 7,82 m</text>
+<text y="763">Západní chodník</text><text x="470" y="763" text-anchor="end">1,00 × 19,25 m</text>
+<text y="778">Skleník</text><text x="470" y="778" text-anchor="end">2,00 × 2,00 m</text>
+<text y="793">Plošina záhonů</text><text x="470" y="793" text-anchor="end">4,20 × 6,20 m</text>
+<text y="808">Servis čerpadla</text><text x="470" y="808" text-anchor="end">4,16 × 0,60 m</text>
+<text y="823">Podstavec čerpadla</text><text x="470" y="823" text-anchor="end">1,15 × 0,60 m</text>
+<text y="838">Pergola</text><text x="470" y="838" text-anchor="end">6,00 × 4,00 m</text>
+<text y="853">Sauna se zádveřím a krytou vířivkou</text><text x="470" y="853" text-anchor="end">5,00 × 2,50 m</text>
+<text y="868">Západní pás</text><text x="470" y="868" text-anchor="end">0,75 × 19,25 m</text>
+<text y="883">Rovný příjezd podél domu a garáže</text><text x="470" y="883" text-anchor="end">12,85 m</text>
+<text y="898">Šířka příjezdu u brány</text><text x="470" y="898" text-anchor="end">4,00 m</text>
+<text y="913">Hloubka rovné příjezdové plochy</text><text x="470" y="913" text-anchor="end">4,00 m</text>
+<text y="928">Rovná plocha před garáží</text><text x="470" y="928" text-anchor="end">6,50 m podél průčelí</text>
+<text y="943">Sauna s vířivkou – plot</text><text x="470" y="943" text-anchor="end">2,00 m</text>
+<text y="958">Střecha pergoly – plot</text><text x="470" y="958" text-anchor="end">2,00 m</text>
+<text y="973">Roh domu – sloup pergoly</text><text x="470" y="973" text-anchor="end">2,00 m</text>
+<path d="M13 1005h14M13 1011h14" fill="none" stroke="#17649e" stroke-width="2.2"/><text x="36" y="1012" font-size="11">Rovná plocha</text><path d="M11 1027h18m-5 -4l5 4l-5 4" fill="none" stroke="#93502e" stroke-width="2"/><text x="36" y="1031" font-size="11">Svah · šipka dolů</text>
+<text x="10" y="1078" font-size="10">Modrý obrys: zakrytý průchod · modrý bod: podzemní odvodnění</text>
   </g>
-<g transform="translate(0,546)">
+<g transform="translate(0,516)">
   <g>
     <rect x="80" y="756" width="620" height="70" fill="white" stroke="#2a2a2a" stroke-width="1"/>
     <text x="92" y="771" class="tb-lbl">LEGENDA</text>
