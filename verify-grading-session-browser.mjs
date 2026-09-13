@@ -166,7 +166,14 @@ try {
   await page.locator('#panel-more > details > summary').click();
   await page.locator('#terrainPreview summary').click();
   await page.check('#gradingAreas');
+  const featureHints={B:'Brána, revizní kanalizační šachta',C:'Pergola, ohniště, jezírko, lavička',D:'Posezení, venkovní kuchyň',G:'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník',H:'Podzemní dešťová nádrž',I:'Přístřešek na popelnice',O:'Plastový úložný box, kompostér'};
+  assert.equal(await page.locator('#terrainPreview [data-zone-features]').count(),7);
+  for(const [id,hint] of Object.entries(featureHints)){
+    const row=page.locator(`#terrainPreview [data-zone-features="${id}"]`);
+    assert.equal(await row.textContent(),hint);assert(await row.isVisible());
+  }
   assert.equal(await page.evaluate(()=>gradingSession.gradingOverlay.group.visible),true);
+  assert(await page.evaluate(()=>!!gradingSession.gradingOverlay.group.getObjectByName('grading-downhill-east-garage')),'P has its downhill arrow in the 3D overlay');
   const terrainMarks=await page.evaluate(()=>{
     const names=[];gradingSession.gradingOverlay.group.traverse(object=>names.push(object.name));
     return Object.fromEntries(['bank','downhill','flat','preserve'].map(kind=>[kind,names.filter(name=>name.startsWith('grading-'+kind+'-')).length]));

@@ -10,6 +10,7 @@ function run(command,args,stdio='inherit') {
 }
 
 const checks=[
+  'verify-grading-pdf.mjs',
   'verify-kitchen-return-grille.mjs',
   'validate-layout.js',
   'verify-garden-details.mjs',
