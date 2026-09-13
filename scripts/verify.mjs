@@ -58,6 +58,7 @@ const checks=[
   'verify-nightstands.mjs',
   'verify-fixtures.mjs',
   'verify-public-runtime.mjs',
+  'verify-runtime-asset-references.mjs',
   'verify-interior-data.mjs house-interior.js',
   'verify-door-approach.mjs',
   'verify-hoxter-stove.mjs',
