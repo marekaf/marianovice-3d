@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import {createMeshHeightQuery} from './mesh-height-query.js';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
@@ -30,9 +32,9 @@ assert.ok(model.lights.length > 0 && model.lights.every(light => light.category 
 const burningParts = model.parts.filter(part => /^(flame|coal)_/.test(part.name));
 assert.ok(burningParts.length > 0 && burningParts.every(part => part.category === 'fire'),
   'Flames and glowing coals must hide with the fire lighting');
-assert.equal(model.benches.length, 5, 'Preserve five seats around the fire pit');
-const pergola=GARDEN.elements.find(e=>e.id==='pergola').parts.find(p=>p.kind==='rect');
-near(model.approach.angle,Math.atan2(pergola.y+pergola.d/2-pit.cy,pergola.x+pergola.w/2-pit.cx)*180/Math.PI);
+assert.equal(model.benches.length, 3, 'Three solid oak seats stand opposite the house');
+const house=GARDEN.elements.find(e=>e.id==='house').meta.bbox;
+near(model.approach.angle,Math.atan2((house[1]+house[3])/2-pit.cy,(house[0]+house[2])/2-pit.cx)*180/Math.PI);
 assert.ok(model.approach.width >= 50, 'Keep the southwest approach open');
 assert.ok(model.pit.ashHeight < model.pit.wallHeight, 'Ash must sit inside the steel ring');
 assert.equal(model.pit.finish, 'corten');
@@ -77,44 +79,14 @@ for (const bench of model.benches) {
     const delta = Math.abs(((direction - model.approach.angle + 540) % 360) - 180);
     assert.ok(delta >= model.approach.width / 2, `${bench.id}: seat corner blocks southwest approach`);
   }
-  for (const foot of bench.feet) {
-    near(foot.groundHeight, localGround(...foot.center), `${bench.id}: foot must match natural grade`);
-    assert.ok(foot.topHeight > foot.groundHeight, `${bench.id}: negative leg height`);
-  }
-  const local = point => {
-    const dx = point[0] - bench.center[0], dy = point[1] - bench.center[1];
-    return [dx * tangent[0] + dy * tangent[1], dx * radial[0] + dy * radial[1], point[2]];
-  };
-  const bounds = part => {
-    const vertices = part.vertices.map(local);
-    return { min: [0, 1, 2].map(axis => Math.min(...vertices.map(vertex => vertex[axis]))),
-      max: [0, 1, 2].map(axis => Math.max(...vertices.map(vertex => vertex[axis]))) };
-  };
-  const contains = (point, b) => point.every((value, axis) => value >= b.min[axis] - 0.001 && value <= b.max[axis] + 0.001);
-  const seats = model.parts.filter(part => part.name.startsWith(`${bench.id}_seat_`));
-  const legs = model.parts.filter(part => part.name.startsWith(`${bench.id}_leg_`));
-  assert.equal(legs.length, bench.feet.length, `${bench.id}: missing modeled feet`);
-  assert.ok(seats.length > 0, `${bench.id}: missing seat`);
-  for (const seat of seats) {
-    near(bounds(seat).max[2], bench.seatHeight);
-    for (const vertex of seat.vertices) assert.ok(Math.hypot(vertex[0] - pit.cx, vertex[1] - pit.cy) <= seating.r + 0.001,
-      `${seat.name}: actual mesh exceeds seating footprint`);
-  }
-  for (const leg of legs) {
-    for (const bottom of leg.vertices.slice(0, 4)) near(bottom[2], localGround(bottom[0], bottom[1]),
-      `${leg.name}: foot corner must contact natural slope`);
-    const b = bounds(leg);
-    assert.ok(seats.some(seat => {
-      const top = bounds(seat);
-      return Math.abs(top.min[2] - b.max[2]) < 0.001 && top.min[0] < b.max[0] && top.max[0] > b.min[0]
-        && top.min[1] < b.max[1] && top.max[1] > b.min[1];
-    }), `${leg.name}: leg must support a seat plank`);
-  }
-  const aprons = model.parts.filter(part => part.name.startsWith(`${bench.id}_apron_`));
-  for (const brace of model.parts.filter(part => part.name.startsWith(`${bench.id}_brace_`))) {
-    assert.ok(legs.some(leg => contains(local(brace.start), bounds(leg))), `${brace.name}: brace must meet a leg`);
-    assert.ok(aprons.some(apron => contains(local(brace.end), bounds(apron))), `${brace.name}: brace must meet an apron`);
-  }
+  const block=parts.get(bench.id+'_block');
+  assert(block&&block.material.startsWith('oak'));
+  assert.equal(model.materials[block.material].grain,Math.abs(tangent[0])>=Math.abs(tangent[1])?'x':'y');
+  assert(!model.parts.some(p=>p.name.startsWith(bench.id+'_leg')||p.name.startsWith(bench.id+'_seat')));
+  near(bench.length,1.2);near(bench.depth,.42);
+  for(const vertex of block.vertices.slice(bench.contacts.length))near(vertex[2],bench.seatHeight,'Solid oak seat top is flat');
+  for(const bottom of bench.contacts)near(bottom[2],localGround(bottom[0],bottom[1])+.008,'Oak block rests on rendered gravel');
+
 }
 
 assert.ok(!model.parts.some(part => part.name.startsWith('ring_course_')));
@@ -170,13 +142,29 @@ function ribbonClearance(a,b,polygon) {
   return distance;
 }
 for(const route of GARDEN.gardenRoutes.filter(route=>['Gathering connection','Pond walk'].includes(route.id))){
-  for(const seat of model.parts.filter(part=>/^bench_\d+_seat_\d+$/.test(part.name))){
-    const footprint=seat.vertices.slice(0,4);
+  for(const seat of model.parts.filter(part=>/^bench_\d+_block$/.test(part.name))){
+    const bench=model.benches.find(b=>seat.name===b.id+'_block'),angle=bench.angle*Math.PI/180;
+    const footprint=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([u,v])=>[bench.center[0]-Math.sin(angle)*u*bench.length/2+Math.cos(angle)*v*bench.depth/2,bench.center[1]+Math.cos(angle)*u*bench.length/2+Math.sin(angle)*v*bench.depth/2]);
     for(let i=1;i<route.points.length;i++)assert(ribbonClearance(route.points[i-1],route.points[i],footprint)>=route.width/2,
       `${route.id}: full walking width intersects ${seat.name}`);
   }
   const end=route.points.at(-1),previous=route.points.at(-2),dx=end[0]-previous[0],dy=end[1]-previous[1],length=Math.hypot(dx,dy);
   for(const offset of[-route.width/2,route.width/2])assert(Math.hypot(end[0]-dy/length*offset-seating.cx,end[1]+dx/length*offset-seating.cy)<=seating.r,
     `${route.id}: full joining edge must enter the seating apron`);
+}
+for(const subject of [model,sampledModel]){
+  const apron=subject.parts.find(p=>p.name==='gravel_apron'),geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(apron.vertices.flatMap(v=>[v[0],v[2],v[1]]),3));
+  geometry.setIndex(apron.faces.flatMap(face=>Array.from({length:face.length-2},(_,i)=>[face[0],face[i+1],face[i+2]]).flat()));
+  const heightAt=createMeshHeightQuery(geometry);
+  for(const bench of subject.benches){
+    for(const vertex of bench.contacts){
+      const actual=heightAt(vertex[0],vertex[1]);assert(actual!==null);
+      assert(Math.abs(vertex[2]-actual)<1e-5,'Oak bottom follows actual triangulated gravel, including sampled terrain');
+      assert(bench.seatHeight-vertex[2]>.2,'Oak remains a solid positive-height block on varying terrain');
+    }
+    const block=subject.parts.find(p=>p.name===bench.id+'_block');
+    for(const vertex of block.vertices)assert(Math.hypot(vertex[0]-pit.cx,vertex[1]-pit.cy)<=seating.r);
+  }
 }
 console.log(`Firepit: ${model.parts.length} parts; fixed footprint, hollow ring, supported logs, grounded benches and access pass`);
