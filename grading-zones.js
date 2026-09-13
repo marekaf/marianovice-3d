@@ -110,6 +110,15 @@ const GradingZones = (() => {
       ['P','Východní zahrada u vodovodní šachty',[rampNorthEdge?half(eastGarden,...rampNorthEdge,false):eastGarden],[39,21.5],'#9b7d99'],
       ['I','Jižní zahrada a svahy',[bounds],[14,30],'#c4c3a7']
     ];
+    const features={
+      B:['Brána','revizní kanalizační šachta'],
+      C:['Pergola','ohniště','jezírko','lavička'],
+      D:['Posezení','venkovní kuchyň'],
+      G:['Dřevostavba sauny','vířivka','vyvýšené záhony','skleník'],
+      H:['Podzemní dešťová nádrž'],
+      I:['Přístřešek na popelnice'],
+      O:['Plastový úložný box','kompostér']
+    };
     let remaining=plot;
     const zones=[];
     for(const [id,name,polygons,label,color] of masks) {
@@ -118,7 +127,7 @@ const GradingZones = (() => {
         for(const p of remaining){const intersection=split(p,mask).inside;if(intersection.length)selected.push(intersection);}
         remaining=subtract(remaining,[mask]);
       }
-      zones.push({id,name,polygons:selected,boundaries:boundary(selected),area:sum(selected),label,color});
+      zones.push({id,name,features:features[id]??[],polygons:selected,boundaries:boundary(selected),area:sum(selected),label,color});
     }
     zones.sort((a,b)=>a.id.localeCompare(b.id));
     const groups=[['buildings','Dům, garáž a ostatní stavby',['house','garage','sauna','saunaShelter','greenhouse','toolStore']],['driveway','Příjezd včetně přístřešku',['driveway','carport']],['eastTerrace','Východní terasa',['eastTerrace']],['westTerrace','Západní terasa včetně atria',['westTerrace']],['pergola','Pergola',['pergola']],['service','Servisní plocha čerpadla včetně podstavce',['heatPumpService','heatPumpPad']],['paths','Pevné pěší plochy',['saunaPath']],['productive','Plošina záhonů',['raisedBedsPad']],['drainage','Západní snížený pás',[]]];
