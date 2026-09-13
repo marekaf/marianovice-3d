@@ -78,6 +78,15 @@ for(const [id,width,depth] of [['sauna',4,3],['pergola',6,4]]) {
   }
 }
 const {GradingOverlay}=require('./grading-overlay.js');
+const featureHints={B:'Brána, revizní kanalizační šachta',C:'Pergola, ohniště, jezírko, lavička',D:'Posezení, venkovní kuchyň',G:'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník',H:'Podzemní dešťová nádrž',I:'Přístřešek na popelnice',O:'Plastový úložný box, kompostér'};
+assert.equal(quantities.zones.filter(zone=>zone.features.length).length,7);
+for(const [id,hint] of Object.entries(featureHints)){
+  const zone=quantities.zones.find(zone=>zone.id===id);
+  assert.equal(zone.features.join(', '),hint);
+  assert(result.html.includes(`data-zone-features="${id}"`));
+  for(const line of GradingOverlay.featureLines(zone))assert(result.exportSVG.includes(line));
+}
+assert(!result.mapSVG.includes('data-zone-features='),'Feature hints belong only to the legend');
 for(const bank of GARDEN.gradingBanks)assert(result.mapSVG.includes(`data-terrain-bank="${bank.id}"`));
 for(const [,label] of GradingOverlay.terrainLegend)for(const output of [result.html,result.exportSVG])assert(output.includes(label));
 for(const output of [result.html,result.exportSVG])assert(!/data-terrain-preserve|Zachovat výšku zaměřeného plotu/.test(output));
