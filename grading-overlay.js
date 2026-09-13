@@ -30,12 +30,11 @@ const GradingOverlay = (() => {
       const b=p.grading.fallX?[p.x+p.w,p.y+p.d/2]:[p.x+p.w/2,p.grading.zEnd??p.y+p.d];
       slopes.push({id:'drainage-'+i,from:(p.grading.fallX??p.grading.fallZ)<0?a:b,to:(p.grading.fallX??p.grading.fallZ)<0?b:a});
     }
-    return {banks,slopes,flats,fences:quantities.fenceSegments??[]};
+    return {banks,slopes,flats};
   }
-  const terrainLegend=[['flat','Rovná plocha'],['slope','Svah · šipka dolů'],['fixed','Zachovat výšku zaměřeného plotu']];
+  const terrainLegend=[['flat','Rovná plocha'],['slope','Svah · šipka dolů']];
   function svgTerrainSymbol(kind,x,y) {
     if(kind==='flat')return `<path d="M${x-7} ${y-3}h14M${x-7} ${y+3}h14" fill="none" stroke="#17649e" stroke-width="2.2"/>`;
-    if(kind==='fixed')return `<path d="M${x-6} ${y-4}l12 8M${x-6} ${y+4}l12 -8" fill="none" stroke="#243b32" stroke-width="2"/>`;
     return `<path d="M${x-9} ${y}h18m-5 -4l5 4l-5 4" fill="none" stroke="#93502e" stroke-width="2"/>`;
   }
   function svgTerrainLegend(x,y) {
@@ -57,7 +56,6 @@ const GradingOverlay = (() => {
       out+=`<path data-terrain-downhill="${bank.id}" d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#93502e" stroke-width="2.3"/>`;
     }
     for(const mark of marks.flats)out+=`<g data-terrain-flat="${mark.id}">${svgTerrainSymbol('flat',px(mark.position[0]),pz(mark.position[1]))}</g>`;
-    for(const [i,segment] of marks.fences.entries())out+=`<g data-terrain-preserve="${i}">${svgTerrainSymbol('fixed',px((segment.start[0]+segment.end[0])/2),pz((segment.start[1]+segment.end[1])/2))}</g>`;
     return out;
   }
   function create({THREE,scene,ground,garden,height,panel}) {
@@ -124,7 +122,6 @@ const GradingOverlay = (() => {
       if(bank.from&&bank.to){const a=bank.from,b=bank.to,length=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/length,uz=(b[1]-a[1])/length;terrainLine([a,b],'grading-downhill-'+bank.id);terrainLine([[b[0]-.4*ux-.2*uz,b[1]-.4*uz+.2*ux],b,[b[0]-.4*ux+.2*uz,b[1]-.4*uz-.2*ux]],'grading-downhill-tip-'+bank.id);}
     }
     for(const mark of terrain.flats){const [x,z]=mark.position;for(const offset of [-.1,.1])terrainLine([[x-.3,z+offset],[x+.3,z+offset]],'grading-flat-'+mark.id,'#17649e');}
-    for(const [i,segment] of terrain.fences.entries()){const x=(segment.start[0]+segment.end[0])/2,z=(segment.start[1]+segment.end[1])/2;for(const sign of [-1,1])terrainLine([[x-.2,z-sign*.2],[x+.2,z+sign*.2]],'grading-preserve-'+i,'#243b32');}
     const dimensions=new THREE.Group();dimensions.visible=false;group.add(dimensions);
     for(const dimension of data.dimensions.filter(d=>d.from&&d.to)){
       const from=dimension.from.map((v,i)=>v+(dimension.displayOffset?.[i]??0)),to=dimension.to.map((v,i)=>v+(dimension.displayOffset?.[i]??0));
@@ -141,7 +138,7 @@ const GradingOverlay = (() => {
     const legend=document.createElement('div');legend.hidden=true;legend.style.cssText='font-size:11px;line-height:1.6;margin-top:6px';
     for(const zone of zones){const row=document.createElement('div');row.textContent=`${zone.id} · ${zone.name} · ${zone.area.toLocaleString('cs-CZ',{maximumFractionDigits:1})} m²`;row.style.cssText=`border-left:4px solid ${colorFor(zone)};padding-left:6px;margin:3px 0`;legend.append(row);}
     const levelKey=document.createElement('div');levelKey.textContent='Výšky vůči podlaze domu ±0,00 m';legend.append(levelKey);
-    for(const [kind,text] of terrainLegend){const row=document.createElement('div');row.textContent=({flat:'═ ',slope:'↘ ',fixed:'× '})[kind]+text;legend.append(row);}
+    for(const [kind,text] of terrainLegend){const row=document.createElement('div');row.textContent=({flat:'═ ',slope:'↘ '})[kind]+text;legend.append(row);}
     const terrainMode=document.getElementById('terrainMode');
     const sync=()=>{group.visible=toggle.checked&&terrainMode.value!=='existing';legend.hidden=!group.visible;dimensions.visible=dimensionToggle.checked;};
     terrainMode.addEventListener('change',sync);
