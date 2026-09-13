@@ -2,6 +2,7 @@
 // All coordinates in meters. Origin: fixed model datum (near the plot NW corner); the plot polygon is
 // the surveyed parcel boundary registered to the buildings. x → east, y → south (= z in the 3D viewer).
 // 2D pages render at m2px pixels per meter. Regenerate zahrada-plan.svg with: node generate-svg.js
+const SAUNA_BUILDING_NAME = "Sauna + Softub · 5 × 2,5 m";
 const GARDEN = {
   m2px: 18,
   gridCellM: 2,
@@ -254,20 +255,19 @@ const GARDEN = {
     },
     {
       id: "sauna",
-      name: "Sauna se zádveřím 2,8 × 2,5 m",
+      name: SAUNA_BUILDING_NAME,
       parts: [
         {kind: "rect", x: 4.5, y: 1.988663694038809, w: 2.8, d: 2.5, fill: "#8b6f47", opacity: 0.9, stroke: "#5a3e25", sw: 1.2},
         {kind: "text", x: 5.9, y: 3.038663694038809, text: "SAUNA", cls: "lbl-w"},
-        {kind: "text", x: 5.9, y: 3.788663694038809, text: "2,8 × 2,5 m", cls: "dim", fill: "#fff"}
       ]
     },
     {
       id: "saunaShelter",
-      name: "Krytá část s vířivkou 2,2 × 2,5 m",
+      name: SAUNA_BUILDING_NAME,
       parts: [
         {kind: "rect", x: 2.3, y: 1.988663694038809, w: 2.2, d: 2.5, fill: "#cdc1ad", opacity: 0.4, stroke: "#7a5e3e", sw: 1, dash: "4, 3"},
         {kind: "text", x: 3.4, y: 4.988663694038809, text: "krytá vířivka", cls: "lbl-sm", fill: "#5a4828"},
-        {kind: "text", x: 3.4, y: 5.488663694038809, text: "2,2 × 2,5 m", cls: "dim"}
+        {kind: "text", x: 3.4, y: 5.488663694038809, text: "5 × 2,5 m celkem", cls: "dim"}
       ]
     },
     {
@@ -281,7 +281,7 @@ const GARDEN = {
     },
     {
       id: "softub",
-      name: "Vířivka Softub ø 1,8 m",
+      name: SAUNA_BUILDING_NAME,
       parts: [
         {kind: "circle", cx: 3.34, cy: 3.028663694038809, r: 0.9, fill: "#5dade2", opacity: 0.7, stroke: "#1f618d", sw: 1.5},
         {kind: "text", x: 3.34, y: 3.248663694038809, text: "Softub", cls: "lbl-sm", weight: 700, fill: "#1f3a5f"}
