@@ -270,7 +270,12 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
       }
     }
     if(spec.sliding)for(const offset of [-.035,.035])rail(`track_${offset}`,start+.025,end-.025,sill+.003,sill+.009,'metal',.012,depth+offset);
-    else if(sill>0)rail('exterior_sill',start-.015,end+.015,sill-.025,sill-.006,'frame',.18,depth-.06);
+    if(this.extWalls.some(w=>w.id===wall.id)) {
+      const frameEdge=depth-(spec.sliding?.07:.04);
+      const facade=depth-Math.abs(depth-(inward===1?wall.a[cross]:wall.b[cross]));
+      const width=frameEdge-facade;
+      if(width>0)rail(sill>0?'exterior_sill':'exterior_threshold',start,end,sill-.019,sill+.001,'frame',width,(facade+frameEdge)/2);
+    }
   } else {
     const entrance = spec.kind === 'entrance', edge = entrance ? 0.06 : doorEdge;
     const frameMaterial = entrance ? 'frame' : 'casing';

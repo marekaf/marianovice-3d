@@ -76,6 +76,9 @@ try{
       if(!object)throw new Error('Missing exterior opening '+model.name);
       roots.push({name:model.name,object});
     }
+    const plinth=s.scene.children.find(object=>object.name==='house_plinth');
+    if(!plinth)throw new Error('House plinth is missing');
+    roots.push({name:'house_plinth',object:plinth});
     const entranceLanding=s.scene.children.find(object=>object.name==="entrance_reveal_landing");
     if(!entranceLanding)throw new Error("Missing entrance reveal landing");
     roots.push({name:"entrance_reveal_landing",object:entranceLanding});

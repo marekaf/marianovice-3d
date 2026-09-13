@@ -1011,23 +1011,11 @@ hp_fan.rotation_euler.x = math.pi / 2
 # marmolit sokl band: level top above floor, bottom under the gravel grade
 MAT["sokl"] = mat_pbr("sokl", "plastered_wall_02", scale=2.0,
                       tint=hexc("#453f38"), tint_fac=0.85, tint_mode="MIX")  # marmolit MAR2 M092, dark
-SOKL_TOP = ft + 0.25
-for run_a0, run_a1, run_c, run_axis, run_dir in [
-    (10.48, 21.28, 7.18, "x", -1), (10.48, 21.28, 26.43, "x", 1), (7.18, 11.58, 21.28, "y", 1),
-]:
-    n_seg = int(math.ceil(run_a1 - run_a0))
-    for si in range(n_seg):
-        mid = run_a0 + (run_a1 - run_a0) * (si + 0.5) / n_seg
-        seg0 = run_a0 + (run_a1 - run_a0) * si / n_seg
-        seg1 = run_a0 + (run_a1 - run_a0) * (si + 1) / n_seg
-        px, py = (mid, run_c + run_dir * 0.25) if run_axis == "x" else (run_c + run_dir * 0.25, mid)
-        z_lo = ground_h(px, py) - 0.15
-        if run_axis == "x":
-            box_p("sokl_x%d_%d" % (int(run_c), si), seg0, run_c + min(0, run_dir * 0.05), seg1,
-                  run_c + max(0, run_dir * 0.05), z_lo, SOKL_TOP, MAT["sokl"])
-        else:
-            box_p("sokl_y%d_%d" % (int(run_c), si), run_c + min(0, run_dir * 0.05), seg0,
-                  run_c + max(0, run_dir * 0.05), seg1, z_lo, SOKL_TOP, MAT["sokl"])
+for part in GARDEN["housePlinth"]["parts"]:
+    px, py, pz = part["position"]
+    width, depth, height = part["size"]
+    box_p(part["name"], px - width / 2, py - depth / 2,
+          px + width / 2, py + depth / 2, pz - height / 2, pz + height / 2, MAT["sokl"])
 
 box_p("chimney", ridge_x - 0.3, 21.7, ridge_x + 0.3, 22.3, ft + 3.5, RIDGE_Z + 0.6, MAT["garage_walls"])
 
