@@ -33,5 +33,6 @@ let vertexError=0;
 for(let i=0;i<aligned.attributes.position.count;i++){const p=aligned.attributes.position;vertexError=Math.max(vertexError,Math.abs(p.getY(i)-site.height(p.getX(i),p.getZ(i))));}
 assert(vertexError<2e-5,`Inserted mesh vertices preserve sampled ramps and basin: ${vertexError}`);
 assert(aligned.index.count/3<150000,'Local refinement keeps the coarse fixture below150,000 triangles');
+assert(Math.abs(height(mesh,35.6,14)-site.height(35.6,14))<.001,'Former basin is filled in actual triangles');
 assert(height(mesh,pond.cx,pond.cz)<pond.edge-pond.depth*.8,'Boundary alignment preserves the excavated basin');
 console.log(JSON.stringify({rimSamples:rim.length,lawnSamples,maximumRimError,maximumLawnError,vertexError,triangles:aligned.index.count/3}));

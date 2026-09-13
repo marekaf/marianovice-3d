@@ -2694,7 +2694,10 @@
       <polygon points="27,293.4 59.4,293.4 118.8,298.8 145.8,313.2 138.6,320.4 111.6,311.4 63,309.6 41.4,324 45,369 90,383.4 126,374.4 147.6,387 108,396 27,390.6" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
     </g>
     <g class="el" data-id="eastGatheringBorder"><title>Výsadba u posezení a jezírka</title>
-      <polygon points="405,14.4 662.4,5.4 673.2,117 748.8,117 761.4,318.6 678.6,333 626.4,327.6 570.6,336.6 500.4,333 482.4,309.6 558,300.6 568.8,252 554.4,214.2 583.2,194.4 583.2,93.6 504,90 432,108 406.8,72" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
+      <polygon points="405,14.4 662.4,5.4 673.2,117 748.8,117 753.64,194.4 583.2,194.4 583.2,93.6 504,90 432,108 406.8,72" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
+    </g>
+    <g class="el" data-id="compactPondBorder"><title>Nízký lem jezírka</title>
+      <ellipse cx="540" cy="288" rx="33.3" ry="26.1" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
     </g>
     <g class="el" data-id="terraceFrontage"><title>Nízká výsadba před terasou</title>
       <polygon points="450,212.4 460.8,230.4 460.8,284.4 450,298.8 442.8,288 442.8,225" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
@@ -2785,9 +2788,9 @@
       <text x="742.5" y="441" class="lbl-sm">vodovodní šachta</text>
     </g>
     <g class="el" data-id="pond"><title>Jezírko: půdorys 2,4 × 1,6 m</title>
-      <ellipse cx="640.8" cy="252" rx="21.6" ry="14.4" fill="#3a7ab8" opacity="0.65" stroke="#5a4a30" stroke-width="1.5"/>
-      <text x="640.8" y="250.02" class="lbl-sm" fill="#fff" font-weight="700">jezírko</text>
-      <text x="640.8" y="262.08" class="dim" fill="#fff">2,4 × 1,6 m</text>
+      <ellipse cx="540" cy="288" rx="21.6" ry="14.4" fill="#3a7ab8" opacity="0.65" stroke="#5a4a30" stroke-width="1.5"/>
+      <text x="540" y="286.02" class="lbl-sm" fill="#fff" font-weight="700">jezírko</text>
+      <text x="540" y="298.08" class="dim" fill="#fff">2,4 × 1,6 m</text>
     </g>
     <g class="el" data-id="firePit"><title>Ohniště ø 1 m a mlatové posezení ø 4 m</title>
       <circle cx="567" cy="117" r="36" fill="none" stroke="#8a7a5a" stroke-width="1" stroke-dasharray="5, 4"/>

@@ -37,7 +37,7 @@ assert.equal(element('firePit').meta.grading.level, 1.865);
 const fire = element('firePit').parts.filter(part => part.kind === 'circle');
 assert.deepEqual(fire.map(part => [part.cx, part.cy, part.r]), [[31.5,6.5,2],[31.5,6.5,.5],[31.5,6.5,.496]]);
 const pond = element('pond').parts[0];
-assert.deepEqual([pond.cx,pond.cy,pond.rx,pond.ry], [35.6,14,1.2,.8]);
+assert.deepEqual([pond.cx,pond.cy,pond.rx,pond.ry], [30,16,1.2,.8]);
 assert.equal(new Set(GARDEN.elements.map(item => item.id)).size, GARDEN.elements.length);
 assert.equal(GARDEN.gardenRoutes.length, 9);
 const gathering=GARDEN.gardenRoutes.find(route => route.id === 'Gathering connection');
