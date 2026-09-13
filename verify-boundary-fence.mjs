@@ -21,7 +21,14 @@ const existing=SurveySurface.create(require('./docs/survey-terrain.js').SURVEY_T
 let boundary=BoundaryFenceModel.build({garden:GARDEN,survey:FENCE_SURVEY,heightAt:existing});
 assert.deepEqual(boundary.segments.filter(s=>s.measured).map(({sourceIndex,start,end})=>({sourceIndex,start,end})),FENCE_SURVEY.segments);
 assert.equal(boundary.gateModel.dims.opening,4);
+const westEnd=FENCE_SURVEY.segments.at(-1).end;
+const southSpan=boundary.segments.find(s=>!s.measured&&Math.hypot(s.end[0]-s.start[0],s.end[1]-s.start[1])>20);
+assert.deepEqual(southSpan.end,westEnd,'South fence joins the measured west endpoint without a cadastral dogleg');
+const cornerPosts=boundary.models.flatMap(model=>model.parts.filter(part=>part.type==='cylinder')).filter(part=>Math.hypot(part.position[0]-westEnd[0],part.position[1]-westEnd[1])<.5);
+assert.equal(cornerPosts.length,1,'The southwest junction has one shared corner post');
 const gate=boundary.gateModel.dims,start=gate.openingStart,u=gate.direction;
+const afterWicket=start.map((v,i)=>v+u[i]*5.35);
+assert(!boundary.segments.some(s=>Math.hypot(s.start[0]-afterWicket[0],s.start[1]-afterWicket[1])<1e-7),'The cabinet-facing gap beyond the wicket remains free of added wire panels');
 for(const s of boundary.segments){
   const p=s.start,q=s.end;
   for(let i=0;i<=100;i++){
