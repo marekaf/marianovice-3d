@@ -10,6 +10,19 @@ This is a visualization, not a construction drawing or clearance approval. Some 
 
 The pale-oak flooring uses an original procedural texture. It is an illustrative approximation, not an exact product photograph or colour sample.
 
+## Quest VR prototype
+
+In Meta Quest Browser, open the viewer over HTTPS, select **VR**, wait for the interiors to load, then select **Enter VR**. The walkthrough starts in the living room at life size, using the headset's tracked height.
+
+- Point at a clear floor area and press either trigger to teleport to the green ring.
+- Move either thumbstick sideways for a 30° snap turn; release it before turning again.
+- Point at a nearby door and squeeze the grip to open or close it.
+- Exit through the headset menu to return to the desktop viewer.
+
+Teleportation is limited to the ground floor; stairs, loft and garden navigation are excluded. Planting, vehicles and some outdoor furniture are hidden, and shadows are disabled during VR. Their previous settings return when the session ends. Physical roomscale movement remains controlled by the headset and can cross virtual walls.
+
+Browser and simulated-session checks do not establish Quest frame rate or comfort. Verify both on a headset before extending this prototype. Run `node verify-walk-vr-locomotion.mjs` for movement checks and `node verify-walk-vr-browser.mjs` with Chrome available for the browser lifecycle checks.
+
 ## Verification
 
 Run `yarn verify` with Node.js 22 and Yarn 1.22.18, or run `corepack enable` to use the pinned Yarn version. No dependency installation is needed.
