@@ -108,9 +108,9 @@
 <script src="privacy-screen-model.js"></script>
 <script src="sauna-model.js?v=e50990536148"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
-<script src="interiors3d.js?v=1ff16365eac3"></script>
+<script src="interiors3d.js?v=68757001ef24"></script>
 <script src="vehicle-model.js"></script>
-<script src="house-interior.js?v=176a1665596f"></script>
+<script src="house-interior.js?v=5fe725afc85a"></script>
 <script src="house-roof.js"></script>
 <script src="docs/house-roof-windows.js"></script>
 <script type="module">
@@ -330,7 +330,7 @@ if (hasLoft) {
   BUILDINGS.loft = {
     root: loft.root, walls: loft.walls, ceiling: loft.ceiling, labels: loft.labels, wallIds: loft.wallIds, furniture: loft.furniture,
     views: mkViews(o.x + loft.dims.w / 2, o.z + loft.dims.d / 2, loft.dims.floorY + 1.1, loft.dims.w, loft.dims.d, 3.2, 'HOUSE PODKROVÍ'),
-    dims: `podkroví · 2.01–2.03 · clear 0.85–2.27 m · floor +${HOUSE_LOFT.floorY.toFixed(2)}`,
+    dims: `podkroví · 2.01/2.02: floor +${HOUSE_LOFT.floorY.toFixed(2)}, ceiling 2.27 m · 2.03: floor +2.77, ceiling follows roof`,
   };
 }
 

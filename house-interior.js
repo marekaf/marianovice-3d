@@ -4,6 +4,8 @@
 // Walls: a/b are the wall rectangle's min/max corners (x0,z0)-(x1,z1).
 // Openings: at = metres from the wall's min corner along its axis; no sill = floor-to-lintel.
 const HOUSE_LOFT_FLOOR = 2.92;
+const HOUSE_ATTIC_FLOOR = 2.77;
+const HOUSE_ATTIC_BOUNDS = { x0: 3.60, z0: 0.45, x1: 9.55, z1: 6.75 };
 const HOUSE_INTERIOR = {
   wallLayerModel:'project250-200',
   originPlot: { x: 10.48, z: 7.18 },
@@ -84,7 +86,7 @@ const HOUSE_INTERIOR = {
   // Ceiling = one continuous lid (the loft floor plate) RESTING ON the walls — walls stop at
   // clearH, the plate spans the whole outline above them. Holes: stairwell, V1 vlez (chodba,
   // A-NADREZ rectangle), and the cathedral over the living + kitchen.
-  lid: { top: HOUSE_LOFT_FLOOR - .15, holes: [
+  lid: { top: HOUSE_ATTIC_FLOOR, topOpenings: [HOUSE_ATTIC_BOUNDS], holes: [
     { x0: 5.70, z0: 12.80, x1: 8.43, z1: 13.95 },  // stairwell — opening runs to the gallery wall
     { x0: 4.10, z0: 2.45, x1: 5.10, z1: 3.15 },    // V1 půdní vlez 1000×700
     { x0: 4.70, z0: 7.00, x1: 9.65, z1: 12.80 },   // cathedral — 2.03 attic floor ends at z 7.00, kitchen is under it
@@ -476,7 +478,7 @@ HOUSE_INTERIOR.exteriorInterior = function (exteriorWallHeight = this.clearH) {
   }
   return { name: 'opening-room-backing', floorHeight: 0, materials, parts, lights: [], terrainCutouts };
 };
-HOUSE_INTERIOR.gableOpening = function (floor=HOUSE_LOFT_FLOOR) {
+HOUSE_INTERIOR.gableOpening = function (floor=HOUSE_ATTIC_FLOOR) {
   const wall={id:'gable',face:'N',a:[6.55,0],b:[7.3,.45]};
   const opening={at:0,w:.75,h:1,sill:floor+1.1};
   const model=this.buildOpening(wall,opening,0,{specification:{kind:'window',width:.75,height:1,single:true,movingHalf:'single',hinge:'east',concealedHinges:true}});
@@ -491,6 +493,7 @@ HOUSE_INTERIOR.roofWindowModelUrl='./docs/house-roof-windows.js';
 const HOUSE_LOFT = {
   floorY: HOUSE_LOFT_FLOOR,
   floorDepth: .15,
+  floorBuildUpHoles: [HOUSE_ATTIC_BOUNDS],
   originPlot: { x: 10.48, z: 7.18 },
   clearH: 2.27,
   outline: [[0, 0], [10.8, 0], [10.8, 4.4], [10.1, 4.4], [10.1, 15.35], [10.8, 15.35], [10.8, 19.25], [0, 19.25], [0, 11.99], [4.45, 11.99], [4.45, 8.75], [0, 8.75]],
@@ -501,7 +504,7 @@ const HOUSE_LOFT = {
   ],
   entryRooms: ['2.01', '2.03'],  // reached from below: stairs into 2.01, vlez ladder into 2.03
   rooms: [
-    { id: '2.03', name: 'Půdní sklad', x0: 3.60, z0: 0.45, x1: 9.55, z1: 6.75, area: 41.2 },
+    { id: '2.03', name: 'Půdní sklad', ...HOUSE_ATTIC_BOUNDS, floorY: HOUSE_ATTIC_FLOOR, area: 41.2 },
     { id: '2.01', name: 'Hala',        x0: 7.80, z0: 12.88, x1: 9.55, z1: 15.50, area: 4.1 },
     { id: '2.02', name: 'Pokoj',       x0: 3.60, z0: 15.65, x1: 9.55, z1: 18.80, area: 30.7 },
     { id: '2.02b', name: '', x0: 3.60, z0: 12.88, x1: 7.65, z1: 15.65, noLabel: true },  // 2.02's L-arm west of the hala
@@ -509,7 +512,7 @@ const HOUSE_LOFT = {
   extWalls: [
     { id: 'P1', face: 'N', a: [0, 0],     b: [10.8, 0.45], openings: [],
       profile: [[0, 0.11], [3.50, 0.17], [7.55, 4.23], [10.8, 0.98]],
-      glazing: [{ x0: 6.55, x1: 7.30, sill: 1.10, h: 1.00 }] },   // O7 gable window
+      glazing: [{ x0: 6.55, x1: 7.30, sill: HOUSE_ATTIC_FLOOR - HOUSE_LOFT_FLOOR + 1.10, h: 1.00 }] },   // O7 gable window
     { id: 'P2', face: 'S', a: [0, 18.80], b: [10.8, 19.25], openings: [],
       profile: [[0, 0.11], [3.50, 0.17], [7.55, 4.23], [10.8, 0.98]] },
     { id: 'P18', face: 'E', a: [10.7, 0.45], b: [10.8, 4.40], h: 0.98, openings: [] },   // east eave wall, north run
@@ -540,12 +543,11 @@ const HOUSE_LOFT = {
     { x0: 9.51, x1: 10.8, z0: 12.80, z1: 18.80, y0: 2.27, y1: 0.98 },// east 45° slope, south run — down to the eave
   ],
   ceilings: [
-    { x0: 5.59, z0: 0.45, x1: 9.51, z1: 6.75 },   // flat SDK over 2.03
     { x0: 5.59, z0: 12.88, x1: 7.65, z1: 18.80 }, // flat SDK west of the hala partition
     { x0: 7.65, z0: 12.88, x1: 7.80, z1: 13.95 },
     { x0: 7.80, z0: 12.88, x1: 9.51, z1: 15.50 }, // flat SDK over 2.01
     { x0: 7.65, z0: 15.65, x1: 9.51, z1: 18.80 }, // flat SDK over 2.02 SE part
   ],
 };
-HOUSE_LOFT.buildOpening=function(wall,opening,index,options){return wall.id==='P1'?HOUSE_INTERIOR.gableOpening(0):HOUSE_INTERIOR.buildOpening(wall,opening,index,options);};
+HOUSE_LOFT.buildOpening=function(wall,opening,index,options){return wall.id==='P1'?HOUSE_INTERIOR.gableOpening(HOUSE_ATTIC_FLOOR-HOUSE_LOFT_FLOOR):HOUSE_INTERIOR.buildOpening(wall,opening,index,options);};
 if (typeof module !== "undefined") module.exports = { HOUSE_INTERIOR, HOUSE_LOFT };

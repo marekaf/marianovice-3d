@@ -4,8 +4,11 @@ export function prepareLoftRoofData(data,roof,windowModel) {
   const eastJoin=roof.ridgeX+eastHeight(roof.ridgeX)-flat,westJoin=roof.ridgeX-westHeight(roof.ridgeX)+flat;
   const eastFloor=roof.ridgeX+eastHeight(roof.ridgeX)-data.floorY;
   const surfaces=[];
+  const attic=data.rooms.find(room=>room.id==='2.03');
   for(const [i,slope]of data.slopes.entries()){
-    const east=slope.x0>roof.ridgeX,x0=east?eastJoin:slope.x0,x1=east?Math.min(slope.x1,eastFloor):westJoin;
+    const north=slope.z0<attic.z1;
+    const east=slope.x0>roof.ridgeX,x0=east?(north?roof.ridgeX:eastJoin):slope.x0;
+    const x1=east?Math.min(slope.x1,north?eastFloor+data.floorY-attic.floorY:eastFloor):(north?roof.ridgeX:westJoin);
     surfaces.push({name:`Loft slope ${i}`,x0,x1,z0:slope.z0,z1:slope.z1,
       heightAt:east?eastHeight:westHeight});
   }

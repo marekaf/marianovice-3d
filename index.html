@@ -156,7 +156,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="layout.js?v=a35a95f2711b"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
-<script src="interiors3d.js?v=1ff16365eac3"></script>
+<script src="interiors3d.js?v=68757001ef24"></script>
 <script src="vehicle-model.js"></script>
 <script src="exterior-furniture-model.js"></script>
 <script src="portal-drain-model.js"></script>
@@ -216,7 +216,7 @@ import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=17bbd6cc230
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=176a1665596f';
+  script.src = './house-interior.js?v=5fe725afc85a';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);

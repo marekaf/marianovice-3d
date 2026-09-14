@@ -199,7 +199,7 @@ const INTERIORS3D = (() => {
 
     // Plate builder: outline minus holes as ONE mesh with faces only at real boundaries
     // (top, bottom, outline + hole rims) — used by the ceiling lid and the loft floor
-    function plate(target, holes, y0, y1, mat, topClip = null) {
+    function plate(target, holes, y0, y1, mat, topClip = null, topOpenings = []) {
       const inOutline = (x, z) => {
         let inside = false;
         const pts = data.outline;
@@ -211,8 +211,9 @@ const INTERIORS3D = (() => {
       };
       const outlineXs=data.outline.map(p=>p[0]),crossing=topClip?-topClip.offset/topClip.slope:null;
       const clipCuts=topClip&&crossing>Math.min(...outlineXs)&&crossing<Math.max(...outlineXs)?[crossing]:[];
-      const xs = [...new Set([...outlineXs, ...holes.flatMap(h => [h.x0, h.x1]), ...clipCuts])].sort((a, b) => a - b);
-      const zs = [...new Set([...data.outline.map(p => p[1]), ...holes.flatMap(h => [h.z0, h.z1])])].sort((a, b) => a - b);
+      const bounds = [...holes, ...topOpenings];
+      const xs = [...new Set([...outlineXs, ...bounds.flatMap(h => [h.x0, h.x1]), ...clipCuts])].sort((a, b) => a - b);
+      const zs = [...new Set([...data.outline.map(p => p[1]), ...bounds.flatMap(h => [h.z0, h.z1])])].sort((a, b) => a - b);
       const solidAt = (xi, zi) => {
         if (xi < 0 || zi < 0 || xi >= xs.length - 1 || zi >= zs.length - 1) return false;
         const cx = (xs[xi] + xs[xi + 1]) / 2, cz = (zs[zi] + zs[zi + 1]) / 2;
@@ -230,7 +231,8 @@ const INTERIORS3D = (() => {
         const x0 = xs[xi], x1 = xs[xi + 1], z0 = zs[zi], z1 = zs[zi + 1];
         const leftTop=topClip?y1+Math.min(0,topClip.slope*x0+topClip.offset):y1;
         const rightTop=topClip?y1+Math.min(0,topClip.slope*x1+topClip.offset):y1;
-        quad([[x0, leftTop, z0], [x0, leftTop, z1], [x1, rightTop, z1], [x1, rightTop, z0]], [0, 1, 0]);
+        if (!topOpenings.some(h => (x0+x1)/2 > h.x0 && (x0+x1)/2 < h.x1 && (z0+z1)/2 > h.z0 && (z0+z1)/2 < h.z1))
+          quad([[x0, leftTop, z0], [x0, leftTop, z1], [x1, rightTop, z1], [x1, rightTop, z0]], [0, 1, 0]);
         quad([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], [0, -1, 0]);
         if (!solidAt(xi, zi - 1)) quad([[x0, y0, z0], [x0, leftTop, z0], [x1, rightTop, z0], [x1, y0, z0]], [0, 0, -1]);
         if (!solidAt(xi, zi + 1)) quad([[x0, y0, z1], [x1, y0, z1], [x1, rightTop, z1], [x0, leftTop, z1]], [0, 0, 1]);
@@ -263,7 +265,7 @@ const INTERIORS3D = (() => {
     }
     // Floor: plate with holes (loft — open over the cathedral/stairwell) or plain outline extrude
     if (data.floorHoles) {
-      plate(floor, data.floorHoles, floorY - (data.floorDepth ?? 0.12), floorY, floorMat, data.floorTopClip);
+      plate(floor, [...data.floorHoles, ...(data.floorBuildUpHoles || [])], floorY - (data.floorDepth ?? 0.12), floorY, floorMat, data.floorTopClip);
     } else {
       const shape = new THREE.Shape();
       shape.moveTo(data.outline[0][0], -data.outline[0][1]);
@@ -282,7 +284,7 @@ const INTERIORS3D = (() => {
     // flush with the wall tops; else fall back to one slab per non-open room
     const cH = data.clearH ?? 2.52;
     if (data.lid) {
-      plate(ceiling, data.lid.holes || [], floorY + cH, floorY + (data.lid.top ?? cH + 0.2), ceilMat);
+      plate(ceiling, data.lid.holes || [], floorY + cH, floorY + (data.lid.top ?? cH + 0.2), ceilMat, null, data.lid.topOpenings);
       if (data.hatch) {
         const h = data.hatch;
         const lidMat = new THREE.MeshStandardMaterial({ color: 0xb59a6f, roughness: 0.7 });

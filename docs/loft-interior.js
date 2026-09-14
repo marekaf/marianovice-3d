@@ -144,7 +144,7 @@ export function loftInteriorModel(data) {
   for (let xi = 0; xi < xs.length - 1; xi++) for (let zi = 0; zi < zs.length - 1; zi++) {
     const x = (xs[xi] + xs[xi + 1]) / 2, z = (zs[zi] + zs[zi + 1]) / 2;
     if (data.floorHoles.some(hole => x > hole.x0 && x < hole.x1 && z > hole.z0 && z < hole.z1)) continue;
-    box(`attic_concrete_${xi}_${zi}`, xs[xi], zs[zi], .00125, xs[xi + 1] - xs[xi], zs[zi + 1] - zs[zi], .0025, 'concrete', 'floorFinish');
+    box(`attic_concrete_${xi}_${zi}`, xs[xi], zs[zi], attic.floorY - data.floorY - .0025, xs[xi + 1] - xs[xi], zs[zi + 1] - zs[zi], .0025, 'concrete', 'floorFinish');
   }
   const clearances = [
     { name: 'Door approach', x0: 6.5, z0: 14.18, x1: 7.65, z1: 15.1, height: 2 },
@@ -189,11 +189,12 @@ export function attachLoftInterior(THREE, loft, data, { buildModel, renderer, ap
   }
   group.userData.model = model;
   flooring.userData.floorModel = floorModel;
+  const atticFloorOffset = data.rooms.find(room=>room.id==='2.03').floorY - data.floorY;
   return { group, flooring, notes: model.notes, clearances: model.clearances, presets: {
     room: { position: [7.4, 1.65, 15.9], target: [7.35, .80, 17.8] },
     sim: { position: [6.65, 1.4, 15.45], target: [5.3, .65, 14.6] },
     trainer: { position: [7.65, 1.5, 15.95], target: [8.65, .65, 17.5] },
     landing: { position: [8.75, 1.58, 15.1], target: [7.7, 1.1, 14.5] },
-    attic: { position: [7.2, 1.55, 5.8], target: [6.7, 1.2, .9] },
+    attic: { position: [7.2, 1.55 + atticFloorOffset, 5.8], target: [6.7, 1.2 + atticFloorOffset, .9] },
   } };
 }

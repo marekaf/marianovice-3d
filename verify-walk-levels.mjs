@@ -59,3 +59,11 @@ const head=position(5.5,13.5);envelope.reset(head);
 envelope.constrain(head,head.x,head.z);assert.equal(headChecks,0,'Idle walking does not raycast the roof');
 move(envelope,head,6,13.5);assert.equal(envelope.state.surface,'ground','Headroom includes the body radius, not just its center');
 console.log('Level-aware walking: 13 treads, landing, descent, support boundaries, body checks and ground resets verified');
+const openLoft = createWalkLevels({ data, loftData:{...loftData, floorHoles:[]}, floorY,
+  groundHeight:()=>floorY, canStandAt:()=>true, headroomAt:()=>Infinity });
+const atticWalker = position(5.5,13.5);
+openLoft.reset(atticWalker);
+move(openLoft,atticWalker,8.8,13.5);
+move(openLoft,atticWalker,8.8,4);
+assert.equal(openLoft.state.surface,'loft');
+close(openLoft.state.footY,floorY+2.77);
