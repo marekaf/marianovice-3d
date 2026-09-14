@@ -99,6 +99,7 @@ const checks=[
   'verify-viewer-loading.mjs',
   'verify-walk-interior-loading.mjs',
   'verify-walk-movement.mjs',
+  'verify-walk-vr-locomotion.mjs',
   'verify-render-scheduler.mjs',
   'verify-bathroom-fixtures.mjs',
   'verify-bathroom-vanities.mjs',

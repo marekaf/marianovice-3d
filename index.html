@@ -209,6 +209,7 @@ import { createWalkHouseNavigation } from './docs/walk-house-navigation.js';
 import { createHouseChimney } from './house-chimney.js';
 import { capRoofWall } from './docs/roof-wall-cap.js?v=0ed105086bfd';
 import { moveWalker } from './walk-movement.js';
+import { mountVRWalk } from './walk-vr.js';
 import { stepSupportHeight } from './walk-step-support.js';
 import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=17bbd6cc230d';
 
@@ -297,7 +298,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // redrawn only when the sun moves or something is shown or hidden.
 renderer.shadowMap.autoUpdate = false;
 let renderScheduler;
-const requestRender = () => renderScheduler?.invalidate();
+const requestRender = () => { if(!renderer.xr.isPresenting)renderScheduler?.invalidate(); };
 const invalidateShadows = () => { renderer.shadowMap.needsUpdate = true; requestRender(); };
 THREE.DefaultLoadingManager.onLoad = requestRender;
 THREE.DefaultLoadingManager.onProgress = requestRender;
@@ -2553,6 +2554,7 @@ function tourUpdate() {
 // ───────────────────────── ANIMATE ─────────────────────────
 let animationTime=0;
 function animate(dt=0) {
+  if(renderer.xr.isPresenting)return false;
   animationTime+=dt;
   const t = animationTime;
   // Smoke particles rising and fading
@@ -2578,7 +2580,7 @@ function animate(dt=0) {
 }
 await ViewerLoading.stage('Preparing the first view…');
 const { mountViewerUI } = await import('./viewer-ui.js');
-mountViewerUI({ stopTour() {
+const viewerUI=mountViewerUI({ stopTour() {
   if (!tourActive) return;
   tourActive = false;
   controls.target.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(20));
@@ -2587,14 +2589,29 @@ mountViewerUI({ stopTour() {
   requestRender();
 } });
 renderScheduler=createRenderScheduler({render:animate});
+const vrWalk=mountVRWalk(THREE,{scene,camera,renderer,loadInterior:loadWalkInterior,
+  closePanels:()=>viewerUI.closePanel(false),
+  getContext:()=>({house:walkHouse,data:localHouseData,floorY:houseTerrainY,doors:walkDoors,
+    hidden:[treesGroup,vehiclesGroup,furnitureGroup,outdoorLoungeGroup,cotoneasterGroup],
+    shown:[roofGroup,walkHouse.furniture,walkHouse.loft.furniture]}),
+  onStart(){
+    if(fpState.active||tourActive)controls.target.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(5));
+    fpState.active=false;fpState.keys={};document.getElementById('toggleFP').checked=false;
+    document.exitPointerLock();doorPrompt.hidden=true;
+    tourActive=false;tourLabel.style.opacity=0;controls.enabled=false;
+    document.dispatchEvent(new Event('viewer-tour-ended'));
+    renderScheduler.setVisible(false);
+  },
+  onEnd(){controls.enabled=true;renderScheduler.setVisible(!document.hidden);},
+});
 for(const event of ['input','change','click','toggle'])document.addEventListener(event,requestRender,true);
 document.addEventListener('visibilitychange',()=>{
   fpState.keys={};
-  renderScheduler.setVisible(!document.hidden);
+  renderScheduler.setVisible(!document.hidden&&!vrWalk.active);
 });
 renderer.domElement.addEventListener('webglcontextrestored',invalidateShadows);
 window.addEventListener('pagehide',()=>renderScheduler.setVisible(false));
-window.addEventListener('pageshow',()=>renderScheduler.setVisible(!document.hidden));
+window.addEventListener('pageshow',()=>renderScheduler.setVisible(!document.hidden&&!vrWalk.active));
 renderScheduler.setVisible(!document.hidden);
 animate();
 ViewerLoading.finish();
