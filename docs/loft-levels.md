@@ -9,13 +9,16 @@ Heights are metres above the ground-floor finished floor, not terrain levels.
 | Structural ceiling top | 2.770 | Section 301 A–A′ |
 | Last stair tread | 2.712, rounded | Loft plan 102, revision 2026-02-10 |
 | Loft finished floor / landing | 2.920 | Revised loft plan 102 and section 301 |
-| Flat loft ceiling clear height | 2.270 above loft floor | On-site measurement recorded in the project notes |
+| Northern attic store 2.03 floor | 2.770 | Revised loft plan 102 and section 303 C–C′ |
+| O7 gable window sill / head | 3.870 / 4.870 | 1.100 m sill and 1.000 m height above the 2.03 floor |
+| Southern gym ceiling clearance | Approximately 2.270 above the current subfloor | User measurement, 2026-08-12; interior/home-gym.md in the project notes |
 
 The stair flight has thirteen treads plus the landing rise. Its rise is
 2.920 / 14 m; the last tread is 2.711429 m. The nearby +2.712 label must not
 be used as the loft-floor level.
 
-The model uses a 250 mm structural ceiling and a 150 mm loft floor build-up.
+The model uses a 250 mm structural ceiling and a 150 mm floor build-up in the southern loft.
+The northern concrete attic floor has no additional 150 mm build-up.
 They meet at +2.770 without overlapping top faces. These are overall build-up
 depths, not individually modelled floor layers.
 
@@ -30,13 +33,18 @@ For the loft ST01 lining, detail 405 includes a 37.5 mm service gap behind
 12.5 mm plasterboard, 160 mm under-rafter insulation, 200 mm between-rafter
 insulation, 40 mm counter-battens, 20 mm deck and thin roof layers. The model
 uses a rounded 480 mm normal depth from this detail, retaining the measured
-2.270 m flat ceiling height. It is not the 250 mm exposed-overhang section.
+southern 2.270 m flat ceiling height. The northern attic lining follows both roof slopes to the ridge.
+It is not the 250 mm exposed-overhang section.
 
 There is a source discrepancy: schedule 001 omits that service gap and lists
 an 18 mm deck, giving 439.5 mm overall. Detail 405 gives about 480.1 mm with
 its written 37.5 mm gap; its dimension chain appears to round that gap to
 40 mm. The model follows the detailed assembly for visualization, not an
 approved as-built measurement.
+
+At the northern ridge, the 480 mm lining depth gives a clear height of about
+3.701 m above the +2.770 floor. The room schedule gives 3.75 m, consistent
+with its thinner assembly; the model retains detail 405 rather than moving the roof.
 
 Window frames reuse the exterior model, with physical lining apertures and
 reveal shafts. Window centres, reveal construction and illustrative rafter

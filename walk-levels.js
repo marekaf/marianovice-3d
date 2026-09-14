@@ -2,6 +2,10 @@ export function createWalkLevels({data,loftData,floorY,groundHeight,canStandAt,h
   const stairs=data.stairs,origin=data.originPlot;
   if(stairs.toward!=='E')throw new Error('Walking stairs require an eastward flight');
   const going=(stairs.x1-stairs.x0)/stairs.steps,loftHeight=floorY+loftData.floorY+.00375;
+  const loftFloorAt=(x,z)=>{
+    const room=loftData.rooms.find(room=>room.floorY!==undefined&&x>=room.x0&&x<=room.x1&&z>=room.z0&&z<=room.z1);
+    return room?floorY+room.floorY:loftHeight;
+  };
   const headSamples=[[0,0],...Array.from({length:8},(_,i)=>[radius*Math.cos(i*Math.PI/4),radius*Math.sin(i*Math.PI/4)])];
   let state={surface:'ground',footY:floorY,stairIndex:null};
   const stairLane=z=>z>=stairs.z0+radius&&z<=stairs.z1-radius;
@@ -39,7 +43,7 @@ export function createWalkLevels({data,loftData,floorY,groundHeight,canStandAt,h
     }
     const stairIndex=surface==='stairs'?Math.min(stairs.steps-1,Math.floor((lx-stairs.x0)/going)):null;
     if(surface==='loft'&&!loftSupported(lx,lz))return null;
-    const footY=surface==='stairs'?floorY+(stairIndex+1)*stairs.rise+.0025:surface==='loft'?loftHeight:groundHeight(x,z);
+    const footY=surface==='stairs'?floorY+(stairIndex+1)*stairs.rise+.0025:surface==='loft'?loftFloorAt(lx,lz):groundHeight(x,z);
     if((state.surface==='stairs'||surface==='stairs')&&Math.abs(footY-state.footY)>stairs.rise+.004)return null;
     const eyeY=footY+eyeHeight;
     if(!canStandAt(x,z,eyeY)||headSamples.some(([dx,dz])=>eyeY+.05>headroomAt(x+dx,z+dz)))return null;
