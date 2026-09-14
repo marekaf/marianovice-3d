@@ -256,6 +256,11 @@ const INTERIORS3D = (() => {
       ceiling.add(m);
     }
 
+    if (data.stairWallClosure) {
+      const c = data.stairWallClosure;
+      const closure = mkB(intGroup, c.x0, floorY + c.y0, c.z0, c.x1, floorY + c.y1, c.z1, wallMat);
+      closure.name = 'Stairwell wall closure';
+    }
     // Floor: plate with holes (loft — open over the cathedral/stairwell) or plain outline extrude
     if (data.floorHoles) {
       plate(floor, data.floorHoles, floorY - (data.floorDepth ?? 0.12), floorY, floorMat, data.floorTopClip);
