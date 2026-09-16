@@ -5,7 +5,7 @@ const FenceModel=(()=>{
     const u=[(end[0]-start[0])/length,(end[1]-start[1])/length],n=[-u[1],u[0]],parts=[],bays=[],spacing=length/Math.ceil(length/2.5);
     const point=(t,d,h)=>[start[0]+u[0]*t+n[0]*d,start[1]+u[1]*t+n[1]*d,h];
     const ground=t=>heightAt(...point(t,0,0).slice(0,2));
-    const beam=(name,a,b,width,material='fenceSteel')=>parts.push({name,type:'beam',start:a,end:b,width,depth:width,material,category:'structure'});
+    const beam=(name,a,b,width,material='fenceSteel',castShadow=true)=>parts.push({name,type:'beam',start:a,end:b,width,depth:width,material,category:'structure',castShadow});
     const post=(t,name)=>{
       const h=ground(t);
       parts.push({name,type:'cylinder',position:point(t,0,h+.90),radiusTop:.024,radiusBottom:.024,height:2.2,axis:'z',segments:12,material:'fenceSteel',category:'structure'});
@@ -35,9 +35,10 @@ const FenceModel=(()=>{
         if(!groups.has(key))groups.set(key,{vertices:relative,faces,positions:[]});
         groups.get(key).positions.push(position);
       }
-      parts.push({name:`chain_link_mesh_${bay}`,type:'repeatedMesh',groups:[...groups.values()],smooth:true,material:'fenceWire',category:'structure'});
+      // 2.8 mm wire is a tenth of one 4096-map shadow texel, so its shadow is only noise.
+      parts.push({name:`chain_link_mesh_${bay}`,type:'repeatedMesh',groups:[...groups.values()],smooth:true,material:'fenceWire',category:'structure',castShadow:false});
       const wireHeight=(t,h,ground)=>topHeightAt?ground+.2+(h-.2)/1.8*(topHeightAt(...point(t,0,0).slice(0,2))-ground-.2):ground+h;
-      for(const h of [.21,1.1,1.99])beam(`tension_wire_${bay}_${h}`,point(from,.003,wireHeight(from,h,ha)),point(to,.003,wireHeight(to,h,hb)),.003,'fenceWire');
+      for(const h of [.21,1.1,1.99])beam(`tension_wire_${bay}_${h}`,point(from,.003,wireHeight(from,h,ha)),point(to,.003,wireHeight(to,h,hb)),.003,'fenceWire',false);
       for(const [endIndex,t] of [from,to].entries())beam(`board_retainer_${bay}_${endIndex}`,point(t,0,base(t)+.02),point(t,0,base(t)+.22),.018);
       bays.push({from,to,bottom,top:[ha+.2,hb+.2],samples,height:2});
     }
