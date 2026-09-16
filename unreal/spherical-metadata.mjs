@@ -92,7 +92,6 @@ export function injectSphericalMetadata(buffer,options={}){
   }
   parts.push(buffer.subarray(cursor));
   const output=Buffer.concat(parts);
-  // Rewrite the enclosing sizes: moov itself and each patched trak, whose starts are unchanged.
   output.writeUInt32BE(moov.size+grown,moov.offset);
   traks.forEach((trak,index)=>{
     if(trak.headerSize!==8)throw new Error('64-bit trak boxes are not supported');
