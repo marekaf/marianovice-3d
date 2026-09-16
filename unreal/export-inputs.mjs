@@ -27,8 +27,9 @@ export async function createExportInputs({sourceRoot,toolRoot}) {
   }
   await checkedFile(viewerRoot,'index.html');
   await checkedFile(viewerRoot,'interior.html');
+  const pinned=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).devDependencies.three;
   const dependency=JSON.parse(await readFile(await checkedFile(viewerRoot,'node_modules/three/package.json'),'utf8'));
-  if(dependency.name!=='three'||dependency.version!=='0.160.0')throw new Error('Selected viewer requires its own three 0.160.0 dependency');
+  if(!pinned||dependency.name!=='three'||dependency.version!==pinned)throw new Error(`Selected viewer requires its own three ${pinned} dependency`);
   await checkedFile(viewerRoot,'node_modules/three/build/three.module.js');
   const hashes={viewer:new Map(),tooling:new Map()};
   async function resolveRequest(rawUrl) {

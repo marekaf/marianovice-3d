@@ -21,7 +21,7 @@ try{
   await mkdir(join(tooling,'unreal'),{recursive:true});
   await writeFile(join(viewer,'index.html'),'active viewer');
   await writeFile(join(viewer,'interior.html'),'active interior');
-  await writeFile(join(viewer,'node_modules/three/package.json'),JSON.stringify({name:'three',version:'0.160.0'}));
+  await writeFile(join(viewer,'node_modules/three/package.json'),JSON.stringify({name:'three',version:JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).devDependencies.three}));
   await writeFile(join(viewer,'node_modules/three/build/three.module.js'),'selected dependency');
   await writeFile(join(tooling,'index.html'),'older viewer');
   await writeFile(join(tooling,'unreal/export-scene.mjs'),'export helper');
