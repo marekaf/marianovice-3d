@@ -64,9 +64,16 @@ const GradingOverlay = (() => {
     for(const mark of marks.flats)out+=`<g data-terrain-flat="${mark.id}">${svgTerrainSymbol('flat',px(mark.position[0]),pz(mark.position[1]))}</g>`;
     return out;
   }
-  function create({THREE,scene,ground,garden,height,panel}) {
-    const data=GradingZones.create(garden),group=new THREE.Group();
+  function create({THREE,scene,ground,garden,height,panel,quantities}) {
+    const data=quantities??GradingZones.create(garden),group=new THREE.Group();
     group.name='grading-work-areas';group.visible=false;
+    const dimensions=new THREE.Group();dimensions.visible=false;group.add(dimensions);
+    // The overlay is hidden by default and its ground recolouring, borders, lines and labels take
+    // about two seconds, so they are built on the first toggle instead of on every page load.
+    let built=false;
+    function build() {
+    if(built)return;
+    built=true;
     const zones=data.zones.map(zone=>({...zone,colorValue:new THREE.Color(colorFor(zone)),bounds:zone.polygons.map(points=>({points,x0:Math.min(...points.map(p=>p[0])),x1:Math.max(...points.map(p=>p[0])),z0:Math.min(...points.map(p=>p[1])),z1:Math.max(...points.map(p=>p[1]))}))}));
     const contains=(polygon,x,z)=>{
       if(x<polygon.x0||x>polygon.x1||z<polygon.z0||z>polygon.z1)return false;
@@ -128,7 +135,6 @@ const GradingOverlay = (() => {
       if(bank.from&&bank.to){const a=bank.from,b=bank.to,length=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/length,uz=(b[1]-a[1])/length;terrainLine([a,b],'grading-downhill-'+bank.id);terrainLine([[b[0]-.4*ux-.2*uz,b[1]-.4*uz+.2*ux],b,[b[0]-.4*ux+.2*uz,b[1]-.4*uz-.2*ux]],'grading-downhill-tip-'+bank.id);}
     }
     for(const mark of terrain.flats){const [x,z]=mark.position;for(const offset of [-.1,.1])terrainLine([[x-.3,z+offset],[x+.3,z+offset]],'grading-flat-'+mark.id,'#17649e');}
-    const dimensions=new THREE.Group();dimensions.visible=false;group.add(dimensions);
     for(const dimension of data.dimensions.filter(d=>d.from&&d.to)){
       const from=dimension.from.map((v,i)=>v+(dimension.displayOffset?.[i]??0)),to=dimension.to.map((v,i)=>v+(dimension.displayOffset?.[i]??0));
       const points=[];
@@ -137,16 +143,17 @@ const GradingOverlay = (() => {
       label(dimension.value,(from[0]+to[0])/2,(from[1]+to[1])/2,.09);
       dimensions.add(group.children.at(-1));
     }
+    }
     scene.add(group);
     const wrapper=document.createElement('div'),toggle=document.createElement('input'),toggleLabel=document.createElement('label');
-    toggle.type='checkbox';toggle.id='gradingAreas';toggleLabel.append(toggle,` Work areas ${zones[0].id}–${zones.at(-1).id}`);
+    toggle.type='checkbox';toggle.id='gradingAreas';toggleLabel.append(toggle,` Work areas ${data.zones[0].id}–${data.zones.at(-1).id}`);
     const dimensionToggle=document.createElement('input'),dimensionLabel=document.createElement('label');dimensionToggle.type='checkbox';dimensionToggle.id='gradingDimensions';dimensionLabel.append(dimensionToggle,' Plan dimensions');dimensionLabel.style.display='block';
     const legend=document.createElement('div');legend.hidden=true;legend.style.cssText='font-size:11px;line-height:1.6;margin-top:6px';
-    for(const zone of zones){const row=document.createElement('div');row.textContent=`${zone.id} · ${zone.name} · ${zone.area.toLocaleString('cs-CZ',{maximumFractionDigits:1})} m²`;row.style.cssText=`border-left:4px solid ${colorFor(zone)};padding-left:6px;margin:3px 0`;if(zone.features.length){const hint=document.createElement('div');hint.dataset.zoneFeatures=zone.id;hint.textContent=zone.features.join(', ');hint.style.cssText='font-size:10px;color:#52614f';row.append(hint);}legend.append(row);}
+    for(const zone of data.zones){const row=document.createElement('div');row.textContent=`${zone.id} · ${zone.name} · ${zone.area.toLocaleString('cs-CZ',{maximumFractionDigits:1})} m²`;row.style.cssText=`border-left:4px solid ${colorFor(zone)};padding-left:6px;margin:3px 0`;if(zone.features.length){const hint=document.createElement('div');hint.dataset.zoneFeatures=zone.id;hint.textContent=zone.features.join(', ');hint.style.cssText='font-size:10px;color:#52614f';row.append(hint);}legend.append(row);}
     const levelKey=document.createElement('div');levelKey.textContent='Výšky vůči podlaze domu ±0,00 m';legend.append(levelKey);
     for(const [kind,text] of terrainLegend){const row=document.createElement('div');row.textContent=({flat:'═ ',slope:'↘ '})[kind]+text;legend.append(row);}
     const terrainMode=document.getElementById('terrainMode');
-    const sync=()=>{group.visible=toggle.checked&&terrainMode.value!=='existing';legend.hidden=!group.visible;dimensions.visible=dimensionToggle.checked;};
+    const sync=()=>{if(toggle.checked||dimensionToggle.checked)build();group.visible=toggle.checked&&terrainMode.value!=='existing';legend.hidden=!group.visible;dimensions.visible=dimensionToggle.checked;};
     terrainMode.addEventListener('change',sync);
     toggle.addEventListener('change',sync);dimensionToggle.addEventListener('change',()=>{if(dimensionToggle.checked)toggle.checked=true;sync();});
     wrapper.append(toggleLabel,dimensionLabel,legend);panel.append(wrapper);
