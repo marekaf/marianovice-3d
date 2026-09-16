@@ -33,6 +33,7 @@ const checks=[
   'verify-pond-approach.mjs',
   'verify-rainwater-path.mjs',
   'verify-perennial-sharing.mjs',
+  'verify-perennial-batch.mjs',
   'verify-garage.mjs',
   'verify-garage-roof-ends.mjs',
   'verify-loft-ceiling.mjs',

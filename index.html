@@ -167,7 +167,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="cotoneaster-model.js?v=3c1409a56a2d"></script>
 <script src="selected-planting.js?v=1ca7d8673921"></script>
 <script src="planting-guide.js"></script>
-<script src="perennial-model.js?v=ab389727ee00"></script>
+<script src="perennial-model.js?v=495faddb28ff"></script>
 <script src="seasonal-planting.js?v=73a125d14e5a"></script>
 <script src="privacy-preview.js"></script>
 <script src="privacy-screen-model.js"></script>
@@ -1571,6 +1571,7 @@ treesGroup.add(pergolaRoses);
 
 // Perennial strip u northního plotu (různé barvy a velikosti, hustěji)
 const perennialPlants = [];
+const perennialBatch = PerennialModel.createBatch(THREE);
 const perennialDensity = 2;
 function zoneRandom(id) {
   let seed = 2166136261;
@@ -1591,7 +1592,7 @@ function addPerennial(zoneId, x, z, kind) {
     if(Math.hypot(x-waterCover.cx,z-waterCover.cy)<waterCover.r+spec.spread+.3)return;
   }
   if (CotoneasterModel.contains(cotoneasterBank,x,z)||!inPlot(x, z) || overlapsStructureAccess(x, z, spec.spread,zone?.utilityCover===true)) return;
-  const root = PerennialModel.createShared(THREE, spec);
+  const root = perennialBatch.add(spec, { zoneId });
   root.name = spec.name;
   root.position.set(x, terrainHeight(x, z), z);
   root.userData.zoneId = zoneId;
@@ -2070,6 +2071,7 @@ gateText.textContent+=' '+utilityPillarModel.notes.join(' ');
 for(const model of boundaryFence.models)fenceGroup.add(buildModel(THREE,model));
 
 // ───────────────────────── CAMERA PRESETS ─────────────────────────
+perennialBatch.build(treesGroup);
 const plantingPreview = PlantingPreview.create({ scene, camera, renderer, treesGroup });
 PlantingGuide.create(perennialPlants,treesGroup.children.filter(p=>p.userData.treeForm));
 const targetCenter = new THREE.Vector3(22, 0, 17);
