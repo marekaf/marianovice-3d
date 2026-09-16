@@ -71,7 +71,6 @@ export function gradingGroundRefinement(spec) {
 export function refinePlateauGround(THREE,ground,height,{x0,x1,z0,z1,level,tolerance=.00025,maxDepth=10}) {
   const position=ground.attributes.position,texture=ground.attributes.uv,vertices=[],lookup=new Map();
   const vertex=p=>{const key=p[0]+','+p[2];if(!lookup.has(key)){lookup.set(key,vertices.length);vertices.push(p);}return lookup.get(key);};
-  const sampled=p=>[p[0],height(p[0],p[2]),p[2],p[3],p[4]];
   const average=points=>points[0].map((_,i)=>points.reduce((sum,p)=>sum+p[i],0)/points.length);
   const edge=(a,b)=>a<b?a+','+b:b+','+a;
   let triangles=[];
@@ -81,6 +80,8 @@ export function refinePlateauGround(THREE,ground,height,{x0,x1,z0,z1,level,toler
   }));
   const verified=new Set(),heightCache=new Map();
   const sample=(x,z)=>{const key=x+','+z;if(!heightCache.has(key))heightCache.set(key,height(x,z));return heightCache.get(key);};
+  // Every new vertex sits on an edge midpoint that was already probed, so it reads the cache.
+  const sampled=p=>[p[0],sample(p[0],p[2]),p[2],p[3],p[4]];
   for(let depth=0;depth<maxDepth;depth++) {
     const split=new Map();
     for(const ids of triangles) {

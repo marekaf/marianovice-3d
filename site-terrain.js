@@ -1,9 +1,35 @@
 const SiteTerrain = (() => {
   const baseHeight = (plane, x, z) => Math.max(0, plane.a * x + plane.b * z + plane.c);
-  const surveySampler = () => typeof module !== 'undefined' ? require('./survey-surface.js').SurveySurface : SurveySurface;
+  let surveySurfaceModule = null;
+  const surveySampler = () => surveySurfaceModule ??= typeof module !== 'undefined' ? require('./survey-surface.js').SurveySurface : SurveySurface;
   const naturalHeight = (spec, x, z) => spec.surveySurface ? surveySampler().height(spec.surveySurface, x, z) : baseHeight(spec.plane, x, z);
   const smoothstep = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
   const rectDistance = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
+  // Height queries run tens of millions of times while the viewer builds its ground, so the loops
+  // below avoid allocating per call. Every shortcut must return the same number as the plain code.
+  const bounds = new WeakMap();
+  function polygonBounds(points) {
+    let box = bounds.get(points);
+    if (!box) {
+      box = { x0: Infinity, z0: Infinity, x1: -Infinity, z1: -Infinity };
+      for (const [px, pz] of points) { box.x0 = Math.min(box.x0, px); box.x1 = Math.max(box.x1, px); box.z0 = Math.min(box.z0, pz); box.z1 = Math.max(box.z1, pz); }
+      bounds.set(points, box);
+    }
+    return box;
+  }
+  // Most queries lie far from a boundary or fence segment, so the projection clamps to one of its
+  // two endpoints. Those two natural heights are constant per segment and are computed once.
+  const endpointLevels = new WeakMap();
+  function segmentLevel(spec, key, a, dx, dz, t) {
+    if (t !== 0 && t !== 1) return naturalHeight(spec, a[0] + t * dx, a[1] + t * dz);
+    const surface = spec.surveySurface ?? spec.plane;
+    let perSurface = endpointLevels.get(surface);
+    if (!perSurface) endpointLevels.set(surface, perSurface = new WeakMap());
+    let levels = perSurface.get(key);
+    if (!levels) perSurface.set(key, levels = [naturalHeight(spec, a[0], a[1]), naturalHeight(spec, a[0] + dx, a[1] + dz)]);
+    return levels[t];
+  }
+  const minRectDistance = (rects, x, z) => { let d = Infinity; for (const r of rects) d = Math.min(d, rectDistance(r, x, z)); return d; };
   function bankEnvelope(value,level,slope,distance){
     const radius=.08*Math.min(1,distance/2);
     if(!radius)return level;
@@ -30,20 +56,23 @@ const SiteTerrain = (() => {
     for(const route of court.routes)distance=Math.min(distance,Math.max(0,routeSample(route,x,z).distance-route.width/2));
     return (1-smoothstep(distance/court.blend))*(1-smoothstep((x-court.x1)/court.eastBlend));
   }
+  const sampleDistances=[],sampleLevels=[];
   function routeSample(route,x,z,bank=false) {
-    const samples=[];
-    for(let i=1;i<route.points.length;i++) {
+    const count=route.points.length-1;
+    let distance=Infinity;
+    for(let i=1;i<=count;i++) {
       const a=route.points[i-1],b=route.points[i],dx=b[0]-a[0],dz=b[1]-a[1];
       const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));
-      const distance=Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz);
-      samples.push({distance,level:route.levels[i-1]+(route.levels[i]-route.levels[i-1])*t});
+      const d=Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz);
+      sampleDistances[i-1]=d;sampleLevels[i-1]=route.levels[i-1]+(route.levels[i]-route.levels[i-1])*t;
+      distance=Math.min(distance,d);
     }
-    const distance=Math.min(...samples.map(s=>s.distance));
     let weighted=0,total=0,bankWeighted=0,bankTotal=0;
-    for(const sample of samples) {
-      const weight=smoothstep(1-(sample.distance-distance)/(route.approachBank?2:.2))/(sample.distance**2+1e-12);
-      weighted+=sample.level*weight;total+=weight;
-      if(bank&&route.approachBank){const w=1/(sample.distance**2+1e-12);bankWeighted+=sample.level*w;bankTotal+=w;}
+    for(let i=0;i<count;i++) {
+      const sampleDistance=sampleDistances[i],sampleLevel=sampleLevels[i];
+      const weight=smoothstep(1-(sampleDistance-distance)/(route.approachBank?2:.2))/(sampleDistance**2+1e-12);
+      weighted+=sampleLevel*weight;total+=weight;
+      if(bank&&route.approachBank){const w=1/(sampleDistance**2+1e-12);bankWeighted+=sampleLevel*w;bankTotal+=w;}
     }
     let level=weighted/total;
     if(bankTotal)level+=(bankWeighted/bankTotal-level)*smoothstep((distance-route.width/2)/.3);
@@ -59,7 +88,9 @@ const SiteTerrain = (() => {
     return {distance,level};
   }
   function routeBankClearance(route,x,z) {
-    return Math.min(Infinity,...(route.bankAvoidRoutes??[]).map(other=>Math.max(0,routeSample(other,x,z).distance-other.width/2)));
+    let clearance=Infinity;
+    for(const other of route.bankAvoidRoutes??[])clearance=Math.min(clearance,Math.max(0,routeSample(other,x,z).distance-other.width/2));
+    return clearance;
   }
   function routeBedding(route,x,z) {
     if(route.startBedding===undefined)return route.bedding??.04;
@@ -96,7 +127,7 @@ const SiteTerrain = (() => {
       for (let i = 0; i < boundary.length; i++) {
         const a = boundary[i], b = boundary[(i + 1) % boundary.length], dx = b[0] - a[0], dz = b[1] - a[1];
         const t = Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));
-        const bx=a[0]+t*dx,bz=a[1]+t*dz,distance=Math.hypot(x-bx,z-bz),level=naturalHeight(spec,bx,bz);
+        const bx=a[0]+t*dx,bz=a[1]+t*dz,distance=Math.hypot(x-bx,z-bz),level=segmentLevel(spec,a,a,dx,dz,t);
         h=Math.max(level-.4*distance,Math.min(level+.4*distance,h));
       }
     }
@@ -135,8 +166,9 @@ const SiteTerrain = (() => {
       else h = Math.min(h, pond.edge + ((spec.continuousGrading ? h : base) - pond.edge) * smoothstep((prr - 1) / 0.3));
     }
     if (spec.houseExcavation) {
-      const p=spec.houseExcavation,distance=polygonDistance(p.points,x,z);
-      if(distance<p.blend) h=Math.min(h,p.level+(h-p.level)*smoothstep(distance/p.blend));
+      const p=spec.houseExcavation;
+      if(rectDistance(polygonBounds(p.points),x,z)<p.blend){const distance=polygonDistance(p.points,x,z);
+      if(distance<p.blend) h=Math.min(h,p.level+(h-p.level)*smoothstep(distance/p.blend));}
     }
     if (spec.drivewayProfile) {
       const p=spec.drivewayProfile,distance=Math.max(0,polygonDistance(p.points,x,z)-p.edgeMargin);
@@ -146,10 +178,10 @@ const SiteTerrain = (() => {
       }
     }
     if (spec.finishPads?.length) {
-      const distance = Math.min(...spec.finishPads.map(p => rectDistance(p, x, z) / p.blend));
+      let distance = Infinity, metres = Infinity;
+      for (const p of spec.finishPads) { const d = rectDistance(p, x, z); distance = Math.min(distance, d / p.blend); metres = Math.min(metres, d); }
       const level = spec.finishedSoil - (spec.regionalGrades ? .18 * smoothstep((z - 5.7) / 1.48) * (1 - smoothstep((x - 14.93) / 3)) : 0);
       if (spec.regionalGrades) {
-        const metres=Math.min(...spec.finishPads.map(p=>rectDistance(p,x,z)));
         h=Math.max(level-.4*metres,Math.min(level+.4*metres,h));
       } else if (distance < 1) h = level + (h - level) * smoothstep(distance);
     }
@@ -171,10 +203,12 @@ const SiteTerrain = (() => {
       }
       if(total)h+=(level/total-h)*strength;
     }
-    for(const route of (spec.routeProfiles??[]).filter(route=>route.bankApron&&!spec.regionalGrades)) {
+    if(!spec.regionalGrades)for(const route of spec.routeProfiles??[]) {
+      if(!route.bankApron)continue;
       if(route.bankBounds&&rectDistance(route.bankBounds,x,z)>0)continue;
       const sample=routeSample(route,x,z,true),distance=Math.max(0,sample.distance-route.width/2);
-      const clear=Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d),spec.houseExcavation?polygonDistance(spec.houseExcavation.points,x,z):Infinity);
+      let clear=Math.min(minRectDistance(spec.finishPads??[],x,z),minRectDistance(spec.protectedPads??[],x,z),spec.houseExcavation?polygonDistance(spec.houseExcavation.points,x,z):Infinity);
+      for(const s of gatheringSamples)clear=Math.min(clear,s.d);
       const influence=(1-smoothstep(distance/route.bankApron.blend))*smoothstep(clear/route.bankApron.clearBlend)*smoothstep(routeBankClearance(route,x,z));
       h+=(sample.level-(route.bedding??.04)-h)*influence;
     }
@@ -187,11 +221,12 @@ const SiteTerrain = (() => {
         let target=Math.max(sample.level-bedding-(route.bankSlope??.4)*distance,Math.min(sample.level-bedding+(route.bankSlope??.4)*distance,h));
         for(const pad of spec.fixedFences?.levelPads??[])target=Math.max(target,pad.level-.4*rectDistance(pad,x,z));
         for(const strip of spec.drainageStrips??[])target=Math.min(target,drainageLevel(strip,x,z)+(strip.bankSlope??.45)*rectDistance(strip,x,z));
-        const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z))):Infinity;
+        const clear=route.approachBank?minRectDistance(spec.finishPads??[],x,z):Infinity;
         h+=(target-h)*smoothstep(clear/.3);
       }
       else if(distance<blend) {
-        const clear=route.approachBank?Math.min(...(spec.finishPads??[]).map(p=>rectDistance(p,x,z)),...(spec.protectedPads??[]).map(p=>rectDistance(p,x,z)),...gatheringSamples.map(s=>s.d)):Infinity;
+        let clear=Infinity;
+        if(route.approachBank){clear=Math.min(minRectDistance(spec.finishPads??[],x,z),minRectDistance(spec.protectedPads??[],x,z));for(const s of gatheringSamples)clear=Math.min(clear,s.d);}
         const influence=(1-smoothstep(distance/blend))*(route.approachBank?smoothstep(clear/1.2):1)*smoothstep(routeBankClearance(route,x,z));
         h+=(sample.level-bedding-h)*influence;
         if(route.approachBank)h=Math.min(h,h+(sample.level-bedding-h)*(1-smoothstep(distance/.3))*smoothstep(routeBankClearance(route,x,z)/.6));
@@ -206,8 +241,8 @@ const SiteTerrain = (() => {
       if(prr<=1)h=Math.min(h,pond.edge-pond.depth*.5*(1+Math.cos(prr*Math.PI)));
       else h=Math.min(h,pond.edge+(h-pond.edge)*smoothstep((prr-1)/(pondOuter-1)));
     }
-    if(spec.gateRunback){const p=spec.gateRunback,d=polygonDistance(p.points,x,z);if(d<p.blend)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
-    if(spec.wicketLanding){const p=spec.wicketLanding,d=Math.hypot(polygonDistance(p.points,x,z),polygonDistance(p.boundary,x,z));if(d<p.blend)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
+    if(spec.gateRunback&&rectDistance(polygonBounds(spec.gateRunback.points),x,z)<spec.gateRunback.blend){const p=spec.gateRunback,d=polygonDistance(p.points,x,z);if(d<p.blend)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
+    if(spec.wicketLanding&&rectDistance(polygonBounds(spec.wicketLanding.points),x,z)<spec.wicketLanding.blend){const p=spec.wicketLanding,d=Math.hypot(polygonDistance(p.points,x,z),polygonDistance(p.boundary,x,z));if(d<p.blend)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
     if(spec.benchPad){const p=spec.benchPad,d=Math.hypot(Math.max(p.x0-x,0,x-p.x1)/p.blend,Math.max(p.z0-z,0)/p.blend,Math.max(z-p.z1,0)/p.southBlend);if(d<1)h=p.level+(h-p.level)*smoothstep(d);}
     if(spec.productiveCourt&&spec.productiveCourt.mode!=='level') {
       const p=spec.productiveCourt,weight=productiveInfluence(p,x,z);
@@ -225,7 +260,7 @@ const SiteTerrain = (() => {
     for(const segment of spec.fixedFences?.segments??[]) {
       const [a,b]=[segment.start,segment.end],dx=b[0]-a[0],dz=b[1]-a[1];
       const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));
-      const bx=a[0]+t*dx,bz=a[1]+t*dz,d=Math.hypot(x-bx,z-bz),level=naturalHeight(spec,bx,bz);
+      const bx=a[0]+t*dx,bz=a[1]+t*dz,d=Math.hypot(x-bx,z-bz),level=segmentLevel(spec,segment,a,dx,dz,t);
       let slope=spec.fixedFences.bankSlope;
       for(const pad of spec.fixedFences.levelPads??[])slope=Math.max(slope,Math.min(pad.bankSlope,Math.abs(pad.level-level)/Math.max(.001,rectDistance(pad,bx,bz))));
       h=Math.max(level-slope*d,Math.min(level+slope*d,h));
