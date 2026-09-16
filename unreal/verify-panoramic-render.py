@@ -262,7 +262,7 @@ with tempfile.TemporaryDirectory() as directory:
         assert output.output_directory.endswith('video-frames-360/' + eye)
     assert jobs[0].sequence != jobs[1].sequence, 'Each eye renders its own offset sequence'
     status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
-    assert status['projection'] == 'stereo360' and status['stereo_layout'] == 'top-bottom'
+    assert status['projection'] == 'stereo360' and status['stereo_layout'] == 'top-bottom' and status['pane_history'] is True
     assert status['fps'] == 30 and status['resolution'] == [1440, 720] and status['total_frames'] == 3600
     assert status['output_directory'].endswith('video-frames-360')
     assert sorted(status['eye_directories']) == ['left', 'right']
@@ -278,10 +278,12 @@ with tempfile.TemporaryDirectory() as directory:
     except ValueError as error:
         assert 'twice as wide' in str(error)
 
-    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'mono360'}))
+    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'mono360', 'paneHistory': False}))
     renderer['render']()
     jobs = live['QUEUE'].jobs
     assert [job.job_name for job in jobs] == ['Walkthrough mono360 preview']
+    assert jobs[0].config.settings['MoviePipelinePanoramicPass'].allocate_history_per_pane is False
+    assert json.loads((root / 'generated' / 'video-render-360.json').read_text())['pane_history'] is False
     assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_resolution == (5760, 2880)
     assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_directory.endswith('video-frames-360')
     status = json.loads((root / 'generated' / 'video-render-360.json').read_text())

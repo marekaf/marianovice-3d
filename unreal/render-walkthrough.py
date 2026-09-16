@@ -161,6 +161,8 @@ def read_options():
     duration_scale = options.get('durationScale', 1)
     if not isinstance(duration_scale, (int, float)) or not math.isfinite(duration_scale) or duration_scale <= 0:
         raise ValueError('video-options.json durationScale must be a positive number')
+    if not isinstance(options.get('paneHistory', True), bool):
+        raise ValueError('video-options.json paneHistory must be a boolean')
     return options, projection, profile, resolution, frame_step, duration_scale
 
 
@@ -205,12 +207,13 @@ def render():
         eye_folder = folder / eye if eye else folder
         eye_folder.mkdir(parents=True, exist_ok=True)
         eye_directories[eye] = str(eye_folder)
-        add_job(QUEUE, map_path, sequence, eye_folder, projection, preview, fps, resolution, end_frame, frame_step, eye)
+        add_job(QUEUE, map_path, sequence, eye_folder, projection, preview, fps, resolution, end_frame, frame_step, eye,
+                options.get('paneHistory', True))
     write_status(state='rendering', preview=preview, expected_frames=len(expected_indices),
                  expected_indices=expected_indices, frame_step=frame_step, route_shots=shots,
                  total_frames=total_frames, fps=fps, resolution=list(resolution),
                  projection=projection, stereo_layout='top-bottom' if projection == 'stereo360' else None,
-                 eye_directories=eye_directories,
+                 eye_directories=eye_directories, pane_history=options.get('paneHistory', True),
                  sequences={eye: sequence.get_path_name() for eye, (sequence, _) in sequences.items()}, map=map_path,
                  output_directory=str(folder), started_at=time.time(), errors=[])
     EXECUTOR = unreal.MoviePipelinePIEExecutor()
@@ -224,7 +227,7 @@ def render():
         raise
 
 
-def add_job(queue, map_path, sequence, folder, projection, preview, fps, resolution, end_frame, frame_step, eye):
+def add_job(queue, map_path, sequence, folder, projection, preview, fps, resolution, end_frame, frame_step, eye, pane_history):
     job = queue.allocate_new_job(unreal.MoviePipelineExecutorJob)
     job.job_name = ' '.join(part for part in ['Walkthrough', projection, eye, 'preview' if preview else ''] if part)
     job.map = unreal.SoftObjectPath(map_path)
@@ -249,8 +252,9 @@ def add_job(queue, map_path, sequence, folder, projection, preview, fps, resolut
         panorama.num_horizontal_steps = 8
         panorama.num_vertical_steps = 3
         panorama.follow_camera_orientation = True
-        # Lumen, auto exposure and TAA need a history buffer per pane or the panes render black.
-        panorama.allocate_history_per_pane = True
+        # Lumen, auto exposure and TAA read a history buffer per pane; without it the panes may
+        # render black, with it each pane keeps its own scene history in GPU memory.
+        panorama.allocate_history_per_pane = pane_history
     else:
         config.find_or_add_setting_by_class(unreal.MoviePipelineDeferredPassBase)
     config.find_or_add_setting_by_class(unreal.MoviePipelineImageSequenceOutput_PNG)
