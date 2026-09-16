@@ -190,7 +190,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
 <script src="grading-zones.js?v=39c5fc53e38a"></script>
-<script src="grading-overlay.js?v=718d458e8d3a"></script>
+<script src="grading-overlay.js?v=23ab2d5e595d"></script>
 <script type="module">
 import * as THREE from 'three';
 import { buildEntranceStairs } from './entrance-landing.js?v=1cb023b3f393';
@@ -912,9 +912,10 @@ const groundSurface = GroundSurfaceModel.create(THREE, { garden: GARDEN, clearan
 const ground = new THREE.Mesh(groundGeom, groundSurface.material);
 ground.receiveShadow = true;
 scene.add(ground);
-const cotoneasterBank=GradingZones.create(GARDEN).zones.find(zone=>zone.id==='L').polygons;
+const gradingQuantities=GradingZones.create(GARDEN);
+const cotoneasterBank=gradingQuantities.zones.find(zone=>zone.id==='L').polygons;
 const terrainPreview=TerrainPreview.create({THREE,scene,ground,existingHeight:existingGround,proposedHeight:terrainHeight,surveyed:!!surveySurface});
-const gradingOverlay=GradingOverlay.create({THREE,scene,ground,garden:GARDEN,height:terrainHeight,panel:terrainPreview.panel});
+const gradingOverlay=GradingOverlay.create({THREE,scene,ground,garden:GARDEN,height:terrainHeight,panel:terrainPreview.panel,quantities:gradingQuantities});
 
 // ───────────────────────── HOUSE ─────────────────────────
 await ViewerLoading.stage('Building the house and terraces…');
