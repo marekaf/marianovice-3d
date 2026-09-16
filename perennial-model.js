@@ -132,53 +132,154 @@ const PerennialModel = (() => {
     return root;
   }
   const sharedVariants = new WeakMap();
-  function createShared(THREE, { profile = 'grass', height = .8, spread = .35, seed = 1, bloom = [6, 7, 8], color, winterInterest = true } = {}) {
+  function variant(THREE, { profile = 'grass', height = .8, spread = .35, seed = 1, bloom = [6, 7, 8], color, winterInterest = true } = {}) {
     if (!profiles.includes(profile) || !(height > 0) || !(spread > 0) || !Number.isFinite(height + spread))
       throw new Error('Perennial form needs a known profile and positive finite dimensions');
     if (!sharedVariants.has(THREE)) sharedVariants.set(THREE, new Map());
     const cache = sharedVariants.get(THREE);
-    const numericSeed = (Number(seed) || 1) >>> 0, variant = numericSeed % 4;
-    const key = `${profile}/${variant}`;
+    const numericSeed = (Number(seed) || 1) >>> 0, key = `${profile}/${numericSeed % 4}`;
     if (!cache.has(key)) {
-      const template = create(THREE, { profile, seed: variant + 1 });
+      const template = create(THREE, { profile, seed: numericSeed % 4 + 1 });
       for (const mesh of template.children) mesh.geometry.scale(1 / .35, 1 / .8, 1 / .35);
       cache.set(key, template);
     }
-    // Geometry belongs to the variant cache; specimen cleanup must not dispose it.
-    const root = cache.get(key).clone();
+    const root = new THREE.Group();
+    root.name = cache.get(key).name;
     root.scale.set(spread, height, spread);
     root.rotation.y = numericSeed * 2.399963229728653 % (Math.PI * 2);
     root.userData = { profile, plantingScale: .45, bloom: [...bloom], height, spread, winterInterest };
-    for (const mesh of root.children) {
-      mesh.material = mesh.material.clone();
-      if (mesh.userData.plantPart === 'flower' && color !== undefined) {
-        mesh.material.color.set(color);
-        mesh.userData.summerColor = color;
+    return { template: cache.get(key), root, flowerColor: color };
+  }
+  function createShared(THREE, spec) {
+    const { template, root, flowerColor } = variant(THREE, spec);
+    // Geometry belongs to the variant cache; specimen cleanup must not dispose it.
+    for (const source of template.children) {
+      const mesh = source.clone();
+      mesh.material = source.material.clone();
+      if (mesh.userData.plantPart === 'flower' && flowerColor !== undefined) {
+        mesh.material.color.set(flowerColor);
+        mesh.userData.summerColor = flowerColor;
       }
+      root.add(mesh);
     }
     return update(root, 7);
   }
-  function update(root, month) {
+  function seasonState(root, month) {
     const winter = month <= 3 || month >= 11;
     const blooming = root.userData.bloom.includes(month);
     const dry = winter || month === 10;
     const cut = month === 3 && !blooming;
-    for (const mesh of root.children) {
-      const part = mesh.userData.plantPart;
-      mesh.scale.y = cut ? .12 : 1;
-      mesh.visible = part === 'flower' ? blooming : part === 'seedhead'
-        ? (root.userData.winterInterest && dry && !cut) || (root.userData.profile === 'daisy' && blooming) : true;
-      if (part === 'foliage') {
-        mesh.material.color.set(dry && !blooming ? '#9a8969' : mesh.userData.summerColor);
-        mesh.visible = !winter || root.userData.profile === 'grass' || blooming;
-      } else if (part === 'stem') {
-        mesh.material.color.set(dry && !blooming ? '#918163' : mesh.userData.summerColor);
-        if (winter && !blooming && (root.userData.profile === 'broadleaf' || !root.userData.winterInterest)) mesh.scale.y = cut ? .12 : .15;
+    const state = {};
+    for (const part of ['stem', 'foliage', 'flower', 'seedhead']) {
+      let scaleY = cut ? .12 : 1, visible = true, color;
+      if (part === 'flower') visible = blooming;
+      else if (part === 'seedhead') visible = (root.userData.winterInterest && dry && !cut) || (root.userData.profile === 'daisy' && blooming);
+      else if (part === 'foliage') {
+        color = dry && !blooming ? '#9a8969' : null;
+        visible = !winter || root.userData.profile === 'grass' || blooming;
+      } else {
+        color = dry && !blooming ? '#918163' : null;
+        if (winter && !blooming && (root.userData.profile === 'broadleaf' || !root.userData.winterInterest)) scaleY = cut ? .12 : .15;
+      }
+      state[part] = { scaleY, visible, color };
+    }
+    return state;
+  }
+  function update(root, month) {
+    const state = seasonState(root, month);
+    if (root.userData.instances) {
+      for (const instance of root.userData.instances) {
+        const { scaleY, visible, color } = state[instance.part];
+        instance.scaleY = scaleY;
+        instance.visible = visible;
+        instance.color.set(color ?? instance.summerColor);
+        instance.mesh.userData.stale = true;
+      }
+    } else {
+      for (const mesh of root.children) {
+        const { scaleY, visible, color } = state[mesh.userData.plantPart];
+        mesh.scale.y = scaleY;
+        mesh.visible = visible;
+        if (color !== undefined) mesh.material.color.set(color ?? mesh.userData.summerColor);
       }
     }
     root.userData.month = month;
     return root;
   }
-  return { create, createShared, update };
+  // One InstancedMesh per zone, profile, variant and botanical part replaces thousands of
+  // single-plant meshes. A plant keeps an empty root Group in the scene so existing code can move or
+  // scale it; the instance matrices are rebuilt from those roots right before each render.
+  function createBatch(THREE) {
+    const pending = [], meshes = [];
+    const composed = new THREE.Matrix4(), partScale = new THREE.Matrix4();
+    function add(spec, { zoneId = '' } = {}) {
+      const { template, root, flowerColor } = variant(THREE, spec);
+      pending.push({ root, template, zoneId, flowerColor });
+      return root;
+    }
+    function build(parent) {
+      const groups = new Map();
+      for (const { root, template, zoneId, flowerColor } of pending) {
+        root.userData.instances = [];
+        for (const mesh of template.children) {
+          const key = `${zoneId}/${root.userData.profile}/${mesh.geometry.uuid}/${mesh.userData.plantPart}`;
+          if (!groups.has(key)) groups.set(key, { geometry: mesh.geometry, part: mesh.userData.plantPart, castShadow: mesh.castShadow, members: [] });
+          const group = groups.get(key);
+          const summerColor = mesh.userData.plantPart === 'flower' && flowerColor !== undefined ? flowerColor : mesh.userData.summerColor;
+          const instance = { root, part: mesh.userData.plantPart, slot: -1, summerColor, color: new THREE.Color(), scaleY: 1, visible: true };
+          group.members.push(instance);
+          root.userData.instances.push(instance);
+        }
+      }
+      for (const { geometry, part, castShadow, members } of groups.values()) {
+        const material = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .95, side: THREE.DoubleSide, vertexColors: true });
+        const mesh = new THREE.InstancedMesh(geometry, material, members.length);
+        mesh.setColorAt(0, new THREE.Color());
+        mesh.name = `perennial-${part}`;
+        mesh.castShadow = castShadow;
+        mesh.receiveShadow = true;
+        mesh.userData.stale = true;
+        for (const instance of members) instance.mesh = mesh;
+        mesh.userData.members = members;
+        mesh.onBeforeRender = mesh.onBeforeShadow = () => sync(mesh);
+        meshes.push(mesh);
+        parent.add(mesh);
+      }
+      for (const { root } of pending) update(root, 7);
+      pending.length = 0;
+      return meshes;
+    }
+    // Hidden parts are left out of the drawn range instead of drawn at zero scale, so the GPU skips
+    // their vertices. A season change sets `stale`, which reassigns every slot; otherwise only a moved
+    // or rescaled root rewrites its own slot.
+    const unchanged = (stored, offset, matrix) => matrix.elements.every((value, k) => stored[offset + k] === Math.fround(value));
+    function sync(mesh) {
+      const rewrite = mesh.userData.stale;
+      let slot = 0, changed = rewrite;
+      for (const instance of mesh.userData.members) {
+        if (!instance.visible) { instance.slot = -1; continue; }
+        instance.root.updateMatrix();
+        composed.copy(instance.root.matrix).multiply(partScale.makeScale(1, instance.scaleY, 1));
+        if (rewrite) {
+          instance.slot = slot;
+          mesh.setMatrixAt(slot, composed);
+          mesh.setColorAt(slot, instance.color);
+        } else if (!unchanged(mesh.instanceMatrix.array, slot * 16, composed)) {
+          mesh.setMatrixAt(slot, composed);
+          changed = true;
+        }
+        slot++;
+      }
+      mesh.count = slot;
+      if (rewrite) mesh.instanceColor.needsUpdate = true;
+      if (changed) {
+        mesh.instanceMatrix.needsUpdate = true;
+        mesh.computeBoundingSphere();
+      }
+      mesh.userData.stale = false;
+    }
+    return { add, build, meshes };
+  }
+  return { create, createShared, createBatch, update };
 })();
 if (typeof module !== 'undefined') module.exports = { PerennialModel };
