@@ -123,7 +123,7 @@ class Sequence:
         return binding
 
     def get_path_name(self):
-        return '/Game/WalkthroughVideo/Test'
+        return f'/Game/WalkthroughVideo/Test_{id(self)}'
 
 
 class Config:
@@ -145,10 +145,13 @@ class Executor:
 
 class Queue:
     def __init__(self):
-        self.config = Config()
+        self.jobs = []
 
     def allocate_new_job(self, kind):
-        return SimpleNamespace(get_configuration=lambda: self.config)
+        job = SimpleNamespace(config=Config())
+        job.get_configuration = lambda job=job: job.config
+        self.jobs.append(job)
+        return job
 
 
 def fake_unreal():
@@ -210,10 +213,20 @@ with tempfile.TemporaryDirectory() as directory:
     except ValueError as error:
         assert 'whole 30 fps frames' in str(error)
 
-    sequence, total = build_sequence(shots, 30, 'stereo360')
+    sequence, total = build_sequence(shots, 30, 'stereo360', -3.2)
+    right_eye, _ = build_sequence(shots, 30, 'stereo360', 3.2)
     assert sequence.rate == (30, 1) and total == 7200
-    for binding, shot in zip(sequence.bindings, shots):
+    for binding, right, shot in zip(sequence.bindings, right_eye.bindings, shots):
         section = binding.tracks[0].sections[0]
+        left_position = [channel.keys[0][1] for channel in section.channels[:3]]
+        right_position = [channel.keys[0][1] for channel in right.tracks[0].sections[0].channels[:3]]
+        gap = [b - a for a, b in zip(left_position, right_position)]
+        assert abs(math.hypot(*gap) - 6.4) < 0.000001, f'{shot["name"]}: eyes sit 6.4 cm apart'
+        forward = [b - a for a, b in zip(shot['start'], shot['targetStart'])]
+        assert abs(gap[0] * forward[0] + gap[1] * forward[1]) < 0.000001 and gap[2] == 0.0, f'{shot["name"]}: eyes sit across the heading'
+        assert (gap[0] * forward[1] - gap[1] * forward[0]) < 0, f'{shot["name"]}: right eye is on the right of the heading'
+        centre = [(a + b) / 2 for a, b in zip(left_position, right_position)]
+        assert all(abs(a - b) < 0.000001 for a, b in zip(centre, shot['start'])), f'{shot["name"]}: eyes straddle the route'
         frames = round(shot['duration'] * 30)
         assert section.range[1] - section.range[0] == frames
         roll = {value for _, value in section.channels[3].keys}
@@ -232,22 +245,28 @@ with tempfile.TemporaryDirectory() as directory:
     assert len(set(yaw_keys(turning))) > 1, 'Flat rendering still turns the camera toward a moving target'
     assert any(value != 0.0 for _, value in turning.tracks[0].sections[0].channels[4].keys), 'Flat rendering pitches toward the target'
 
-    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'stereo360', 'resolution': [1440, 1440]}))
+    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'stereo360', 'resolution': [1440, 720]}))
     renderer['render']()
-    config = live['QUEUE'].config
-    assert 'MoviePipelinePanoramicPass' in config.settings and 'MoviePipelineDeferredPassBase' not in config.settings
-    panorama = config.settings['MoviePipelinePanoramicPass']
-    assert panorama.stereo is True and panorama.eye_separation == 6.4
-    assert panorama.allocate_history_per_pane is True and panorama.follow_camera_orientation is True
-    assert panorama.num_horizontal_steps == 8 and panorama.num_vertical_steps == 3
-    output = config.settings['MoviePipelineOutputSetting']
-    assert output.output_resolution == (1440, 1440) and output.output_frame_rate == (30, 1)
-    assert output.custom_end_frame == 30, 'Preview renders one second at the panorama frame rate'
-    assert output.output_directory.endswith('video-frames-360')
+    jobs = live['QUEUE'].jobs
+    assert [job.job_name for job in jobs] == ['Walkthrough stereo360 left preview', 'Walkthrough stereo360 right preview']
+    for job, eye in zip(jobs, ['left', 'right']):
+        config = job.config
+        assert 'MoviePipelinePanoramicPass' in config.settings and 'MoviePipelineDeferredPassBase' not in config.settings
+        panorama = config.settings['MoviePipelinePanoramicPass']
+        assert not hasattr(panorama, 'stereo'), 'Unreal 5.8 exposes no stereo switch; each eye is its own job'
+        assert panorama.allocate_history_per_pane is True and panorama.follow_camera_orientation is True
+        assert panorama.num_horizontal_steps == 8 and panorama.num_vertical_steps == 3
+        output = config.settings['MoviePipelineOutputSetting']
+        assert output.output_resolution == (1440, 720) and output.output_frame_rate == (30, 1)
+        assert output.custom_end_frame == 30, 'Preview renders one second at the panorama frame rate'
+        assert output.output_directory.endswith('video-frames-360/' + eye)
+    assert jobs[0].sequence != jobs[1].sequence, 'Each eye renders its own offset sequence'
     status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
     assert status['projection'] == 'stereo360' and status['stereo_layout'] == 'top-bottom'
-    assert status['fps'] == 30 and status['resolution'] == [1440, 1440] and status['total_frames'] == 3600
+    assert status['fps'] == 30 and status['resolution'] == [1440, 720] and status['total_frames'] == 3600
     assert status['output_directory'].endswith('video-frames-360')
+    assert sorted(status['eye_directories']) == ['left', 'right']
+    assert status['eye_directories']['right'].endswith('video-frames-360/right')
     assert not (root / 'generated' / 'video-render.json').exists(), 'The stereo render leaves the flat report alone'
     live['CALLBACKS'].close()
     fake._walkthrough_video_session = None
@@ -255,9 +274,20 @@ with tempfile.TemporaryDirectory() as directory:
     (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'stereo360', 'resolution': [1920, 1080]}))
     try:
         renderer['render']()
-        raise AssertionError('Non-square stereo 360 output must be rejected')
+        raise AssertionError('Non 2:1 panoramic output must be rejected')
     except ValueError as error:
-        assert 'square' in str(error)
+        assert 'twice as wide' in str(error)
+
+    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'mono360'}))
+    renderer['render']()
+    jobs = live['QUEUE'].jobs
+    assert [job.job_name for job in jobs] == ['Walkthrough mono360 preview']
+    assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_resolution == (5760, 2880)
+    assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_directory.endswith('video-frames-360')
+    status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
+    assert status['projection'] == 'mono360' and status['stereo_layout'] is None and list(status['eye_directories']) == ['']
+    live['CALLBACKS'].close()
+    fake._walkthrough_video_session = None
 
     (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'dome'}))
     try:
@@ -268,11 +298,14 @@ with tempfile.TemporaryDirectory() as directory:
 
     (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': False, 'durationScale': 2}))
     renderer['render']()
-    config = live['QUEUE'].config
+    jobs = live['QUEUE'].jobs
+    assert len(jobs) == 1 and jobs[0].job_name == 'Walkthrough flat'
+    config = jobs[0].config
     assert 'MoviePipelineDeferredPassBase' in config.settings and 'MoviePipelinePanoramicPass' not in config.settings
+    assert config.settings['MoviePipelineOutputSetting'].output_directory.endswith('video-frames')
     status = json.loads((root / 'generated' / 'video-render.json').read_text())
-    assert status['projection'] == 'flat' and status['stereo_layout'] is None
+    assert status['projection'] == 'flat' and status['stereo_layout'] is None and list(status['eye_directories']) == ['']
     assert status['fps'] == 24 and status['resolution'] == [1920, 1080] and status['total_frames'] == 5760
     live['CALLBACKS'].close()
 
-print('Panoramic render: stereo 360 sequences keep a level, fixed heading per shot at 30 fps; the queue selects the panoramic pass with per-pane history; flat rendering is unchanged.')
+print('Panoramic render: 360 sequences keep a level, fixed heading per shot at 30 fps; stereo queues one offset panoramic job per eye; mono 360 and flat rendering are unchanged.')

@@ -151,16 +151,18 @@ The video uses fixed exposure and provisional room lighting. It is a visualisati
 
 ## Stereo 360 walkthrough for Meta Quest
 
-The same route can render as a stereoscopic 360 equirectangular video for a headset. Set `generated/video-options.json` to `{"preview":true,"projection":"stereo360"}` for a one-second test, then `{"preview":false,"projection":"stereo360","durationScale":2}` for the full video. Run `render-walkthrough.py` inside Unreal as before.
+The same route can render as a 360 equirectangular video for a headset. Set `generated/video-options.json` to `{"preview":true,"projection":"stereo360","resolution":[1440,720]}` for a one-second test, then `{"preview":false,"projection":"stereo360","durationScale":2}` for the full video. Run `render-walkthrough.py` inside Unreal as before. Enable the **Movie Render Queue Additional Render Passes** plugin (`MoviePipelineMaskRenderPass`) in the local project first; it owns the panoramic pass.
 
-With `projection` set to `stereo360` the renderer:
+Unreal 5.8 compiles a stereo mode into that pass but leaves its properties without reflection, so no script or editor panel can switch it on. The renderer therefore queues two mono panoramic jobs per frame, one per eye, with the camera moved 3.2 cm left and right of the route across the shot heading. Depth is correct where the viewer faces the heading and fades toward the sides; behind the viewer the eyes are swapped. Set `projection` to `mono360` for a single job with no stereo when comfort matters more than depth.
 
-- uses the Movie Render Queue panoramic pass with `stereo` enabled, a 6.4 cm eye separation and per-pane history so Lumen, auto exposure and TAA work. Enable the **Movie Render Queue Additional Render Passes** plugin first.
-- writes square 5760×5760 top-bottom frames at 30 fps under `generated/video-frames-360/`, with progress in `generated/video-render-360.json`. Override `resolution` with two equal integers for faster tests, for example `[2880, 2880]`.
+With a 360 projection the renderer:
+
+- uses the panoramic pass with 8×3 panes, camera orientation followed, and per-pane history so Lumen, auto exposure and TAA work.
+- writes 2:1 frames, 5760×2880 by default, at 30 fps under `generated/video-frames-360/` (`left/` and `right/` for stereo), with progress in `generated/video-render-360.json`. Override `resolution` with a 2:1 pair for faster tests.
 - keeps one level heading per shot, aimed at the shot's first target. The camera never turns; the viewer turns their head. Flat rendering keeps its look-at motion.
 - scales every shot by `durationScale`, so the same translation happens more slowly. Two is a comfortable starting point for a 4-minute tour.
 
-Each frame renders 8×3 panes per eye, so expect the full video to take far longer than the flat render. Check the one-second preview on the headset before committing to the full run. Motion blur, vignette, depth of field and chromatic aberration should stay off in the local post-process volume; they break stereo fusion.
+Each frame renders 24 panes per eye, so the full video takes far longer than the flat render. The 1440×720 stereo preview took about eleven minutes for its 30 frames per eye on the local Mac. Check the preview on the headset before committing to the full run. Motion blur, vignette, depth of field and chromatic aberration should stay off in the local post-process volume; they break stereo fusion.
 
 Encode the frames with:
 
@@ -168,44 +170,8 @@ Encode the frames with:
 node unreal/encode-walkthrough.mjs --stereo360
 ```
 
-This produces `generated/house-walkthrough-360-tb.mp4`: H.265 in a faststart MP4 tagged `hvc1`, 4:2:0, with a half-second fade through black at every cut and no subtitle track. The encoder then injects Spherical Video V1 metadata (equirectangular, top-bottom) into the video track and checks with `ffprobe` that the projection and stereo layout read back. Validation lands in `generated/video-validation-360.json`.
+Use `--mono360` for the single-eye render and add `--preview` to encode a one-second preview render into a `-preview.mp4` file. The stereo output is `generated/house-walkthrough-360-tb.mp4`: the two eyes stacked top-bottom into a square H.265 stream in a faststart MP4 tagged `hvc1`, 4:2:0, with a half-second fade through black at every cut and no subtitle track. The encoder then injects Spherical Video V1 metadata (equirectangular, top-bottom or mono) into the video track and checks with `ffprobe` that the projection and layout read back. Validation lands in `generated/video-validation-360.json`.
 
 To watch it, copy the file to the headset over USB or Meta Quest Developer Hub and open it from the Files app, choosing 360 and top-bottom if the player does not detect the layout. The Meta Quest Browser also plays it from an HTTPS URL in fullscreen with the 360 top-bottom projection selected. An unlisted YouTube upload works too; YouTube reads the injected metadata.
 
-`node unreal/verify-spherical-metadata.mjs` checks the metadata injector, `node unreal/verify-encode-walkthrough.mjs` runs both encoders on synthetic frames when ffmpeg is available, and `python3 -I unreal/verify-panoramic-render.py` checks the sequence headings and the queue configuration without Unreal.
-
-### Full-detail fallback geometry
-
-Generate a source manifest with `node unreal/export-fallback-manifest.mjs input.glb output.json`.
-It records the GLB hash and each mesh's raw/nondegenerate triangle counts and
-position fingerprints. The default input is `unreal/generated/house-walkthrough.glb`.
-
-In an idle Unreal editor, load `unreal/build-full-detail.py` with `runpy.run_path`
-and call `start(options)`. Supply `sourceRoot` (the imported `StaticMeshes` asset
-folder), a separate `targetRoot`, `manifest` (the manifest file path), and `output`
-(the build report file path). Source assets must use the importer's
-`house-walkthrough_mesh_<index>` naming. Retain the returned session and return
-control to the editor: its ticker builds one mesh at a time. Check
-`session['active']` and `session['report']['state']` for completion or failure.
-
-The builder duplicates reduced meshes into the separate asset root, configures
-100% fallback triangles without trimming, and saves only those copies. It does
-not replace scene components, modify source meshes, or save the level. Matching
-reports permit resuming; untracked target assets and overlapping builds are
-rejected. Do not delete the report when resuming an interrupted build.
-
-Triangle counts alone do not establish geometric equivalence. After completion,
-load `unreal/export-fallback-geometry.py` in the editor and call
-`export_geometry(report_path, output_path)` to extract the actual LOD0 sections.
-Run `node unreal/verify-fallback-geometry.mjs source.glb extraction.json` outside
-the editor and require every mesh to match before using the copies. The command
-also accepts a third mesh-index argument for a single raw-section probe.
-
-Position comparison assumes mesh-local geometry imported without pivot baking:
-source metres become Unreal float32 centimetres using `[x,z,y] * 100`. It checks
-nondegenerate triangle positions independent of winding and indexing, not node
-transforms, normals, materials, lighting, or visual quality. Inspect the rendered
-result separately. A partial extraction verifies only the included meshes.
-
-`yarn unreal:verify` runs synthetic GLB/section tests and a mocked editor build
-lifecycle test using Python 3. Neither requires Unreal or generated house assets.
+`node unreal/verify-spherical-metadata.mjs` checks the metadata injector, `node unreal/verify-encode-walkthrough.mjs` runs the encoders on synthetic frames when ffmpeg is available, and `python3 -I unreal/verify-panoramic-render.py` checks the sequence headings, eye offsets and queue configuration without Unreal.
