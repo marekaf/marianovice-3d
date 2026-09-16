@@ -149,6 +149,31 @@ The encoder requires a successful complete render, checks every frame, adds opti
 
 The video uses fixed exposure and provisional room lighting. It is a visualisation draft, not a daylight or electrical-lighting simulation. Generated videos, images and engine assets stay local.
 
+## Stereo 360 walkthrough for Meta Quest
+
+The same route can render as a stereoscopic 360 equirectangular video for a headset. Set `generated/video-options.json` to `{"preview":true,"projection":"stereo360"}` for a one-second test, then `{"preview":false,"projection":"stereo360","durationScale":2}` for the full video. Run `render-walkthrough.py` inside Unreal as before.
+
+With `projection` set to `stereo360` the renderer:
+
+- uses the Movie Render Queue panoramic pass with `stereo` enabled, a 6.4 cm eye separation and per-pane history so Lumen, auto exposure and TAA work. Enable the **Movie Render Queue Additional Render Passes** plugin first.
+- writes square 5760×5760 top-bottom frames at 30 fps under `generated/video-frames-360/`, with progress in `generated/video-render-360.json`. Override `resolution` with two equal integers for faster tests, for example `[2880, 2880]`.
+- keeps one level heading per shot, aimed at the shot's first target. The camera never turns; the viewer turns their head. Flat rendering keeps its look-at motion.
+- scales every shot by `durationScale`, so the same translation happens more slowly. Two is a comfortable starting point for a 4-minute tour.
+
+Each frame renders 8×3 panes per eye, so expect the full video to take far longer than the flat render. Check the one-second preview on the headset before committing to the full run. Motion blur, vignette, depth of field and chromatic aberration should stay off in the local post-process volume; they break stereo fusion.
+
+Encode the frames with:
+
+```sh
+node unreal/encode-walkthrough.mjs --stereo360
+```
+
+This produces `generated/house-walkthrough-360-tb.mp4`: H.265 in a faststart MP4 tagged `hvc1`, 4:2:0, with a half-second fade through black at every cut and no subtitle track. The encoder then injects Spherical Video V1 metadata (equirectangular, top-bottom) into the video track and checks with `ffprobe` that the projection and stereo layout read back. Validation lands in `generated/video-validation-360.json`.
+
+To watch it, copy the file to the headset over USB or Meta Quest Developer Hub and open it from the Files app, choosing 360 and top-bottom if the player does not detect the layout. The Meta Quest Browser also plays it from an HTTPS URL in fullscreen with the 360 top-bottom projection selected. An unlisted YouTube upload works too; YouTube reads the injected metadata.
+
+`node unreal/verify-spherical-metadata.mjs` checks the metadata injector, `node unreal/verify-encode-walkthrough.mjs` runs both encoders on synthetic frames when ffmpeg is available, and `python3 -I unreal/verify-panoramic-render.py` checks the sequence headings and the queue configuration without Unreal.
+
 ### Full-detail fallback geometry
 
 Generate a source manifest with `node unreal/export-fallback-manifest.mjs input.glb output.json`.

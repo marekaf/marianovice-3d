@@ -10,6 +10,10 @@ ROOT = Path(__file__).resolve().parent
 RendererCallbacks = runpy.run_path(str(ROOT / 'render-session.py'))['RendererCallbacks']
 STATUS = ROOT / 'generated' / 'video-render.json'
 FPS = 24
+PROJECTIONS = {
+    'flat': {'fps': 24, 'resolution': (1920, 1080), 'frames': 'video-frames', 'status': 'video-render.json'},
+    'stereo360': {'fps': 30, 'resolution': (5760, 5760), 'frames': 'video-frames-360', 'status': 'video-render-360.json'},
+}
 QUEUE = None
 EXECUTOR = None
 CALLBACKS = None
@@ -29,7 +33,7 @@ def on_error(executor, pipeline, fatal, error):
 
 
 def on_finished(executor, success):
-    folder = ROOT / 'generated' / 'video-frames'
+    folder = Path(STATE['output_directory'])
     missing = []
     for frame in STATE['expected_indices']:
         path = folder / f'{frame:05d}.png'
@@ -40,19 +44,20 @@ def on_finished(executor, success):
                  finished_at=time.time())
 
 
-def read_route():
+def read_route(fps=FPS, duration_scale=1):
     route = json.loads((ROOT / 'walkthrough-route.json').read_text())
     shots = route['shots']
     if not isinstance(shots, list) or not shots:
         raise ValueError('Walkthrough needs at least one shot')
     for shot in shots:
+        shot['duration'] = shot['duration'] * duration_scale
         if 'exposureBias' in shot and (not isinstance(shot['exposureBias'], (int, float)) or not math.isfinite(shot['exposureBias'])):
             raise ValueError('Shot exposureBias must be finite')
         duration = shot['duration']
         if not isinstance(duration, (int, float)) or not math.isfinite(duration) or duration <= 0:
             raise ValueError('Each shot needs a positive duration in seconds')
-        if abs(duration * FPS - round(duration * FPS)) > 0.000001:
-            raise ValueError('Shot duration must resolve to whole 24 fps frames')
+        if abs(duration * fps - round(duration * fps)) > 0.000001:
+            raise ValueError(f'Shot duration must resolve to whole {fps} fps frames')
         for key in ['start', 'end', 'targetStart', 'targetEnd']:
             point = shot[key]
             if not isinstance(point, list) or len(point) != 3 or not all(
@@ -63,16 +68,16 @@ def read_route():
     return shots
 
 
-def build_sequence(shots):
+def build_sequence(shots, fps=FPS, projection='flat'):
     sequence = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
         'Walkthrough_' + str(time.time_ns()), '/Game/WalkthroughVideo',
         unreal.LevelSequence, unreal.LevelSequenceFactoryNew())
-    sequence.set_display_rate(unreal.FrameRate(FPS, 1))
+    sequence.set_display_rate(unreal.FrameRate(fps, 1))
     sequence.set_playback_start(0)
     cuts = sequence.add_track(unreal.MovieSceneCameraCutTrack)
     offset = 0
     for shot in shots:
-        duration = round(shot['duration'] * FPS)
+        duration = round(shot['duration'] * fps)
         binding = sequence.add_spawnable_from_class(unreal.CameraActor)
         binding.set_display_name(shot['name'])
         camera = binding.get_object_template()
@@ -92,17 +97,26 @@ def build_sequence(shots):
         for channel in channels[6:]:
             channel.set_default(1.0)
         previous_angles = None
+        # The stereo panorama keeps one heading per shot: the viewer turns their own head,
+        # and any camera rotation in the footage reads as the whole world spinning.
+        if projection == 'stereo360':
+            heading = unreal.MathLibrary.find_look_at_rotation(
+                unreal.Vector(*shot['start']), unreal.Vector(*shot['targetStart']))
+            fixed_angles = [0.0, 0.0, heading.yaw]
         for frame in range(duration + 1):
             fraction = frame / duration
             position = [a + (b - a) * fraction for a, b in zip(shot['start'], shot['end'])]
             target = [a + (b - a) * fraction for a, b in zip(shot['targetStart'], shot['targetEnd'])]
-            rotation = unreal.MathLibrary.find_look_at_rotation(
-                unreal.Vector(*position), unreal.Vector(*target))
-            angles = [rotation.roll, rotation.pitch, rotation.yaw]
-            if previous_angles is not None:
-                angles = [previous + (angle - previous + 180) % 360 - 180
-                          for angle, previous in zip(angles, previous_angles)]
-            previous_angles = angles
+            if projection == 'stereo360':
+                angles = list(fixed_angles)
+            else:
+                rotation = unreal.MathLibrary.find_look_at_rotation(
+                    unreal.Vector(*position), unreal.Vector(*target))
+                angles = [rotation.roll, rotation.pitch, rotation.yaw]
+                if previous_angles is not None:
+                    angles = [previous + (angle - previous + 180) % 360 - 180
+                              for angle, previous in zip(angles, previous_angles)]
+                previous_angles = angles
             for channel, value in zip(channels[:6], position + angles):
                 channel.add_key(unreal.FrameNumber(offset + frame), value, 0.0,
                                 unreal.MovieSceneTimeUnit.DISPLAY_RATE,
@@ -116,8 +130,32 @@ def build_sequence(shots):
     return sequence, offset
 
 
+def read_options():
+    options_path = ROOT / 'generated' / 'video-options.json'
+    options = json.loads(options_path.read_text()) if options_path.exists() else {'preview': True}
+    if not isinstance(options.get('preview'), bool):
+        raise ValueError('video-options.json must contain a boolean preview')
+    frame_step = options.get('frameStep', 1)
+    if type(frame_step) is not int or frame_step < 1:
+        raise ValueError('video-options.json frameStep must be a positive integer')
+    projection = options.get('projection', 'flat')
+    if projection not in PROJECTIONS:
+        raise ValueError(f'video-options.json projection must be one of {sorted(PROJECTIONS)}')
+    profile = PROJECTIONS[projection]
+    resolution = options.get('resolution', list(profile['resolution']))
+    if (not isinstance(resolution, list) or len(resolution) != 2
+            or any(type(value) is not int or value <= 0 for value in resolution)):
+        raise ValueError('video-options.json resolution must be two positive integers')
+    if projection == 'stereo360' and resolution[0] != resolution[1]:
+        raise ValueError('Stereo 360 top-bottom output must be square')
+    duration_scale = options.get('durationScale', 1)
+    if not isinstance(duration_scale, (int, float)) or not math.isfinite(duration_scale) or duration_scale <= 0:
+        raise ValueError('video-options.json durationScale must be a positive number')
+    return options, projection, profile, resolution, frame_step, duration_scale
+
+
 def render():
-    global QUEUE, EXECUTOR, CALLBACKS
+    global QUEUE, EXECUTOR, CALLBACKS, STATUS
     if not hasattr(unreal, 'MoviePipelinePIEExecutor'):
         raise RuntimeError('Enable MovieRenderPipeline and restart the editor before rendering')
     levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
@@ -128,19 +166,15 @@ def render():
     subsystem = unreal.get_editor_subsystem(unreal.MoviePipelineQueueSubsystem)
     if subsystem.is_rendering():
         raise RuntimeError('Another Movie Render Queue render is already running')
-    options_path = ROOT / 'generated' / 'video-options.json'
-    options = json.loads(options_path.read_text()) if options_path.exists() else {'preview': True}
-    if not isinstance(options.get('preview'), bool):
-        raise ValueError('video-options.json must contain a boolean preview')
+    options, projection, profile, resolution, frame_step, duration_scale = read_options()
     preview = options['preview']
-    frame_step = options.get('frameStep', 1)
-    if type(frame_step) is not int or frame_step < 1:
-        raise ValueError('video-options.json frameStep must be a positive integer')
+    fps = profile['fps']
+    STATUS = ROOT / 'generated' / profile['status']
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     map_path = world.get_path_name()
     if map_path != '/Game/Walkthrough/House.House':
         raise RuntimeError('Load /Game/Walkthrough/House before rendering')
-    shots = read_route()
+    shots = read_route(fps, duration_scale)
     selected = options.get('shotNames')
     if selected is not None:
         if not isinstance(selected, list) or not selected or any(not isinstance(name, str) for name in selected):
@@ -148,8 +182,8 @@ def render():
         if len(set(selected)) != len(selected) or any(name not in [shot['name'] for shot in shots] for name in selected):
             raise ValueError('shotNames contains duplicates or unknown shots')
         shots = [shot for shot in shots if shot['name'] in selected]
-    sequence, total_frames = build_sequence(shots)
-    end_frame = min(FPS, total_frames) if preview else total_frames
+    sequence, total_frames = build_sequence(shots, fps, projection)
+    end_frame = min(fps, total_frames) if preview else total_frames
     expected_indices = list(range(0, end_frame, frame_step))
     if not levels.save_current_level():
         raise RuntimeError('Could not save the walkthrough world before rendering')
@@ -160,12 +194,12 @@ def render():
     job.sequence = unreal.SoftObjectPath(sequence.get_path_name())
     config = job.get_configuration()
     output = config.find_or_add_setting_by_class(unreal.MoviePipelineOutputSetting)
-    folder = ROOT / 'generated' / 'video-frames'
+    folder = ROOT / 'generated' / profile['frames']
     folder.mkdir(parents=True, exist_ok=True)
     output.output_directory = unreal.DirectoryPath(str(folder))
-    output.output_resolution = unreal.IntPoint(1920, 1080)
+    output.output_resolution = unreal.IntPoint(*resolution)
     output.use_custom_frame_rate = True
-    output.output_frame_rate = unreal.FrameRate(FPS, 1)
+    output.output_frame_rate = unreal.FrameRate(fps, 1)
     output.file_name_format = '{frame_number}'
     output.zero_pad_frame_numbers = 5
     output.override_existing_output = True
@@ -175,7 +209,18 @@ def render():
     output.handle_frame_count = 0
     output.output_frame_step = frame_step
     output.flush_disk_writes_per_shot = True
-    config.find_or_add_setting_by_class(unreal.MoviePipelineDeferredPassBase)
+    if projection == 'stereo360':
+        panorama = config.find_or_add_setting_by_class(unreal.MoviePipelinePanoramicPass)
+        panorama.num_horizontal_steps = 8
+        panorama.num_vertical_steps = 3
+        panorama.stereo = True
+        # Unreal units are centimetres, so this is the 64 mm average adult interpupillary distance.
+        panorama.eye_separation = 6.4
+        panorama.follow_camera_orientation = True
+        # Lumen, auto exposure and TAA need a history buffer per pane or the panes render black.
+        panorama.allocate_history_per_pane = True
+    else:
+        config.find_or_add_setting_by_class(unreal.MoviePipelineDeferredPassBase)
     config.find_or_add_setting_by_class(unreal.MoviePipelineImageSequenceOutput_PNG)
     config.find_or_add_setting_by_class(unreal.MoviePipelineGameOverrideSetting)
     aa = config.find_or_add_setting_by_class(unreal.MoviePipelineAntiAliasingSetting)
@@ -187,7 +232,8 @@ def render():
     aa.use_camera_cut_for_warm_up = False
     write_status(state='rendering', preview=preview, expected_frames=len(expected_indices),
                  expected_indices=expected_indices, frame_step=frame_step, route_shots=shots,
-                 total_frames=total_frames, fps=FPS, resolution=[1920, 1080],
+                 total_frames=total_frames, fps=fps, resolution=list(resolution),
+                 projection=projection, stereo_layout='top-bottom' if projection == 'stereo360' else None,
                  sequence=sequence.get_path_name(), map=map_path,
                  output_directory=str(folder), started_at=time.time(), errors=[])
     EXECUTOR = unreal.MoviePipelinePIEExecutor()
