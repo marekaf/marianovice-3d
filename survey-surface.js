@@ -2,8 +2,39 @@ const SurveySurface = (() => {
   const planeHeight = (plane, x, z) => Math.max(0, plane.a * x + plane.b * z + plane.c);
   const cross = (a, b, c) => (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
 
+  // The viewer samples the surface tens of millions of times while it builds the terrain, so each
+  // query must not scan every triangle. The index lives outside `data`: that object is serialized
+  // for Blender and compared between builds, and a deserialized copy gets its own index on first use.
+  const indexes = new WeakMap();
+  function triangleIndex(data) {
+    let index = indexes.get(data);
+    if (index) return index;
+    const { points, triangles } = data;
+    const xs = points.map(p => p[0]), zs = points.map(p => p[1]);
+    const margin = 1e-6 * Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs));
+    const minX = Math.min(...xs) - margin, minZ = Math.min(...zs) - margin;
+    const maxX = Math.max(...xs) + margin, maxZ = Math.max(...zs) + margin;
+    const n = Math.max(1, Math.ceil(Math.sqrt(triangles.length)) * 2);
+    const cells = Array.from({ length: n * n }, () => []);
+    const cellX = x => Math.max(0, Math.min(n - 1, Math.floor((x - minX) / (maxX - minX) * n)));
+    const cellZ = z => Math.max(0, Math.min(n - 1, Math.floor((z - minZ) / (maxZ - minZ) * n)));
+    // Triangles are pushed in array order, so each cell keeps the first-match order of a full scan.
+    for (const triangle of triangles) {
+      const corners = triangle.map(i => points[i]);
+      const x0 = cellX(Math.min(...corners.map(p => p[0])) - margin), x1 = cellX(Math.max(...corners.map(p => p[0])) + margin);
+      const z0 = cellZ(Math.min(...corners.map(p => p[1])) - margin), z1 = cellZ(Math.max(...corners.map(p => p[1])) + margin);
+      for (let cz = z0; cz <= z1; cz++) for (let cx = x0; cx <= x1; cx++) cells[cz * n + cx].push(triangle);
+    }
+    index = { minX, minZ, maxX, maxZ, n, cells, cellX, cellZ };
+    indexes.set(data, index);
+    return index;
+  }
+
   function height(data, x, z) {
-    const { points, triangles, hullEdges, fallbackPlane } = data;
+    const { points, hullEdges, fallbackPlane } = data;
+    const index = triangleIndex(data);
+    const inside = x >= index.minX && x <= index.maxX && z >= index.minZ && z <= index.maxZ;
+    const triangles = inside ? index.cells[index.cellZ(z) * index.n + index.cellX(x)] : [];
     for (const [i,j,k] of triangles) {
       const a=points[i],b=points[j],c=points[k],area=cross(a,b,c);
       const wb=((x-a[0])*(c[1]-a[1])-(z-a[1])*(c[0]-a[0]))/area;
