@@ -18,17 +18,16 @@ const FenceModel=(()=>{
       const samples=Array.from({length:17},(_,i)=>ground(from+spacing*i/16)),bottom=Math.min(...samples,ha,hb)-.06;
       const a=point(from,-.025,bottom),b=point(to,-.025,bottom),c=point(to,.025,bottom),d=point(from,.025,bottom);
       parts.push({name:`concrete_gravel_board_${bay}`,type:'mesh',vertices:[a,b,c,d,point(from,-.025,ha+.2),point(to,-.025,hb+.2),point(to,.025,hb+.2),point(from,.025,ha+.2)],faces:[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]],material:'fenceConcrete',category:'structure'});
-      const groups=new Map(),rows=Math.ceil(1.8/.035),rise=1.8/rows,radius=.0014;
+      // Each strand is a flat ribbon in the fence plane, as wide across the zigzag as the wire is
+      // thick; the material is double-sided so it reads from both sides of the boundary.
+      const groups=new Map(),rows=Math.ceil(1.8/.035),rise=1.8/rows,radius=.0014,half=radius*Math.hypot(.035,rise)/rise;
       for(let col=-1;col*.035<spacing;col++){
         const vertices=[],faces=[];
         for(let row=0;row<=rows;row++){
           const t=from+Math.max(.004,Math.min(spacing-.004,col*.035+((row+col+2)%2)*.035));
           const height=topHeightAt?base(t)+.2+row/rows*(topHeightAt(...point(t,0,0).slice(0,2))-base(t)-.2):base(t)+.2+row*rise,depth=(col%2?.0015:-.0015);
-          for(let ring=0;ring<6;ring++){
-            const angle=ring*Math.PI/3;
-            vertices.push(point(t+Math.cos(angle)*radius,depth+Math.sin(angle)*radius,height));
-            if(row)faces.push([(row-1)*6+ring,(row-1)*6+(ring+1)%6,row*6+(ring+1)%6,row*6+ring]);
-          }
+          vertices.push(point(t-half,depth,height),point(t+half,depth,height));
+          if(row)faces.push([(row-1)*2,(row-1)*2+1,row*2+1,row*2]);
         }
         const position=vertices[0],relative=vertices.map(vertex=>vertex.map((v,i)=>v-position[i]));
         const key=relative.flat().map(v=>Math.round(v*1e8)).join(',');
@@ -46,7 +45,7 @@ const FenceModel=(()=>{
       const foot=t+sign*Math.min(1.1,length/2);
       beam(`fence_end_brace_${endIndex}`,point(t,.015,ground(t)+1.55),point(foot,.015,ground(foot)+.16),.032);
     }
-    return {name:'Anthracite chain-link boundary fence',floorHeight:0,parts,lights:[],materials:{fenceSteel:{color:'#343b3f',roughness:.55,metalness:.4},fenceWire:{color:'#3c4447',roughness:.65,metalness:.3},fenceConcrete:{color:'#a3a49e',roughness:.96}},dims:{height:2,boardVisible:.2,wireDiameter:.0028,diamondDiagonal:.07,bays},notes:['Nominal height2000mm including200mm visible concrete gravel board. Wire pitch, post profiles and base details are illustrative, not a selected fence product. Board bottoms extend below sampled ground; fabrication and stepped grading need coordination.']};
+    return {name:'Anthracite chain-link boundary fence',floorHeight:0,parts,lights:[],materials:{fenceSteel:{color:'#343b3f',roughness:.55,metalness:.4},fenceWire:{color:'#3c4447',roughness:.65,metalness:.3,doubleSided:true},fenceConcrete:{color:'#a3a49e',roughness:.96}},dims:{height:2,boardVisible:.2,wireDiameter:.0028,diamondDiagonal:.07,bays},notes:['Nominal height2000mm including200mm visible concrete gravel board. Wire pitch, post profiles and base details are illustrative, not a selected fence product. Board bottoms extend below sampled ground; fabrication and stepped grading need coordination.']};
   }
   return {build};
 })();

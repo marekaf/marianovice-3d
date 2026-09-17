@@ -92,6 +92,7 @@ export function buildModel(THREE, model) {
       ior: name.toLowerCase().includes('water') ? 1.333 : 1.5,
       emissive: spec.emissive || '#000000',
       emissiveIntensity: spec.emissiveIntensity || 0,
+      side: spec.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
       ...(spec.grain ? { map: wood, bumpMap: wood, bumpScale: 0.0007 } : {}),
       ...(finishMap ? {map:finishMap,bumpMap:finishMap,bumpScale:.00035} : {}),
     });
