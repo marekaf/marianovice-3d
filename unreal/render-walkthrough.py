@@ -202,8 +202,6 @@ def render():
         shots = [shot for shot in shots if shot['name'] in selected]
     stills = options.get('stills', False)
     if stills:
-        # One frame per route position, taken where the shot begins, so a tour of stills
-        # shares the video's viewpoints and headings.
         shots = [dict(shot, duration=1 / fps, end=shot['start'], targetEnd=shot['targetStart']) for shot in shots]
     sequences = {eye: build_sequence(shots, fps, projection, offset, options.get('exposureBias', 0.0))
                  for eye, offset in profile['eyes'].items()}
