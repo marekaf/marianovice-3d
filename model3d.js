@@ -128,7 +128,8 @@ export function buildModel(THREE, model) {
           mesh.setMatrixAt(instance, transform.makeTranslation(x, z, y));
         });
         mesh.instanceMatrix.needsUpdate = true;
-        mesh.castShadow = mesh.receiveShadow = !material.transmission;
+        mesh.receiveShadow = !material.transmission;
+        mesh.castShadow = mesh.receiveShadow && part.castShadow !== false;
         categories[part.category || 'structure'].add(mesh);
       }
       continue;
@@ -185,21 +186,21 @@ export function buildModel(THREE, model) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.name = part.name;
     if (part.position) mesh.position.set(part.position[0], part.position[2], part.position[1]);
-    mesh.castShadow = !material.transmission;
     mesh.receiveShadow = !material.transmission;
+    mesh.castShadow = mesh.receiveShadow && part.castShadow !== false;
     const category = part.category || 'structure';
     if (material.transmission) {
       categories[category].add(mesh);
     } else {
       const baked = geometry.clone();
       baked.translate(mesh.position.x, mesh.position.y, mesh.position.z);
-      const key = `${category}/${part.material}`;
-      if (!batches.has(key)) batches.set(key, { category, material: part.material, geometries: [] });
+      const key = `${category}/${part.material}/${mesh.castShadow ? 'shadow' : 'noshadow'}`;
+      if (!batches.has(key)) batches.set(key, { category, material: part.material, castShadow: mesh.castShadow, geometries: [] });
       batches.get(key).geometries.push(baked);
       geometry.dispose();
     }
   }
-  for (const { material, category, geometries } of batches.values()) {
+  for (const { material, category, castShadow, geometries } of batches.values()) {
     if (geometries.some(geometry => geometry.index)) {
       let vertices = 0, indices = 0, attributeBytes = 0, expandedBytes = 0;
       for (const geometry of geometries) {
@@ -224,7 +225,8 @@ export function buildModel(THREE, model) {
     }
     const mesh = new THREE.Mesh(mergeGeometries(geometries), materials.get(material));
     mesh.name = `${model.name}_${category}_${material}`;
-    mesh.castShadow = mesh.receiveShadow = true;
+    mesh.receiveShadow = true;
+    mesh.castShadow = castShadow;
     categories[category].add(mesh);
     geometries.forEach(geometry => geometry.dispose());
   }

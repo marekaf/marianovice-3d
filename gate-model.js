@@ -46,7 +46,8 @@ const GateModel = (() => {
           }
         }
       }
-      parts.push({name,type:'repeatedMesh',groups:[...groups.values()],material:'gateMesh',category});
+      // Expanded-metal strands are far below one shadow texel; their shadow is only noise.
+      parts.push({name,type:'repeatedMesh',groups:[...groups.values()],material:'gateMesh',category,castShadow:false});
       return {pitch:[pitchX,pitchZ],strand,thickness,vertices:strands*8,triangles:strands*12};
     }
     const slide=(x,y,z)=>[x+shift,railY+y,z];
