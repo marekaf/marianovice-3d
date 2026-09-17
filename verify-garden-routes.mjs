@@ -17,6 +17,7 @@ for(let i=0;i<result.positions.length;i+=3) {
   assert.ok(GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<.012);
 }
 assert.deepEqual(GardenRouteModel.geometry(GARDEN.gardenRoutes,(x,z)=>2+x*.02+z*.01),result);
+assert.deepEqual(await GardenRouteModel.geometryAsync(GARDEN.gardenRoutes,async(xs,zs)=>Float64Array.from(xs,(x,i)=>2+x*.02+zs[i]*.01)),result,'Batched heights give the same surface');
 const crossing=[{points:[[0,0],[4,0]],width:1}];
 const clipped=GardenRouteModel.geometry(crossing,()=>2,.12,[{kind:'rect',x:1,y:-1,w:2,d:2}]);
 for(let i=0;i<clipped.positions.length;i+=9){

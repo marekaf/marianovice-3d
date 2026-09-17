@@ -12,7 +12,7 @@ class FakeWorker{
     queueMicrotask(()=>{
       if(message.type==='init')return this.behaviour==='broken'?this.emit('message',{type:'error',message:'no scripts'}):this.emit('message',{type:'ready'});
       const heights=new Float64Array(message.xs.length);
-      for(let i=0;i<heights.length;i++)heights[i]=height(message.xs[i],message.zs[i])+(this.behaviour==='drift'?1e-12:0);
+      for(let i=0;i<heights.length;i++)heights[i]=height(message.xs[i],message.zs[i])+(message.field==='route'?1:0)+(this.behaviour==='drift'?1e-12:0);
       this.emit('message',{type:'heights',id:message.id,heights});
     });
   }
@@ -20,10 +20,11 @@ class FakeWorker{
 const xs=Float64Array.from({length:1001},(_,i)=>i*.037-3),zs=Float64Array.from({length:1001},(_,i)=>Math.sqrt(i)*.5);
 const expected=Float64Array.from(xs,(x,i)=>height(x,zs[i]));
 FakeWorker.behaviour='ok';
-const pool=createTerrainSampler({height,workerUrl:'terrain-worker.js',scripts:['a.js'],threads:3,Worker:FakeWorker});
+const pool=createTerrainSampler({height,routeHeight:(x,z)=>height(x,z)+1,workerUrl:'terrain-worker.js',scripts:['a.js'],threads:3,Worker:FakeWorker});
 assert.equal(await pool.mode,'workers');
 assert.equal(FakeWorker.made.length,3);
 assert.deepEqual(await pool.sample(xs,zs),expected,'Chunks reassemble in point order');
+assert.deepEqual(await pool.sampleRoute(xs,zs),expected.map(v=>v+1),'Route heights use the route field');
 assert.deepEqual(await pool.sample(xs.subarray(0,2),zs.subarray(0,2)),expected.subarray(0,2),'Batches shorter than the pool still work');
 assert.deepEqual(await pool.sample(new Float64Array(0),new Float64Array(0)),new Float64Array(0));
 pool.dispose();assert(FakeWorker.made.every(worker=>worker.terminated),'Dispose stops every worker');

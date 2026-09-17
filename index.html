@@ -199,8 +199,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=cf5aeffefc25';
 import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
 import { GroundSurfaceModel } from './ground-surface-model.js';
-import {levelCircularGround,gradingGroundBoundaries,refinePlateauGroundAsync,gradingGroundRefinement} from "./circular-pad-ground.js?v=5f7ce53f9d65";
-import { createTerrainSampler, TERRAIN_WORKER_SCRIPTS } from './terrain-sampler.js?v=c3a9ac65ca52';
+import {levelCircularGroundAsync,gradingGroundBoundaries,refinePlateauGroundAsync,gradingGroundRefinement} from "./circular-pad-ground.js?v=75705cec92a1";
+import { createTerrainSampler, TERRAIN_WORKER_SCRIPTS } from './terrain-sampler.js?v=9800311fdc06';
 import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=a15eb452d53a';
 import { ShrubModel } from './shrub-model.js';
 import { createViewerPostprocessing } from './viewer-postprocessing.js?v=d8efa55f3e31';
@@ -258,7 +258,7 @@ const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r
 const pergolaModel = PergolaModel.build(GARDEN);
 const garageGround = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
 const {site:siteTerrain} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:surveySurface});
-const terrainSampler=createTerrainSampler({height:siteTerrain.height,workerUrl:'./terrain-worker.js?v=c080059c1d52',
+const terrainSampler=createTerrainSampler({height:siteTerrain.height,routeHeight:siteTerrain.routeHeight,workerUrl:'./terrain-worker.js?v=484a673ecae7',
   scripts:TERRAIN_WORKER_SCRIPTS.map(name=>[...document.scripts].find(script=>script.src.split('?')[0].endsWith(`/${name}.js`))?.src).filter(Boolean)});
 const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround,{floorHeight:siteTerrain.spec.productiveCourt.greenhouseFinish});
 const raisedBedsModel = RaisedBedsModel.build(GARDEN,{surfaceHeight:siteTerrain.routeHeight,groundHeight:siteTerrain.height,court:siteTerrain.spec.productiveCourt});
@@ -919,9 +919,8 @@ const groundGeom = await (async () => {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   g.setIndex(index);
-  return refinePlateauGroundAsync(THREE,levelCircularGround(THREE,g,[...siteTerrain.spec.gatheringPads,...gradingGroundBoundaries(GARDEN,siteTerrain.spec)],terrainHeight),terrainSampler.sample,gradingGroundRefinement(siteTerrain.spec));
+  return refinePlateauGroundAsync(THREE,await levelCircularGroundAsync(THREE,g,[...siteTerrain.spec.gatheringPads,...gradingGroundBoundaries(GARDEN,siteTerrain.spec)],terrainSampler.sample),terrainSampler.sample,gradingGroundRefinement(siteTerrain.spec));
 })();
-terrainSampler.dispose();
 
 const groundSurface = GroundSurfaceModel.create(THREE, { garden: GARDEN, clearances: plantingClearances, grassTexture: grassTex });
 const ground = new THREE.Mesh(groundGeom, groundSurface.material);
@@ -1828,8 +1827,9 @@ let houseRoofWindowModel=null;
 const outdoorLoungeGroup = buildModel(THREE, outdoorLoungeModel);
 furnitureGroup.add(outdoorLoungeGroup);
 
-const gardenRoutes=GardenRouteModel.create(THREE,{routes:GARDEN.gardenRoutes,height:siteTerrain.routeHeight,garden:GARDEN,exclusions:[{kind:'rect',...hiddenBenchModel.groundPatch},raisedBedsModel.surfaceFootprint]});
+const gardenRoutes=await GardenRouteModel.createAsync(THREE,{routes:GARDEN.gardenRoutes,sample:terrainSampler.sampleRoute,garden:GARDEN,exclusions:[{kind:'rect',...hiddenBenchModel.groundPatch},raisedBedsModel.surfaceFootprint]});
 scene.add(gardenRoutes);
+terrainSampler.dispose();
 await ViewerLoading.stage('Joining garden paths to the ground…');
 ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry,siteTerrain.spec.drainageStrips);
 const gardenRouteEdges=new THREE.Mesh(routeEdgeGeometry(THREE,ground.geometry,gardenRoutes.geometry),gardenRoutes.material);

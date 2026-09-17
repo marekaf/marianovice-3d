@@ -10,7 +10,7 @@ const server=createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://localhost').pathname;
   let data=await readFile(resolve(root,'.'+path));
   if(path==='/index.html'){
-    data=data.toString().replace('terrainSampler.dispose();','window.terrainCheck={mode:await terrainSampler.mode};terrainSampler.dispose();').replace('scene.add(ground);','scene.add(ground);window.terrainCheck.ground=ground;');
+    data=data.toString().replace('terrainSampler.dispose();','Object.assign(window.terrainCheck??={},{mode:await terrainSampler.mode});terrainSampler.dispose();').replace('scene.add(ground);','scene.add(ground);Object.assign(window.terrainCheck??={},{ground});');
     if(threads!==null)data=data.replace('createTerrainSampler({','createTerrainSampler({threads:'+threads+',');
   }
   if(['.html','.js','.mjs'].includes(extname(path)))data=data.toString().replaceAll('https://unpkg.com/three@0.186.0/','/node_modules/three/');
