@@ -304,6 +304,18 @@ with tempfile.TemporaryDirectory() as directory:
     except ValueError as error:
         assert 'projection' in str(error)
 
+    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': False, 'projection': 'stereo360', 'stills': True, 'shotNames': ['1.06 Living', '1.12 Bedroom']}))
+    renderer['render']()
+    status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
+    assert status['stills'] is True and status['total_frames'] == 2 and status['expected_indices'] == [0, 1]
+    assert [shot['name'] for shot in status['route_shots']] == ['1.06 Living', '1.12 Bedroom']
+    assert all(shot['end'] == shot['start'] and shot['duration'] == 1 / 30 for shot in status['route_shots']), 'Stills hold the camera at the shot start'
+    for binding in LAST_SEQUENCE.bindings:
+        section = binding.tracks[0].sections[0]
+        assert section.range[1] - section.range[0] == 1, 'Each still is a one-frame cut'
+    live['CALLBACKS'].close()
+    fake._walkthrough_video_session = None
+
     (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': False, 'durationScale': 2}))
     renderer['render']()
     jobs = live['QUEUE'].jobs
@@ -313,6 +325,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert config.settings['MoviePipelineOutputSetting'].output_directory.endswith('video-frames')
     status = json.loads((root / 'generated' / 'video-render.json').read_text())
     assert status['projection'] == 'flat' and status['stereo_layout'] is None and list(status['eye_directories']) == ['']
+    assert status['stills'] is False
     assert status['fps'] == 24 and status['resolution'] == [1920, 1080] and status['total_frames'] == 5760
     live['CALLBACKS'].close()
 
