@@ -3,7 +3,7 @@ import {createMeshHeightQuery} from './mesh-height-query.js';
 import * as THREE from 'three';
 import {createRequire} from 'node:module';
 import {existsSync} from 'node:fs';
-import {levelCircularGround,gradingGroundBoundaries,refinePlateauGround,gradingGroundRefinement} from './circular-pad-ground.js';
+import {levelCircularGround,gradingGroundBoundaries,refinePlateauGround,refinePlateauGroundAsync,gradingGroundRefinement} from './circular-pad-ground.js';
 const require=createRequire(import.meta.url),{GARDEN}=require('./layout.js'),{TERRAIN}=require('./terrain.js'),{GradingSite}=require('./grading-site.js');
 const survey=existsSync('docs/survey-terrain.js')?require('./docs/survey-terrain.js').SURVEY_TERRAIN:{points:[[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5]]};
 const {GradingZones}=require('./grading-zones.js'),zone=GradingZones.create(GARDEN).zones.find(z=>z.id==='C');
@@ -35,4 +35,14 @@ assert(vertexError<2e-5,`Inserted mesh vertices preserve sampled ramps and basin
 assert(aligned.index.count/3<150000,'Local refinement keeps the coarse fixture below150,000 triangles');
 assert(Math.abs(height(mesh,35.6,14)-site.height(35.6,14))<.001,'Former basin is filled in actual triangles');
 assert(height(mesh,pond.cx,pond.cz)<pond.edge-pond.depth*.8,'Boundary alignment preserves the excavated basin');
-console.log(JSON.stringify({rimSamples:rim.length,lawnSamples,maximumRimError,maximumLawnError,vertexError,triangles:aligned.index.count/3}));
+const source=new THREE.PlaneGeometry(24,24,35,35);source.rotateX(-Math.PI/2);source.translate(30,0,11);
+for(let i=0;i<source.attributes.position.count;i++)source.attributes.position.setY(i,site.height(source.attributes.position.getX(i),source.attributes.position.getZ(i)));
+let batches=0;
+const batched=await refinePlateauGroundAsync(THREE,levelCircularGround(THREE,source,gradingGroundBoundaries(GARDEN,site.spec),site.height),async(xs,zs)=>{
+  batches++;await new Promise(resolve=>setTimeout(resolve,1));
+  return Float64Array.from(xs,(x,i)=>site.height(x,zs[i]));
+},gradingGroundRefinement(site.spec));
+for(const name of ['position','uv','normal'])assert.deepEqual(Array.from(batched.attributes[name].array),Array.from(aligned.attributes[name].array),`Batched sampling reproduces the ${name} attribute exactly`);
+assert.deepEqual(Array.from(batched.index.array),Array.from(aligned.index.array),'Batched sampling reproduces the triangles exactly');
+assert(batches>1,'Refinement samples once per depth');
+console.log(JSON.stringify({rimSamples:rim.length,lawnSamples,maximumRimError,maximumLawnError,vertexError,triangles:aligned.index.count/3,batches}));
