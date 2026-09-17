@@ -203,7 +203,8 @@ import {levelCircularGround,gradingGroundBoundaries,refinePlateauGroundAsync,gra
 import { createTerrainSampler, TERRAIN_WORKER_SCRIPTS } from './terrain-sampler.js?v=87773e4b887a';
 import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=a15eb452d53a';
 import { ShrubModel } from './shrub-model.js';
-import { createAdaptiveResolution } from './adaptive-resolution.js?v=42f2819e54df';
+import { createViewerPostprocessing } from './viewer-postprocessing.js?v=d8efa55f3e31';
+import { createAdaptiveResolution } from './adaptive-resolution.js?v=3ad4393273fb';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
 import { createWalkInteriorLoader } from './walk-interior-loading.js';
 import { removeFacadeLid } from './docs/walk-facade.js';
@@ -319,7 +320,9 @@ controls.maxPolarAngle = Math.PI / 2 - 0.05;
 controls.minDistance = 3;
 controls.maxDistance = 200;
 controls.addEventListener('change',requestRender);
-const adaptiveResolution=createAdaptiveResolution({renderer,full:()=>Math.min(devicePixelRatio,mobileRendering?1:2),onRestore:requestRender});
+const postprocessing=createViewerPostprocessing({THREE,renderer,scene,camera,samples:mobileRendering?0:4});
+const adaptiveResolution=createAdaptiveResolution({renderer,full:()=>Math.min(devicePixelRatio,mobileRendering?1:2),onRestore:requestRender,
+  setPixelRatio:ratio=>{renderer.setPixelRatio(ratio);postprocessing.setPixelRatio(ratio);}});
 controls.addEventListener('change',adaptiveResolution.interact);
 
 // ───────────────────────── SKY DOME (procedural gradient) ─────────────────────────
@@ -2496,6 +2499,7 @@ window.addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
+  postprocessing.setSize(innerWidth, innerHeight);
   adaptiveResolution.refresh();
   requestRender();
 });
@@ -2596,7 +2600,7 @@ function animate(dt=0) {
   // Skip controls.update() during tour/FP — OrbitControls.update() calls camera.lookAt(target)
   // which would override our custom lookAt and point camera at controls.target (house center)
   if (!tourActive && !fpState.active) controls.update();
-  renderer.render(scene, camera);
+  postprocessing.render();
   const moving=tourActive||(fpState.active&&['w','a','s','d'].some(key=>fpState.keys[key]));
   if(moving)adaptiveResolution.interact();
   return moving;
