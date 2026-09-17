@@ -1,3 +1,13 @@
+// Every climber reads the same two specs, so all of them draw with one branch and one leaf material.
+const materialsByThree = new WeakMap();
+function sharedMaterials(THREE) {
+  if (!materialsByThree.has(THREE)) materialsByThree.set(THREE, {
+    wood: new THREE.MeshStandardMaterial({ color: '#62503a', roughness: .95 }),
+    foliage: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .76, side: THREE.DoubleSide, vertexColors: true }),
+  });
+  return materialsByThree.get(THREE);
+}
+
 export const ClimberModel = {
   create(THREE, { width = 1.1, height = 2.2, seed = 1, blocked = () => false } = {}) {
     if (!(width >= .3 && height >= .4) || !Number.isFinite(width + height)) throw new Error('Climber requires finite wall dimensions');
@@ -53,7 +63,7 @@ export const ClimberModel = {
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(stems, 3));
       geometry.computeVertexNormals();
-      const wood = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: '#62503a', roughness: .95 }));
+      const wood = new THREE.Mesh(geometry, sharedMaterials(THREE).wood);
       wood.name = 'climber-branches'; wood.castShadow = true; wood.receiveShadow = true;
       root.add(wood);
     }
@@ -69,7 +79,7 @@ export const ClimberModel = {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(shades, 3));
     geometry.computeVertexNormals();
-    const foliage = new THREE.InstancedMesh(geometry, new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .76, side: THREE.DoubleSide, vertexColors: true }), leaves.length);
+    const foliage = new THREE.InstancedMesh(geometry, sharedMaterials(THREE).foliage, leaves.length);
     const dark = new THREE.Color('#315631'), light = new THREE.Color('#68834b');
     leaves.forEach(({ matrix, shade }, i) => { foliage.setMatrixAt(i, matrix); foliage.setColorAt(i, dark.clone().lerp(light, shade)); });
     foliage.name = 'climber-leaves'; foliage.userData.leafHabit = 'deciduous';

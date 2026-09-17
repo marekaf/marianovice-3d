@@ -1,3 +1,10 @@
+// Stones take their colour from the instance colour, so every gravel surface shares one material.
+const stoneMaterialByThree=new WeakMap();
+function stoneMaterial(THREE){
+  if(!stoneMaterialByThree.has(THREE))stoneMaterialByThree.set(THREE,new THREE.MeshStandardMaterial({roughness:1}));
+  return stoneMaterialByThree.get(THREE);
+}
+
 export const GravelSurfaceModel = {
   create(THREE, { surface, bounds, exclusions = [], seed = 41 }) {
     let state=seed;
@@ -36,8 +43,7 @@ export const GravelSurfaceModel = {
       const halfHeight=radius*.5,y=Math.min(...heights)+halfHeight*.1;
       parts.push({x,y,z,radius,halfHeight,rotation:random()*Math.PI*2});
     }
-    const stones=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,1),
-      new THREE.MeshStandardMaterial({roughness:1}),parts.length);
+    const stones=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,1),stoneMaterial(THREE),parts.length);
     const dummy=new THREE.Object3D();
     parts.forEach((p,i)=>{
       dummy.position.set(p.x,p.y,p.z);dummy.rotation.set(0,p.rotation,0);dummy.scale.set(p.radius,p.halfHeight,p.radius);
