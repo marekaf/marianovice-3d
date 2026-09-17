@@ -231,8 +231,9 @@ const PerennialModel = (() => {
           root.userData.instances.push(instance);
         }
       }
+      // Every batch mesh takes its colour from the instance colour, so one material serves them all.
+      const material = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .95, side: THREE.DoubleSide, vertexColors: true });
       for (const { geometry, part, castShadow, members } of groups.values()) {
-        const material = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: .95, side: THREE.DoubleSide, vertexColors: true });
         const mesh = new THREE.InstancedMesh(geometry, material, members.length);
         mesh.setColorAt(0, new THREE.Color());
         mesh.name = `perennial-${part}`;
