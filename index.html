@@ -167,7 +167,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="cotoneaster-model.js?v=047460b27306"></script>
 <script src="selected-planting.js?v=8b4fbaeb1890"></script>
 <script src="planting-guide.js"></script>
-<script src="perennial-model.js?v=495faddb28ff"></script>
+<script src="perennial-model.js?v=f18d7a3e061a"></script>
 <script src="seasonal-planting.js?v=73a125d14e5a"></script>
 <script src="privacy-preview.js"></script>
 <script src="privacy-screen-model.js"></script>
@@ -196,7 +196,7 @@ import * as THREE from 'three';
 import { buildEntranceStairs } from './entrance-landing.js?v=1cb023b3f393';
 import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=cf5aeffefc25';
+import { buildModel } from './model3d.js?v=08daa6e001b5';
 import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
 import { GroundSurfaceModel } from './ground-surface-model.js';
 import {levelCircularGroundAsync,gradingGroundBoundaries,refinePlateauGroundAsync,gradingGroundRefinement} from "./circular-pad-ground.js?v=75705cec92a1";
@@ -2070,9 +2070,7 @@ let entranceGate=buildModel(THREE,entranceGateModel),entranceGateOpen=true;scene
 }
 window.toggleEntranceGate=(open=!entranceGateOpen)=>{
   if(open===entranceGateOpen)return;
-  const materials=new Set();
-  entranceGate.traverse(object=>{if(object.isMesh){if(object.isInstancedMesh)object.dispose();object.geometry.dispose();materials.add(object.material);}});
-  for(const material of materials)material.dispose();
+  entranceGate.traverse(object=>{if(object.isMesh){if(object.isInstancedMesh)object.dispose();object.geometry.dispose();}});
   scene.remove(entranceGate);entranceGateOpen=open;
   entranceGate=buildModel(THREE,GateModel.build({openingStart:gateT,direction:[gux,guz],fixedPanelLength:entranceFixedLength,railOffset:entranceGateModel.dims.railOffset,floorHeight:entranceGateModel.floorHeight,open:entranceGateOpen?1:0,wicketOpen:entranceGateOpen?1:0}));
   scene.add(entranceGate);

@@ -66,6 +66,36 @@ function cortenTexture(THREE) {
   return texture;
 }
 
+// Materials, and the procedural textures behind them, are shared by every model built with the same
+// THREE module: a spec that reads the same draws the same, and the renderer then resolves one shader
+// program per spec instead of one per model. Nothing may mutate a material buildModel hands out.
+const sharedByThree = new WeakMap();
+function sharedAssets(THREE) {
+  if (!sharedByThree.has(THREE)) sharedByThree.set(THREE, { materials: new Map(), wood: null, corten: null });
+  return sharedByThree.get(THREE);
+}
+
+function createMaterial(THREE, shared, name, spec) {
+  if (spec.finish === 'marmolit') return createMarmolitMaterial(THREE);
+  const wood = spec.grain ? (shared.wood ??= timberTexture(THREE)) : null;
+  const finishMap = spec.finish === 'corten' ? (shared.corten ??= cortenTexture(THREE)) : null;
+  const material = new THREE.MeshPhysicalMaterial({
+    color: spec.color,
+    roughness: spec.roughness,
+    metalness: spec.metalness || 0,
+    transmission: spec.transmission || 0,
+    thickness: spec.transmission ? (spec.thickness ?? 0.035) : 0,
+    ior: name.toLowerCase().includes('water') ? 1.333 : 1.5,
+    emissive: spec.emissive || '#000000',
+    emissiveIntensity: spec.emissiveIntensity || 0,
+    side: spec.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
+    ...(spec.grain ? { map: wood, bumpMap: wood, bumpScale: 0.0007 } : {}),
+    ...(finishMap ? {map:finishMap,bumpMap:finishMap,bumpScale:.00035} : {}),
+  });
+  material.name = name;
+  return material;
+}
+
 export function buildModel(THREE, model) {
   const group = new THREE.Group();
   group.name = model.name;
@@ -79,26 +109,15 @@ export function buildModel(THREE, model) {
     group.add(category);
     return [name, category];
   }));
-  const wood = timberTexture(THREE);
-  const materials = new Map(Object.entries(model.materials).map(([name, spec]) => {
-    if (spec.finish === 'marmolit') return [name, createMarmolitMaterial(THREE)];
-    const finishMap=spec.finish==='corten'?cortenTexture(THREE):null;
-    const material = new THREE.MeshPhysicalMaterial({
-      color: spec.color,
-      roughness: spec.roughness,
-      metalness: spec.metalness || 0,
-      transmission: spec.transmission || 0,
-      thickness: spec.transmission ? (spec.thickness ?? 0.035) : 0,
-      ior: name.toLowerCase().includes('water') ? 1.333 : 1.5,
-      emissive: spec.emissive || '#000000',
-      emissiveIntensity: spec.emissiveIntensity || 0,
-      side: spec.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
-      ...(spec.grain ? { map: wood, bumpMap: wood, bumpScale: 0.0007 } : {}),
-      ...(finishMap ? {map:finishMap,bumpMap:finishMap,bumpScale:.00035} : {}),
-    });
-    material.name = name;
-    return [name, material];
-  }));
+  const shared = sharedAssets(THREE);
+  // A material's compiled program differs for instanced and plain meshes, and three re-resolves it on
+  // every switch between the two, so each spec gets one material for each kind of mesh.
+  const materialFor = (name, instanced) => {
+    const key = `${instanced ? 'instanced' : 'mesh'}\n${name}\n${JSON.stringify(model.materials[name])}`;
+    if (!shared.materials.has(key)) shared.materials.set(key, createMaterial(THREE, shared, name, model.materials[name]));
+    return shared.materials.get(key);
+  };
+  const materials = new Map(Object.keys(model.materials).map(name => [name, materialFor(name, false)]));
   const batches = new Map();
   function polygonGeometry(part) {
     let geometry = new THREE.BufferGeometry();
@@ -119,7 +138,7 @@ export function buildModel(THREE, model) {
   }
   for (const [index, part] of model.parts.entries()) {
     if (part.type === 'repeatedMesh') {
-      const material = materials.get(part.material);
+      const material = materialFor(part.material, true);
       for (const [variant, repeated] of part.groups.entries()) {
         const geometry = polygonGeometry({ ...repeated, smooth: part.smooth });
         const mesh = new THREE.InstancedMesh(geometry, material, repeated.positions.length);
