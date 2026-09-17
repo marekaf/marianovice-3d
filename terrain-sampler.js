@@ -7,7 +7,7 @@ export const TERRAIN_WORKER_SCRIPTS=['terrain','layout','survey-surface','hidden
 
 export function createTerrainSampler({height,workerUrl,scripts=[],threads,Worker=globalThis.Worker}) {
   const inline=(xs,zs)=>{const heights=new Float64Array(xs.length);for(let i=0;i<xs.length;i++)heights[i]=height(xs[i],zs[i]);return heights;};
-  const count=threads??Math.min(4,Math.max(0,(globalThis.navigator?.hardwareConcurrency??1)-1));
+  const count=threads??Math.min(8,Math.max(0,(globalThis.navigator?.hardwareConcurrency??1)-1));
   const workers=[];
   const dispose=()=>{for(const worker of workers)worker.terminate();workers.length=0;};
   if(!(count>0)||typeof Worker!=='function'||!scripts.length)return {sample:async(xs,zs)=>inline(xs,zs),mode:Promise.resolve('main'),dispose};
