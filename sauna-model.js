@@ -66,15 +66,18 @@ const SaunaModel = (() => {
     box('wall_west_rear', x + 0.025, y + wall, 0, wall - 0.025, doorFrom - y - wall, 2.4, 'interior_y');
     box('wall_west_front', x + 0.025, doorTo, 0, wall - 0.025, front - doorTo - 0.08, 2.4, 'interior_y');
     box('wall_west_lintel', x + 0.025, doorFrom, 2.1, wall - 0.025, doorTo - doorFrom, 0.3, 'interior_y');
+    // The fascias share the outer wall plane from 2.35 m up, so the top row of cladding on the
+    // faces they cover stops below them instead of z-fighting behind them.
+    const underFascia = 2.35;
     for (let row = 0; row < 24; row++) {
-      const z = row * 0.1, h = 0.096;
+      const z = row * 0.1, h = 0.096, side = Math.min(h, underFascia - z);
       category = 'N';
       box(`cladding_north_${row}`, x, y, z, w, 0.025, h, `cedar_x_${row % 3}`);
       category = 'E';
-      box(`cladding_east_${row}`, x + w - 0.025, y + 0.025, z, 0.025, d - 0.025, h, `cedar_y_${row % 3}`);
+      box(`cladding_east_${row}`, x + w - 0.025, y + 0.025, z, 0.025, d - 0.025, side, `cedar_y_${row % 3}`);
       category = 'W';
       for (const [i, a, b] of row >= 21 ? [[0, y, front]] : [[0, y, doorFrom], [1, doorTo, front]])
-        box(`cladding_west_${row}_${i}`, x, a, z, 0.025, b - a, h, `cedar_y_${row % 3}`);
+        box(`cladding_west_${row}_${i}`, x, a, z, 0.025, b - a, side, `cedar_y_${row % 3}`);
     }
     category = 'furniture';
     for (const [name, start, end] of [['rear', y + wall, doorFrom], ['front', doorTo, front - 0.04]]) {
@@ -97,7 +100,7 @@ const SaunaModel = (() => {
     for (let row = 0; row < 24; row++) {
       const z = row * 0.1, end = z + 0.096;
       const runs = end <= windowBottom || z >= windowTop ? [[x, x+w]] : [[x,windowLeft],[windowRight,x+w]];
-      for (const [i, [a,b]] of runs.entries()) box(`cladding_front_${row}_${i}`, a, front-0.025,z,b-a,0.025,0.096,`cedar_x_${row%3}`);
+      for (const [i, [a,b]] of runs.entries()) box(`cladding_front_${row}_${i}`, a, front-0.025,z,b-a,0.025,Math.min(0.096, underFascia - z),`cedar_x_${row%3}`);
     }
     for (const [name, xx, width] of [['sauna', windowLeft, windowRight-windowLeft]]) {
       for (const [i, px] of [xx, xx + width - 0.04].entries()) box(`${name}_window_jamb_${i}`, px, front - 0.08, windowBottom, 0.04, 0.08, windowTop-windowBottom, 'trim');

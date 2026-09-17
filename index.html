@@ -165,13 +165,13 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="tree-model.js"></script>
 <script src="planting-profiles.js?v=8cb64402df59"></script>
 <script src="cotoneaster-model.js?v=3c1409a56a2d"></script>
-<script src="selected-planting.js?v=1ca7d8673921"></script>
+<script src="selected-planting.js?v=8b4fbaeb1890"></script>
 <script src="planting-guide.js"></script>
 <script src="perennial-model.js?v=495faddb28ff"></script>
 <script src="seasonal-planting.js?v=73a125d14e5a"></script>
 <script src="privacy-preview.js"></script>
 <script src="privacy-screen-model.js"></script>
-<script src="sauna-model.js?v=e50990536148"></script>
+<script src="sauna-model.js?v=32109848d9b9"></script>
 <script src="pergola-model.js?v=bad8cd6d266a"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
 <script src="house-roof.js?v=4ddba03ad9f4"></script>
@@ -1088,7 +1088,13 @@ const garageRidgeX = GA.x + garageRoofRidgeOffset;
   const skin = geom.toNonIndexed();
   geom.dispose();
   skin.computeVertexNormals();
-  const m = new THREE.Mesh(skin, roofMat);
+  // The wall tops reach the plate top, 1 mm under this skin, which is inside the depth-buffer
+  // error at the iso distance. The offset lets the skin win without moving the tested datum.
+  const skinMat = roofMat.clone();
+  skinMat.polygonOffset = true;
+  skinMat.polygonOffsetFactor = -1;
+  skinMat.polygonOffsetUnits = -2;
+  const m = new THREE.Mesh(skin, skinMat);
   m.name = 'garage-roof-metal-skin';
   m.castShadow = true;
   roofGroup.add(m);

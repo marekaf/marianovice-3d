@@ -42,7 +42,7 @@ const SelectedPlanting = (() => {
       const pot=new THREE.Mesh(new THREE.CylinderGeometry(.25,.21,.5,12),new THREE.MeshStandardMaterial({color:'#6c5142',roughness:.92}));
       pot.position.set(cx,floor+.25,cz);pot.name='Rose container';root.add(pot);
       const soil=new THREE.Mesh(new THREE.CylinderGeometry(.233,.233,.02,12),new THREE.MeshStandardMaterial({color:'#352a20',roughness:1}));
-      soil.position.set(cx,floor+.49,cz);root.add(soil);
+      soil.position.set(cx,floor+.475,cz);root.add(soil);
       let previous=new THREE.Vector3(cx,floor+.49,cz);
       for(let n=1;n<=18;n++){
         const t=n/18,point=new THREE.Vector3(px+.025*Math.sin(t*22+i),floor+.49+t*1.95,pz+.025*Math.cos(t*22+i));
