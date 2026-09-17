@@ -119,11 +119,12 @@ import {downloadEntranceDrawing} from './docs/entrance-drawing.js?v=16237a51647f
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mountInteriorUI } from './interior-ui.js?v=04a6d3b1a3dd';
 import { prepareLoftRoofData, attachLoftRoofWindows } from './docs/loft-roof-windows.js';
-import { attachEyeLevelWalkthrough } from './docs/eye-level-walkthrough.js?v=f53642429967';
+import { attachEyeLevelWalkthrough } from './docs/eye-level-walkthrough.js?v=9da3a6375c40';
 import { ELECTRICAL_POINTS } from './docs/electrical-points.js';
 import { attachElectricalView } from './docs/electrical-view.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { createRenderScheduler } from './render-scheduler.js';
 import { buildModel } from './model3d.js?v=aa12453b6ee9';
 
 RectAreaLightUniformsLib.init();
@@ -232,6 +233,8 @@ if (hasLoft) {
 
 const GA = gar.dims.rect;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+let renderScheduler = null;
+const requestRender = () => renderScheduler?.invalidate();
 const reflectionRoom = new RoomEnvironment();
 const reflectionGenerator = new THREE.PMREMGenerator(renderer);
 const reflectionMap = reflectionGenerator.fromScene(reflectionRoom, .04);
@@ -430,6 +433,7 @@ function setView(name) {
   document.getElementById('viewlabel').textContent = v.label;
   document.getElementById('dims').textContent = BUILDINGS[curB].dims;
   document.querySelectorAll('#views button[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  requestRender();
   document.querySelectorAll('#views button[data-building]').forEach(b => b.classList.toggle('active', b.dataset.building === curB));
   if (document.querySelector(`#views button[data-view="${name}"]`)) {
     history.replaceState(null, '', `#${curB}-${name}`);
@@ -457,6 +461,7 @@ for (const id of ['toggleGate', 'toggleVehicles', 'toggleCut', 'toggleCeiling', 
   document.getElementById(id).addEventListener('change', applyVisibility);
 }
 controls.addEventListener('change', updateScalebar);
+controls.addEventListener('change', () => requestRender());
 
 // The scale bar is a DOM overlay, so it is not in the WebGL buffer. A plan sheet without its scale
 // cannot be measured off, so redraw it into the exported bitmap rather than exporting the bare canvas.
@@ -513,6 +518,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
   fitFrustum();
   updateScalebar();
+  requestRender();
 });
 
 // Deep-link via URL hash: #plan / #house-plan / #garage-cut3d / …
@@ -572,11 +578,26 @@ window.DEBUG = { scene, get camera() { return camera; }, walkthrough, electrical
   sau: { root: saunaRoot, model: saunaModel, categories: saunaCategories, walls: BUILDINGS.sauna.walls,
     ceiling: saunaCategories.roof, furniture: saunaCategories.furniture, dims: { rect: saunaFootprint, floorY: 0, clearH: 2.4 } },
   hou: hasHouse ? hou : null, loft: hasLoft ? loft : null };
-renderer.setAnimationLoop(time => {
-  walkthrough?.update(time);
-  if (!walkthrough?.active) controls.update();
+// Nothing in these scenes moves on its own, so a frame is drawn only after input, a view change,
+// a resize or a finished texture load. Walking keeps drawing while a movement key or button is held.
+// OrbitControls updates itself on input and setView() updates it after a camera change, so no
+// per-frame update() here: in the straight-down drawing views it reports a change on every call.
+function animate() {
+  walkthrough?.update(performance.now());
   renderer.render(scene, camera);
-});
+  return Boolean(walkthrough?.moving);
+}
+renderScheduler = createRenderScheduler({ render: animate });
+for (const event of ['input', 'change', 'click', 'toggle']) document.addEventListener(event, () => requestRender(), true);
+for (const event of ['keydown', 'keyup', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel', 'touchstart', 'touchmove', 'touchend'])
+  window.addEventListener(event, () => requestRender(), { capture: true, passive: true });
+THREE.DefaultLoadingManager.onLoad = () => requestRender();
+THREE.DefaultLoadingManager.onProgress = () => requestRender();
+document.addEventListener('visibilitychange', () => renderScheduler.setVisible(!document.hidden));
+window.addEventListener('pagehide', () => renderScheduler.setVisible(false));
+window.addEventListener('pageshow', () => renderScheduler.setVisible(!document.hidden));
+renderScheduler.setVisible(!document.hidden);
+animate();
 </script>
 </body>
 </html>

@@ -128,7 +128,9 @@ export function attachEyeLevelWalkthrough(THREE, { data, floorY, camera, control
   });
   for (const event of ['pointerup','pointercancel','lostpointercapture']) canvas.addEventListener(event,e => { if (pointer?.id===e.pointerId) pointer=null; });
   return {
-    get active() { return active; }, start, stop,
+    get active() { return active; },
+    get moving() { return active && (keys.size > 0 || touchPointers.size > 0); },
+    start, stop,
     setVisible(visible) { panel.hidden=!visible; },
     update(time) {
       const delta = lastTime===null ? 0 : Math.min((time-lastTime)/1000,.05); lastTime=time;
