@@ -32,7 +32,7 @@ export async function generateGradingPDF({sourceRoot=fileURLToPath(new URL('.',i
   }
   for(const pathname of ['/docs/survey-terrain.js','/docs/fence-survey.js','/index.html','/grading.html','/package.json','/yarn.lock'])await input(pathname);
   const dependency=JSON.parse(await input('/node_modules/three/package.json'));
-  assert.equal(dependency.version,'0.160.0','Viewer requires its installed three version');
+  assert.equal(dependency.version,JSON.parse(await input('/package.json')).devDependencies.three,'Viewer requires its installed three version');
   const errors=[];
   const server=createServer(async(req,res)=>{
     try{
@@ -43,7 +43,7 @@ export async function generateGradingPDF({sourceRoot=fileURLToPath(new URL('.',i
         assert.equal(source.split(marker).length,2,'Viewer completion hook must be unique');
         bytes=source.replace(marker,'window.gradingPdfCapture={camera,controls,renderer,scene,plot:GARDEN.plot.vertices,fenceBounds:new THREE.Box3().setFromObject(fenceGroup)};'+marker);
       }
-      if(['.html','.js','.mjs'].includes(extname(pathname)))bytes=bytes.toString().replaceAll('https://unpkg.com/three@0.160.0/','/node_modules/three/');
+      if(['.html','.js','.mjs'].includes(extname(pathname)))bytes=bytes.toString().replaceAll('https://unpkg.com/three@0.186.0/','/node_modules/three/');
       res.writeHead(200,{'Content-Type':types[extname(pathname)]||'application/octet-stream','Cache-Control':'no-store'});res.end(bytes);
     }catch(error){if(req.url!=='/favicon.ico')errors.push(`${req.url}: ${error.message}`);res.writeHead(404).end();}
   });

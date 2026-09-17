@@ -146,8 +146,8 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    "three": "https://unpkg.com/three@0.186.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.186.0/examples/jsm/"
   }
 }
 </script>
@@ -291,6 +291,9 @@ const renderer = new THREE.WebGLRenderer({ antialias: !mobileRendering });
 renderer.domElement.addEventListener('webglcontextlost', () => ViewerLoading.fail({message:'The WebGL graphics context was lost while loading.'}));
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, mobileRendering ? 1 : 2));
+// Every frame with glass in view re-renders the opaque scene into the transmission target. At
+// half size the view through glass softens slightly, so only the reduced-quality mobile path takes it.
+renderer.transmissionResolutionScale = mobileRendering ? 0.5 : 1;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Nothing that casts a shadow moves on its own — the sun only moves when a slider does, and the

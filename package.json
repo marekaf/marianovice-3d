@@ -11,6 +11,6 @@
   },
   "devDependencies": {
     "playwright-core": "1.62.1",
-    "three": "0.160.0"
+    "three": "0.186.0"
   }
 }

@@ -30,7 +30,7 @@ const server=createServer(async(req,res)=>{
       body=body.toString();assert.equal(body.split(marker).length,2);
       body=body.replace(marker,injection+marker);
     }
-    if(['.html','.js','.mjs'].includes(extname(file)))body=body.toString().replaceAll('https://unpkg.com/three@0.160.0/','/node_modules/three/');
+    if(['.html','.js','.mjs'].includes(extname(file)))body=body.toString().replaceAll('https://unpkg.com/three@0.186.0/','/node_modules/three/');
     res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.png':'image/png'}[extname(file)]||'application/octet-stream'});res.end(body);
   }catch{res.writeHead(404).end();}
 });
