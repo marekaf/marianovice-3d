@@ -73,7 +73,7 @@ def read_route(fps=FPS, duration_scale=1):
     return shots
 
 
-def build_sequence(shots, fps=FPS, projection='flat', eye_offset=0.0):
+def build_sequence(shots, fps=FPS, projection='flat', eye_offset=0.0, exposure_bias=0.0):
     sequence = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
         'Walkthrough_' + str(time.time_ns()), '/Game/WalkthroughVideo',
         unreal.LevelSequence, unreal.LevelSequenceFactoryNew())
@@ -88,10 +88,11 @@ def build_sequence(shots, fps=FPS, projection='flat', eye_offset=0.0):
         camera = binding.get_object_template()
         camera.camera_component.set_field_of_view(85.0)
         camera.camera_component.set_editor_property('aspect_ratio', 1920 / 1080)
-        if 'exposureBias' in shot:
+        bias = shot.get('exposureBias', 0.0) + exposure_bias
+        if bias:
             settings = camera.camera_component.get_editor_property('post_process_settings')
             settings.set_editor_property('override_auto_exposure_bias', True)
-            settings.set_editor_property('auto_exposure_bias', shot['exposureBias'])
+            settings.set_editor_property('auto_exposure_bias', bias)
             camera.camera_component.set_editor_property('post_process_settings', settings)
             camera.camera_component.set_editor_property('post_process_blend_weight', 1.0)
         transform = binding.add_track(unreal.MovieScene3DTransformTrack).add_section()
@@ -163,6 +164,9 @@ def read_options():
         raise ValueError('video-options.json durationScale must be a positive number')
     if not isinstance(options.get('paneHistory', True), bool):
         raise ValueError('video-options.json paneHistory must be a boolean')
+    exposure = options.get('exposureBias', 0.0)
+    if not isinstance(exposure, (int, float)) or not math.isfinite(exposure):
+        raise ValueError('video-options.json exposureBias must be a finite number')
     return options, projection, profile, resolution, frame_step, duration_scale
 
 
@@ -194,7 +198,8 @@ def render():
         if len(set(selected)) != len(selected) or any(name not in [shot['name'] for shot in shots] for name in selected):
             raise ValueError('shotNames contains duplicates or unknown shots')
         shots = [shot for shot in shots if shot['name'] in selected]
-    sequences = {eye: build_sequence(shots, fps, projection, offset) for eye, offset in profile['eyes'].items()}
+    sequences = {eye: build_sequence(shots, fps, projection, offset, options.get('exposureBias', 0.0))
+                 for eye, offset in profile['eyes'].items()}
     total_frames = next(iter(sequences.values()))[1]
     end_frame = min(fps, total_frames) if preview else total_frames
     expected_indices = list(range(0, end_frame, frame_step))
@@ -214,6 +219,7 @@ def render():
                  total_frames=total_frames, fps=fps, resolution=list(resolution),
                  projection=projection, stereo_layout='top-bottom' if projection == 'stereo360' else None,
                  eye_directories=eye_directories, pane_history=options.get('paneHistory', True),
+                 exposure_bias=options.get('exposureBias', 0.0),
                  sequences={eye: sequence.get_path_name() for eye, (sequence, _) in sequences.items()}, map=map_path,
                  output_directory=str(folder), started_at=time.time(), errors=[])
     EXECUTOR = unreal.MoviePipelinePIEExecutor()

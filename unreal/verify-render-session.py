@@ -78,7 +78,7 @@ def verify(mode):
         live = render.__globals__
         live['ROOT'], live['STATUS'] = root, root / 'status.json'
         live['read_route'] = lambda fps, duration_scale: [{'name': 'Overview'}]
-        live['build_sequence'] = lambda shots, fps, projection, offset=0.0: (SimpleNamespace(get_path_name=lambda: '/Game/Test/Sequence'), 24)
+        live['build_sequence'] = lambda shots, fps, projection, offset=0.0, exposure=0.0: (SimpleNamespace(get_path_name=lambda: '/Game/Test/Sequence'), 24)
         if mode == 'execute_failure':
             with patch.object(Executor, 'execute', side_effect=RuntimeError('start failed')):
                 try:
