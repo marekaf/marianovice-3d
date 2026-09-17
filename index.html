@@ -435,7 +435,7 @@ function updateSun() {
     sun.color.setHex(0x6080a0);
     ambient.intensity = 0.1;
     bulbMat.emissiveIntensity = 2;
-    for (const l of lampLights) l.intensity = l.userData.night;
+    for (const l of lampLights) { l.intensity = l.userData.night; l.visible = true; }
   } else {
     const elevDeg = elev * 180 / Math.PI;
     if (elevDeg < 8) {
@@ -462,7 +462,9 @@ function updateSun() {
     }
     ambient.intensity = 0.15 + Math.min(1, elevDeg / 60) * 0.15;
     bulbMat.emissiveIntensity = 0;
-    for (const l of lampLights) l.intensity = 0;
+    // A lamp at intensity 0 still costs every fragment its loop iteration, so by day the lamps
+    // leave the scene instead of shining at zero. The light count changes only at the horizon.
+    for (const l of lampLights) { l.intensity = 0; l.visible = false; }
   }
   skyMat.uniforms.sunPos.value.set(x, y, z).normalize();
   skyMat.uniforms.sunColor.value.copy(sun.color);
