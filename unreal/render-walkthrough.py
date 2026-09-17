@@ -167,6 +167,8 @@ def read_options():
     exposure = options.get('exposureBias', 0.0)
     if not isinstance(exposure, (int, float)) or not math.isfinite(exposure):
         raise ValueError('video-options.json exposureBias must be a finite number')
+    if not isinstance(options.get('stills', False), bool):
+        raise ValueError('video-options.json stills must be a boolean')
     return options, projection, profile, resolution, frame_step, duration_scale
 
 
@@ -198,6 +200,9 @@ def render():
         if len(set(selected)) != len(selected) or any(name not in [shot['name'] for shot in shots] for name in selected):
             raise ValueError('shotNames contains duplicates or unknown shots')
         shots = [shot for shot in shots if shot['name'] in selected]
+    stills = options.get('stills', False)
+    if stills:
+        shots = [dict(shot, duration=1 / fps, end=shot['start'], targetEnd=shot['targetStart']) for shot in shots]
     sequences = {eye: build_sequence(shots, fps, projection, offset, options.get('exposureBias', 0.0))
                  for eye, offset in profile['eyes'].items()}
     total_frames = next(iter(sequences.values()))[1]
@@ -219,7 +224,7 @@ def render():
                  total_frames=total_frames, fps=fps, resolution=list(resolution),
                  projection=projection, stereo_layout='top-bottom' if projection == 'stereo360' else None,
                  eye_directories=eye_directories, pane_history=options.get('paneHistory', True),
-                 exposure_bias=options.get('exposureBias', 0.0),
+                 exposure_bias=options.get('exposureBias', 0.0), stills=stills,
                  sequences={eye: sequence.get_path_name() for eye, (sequence, _) in sequences.items()}, map=map_path,
                  output_directory=str(folder), started_at=time.time(), errors=[])
     EXECUTOR = unreal.MoviePipelinePIEExecutor()

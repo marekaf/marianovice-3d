@@ -177,3 +177,18 @@ Use `--mono360` for the single-eye render and add `--preview` to encode a one-se
 To watch it, copy the file to the headset over USB or Meta Quest Developer Hub and open it from the Files app, choosing 360 and top-bottom if the player does not detect the layout. The Meta Quest Browser also plays it from an HTTPS URL in fullscreen with the 360 top-bottom projection selected. An unlisted YouTube upload works too; YouTube reads the injected metadata.
 
 `node unreal/verify-spherical-metadata.mjs` checks the metadata injector, `node unreal/verify-encode-walkthrough.mjs` runs the encoders on synthetic frames when ffmpeg is available, and `python3 -I unreal/verify-panoramic-render.py` checks the sequence headings, eye offsets and queue configuration without Unreal.
+
+## Stereo 360 still tour
+
+A tour of stills costs one frame per route position instead of thirty per second, so every position renders at full size in one night. Set `generated/video-options.json` to `{"preview":false,"projection":"stereo360","stills":true,"exposureBias":-4}` and run `render-walkthrough.py` inside Unreal. With `stills` on, each shot becomes a one-frame cut at the shot's start position and heading; `shotNames` still limits the set. Frames land in `generated/video-frames-360/left` and `right`, numbered in route order.
+
+Export the stills with:
+
+```sh
+node unreal/export-tour.mjs
+```
+
+This writes `generated/tour/<index>-<room>_360_TB.jpg`, the two eyes stacked top-bottom, plus `generated/tour/tour.json` with the shot heading and floor hotspots to the previous and next positions. The hotspot azimuth is the target's Unreal yaw minus the shot heading, positive to the right, which `verify-tour.mjs` checks against known positions. The `_360_TB` name tags let DeoVR and similar players open the JPEGs directly from the headset.
+
+`tour.html` at the repository root shows the tour in the browser and in VR. Serve the repository over HTTP or HTTPS, open `tour.html`, drag to look around, and click a green floor disc or use the Previous and Next buttons to move between positions. On the Quest browser, Enter VR shows each eye its own half; the panorama centre faces the shot heading. Run `node verify-tour-browser.mjs` with Chrome available to check the image orientation, eye layout and hotspot navigation against a synthetic panorama.
+

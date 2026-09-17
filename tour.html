@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marianovice 360 tour</title>
+<style>
+  :root { color-scheme: light dark; --bg: #111; --fg: #f4f1ea; --panel: rgba(20, 20, 20, .78); }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 15px/1.4 system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; }
+  #tourUI { position: fixed; inset: auto 16px 16px 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; z-index: 2; }
+  #tourUI button, #tourUI select { background: var(--panel); color: var(--fg); border: 1px solid #555; border-radius: 6px; padding: 8px 12px; font: inherit; }
+  #tourUI button:disabled { opacity: .4; }
+  #tourStatus { position: fixed; top: 16px; left: 16px; right: 16px; background: var(--panel); padding: 8px 12px; border-radius: 6px; z-index: 2; }
+  #tourStatus:empty { display: none; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.186.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.186.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="tourStatus" role="status" aria-live="polite"></div>
+<div id="tourUI">
+  <button id="tourPrev" type="button">Previous</button>
+  <select id="tourSelect" aria-label="Room"></select>
+  <button id="tourNext" type="button">Next</button>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import {VRButton} from 'three/addons/webxr/VRButton.js';
+import {mountTour} from './tour-viewer.js';
+window.tourReview = mountTour(THREE, VRButton, {source: new URL('unreal/generated/tour/tour.json', location.href).href});
+</script>
+</body>
+</html>
