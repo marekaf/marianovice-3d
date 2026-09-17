@@ -86,7 +86,13 @@ const GardenRouteModel = (() => {
         }
       }
       let pieces=clipped.length>=3?[clipped]:[];
-      for(const obstacle of obstacles)pieces=pieces.flatMap(piece=>subtract(piece,obstacle));
+      // subtract() leaves a piece whole unless the obstacle box strictly overlaps it, and every
+      // piece lies inside the grid triangle, so obstacles clear of the triangle box are skipped.
+      const minX=Math.min(points[0][0],points[1][0],points[2][0]),maxX=Math.max(points[0][0],points[1][0],points[2][0]);
+      const minZ=Math.min(points[0][1],points[1][1],points[2][1]),maxZ=Math.max(points[0][1],points[1][1],points[2][1]);
+      for(const obstacle of obstacles){
+        if(pieces.length&&obstacle.minX<maxX&&obstacle.maxX>minX&&obstacle.minZ<maxZ&&obstacle.maxZ>minZ)pieces=pieces.flatMap(piece=>subtract(piece,obstacle));
+      }
       for(const piece of pieces)for(let i=1;i+1<piece.length;i++){
         if(Math.abs(cross(piece[0],piece[i],piece[i+1]))<1e-12)continue;
         for(const [x,z] of [piece[0],piece[i+1],piece[i]]){positions.push(x,height(x,z),z);uv.push(x,z);}
