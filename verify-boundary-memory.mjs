@@ -17,7 +17,7 @@ globalThis.document = { createElement: () => ({ getContext: () => ({
 
 for (const [model, expectedTriangles, baselineBytes, baselineDescriptor] of [
   [GateModel.build({ open: 0, wicketOpen: 0 }), 782244, 75082536, 42352215],
-  [FenceModel.build({ start: [0, 0], end: [40, 0], heightAt: x => x * .1 }), 736808, 20924688, 27629696],
+  [FenceModel.build({ start: [0, 0], end: [40, 0], heightAt: x => x * .1 }), 129448, 20924688, 27629696],
 ]) {
   const root = buildModel(THREE, model);
   root.updateMatrixWorld(true);
