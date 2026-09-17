@@ -199,7 +199,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=aa12453b6ee9';
 import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
 import { GroundSurfaceModel } from './ground-surface-model.js';
-import {levelCircularGround,gradingGroundBoundaries,refinePlateauGround,gradingGroundRefinement} from "./circular-pad-ground.js?v=5f7ce53f9d65";
+import {levelCircularGround,gradingGroundBoundaries,refinePlateauGroundAsync,gradingGroundRefinement} from "./circular-pad-ground.js?v=5f7ce53f9d65";
+import { createTerrainSampler, TERRAIN_WORKER_SCRIPTS } from './terrain-sampler.js?v=87773e4b887a';
 import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=a15eb452d53a';
 import { ShrubModel } from './shrub-model.js';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
@@ -255,6 +256,8 @@ const rectVerts = r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.d], [r
 const pergolaModel = PergolaModel.build(GARDEN);
 const garageGround = GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5);
 const {site:siteTerrain} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:surveySurface});
+const terrainSampler=createTerrainSampler({height:siteTerrain.height,workerUrl:'./terrain-worker.js?v=c080059c1d52',
+  scripts:TERRAIN_WORKER_SCRIPTS.map(name=>[...document.scripts].find(script=>script.src.split('?')[0].endsWith(`/${name}.js`))?.src).filter(Boolean)});
 const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround,{floorHeight:siteTerrain.spec.productiveCourt.greenhouseFinish});
 const raisedBedsModel = RaisedBedsModel.build(GARDEN,{surfaceHeight:siteTerrain.routeHeight,groundHeight:siteTerrain.height,court:siteTerrain.spec.productiveCourt});
 const firepitModel = FirepitModel.build(GARDEN, siteTerrain.height);
@@ -857,7 +860,7 @@ function nearestOnPlotEdge(x, z) {
   }
   return [bx, bz];
 }
-const groundGeom = (() => {
+const groundGeom = await (async () => {
   const xs = plotVerts.map(p => p[0]), zs = plotVerts.map(p => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const contactPoints = hiddenBenchModel.feet.flatMap(foot => foot.bottomCorners);
@@ -898,10 +901,10 @@ const groundGeom = (() => {
   for (let k = 0; k < gx.length; k++) {
     if (used[k] && !pointInPlot(gx[k], gz[k])) [gx[k], gz[k]] = nearestOnPlotEdge(gx[k], gz[k]);
   }
-  const pos = new Float32Array(gx.length * 3), uv = new Float32Array(gx.length * 2);
+  const pos = new Float32Array(gx.length * 3), uv = new Float32Array(gx.length * 2), heights = await terrainSampler.sample(gx, gz);
   for (let k = 0; k < gx.length; k++) {
     pos[k * 3] = gx[k];
-    pos[k * 3 + 1] = terrainHeight(gx[k], gz[k]);
+    pos[k * 3 + 1] = heights[k];
     pos[k * 3 + 2] = gz[k];
     uv[k * 2] = gx[k];
     uv[k * 2 + 1] = gz[k];
@@ -910,8 +913,9 @@ const groundGeom = (() => {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   g.setIndex(index);
-  return refinePlateauGround(THREE,levelCircularGround(THREE,g,[...siteTerrain.spec.gatheringPads,...gradingGroundBoundaries(GARDEN,siteTerrain.spec)],terrainHeight),terrainHeight,gradingGroundRefinement(siteTerrain.spec));
+  return refinePlateauGroundAsync(THREE,levelCircularGround(THREE,g,[...siteTerrain.spec.gatheringPads,...gradingGroundBoundaries(GARDEN,siteTerrain.spec)],terrainHeight),terrainSampler.sample,gradingGroundRefinement(siteTerrain.spec));
 })();
+terrainSampler.dispose();
 
 const groundSurface = GroundSurfaceModel.create(THREE, { garden: GARDEN, clearances: plantingClearances, grassTexture: grassTex });
 const ground = new THREE.Mesh(groundGeom, groundSurface.material);
