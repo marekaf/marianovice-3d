@@ -1,4 +1,7 @@
-export function levelCircularGround(THREE,ground,pads,height) {
+// New vertices get their height in one batch after every pad is clipped, so a caller may sample it
+// anywhere. Clipping reads only x and z, so the batch changes no vertex, no triangle and no order.
+export function* levelCircularGroundSteps(THREE,ground,pads) {
+  const pending=[];
   for(const pad of pads.filter(p=>p.radius!==undefined||p.boundary)) {
     const position=ground.attributes.position,texture=ground.attributes.uv;
     const positions=Array.from(position.array),uv=Array.from(texture.array),indices=[];
@@ -19,7 +22,8 @@ export function levelCircularGround(THREE,ground,pads,height) {
       const ids=polygon.map(p=>{
         if(p.index!==undefined)return p.index;
         const [x,,z,u,v]=p.values,index=positions.length/3;
-        positions.push(x,flat?pad.level:height(x,z),z);uv.push(u,v);
+        if(flat)positions.push(x,pad.level,z);else{pending.push(index,x,z);positions.push(x,NaN,z);}
+        uv.push(u,v);
         return index;
       });
       for(let i=1;i+1<ids.length;i++){
@@ -47,8 +51,32 @@ export function levelCircularGround(THREE,ground,pads,height) {
     aligned.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
     aligned.setIndex(indices);ground.dispose();ground=aligned;
   }
+  if(pending.length){
+    const xs=new Float64Array(pending.length/3),zs=new Float64Array(pending.length/3);
+    for(let i=0;i<xs.length;i++){xs[i]=pending[i*3+1];zs[i]=pending[i*3+2];}
+    const heights=yield {xs,zs};
+    for(let i=0;i<xs.length;i++)ground.attributes.position.setY(pending[i*3],heights[i]);
+  }
   ground.computeVertexNormals();
   return ground;
+}
+
+export function levelCircularGround(THREE,ground,pads,height) {
+  const steps=levelCircularGroundSteps(THREE,ground,pads);
+  let step=steps.next();
+  while(!step.done){
+    const {xs,zs}=step.value,heights=new Float64Array(xs.length);
+    for(let i=0;i<xs.length;i++)heights[i]=height(xs[i],zs[i]);
+    step=steps.next(heights);
+  }
+  return step.value;
+}
+
+export async function levelCircularGroundAsync(THREE,ground,pads,sample) {
+  const steps=levelCircularGroundSteps(THREE,ground,pads);
+  let step=steps.next();
+  while(!step.done)step=steps.next(await sample(step.value.xs,step.value.zs));
+  return step.value;
 }
 
 export function gradingGroundBoundaries(garden,spec) {

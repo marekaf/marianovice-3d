@@ -11,7 +11,7 @@ self.onmessage=({data})=>{
     }catch(error){self.postMessage({type:'error',message:String(error?.message??error)});}
     return;
   }
-  const {id,xs,zs}=data,heights=new Float64Array(xs.length);
-  for(let i=0;i<xs.length;i++)heights[i]=site.height(xs[i],zs[i]);
+  const {id,xs,zs}=data,heights=new Float64Array(xs.length),field=data.field==='route'?site.routeHeight:site.height;
+  for(let i=0;i<xs.length;i++)heights[i]=field(xs[i],zs[i]);
   self.postMessage({type:'heights',id,heights},[heights.buffer]);
 };

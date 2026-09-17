@@ -56,12 +56,14 @@ const GardenRouteModel = (() => {
     }
     return result;
   }
-  function geometry(routes,height,step=.12,exclusions=[]) {
+  // The surface is laid out in x and z first; heights are filled in afterwards, in vertex order, so a
+  // caller may sample them in one batch anywhere.
+  function layout(routes,step=.12,exclusions=[]) {
     if(!routes.length)return {positions:[],uv:[]};
     const fine=routes.filter(route=>route.surfaceStep&&route.surfaceStep<step);
     if(fine.length){
       const ordinary=routes.filter(route=>!fine.includes(route));
-      const pieces=[geometry(ordinary,height,step,exclusions),...fine.map(route=>geometry([route],height,route.surfaceStep,exclusions))];
+      const pieces=[layout(ordinary,step,exclusions),...fine.map(route=>layout([route],route.surfaceStep,exclusions))];
       return {positions:pieces.flatMap(p=>p.positions),uv:pieces.flatMap(p=>p.uv)};
     }
     const points=routes.flatMap(r=>r.points),margin=Math.max(...routes.map(r=>r.width))/2+step;
@@ -95,7 +97,7 @@ const GardenRouteModel = (() => {
       }
       for(const piece of pieces)for(let i=1;i+1<piece.length;i++){
         if(Math.abs(cross(piece[0],piece[i],piece[i+1]))<1e-12)continue;
-        for(const [x,z] of [piece[0],piece[i+1],piece[i]]){positions.push(x,height(x,z),z);uv.push(x,z);}
+        for(const [x,z] of [piece[0],piece[i+1],piece[i]]){positions.push(x,NaN,z);uv.push(x,z);}
       }
     }
     for(let j=0;j<nz;j++)for(let i=0;i<nx;i++) {
@@ -104,8 +106,26 @@ const GardenRouteModel = (() => {
     }
     return {positions,uv};
   }
+  function geometry(routes,height,step=.12,exclusions=[]) {
+    const data=layout(routes,step,exclusions);
+    for(let i=0;i<data.positions.length;i+=3)data.positions[i+1]=height(data.positions[i],data.positions[i+2]);
+    return data;
+  }
+  async function geometryAsync(routes,sample,step=.12,exclusions=[]) {
+    const data=layout(routes,step,exclusions),count=data.positions.length/3,xs=new Float64Array(count),zs=new Float64Array(count);
+    for(let i=0;i<count;i++){xs[i]=data.positions[i*3];zs[i]=data.positions[i*3+2];}
+    const heights=count?await sample(xs,zs):[];
+    for(let i=0;i<count;i++)data.positions[i*3+1]=heights[i];
+    return data;
+  }
   function create(THREE,{routes,height,garden,exclusions=[]}) {
-    const data=geometry(routes,height,.12,[...(garden?surfaceExclusions(garden):[]),...exclusions]),meshGeometry=new THREE.BufferGeometry();
+    return assemble(THREE,geometry(routes,height,.12,[...(garden?surfaceExclusions(garden):[]),...exclusions]));
+  }
+  async function createAsync(THREE,{routes,sample,garden,exclusions=[]}) {
+    return assemble(THREE,await geometryAsync(routes,sample,.12,[...(garden?surfaceExclusions(garden):[]),...exclusions]));
+  }
+  function assemble(THREE,data) {
+    const meshGeometry=new THREE.BufferGeometry();
     meshGeometry.setAttribute('position',new THREE.Float32BufferAttribute(data.positions,3));
     meshGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(data.uv,2));meshGeometry.computeVertexNormals();
     const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
@@ -119,6 +139,6 @@ const GardenRouteModel = (() => {
     const mesh=new THREE.Mesh(meshGeometry,new THREE.MeshStandardMaterial({map:texture,roughness:.98,side:THREE.DoubleSide}));
     mesh.name='Garden mineral routes';mesh.receiveShadow=true;return mesh;
   }
-  return {distance,geometry,create,surfaceExclusions};
+  return {distance,geometry,geometryAsync,create,createAsync,surfaceExclusions};
 })();
 if(typeof module!=='undefined')module.exports={GardenRouteModel};
