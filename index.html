@@ -164,7 +164,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="planting-preview.js"></script>
 <script src="tree-model.js"></script>
 <script src="planting-profiles.js?v=8cb64402df59"></script>
-<script src="cotoneaster-model.js?v=3c1409a56a2d"></script>
+<script src="cotoneaster-model.js?v=047460b27306"></script>
 <script src="selected-planting.js?v=8b4fbaeb1890"></script>
 <script src="planting-guide.js"></script>
 <script src="perennial-model.js?v=495faddb28ff"></script>
@@ -1835,7 +1835,7 @@ ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry,site
 const gardenRouteEdges=new THREE.Mesh(routeEdgeGeometry(THREE,ground.geometry,gardenRoutes.geometry),gardenRoutes.material);
 gardenRouteEdges.name='Mineral path edge connections';gardenRouteEdges.receiveShadow=true;scene.add(gardenRouteEdges);
 groundGeom.dispose();
-const cotoneasterModel=CotoneasterModel.build(GARDEN,createMeshHeightQuery(ground));
+const cotoneasterModel=CotoneasterModel.build(GARDEN,createMeshHeightQuery(ground),{grading:gradingQuantities});
 const cotoneasterGroup=buildModel(THREE,cotoneasterModel);
 Object.assign(cotoneasterGroup.userData,{species:cotoneasterModel.species,zoneId:'L'});
 treesGroup.add(cotoneasterGroup);
