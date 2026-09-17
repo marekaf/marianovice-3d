@@ -1,9 +1,9 @@
 const CotoneasterModel = (() => {
   function contains(polygons,x,y){return polygons.some(p=>{let result=false;for(let i=0,j=p.length-1;i<p.length;j=i++)if((p[i][1]>y)!==(p[j][1]>y)&&x<(p[j][0]-p[i][0])*(y-p[i][1])/(p[j][1]-p[i][1])+p[i][0])result=!result;return result;});}
-  function build(garden,heightAt) {
+  function build(garden,heightAt,{grading}={}) {
     const zones=typeof module!=='undefined'?require('./grading-zones.js').GradingZones:GradingZones;
     const routes=typeof module!=='undefined'?require('./garden-route-model.js').GardenRouteModel:GardenRouteModel;
-    const zone=zones.create(garden).zones.find(z=>z.id==='L');
+    const zone=(grading??zones.create(garden)).zones.find(z=>z.id==='L');
     const inside=(x,y)=>contains(zone.polygons,x,y);
     const distance=(x,y,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)));return Math.hypot(x-a[0]-dx*t,y-a[1]-dy*t);};
     const covers=garden.elements.flatMap(e=>e.meta?.accessCover?[e.meta.accessCover]:e.id==='waterSource'?e.parts.filter(p=>p.kind==='circle').map(p=>({x:p.cx,z:p.cy})):[]);

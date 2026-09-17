@@ -4,6 +4,8 @@ const require=createRequire(import.meta.url),{GARDEN}=require('./layout.js'),{Co
 const original=JSON.stringify(GARDEN);
 for(const height of [(x,y)=>2+.48*x-.2*y,(x,y)=>2+.05*Math.sin(x*3)+.4*y]){
  const model=CotoneasterModel.build(GARDEN,height);
+const {GradingZones}=require('./grading-zones.js');
+assert.deepEqual(CotoneasterModel.build(GARDEN,height,{grading:GradingZones.create(GARDEN)}),model,'Shared grading zones build the same bank');
  assert.equal(model.species,'Cotoneaster');assert.equal(model.zoneId,'L');
  assert(model.anchors.length>150&&model.anchors.length<300);
  for(const p of model.contacts)assert(Math.abs(p[2]-height(p[0],p[1])-.008)<1e-10);
