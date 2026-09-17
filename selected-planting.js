@@ -37,11 +37,12 @@ const SelectedPlanting = (() => {
       if(!roof||seed%3===0)flowerTransforms.push(transform.matrix.clone());
     }
     const corners=[[x+.27,y+.27],[x+w-.27,y+.27],[x+.27,y+d-.27],[x+w-.27,y+d-.27]];
+    const potMaterial=new THREE.MeshStandardMaterial({color:'#6c5142',roughness:.92}),soilMaterial=new THREE.MeshStandardMaterial({color:'#352a20',roughness:1});
     for(const [i,[px,pz]] of corners.entries()){
       const cx=px+(px<x+w/2?.28:-.28),cz=pz+(pz<y+d/2?.28:-.28);
-      const pot=new THREE.Mesh(new THREE.CylinderGeometry(.25,.21,.5,12),new THREE.MeshStandardMaterial({color:'#6c5142',roughness:.92}));
+      const pot=new THREE.Mesh(new THREE.CylinderGeometry(.25,.21,.5,12),potMaterial);
       pot.position.set(cx,floor+.25,cz);pot.name='Rose container';root.add(pot);
-      const soil=new THREE.Mesh(new THREE.CylinderGeometry(.233,.233,.02,12),new THREE.MeshStandardMaterial({color:'#352a20',roughness:1}));
+      const soil=new THREE.Mesh(new THREE.CylinderGeometry(.233,.233,.02,12),soilMaterial);
       soil.position.set(cx,floor+.475,cz);root.add(soil);
       let previous=new THREE.Vector3(cx,floor+.49,cz);
       for(let n=1;n<=18;n++){

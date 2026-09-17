@@ -165,7 +165,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="tree-model.js"></script>
 <script src="planting-profiles.js?v=8cb64402df59"></script>
 <script src="cotoneaster-model.js?v=047460b27306"></script>
-<script src="selected-planting.js?v=8b4fbaeb1890"></script>
+<script src="selected-planting.js?v=d571bb203f6d"></script>
 <script src="planting-guide.js"></script>
 <script src="perennial-model.js?v=f18d7a3e061a"></script>
 <script src="seasonal-planting.js?v=73a125d14e5a"></script>
@@ -516,6 +516,12 @@ function makePolyShape(verts2d) {
 }
 
 // Box on terrain
+const boxMaterials = new Map();
+function boxMaterial(color, opacity, roughness) {
+  const key = `${new THREE.Color(color).getHex()}\n${opacity ?? ''}\n${roughness}`;
+  if (!boxMaterials.has(key)) boxMaterials.set(key, new THREE.MeshStandardMaterial({ color, transparent: opacity !== undefined, opacity: opacity ?? 1, roughness }));
+  return boxMaterials.get(key);
+}
 function addBox(plotX, plotY, w, d, h, color, opts = {}) {
   const cx = plotX + w/2;
   const cz = plotY + d/2;
@@ -529,13 +535,7 @@ function addBox(plotX, plotY, w, d, h, color, opts = {}) {
   }
   const yOffset = opts.yOffset ?? 0;
   const geom = new THREE.BoxGeometry(w, h, d);
-  const mat = new THREE.MeshStandardMaterial({
-    color,
-    transparent: opts.opacity !== undefined,
-    opacity: opts.opacity ?? 1,
-    roughness: opts.roughness ?? 0.7,
-  });
-  const mesh = new THREE.Mesh(geom, mat);
+  const mesh = new THREE.Mesh(geom, boxMaterial(color, opts.opacity, opts.roughness ?? 0.7));
   mesh.position.set(cx, baseY + h/2 + yOffset, cz);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -597,7 +597,7 @@ function addStorageBox(plotX, plotY, w, d, h, bodyColor = 0x41454b, lidColor = 0
   const topY = terrainHeight(plotX + w / 2, plotY + d / 2) + bodyH;
   const lid = new THREE.Mesh(
     new THREE.BoxGeometry(w + 0.06, 0.1, d + 0.06),
-    new THREE.MeshStandardMaterial({ color: lidColor, roughness: 0.5 })
+    boxMaterial(lidColor, undefined, 0.5)
   );
   lid.position.set(plotX + w / 2, topY + 0.03, plotY + d / 2);
   lid.castShadow = true; lid.receiveShadow = true;
@@ -1151,13 +1151,14 @@ const carportWestY = carportEastY - carportRoofWidth * carportPitch;
 }
 
 // Carport between house and garage — open posts on west side (garage walls support east side)
+const carportPostMaterial = new THREE.MeshStandardMaterial({ color: 0x5a3e25, roughness: 0.7 });
 [[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
   const baseY = terrainHeight(px, pz);
   // Each post stretched from its local terrain to the plate's west edge
   const ph = carportWestY - .08 - baseY;
   const post = new THREE.Mesh(
     new THREE.BoxGeometry(0.15, ph, 0.15),
-    new THREE.MeshStandardMaterial({ color: 0x5a3e25, roughness: 0.7 })
+    carportPostMaterial
   );
   post.position.set(px, baseY + ph / 2, pz);
   post.castShadow = true;
@@ -1468,6 +1469,8 @@ scene.add(driveway);
 }
 
 // Underground utilities expose only their access covers.
+const coverMaterial = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6, metalness: 0.4 });
+const coverCenterMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.8 });
 for (const id of ['rainTank','waterSource','sewerInspection']) {
   const part = EL[id].parts.find(p => p.kind === 'rect' || p.kind === 'circle');
   const cover = EL[id].meta?.accessCover;
@@ -1484,7 +1487,7 @@ for (const id of ['rainTank','waterSource','sewerInspection']) {
   // Manhole / cover
   const manhole = new THREE.Mesh(
     new THREE.CylinderGeometry(radius, radius, 0.05, 24),
-    new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6, metalness: 0.4 })
+    coverMaterial
   );
   conformToPaving(manhole.geometry);
   manhole.position.set(cx, baseY + (pavingHeight ? -.023 : .01), cz);
@@ -1493,7 +1496,7 @@ for (const id of ['rainTank','waterSource','sewerInspection']) {
   // Center circle
   const inner = new THREE.Mesh(
     new THREE.CylinderGeometry(radius*.32/.45, radius*.32/.45, 0.06, 24),
-    new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.8 })
+    coverCenterMaterial
   );
   conformToPaving(inner.geometry);
   inner.position.set(cx, baseY + (pavingHeight ? -.027 : .035), cz);
