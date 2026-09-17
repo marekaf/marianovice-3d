@@ -50,7 +50,7 @@ if(panoramic){
   const stacked=stereo?'[0:v][1:v]vstack=inputs=2[eyes];':'';
   const filter=stacked+(fades?fades.graph:stereo?'[eyes]null[v]':'[0:v]null[v]');
   run('ffmpeg',[...common,'-filter_complex',filter,'-map','[v]','-r',String(report.fps),'-frames:v',String(frameCount),
-    '-c:v','libx265','-preset','medium','-crf','20','-pix_fmt','yuv420p','-tag:v','hvc1',
+    '-c:v','libx265','-preset','slow','-crf','16','-pix_fmt','yuv420p','-tag:v','hvc1',
     '-x265-params','log-level=error','-movflags','+faststart',output]);
   const tagged=injectSphericalMetadata(await readFile(output),{stereo:stereo?'top-bottom':'none'});
   await writeFile(output,tagged.buffer);

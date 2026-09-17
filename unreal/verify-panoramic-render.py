@@ -115,6 +115,8 @@ class Sequence:
         return track
 
     def add_spawnable_from_class(self, kind):
+        global LAST_SEQUENCE
+        LAST_SEQUENCE = self
         binding = Binding()
         self.bindings.append(binding)
         return binding
@@ -203,6 +205,7 @@ with tempfile.TemporaryDirectory() as directory:
     root = Path(directory)
     fake = fake_unreal()
     renderer, live = load(fake, root)
+    LAST_SEQUENCE = None
     read_route, build_sequence = renderer['read_route'], renderer['build_sequence']
 
     shots = read_route(30, 2)
@@ -262,7 +265,7 @@ with tempfile.TemporaryDirectory() as directory:
         assert output.output_directory.endswith('video-frames-360/' + eye)
     assert jobs[0].sequence != jobs[1].sequence, 'Each eye renders its own offset sequence'
     status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
-    assert status['projection'] == 'stereo360' and status['stereo_layout'] == 'top-bottom'
+    assert status['projection'] == 'stereo360' and status['stereo_layout'] == 'top-bottom' and status['pane_history'] is True
     assert status['fps'] == 30 and status['resolution'] == [1440, 720] and status['total_frames'] == 3600
     assert status['output_directory'].endswith('video-frames-360')
     assert sorted(status['eye_directories']) == ['left', 'right']
@@ -278,10 +281,15 @@ with tempfile.TemporaryDirectory() as directory:
     except ValueError as error:
         assert 'twice as wide' in str(error)
 
-    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'mono360'}))
+    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'mono360', 'paneHistory': False, 'exposureBias': -2.5}))
     renderer['render']()
     jobs = live['QUEUE'].jobs
     assert [job.job_name for job in jobs] == ['Walkthrough mono360 preview']
+    assert jobs[0].config.settings['MoviePipelinePanoramicPass'].allocate_history_per_pane is False
+    status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
+    assert status['pane_history'] is False and status['exposure_bias'] == -2.5
+    biased = [binding.template.camera_component.properties.get('post_process_blend_weight') for binding in LAST_SEQUENCE.bindings]
+    assert all(weight == 1.0 for weight in biased), 'A global exposure bias applies to every shot'
     assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_resolution == (5760, 2880)
     assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_directory.endswith('video-frames-360')
     status = json.loads((root / 'generated' / 'video-render-360.json').read_text())

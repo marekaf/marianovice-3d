@@ -161,6 +161,8 @@ With a 360 projection the renderer:
 - writes 2:1 frames, 5760×2880 by default, at 30 fps under `generated/video-frames-360/` (`left/` and `right/` for stereo), with progress in `generated/video-render-360.json`. Override `resolution` with a 2:1 pair for faster tests.
 - keeps one level heading per shot, aimed at the shot's first target. The camera never turns; the viewer turns their head. Flat rendering keeps its look-at motion.
 - scales every shot by `durationScale`, so the same translation happens more slowly. Two is a comfortable starting point for a 4-minute tour.
+- adds `exposureBias` (EV, default 0) to every shot's own bias. Panoramas look at the windows in every direction, so interiors that read fine in the flat render clip in 360. The living room measured well exposed at -4 and still clipped at -2.
+- keeps a scene history per pane unless `paneHistory` is `false`. Each pane's history lives in GPU memory for the whole job; a 150-frame shot at 1440×720 pushed the local Mac into heavy swap and frame times grew from 20 s to over 100 s. Try `paneHistory: false` first and check the preview for black or flickering panes before choosing.
 
 Each frame renders 24 panes per eye, so the full video takes far longer than the flat render. The 1440×720 stereo preview took about eleven minutes for its 30 frames per eye on the local Mac. Check the preview on the headset before committing to the full run. Motion blur, vignette, depth of field and chromatic aberration should stay off in the local post-process volume; they break stereo fusion.
 
