@@ -104,6 +104,7 @@ const checks=[
   'verify-walk-movement.mjs',
   'verify-walk-vr-locomotion.mjs',
   'verify-render-scheduler.mjs',
+  'verify-adaptive-resolution.mjs',
   'verify-bathroom-fixtures.mjs',
   'verify-bathroom-vanities.mjs',
   'docs/verify-utility-joinery.mjs',
