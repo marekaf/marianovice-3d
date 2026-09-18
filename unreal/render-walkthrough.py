@@ -57,8 +57,9 @@ def read_route(fps=FPS, duration_scale=1):
         raise ValueError('Walkthrough needs at least one shot')
     for shot in shots:
         shot['duration'] = shot['duration'] * duration_scale
-        if 'exposureBias' in shot and (not isinstance(shot['exposureBias'], (int, float)) or not math.isfinite(shot['exposureBias'])):
-            raise ValueError('Shot exposureBias must be finite')
+        for key in ('exposureBias', 'exposureBias360'):
+            if key in shot and (not isinstance(shot[key], (int, float)) or not math.isfinite(shot[key])):
+                raise ValueError(f'Shot {key} must be finite')
         duration = shot['duration']
         if not isinstance(duration, (int, float)) or not math.isfinite(duration) or duration <= 0:
             raise ValueError('Each shot needs a positive duration in seconds')
@@ -89,8 +90,14 @@ def build_sequence(shots, fps=FPS, projection='flat', eye_offset=0.0, exposure_b
         camera = binding.get_object_template()
         camera.camera_component.set_field_of_view(85.0)
         camera.camera_component.set_editor_property('aspect_ratio', 1920 / 1080)
-        bias = shot.get('exposureBias', 0.0) + exposure_bias
-        if bias:
+        # A panorama meters the whole sphere, so the flat video's per-shot bias does not carry
+        # over: 360 renders use the shot's own exposureBias360, or the global bias without it.
+        if projection == 'flat':
+            bias = shot.get('exposureBias', 0.0) + exposure_bias
+        else:
+            bias = shot.get('exposureBias360', exposure_bias)
+        # A 360 bias of 0 is a real value: without the override the level's own volume bias applies.
+        if bias or projection != 'flat':
             settings = camera.camera_component.get_editor_property('post_process_settings')
             settings.set_editor_property('override_auto_exposure_bias', True)
             settings.set_editor_property('auto_exposure_bias', bias)
@@ -172,6 +179,9 @@ def read_options():
         raise ValueError('video-options.json stills must be a boolean')
     if not isinstance(options.get('serialRenderGraph', False), bool):
         raise ValueError('video-options.json serialRenderGraph must be a boolean')
+    level = options.get('level', 'House')
+    if not isinstance(level, str) or not level.replace('_', '').isalnum():
+        raise ValueError('video-options.json level must be a level name under /Game/Walkthrough')
     return options, projection, profile, resolution, frame_step, duration_scale
 
 
@@ -193,8 +203,9 @@ def render():
     STATUS = ROOT / 'generated' / profile['status']
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     map_path = world.get_path_name()
-    if map_path != '/Game/Walkthrough/House.House':
-        raise RuntimeError('Load /Game/Walkthrough/House before rendering')
+    level = options.get('level', 'House')
+    if map_path != f'/Game/Walkthrough/{level}.{level}':
+        raise RuntimeError(f'Load /Game/Walkthrough/{level} before rendering')
     if options.get('serialRenderGraph', False):
         # On D3D12 with SM6 the panoramic pass opens more command lists than the residency
         # manager has slots for ("Too many residency sets are open concurrently"), and that

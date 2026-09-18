@@ -4,7 +4,7 @@
   "scripts": {
     "verify:visual": "node scripts/visual-review.mjs",
     "unreal:export": "node unreal/export.mjs",
-    "unreal:verify": "node unreal/verify-export-inputs.mjs && node unreal/verify-floor-reference.mjs && node unreal/verify-export.mjs && node unreal/verify-loft-import-guard.mjs && node unreal/verify-refresh-isolation.mjs && node unreal/verify-apertures.mjs && node unreal/verify-fallback-manifest.mjs && node unreal/verify-spherical-metadata.mjs && node unreal/verify-encode-walkthrough.mjs && node unreal/verify-walkthrough-motion.mjs && node unreal/verify-tour.mjs && python3 -I unreal/verify-panoramic-render.py && python3 -I unreal/verify-full-detail.py && python3 -I unreal/verify-editor-session.py && python3 -I unreal/verify-render-session.py",
+    "unreal:verify": "node unreal/verify-export-inputs.mjs && node unreal/verify-floor-reference.mjs && node unreal/verify-export.mjs && node unreal/verify-loft-import-guard.mjs && node unreal/verify-refresh-isolation.mjs && node unreal/verify-apertures.mjs && node unreal/verify-fallback-manifest.mjs && node unreal/verify-spherical-metadata.mjs && node unreal/verify-encode-walkthrough.mjs && node unreal/verify-walkthrough-motion.mjs && node unreal/verify-tour.mjs && python3 -I unreal/verify-panoramic-render.py && python3 -I unreal/verify-rebuild-level.py && python3 -I unreal/verify-full-detail.py && python3 -I unreal/verify-editor-session.py && python3 -I unreal/verify-render-session.py",
     "verify": "node scripts/verify.mjs && yarn unreal:verify",
     "assets:version": "node scripts/version-assets.mjs",
     "grading:pdf": "node generate-grading-pdf.mjs"

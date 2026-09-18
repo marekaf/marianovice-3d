@@ -161,7 +161,7 @@ With a 360 projection the renderer:
 - writes 2:1 frames, 5760×2880 by default, at 30 fps under `generated/video-frames-360/` (`left/` and `right/` for stereo), with progress in `generated/video-render-360.json`. Override `resolution` with a 2:1 pair for faster tests.
 - keeps one level heading per shot, aimed at the shot's first target. The camera never turns; the viewer turns their head. Flat rendering keeps its look-at motion.
 - scales every shot by `durationScale`, so the same translation happens more slowly. Two is a comfortable starting point for a 4-minute tour.
-- adds `exposureBias` (EV, default 0) to every shot's own bias. Panoramas look at the windows in every direction, so interiors that read fine in the flat render clip in 360. The living room measured well exposed at -4 and still clipped at -2.
+- uses `exposureBias` (EV, default 0) as the bias for every shot, unless the shot has its own `exposureBias360` in `walkthrough-route.json`. The flat video's per-shot `exposureBias` is ignored in 360: a panorama meters the whole sphere, so values tuned for one view do not carry over and stacking them rendered the loft black. The living room measured well exposed at -4 and still clipped at -2; in the garden level interiors sit at -3.25, small-window rooms and the loft at -3 and exteriors at -5.5. The house-only level needs very different values because its windows look onto a bright void. A 360 bias of 0 still overrides the level's own exposure volume.
 - keeps a scene history per pane unless `paneHistory` is `false`. Each pane's history lives in GPU memory for the whole job; a 150-frame shot at 1440×720 pushed the local Mac into heavy swap and frame times grew from 20 s to over 100 s. Try `paneHistory: false` first and check the preview for black or flickering panes before choosing.
 
 Each frame renders 24 panes per eye, so the full video takes far longer than the flat render. The 1440×720 stereo preview took about eleven minutes for its 30 frames per eye on the local Mac. Check the preview on the headset before committing to the full run. Motion blur, vignette, depth of field and chromatic aberration should stay off in the local post-process volume; they break stereo fusion.
@@ -191,6 +191,19 @@ node unreal/export-tour.mjs
 This writes `generated/tour/<index>-<room>_360_TB.jpg`, the two eyes stacked top-bottom, plus `generated/tour/tour.json` with the shot heading and floor hotspots to the previous and next positions. The hotspot azimuth is the target's Unreal yaw minus the shot heading, positive to the right, which `verify-tour.mjs` checks against known positions. The `_360_TB` name tags let DeoVR and similar players open the JPEGs directly from the headset.
 
 `tour.html` at the repository root shows the tour in the browser and in VR. Serve the repository over HTTP or HTTPS, open `tour.html`, drag to look around, and click a green floor disc or use the Previous and Next buttons to move between positions. On the Quest browser, Enter VR shows each eye its own half; the panorama centre faces the shot heading. Run `node verify-tour-browser.mjs` with Chrome available to check the image orientation, eye layout and hotspot navigation against a synthetic panorama.
+
+## Levels are snapshots: refresh before rendering
+
+An Unreal level holds whatever the viewer looked like on the day of its import. Nothing keeps it in step with the website model. In September 2026 a full tour was rendered from a level imported on the ninth, and it showed a key hanger and network rack on their old walls, non-reflective mirrors, exposed roof sheeting in the loft and a stairwell ledge that the viewer had fixed days earlier. `/Game/Walkthrough/House` also contains the house alone, so exteriors rendered over a black void and interiors metered against it.
+
+Before any render that matters:
+
+1. Export the current viewer: `PLAYWRIGHT_MODULE=<path>/playwright-core/index.mjs node unreal/export.mjs --source-root <clean checkout of main>`. It takes under a minute.
+2. Compare it with what Unreal has. Load the old and new GLB in three.js and compare the bounds of named objects such as `keyMetal`, `UniFi_12U_wall_rack` and the mirror materials' metalness. Moved bounds or changed materials mean the level is stale.
+3. Rebuild the level. Write `generated/rebuild-level.json`, for example `{"sourceLevel":"HouseGardenSync20260913","newLevel":"HouseFresh20260918","assetFolder":"HouseFresh20260918","replaceAssetFolders":["HouseVideo20260910_1702","HouseSync20260913","AtticSync20260914","HouseFullDetail20260910","StairSync20260913V2","HouseBase20260910","HangerJoint20260911"]}`, and run `rebuild-level.py` inside the editor. It copies the source level, removes only the static meshes that come from the listed import folders, prunes the hierarchy groups they leave empty, keeps garden, terrain context, lights, sky and the exposure volume, imports `generated/house-walkthrough.glb` into the new asset folder, and refuses to overwrite an existing level or folder. List a level's import folders by grouping its static mesh actors by the second path segment of their mesh.
+4. Render with `"level": "<newLevel>"` in `video-options.json`, and load that map in the task before calling `render()`. The renderer refuses to run when the loaded map and `level` differ. The default stays `House` for the existing flat video.
+
+The garden and terrain context are their own imports and go stale the same way. In equirectangular stills, roof windows near the zenith stretch into wide blue bands; that is projection, not a missing roof.
 
 ## Rendering on a Windows PC
 
