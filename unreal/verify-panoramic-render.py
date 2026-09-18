@@ -66,7 +66,9 @@ class Track:
 
 class Component:
     def __init__(self):
-        self.properties = {'post_process_settings': SimpleNamespace(set_editor_property=lambda name, value: None)}
+        settings = SimpleNamespace(values={})
+        settings.set_editor_property = settings.values.__setitem__
+        self.properties = {'post_process_settings': settings}
 
     def set_field_of_view(self, value):
         self.fov = value
@@ -294,6 +296,11 @@ with tempfile.TemporaryDirectory() as directory:
     assert status['pane_history'] is False and status['exposure_bias'] == -2.5
     biased = [binding.template.camera_component.properties.get('post_process_blend_weight') for binding in LAST_SEQUENCE.bindings]
     assert all(weight == 1.0 for weight in biased), 'A global exposure bias applies to every shot'
+    biases = {binding.name: binding.template.camera_component.properties['post_process_settings'].values['auto_exposure_bias'] for binding in LAST_SEQUENCE.bindings}
+    assert biases['1.06 Living'] == -2.5, 'A shot without its own 360 bias takes the global one'
+    assert biases['1.01 Entrance'] == -3 and biases['2.02 Gym and hobby room'] == -1, 'exposureBias360 replaces the global bias'
+    assert biases['2.01 Loft landing'] == 0, 'A 360 bias of zero still overrides the level volume'
+    assert biases['Garden arrival'] == -7, 'The flat exposureBias is ignored in 360'
     assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_resolution == (5760, 2880)
     assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_directory.endswith('video-frames-360')
     status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
@@ -333,6 +340,8 @@ with tempfile.TemporaryDirectory() as directory:
     status = json.loads((root / 'generated' / 'video-render.json').read_text())
     assert status['projection'] == 'flat' and status['stereo_layout'] is None and list(status['eye_directories']) == ['']
     assert status['stills'] is False
+    flat_biases = {binding.name: binding.template.camera_component.properties['post_process_settings'].values.get('auto_exposure_bias') for binding in LAST_SEQUENCE.bindings}
+    assert flat_biases['Garden arrival'] == -5.75 and flat_biases['1.01 Entrance'] is None, 'Flat rendering keeps its own biases and ignores exposureBias360'
     assert status['fps'] == 24 and status['resolution'] == [1920, 1080] and status['total_frames'] == 5760
     live['CALLBACKS'].close()
 

@@ -13,7 +13,7 @@ const gentleShots=new Set(['1.02 Utility','1.11 Dressing room','Bedroom northeas
 const exteriorShots=new Set(['Garden arrival','West garden and offices','Pergola and firepit','Pond toward house']);
 const difference=(a,b)=>a.map((value,index)=>value-b[index]);
 for(const shot of route.shots){
-  if('exposureBias' in shot)assert(Number.isFinite(shot.exposureBias),`${shot.name}: finite exposure bias`);
+  for(const key of ['exposureBias','exposureBias360'])if(key in shot)assert(Number.isFinite(shot[key]),`${shot.name}: finite ${key}`);
   assert(Number.isFinite(shot.duration)&&shot.duration>0,`${shot.name}: positive duration`);
   assert(Number.isInteger(shot.duration*route.fps),`${shot.name}: whole frames`);
   for(const key of ['start','end','targetStart','targetEnd']){
