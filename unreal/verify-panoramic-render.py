@@ -156,6 +156,9 @@ class Queue:
         return job
 
 
+CONSOLE_COMMANDS = []
+
+
 def fake_unreal():
     fake = SimpleNamespace(
         FrameRate=lambda numerator, denominator: (numerator, denominator),
@@ -168,6 +171,7 @@ def fake_unreal():
         MovieSceneKeyInterpolation=SimpleNamespace(LINEAR='linear'),
         MoviePipelinePIEExecutor=Executor, MoviePipelineQueue=Queue,
         SoftObjectPath=str, DirectoryPath=str, IntPoint=lambda *values: values,
+        SystemLibrary=SimpleNamespace(execute_console_command=lambda world, command: CONSOLE_COMMANDS.append(command)),
     )
     for name in ('LevelSequence', 'LevelSequenceFactoryNew', 'MovieSceneCameraCutTrack', 'CameraActor',
                  'MovieScene3DTransformTrack', 'MovieSceneScriptingDoubleChannel',
@@ -304,9 +308,12 @@ with tempfile.TemporaryDirectory() as directory:
     except ValueError as error:
         assert 'projection' in str(error)
 
-    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': False, 'projection': 'stereo360', 'stills': True, 'shotNames': ['1.06 Living', '1.12 Bedroom']}))
+    assert CONSOLE_COMMANDS == [], 'Renders leave the render graph parallel unless asked'
+    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': False, 'projection': 'stereo360', 'stills': True, 'serialRenderGraph': True, 'shotNames': ['1.06 Living', '1.12 Bedroom']}))
     renderer['render']()
+    assert CONSOLE_COMMANDS == ['r.RDG.ParallelExecute 0', 'r.RDG.ParallelSetup 0', 'r.RHICmd.ParallelTranslate.Enable 0']
     status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
+    assert status['serial_render_graph'] is True
     assert status['stills'] is True and status['total_frames'] == 2 and status['expected_indices'] == [0, 1]
     assert [shot['name'] for shot in status['route_shots']] == ['1.06 Living', '1.12 Bedroom']
     assert all(shot['end'] == shot['start'] and shot['duration'] == 1 / 30 for shot in status['route_shots']), 'Stills hold the camera at the shot start'

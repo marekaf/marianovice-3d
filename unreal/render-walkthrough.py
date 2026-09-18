@@ -19,6 +19,7 @@ PROJECTIONS = {
     'stereo360': {'fps': 30, 'resolution': (5760, 2880), 'frames': 'video-frames-360', 'status': 'video-render-360.json',
                   'eyes': {'left': -EYE_SEPARATION_CM / 2, 'right': EYE_SEPARATION_CM / 2}},
 }
+SERIAL_RENDER_GRAPH_COMMANDS = ('r.RDG.ParallelExecute 0', 'r.RDG.ParallelSetup 0', 'r.RHICmd.ParallelTranslate.Enable 0')
 QUEUE = None
 EXECUTOR = None
 CALLBACKS = None
@@ -169,6 +170,8 @@ def read_options():
         raise ValueError('video-options.json exposureBias must be a finite number')
     if not isinstance(options.get('stills', False), bool):
         raise ValueError('video-options.json stills must be a boolean')
+    if not isinstance(options.get('serialRenderGraph', False), bool):
+        raise ValueError('video-options.json serialRenderGraph must be a boolean')
     return options, projection, profile, resolution, frame_step, duration_scale
 
 
@@ -192,6 +195,12 @@ def render():
     map_path = world.get_path_name()
     if map_path != '/Game/Walkthrough/House.House':
         raise RuntimeError('Load /Game/Walkthrough/House before rendering')
+    if options.get('serialRenderGraph', False):
+        # On D3D12 with SM6 the panoramic pass opens more command lists than the residency
+        # manager has slots for ("Too many residency sets are open concurrently"), and that
+        # fatal error leaves the Nvidia driver hung until a reboot. Serial execution avoids it.
+        for command in SERIAL_RENDER_GRAPH_COMMANDS:
+            unreal.SystemLibrary.execute_console_command(world, command)
     shots = read_route(fps, duration_scale)
     selected = options.get('shotNames')
     if selected is not None:
@@ -225,6 +234,7 @@ def render():
                  projection=projection, stereo_layout='top-bottom' if projection == 'stereo360' else None,
                  eye_directories=eye_directories, pane_history=options.get('paneHistory', True),
                  exposure_bias=options.get('exposureBias', 0.0), stills=stills,
+                 serial_render_graph=options.get('serialRenderGraph', False),
                  sequences={eye: sequence.get_path_name() for eye, (sequence, _) in sequences.items()}, map=map_path,
                  output_directory=str(folder), started_at=time.time(), errors=[])
     EXECUTOR = unreal.MoviePipelinePIEExecutor()
