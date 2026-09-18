@@ -192,3 +192,26 @@ This writes `generated/tour/<index>-<room>_360_TB.jpg`, the two eyes stacked top
 
 `tour.html` at the repository root shows the tour in the browser and in VR. Serve the repository over HTTP or HTTPS, open `tour.html`, drag to look around, and click a green floor disc or use the Previous and Next buttons to move between positions. On the Quest browser, Enter VR shows each eye its own half; the panorama centre faces the shot heading. Run `node verify-tour-browser.mjs` with Chrome available to check the image orientation, eye layout and hotspot navigation against a synthetic panorama.
 
+## Rendering on a Windows PC
+
+An Nvidia desktop card renders the panoramic pass far faster than the Mac: one 5760×2880 stereo still took about eleven minutes on an RTX 5080, against roughly two hours per still estimated on the M3 Pro. Copy the project's `Config` and `Content` folders and this `unreal/` directory to the PC, install the same engine version, and keep both plugins enabled in the `.uproject`. macOS `tar` adds `._*` sidecar files; delete them after copying or Unreal reports broken assets.
+
+Four settings make the Windows render match the Mac and stay alive:
+
+- Add a Windows target block to the PC copy of `Config/DefaultEngine.ini` so D3D12 runs Shader Model 6. On SM5 Lumen is off and interiors render pale and flat.
+
+  ```ini
+  [/Script/WindowsTargetPlatform.WindowsTargetSettings]
+  DefaultGraphicsRHI=DefaultGraphicsRHI_DX12
+  -D3D12TargetedShaderFormats=PCD3D_SM5
+  +D3D12TargetedShaderFormats=PCD3D_SM6
+  ```
+
+- Set `r.Shadow.Virtual.Enable=0` in the same file. Virtual Shadow Maps hit a GPU timeout inside Nanite culling during the 5760 panoramic warm-up.
+- Set `"serialRenderGraph": true` in `video-options.json`. With parallel render-graph execution the pass fails with "Too many residency sets are open concurrently", and that fatal error leaves the Nvidia driver hung: every later editor start ends in `DXGI_ERROR_DEVICE_HUNG` until the PC reboots.
+- Keep a user logged in on the PC desktop. An editor started without a desktop session loses its D3D12 device two seconds after start. A locked screen is fine.
+
+To drive the PC from another machine over SSH, start the editor detached from the SSH session, for example with PowerShell's `Invoke-CimMethod -ClassName Win32_Process -MethodName Create`, using `UnrealEditor-Cmd.exe <project> /Game/Walkthrough/House -ExecutePythonScript=<unreal>/editor-session.py -RenderOffscreen -unattended -nosplash -log -abslog=<log>`. A child of the SSH session dies when the session closes. Copy task files into `generated/` with `scp`; the session script picks them up as on the Mac. For a visible editor with the Movie Render Queue progress window, start `UnrealEditor.exe` with the same arguments, minus `-RenderOffscreen` and `-unattended`, from the PC desktop.
+
+Each still costs 32 warm-up frames per eye, so the 22-position stereo tour takes about four hours even on the PC. Test any new setting at `mono360` and 2880×1440 first: a failed experiment at full size can cost a reboot.
+
