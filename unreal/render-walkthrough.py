@@ -179,6 +179,9 @@ def read_options():
         raise ValueError('video-options.json stills must be a boolean')
     if not isinstance(options.get('serialRenderGraph', False), bool):
         raise ValueError('video-options.json serialRenderGraph must be a boolean')
+    level = options.get('level', 'House')
+    if not isinstance(level, str) or not level.replace('_', '').isalnum():
+        raise ValueError('video-options.json level must be a level name under /Game/Walkthrough')
     return options, projection, profile, resolution, frame_step, duration_scale
 
 
@@ -200,8 +203,9 @@ def render():
     STATUS = ROOT / 'generated' / profile['status']
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     map_path = world.get_path_name()
-    if map_path != '/Game/Walkthrough/House.House':
-        raise RuntimeError('Load /Game/Walkthrough/House before rendering')
+    level = options.get('level', 'House')
+    if map_path != f'/Game/Walkthrough/{level}.{level}':
+        raise RuntimeError(f'Load /Game/Walkthrough/{level} before rendering')
     if options.get('serialRenderGraph', False):
         # On D3D12 with SM6 the panoramic pass opens more command lists than the residency
         # manager has slots for ("Too many residency sets are open concurrently"), and that

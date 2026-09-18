@@ -298,15 +298,31 @@ with tempfile.TemporaryDirectory() as directory:
     assert all(weight == 1.0 for weight in biased), 'A global exposure bias applies to every shot'
     biases = {binding.name: binding.template.camera_component.properties['post_process_settings'].values['auto_exposure_bias'] for binding in LAST_SEQUENCE.bindings}
     assert biases['1.06 Living'] == -2.5, 'A shot without its own 360 bias takes the global one'
-    assert biases['1.01 Entrance'] == -3 and biases['2.02 Gym and hobby room'] == -1, 'exposureBias360 replaces the global bias'
-    assert biases['2.01 Loft landing'] == 0, 'A 360 bias of zero still overrides the level volume'
-    assert biases['Garden arrival'] == -7, 'The flat exposureBias is ignored in 360'
+    tuned = {shot['name']: shot['exposureBias360'] for shot in json.loads((ROOT / 'walkthrough-route.json').read_text())['shots'] if 'exposureBias360' in shot}
+    assert tuned and all(biases[name] == value for name, value in tuned.items()), 'exposureBias360 replaces the global bias'
+    zero, _ = build_sequence([dict(shots[0], name='Zero', exposureBias360=0)], 30, 'mono360', 0.0, -2.5)
+    zero_settings = zero.bindings[0].template.camera_component.properties['post_process_settings'].values
+    assert zero_settings['auto_exposure_bias'] == 0 and zero_settings['override_auto_exposure_bias'] is True, 'A 360 bias of zero still overrides the level volume'
+    assert biases['Garden arrival'] == tuned['Garden arrival'] != -5.75, 'The flat exposureBias is ignored in 360'
     assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_resolution == (5760, 2880)
     assert jobs[0].config.settings['MoviePipelineOutputSetting'].output_directory.endswith('video-frames-360')
     status = json.loads((root / 'generated' / 'video-render-360.json').read_text())
     assert status['projection'] == 'mono360' and status['stereo_layout'] is None and list(status['eye_directories']) == ['']
     live['CALLBACKS'].close()
     fake._walkthrough_video_session = None
+
+    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'level': 'HouseGardenSync20260913'}))
+    try:
+        renderer['render']()
+        raise AssertionError('Rendering must refuse a level other than the one requested')
+    except RuntimeError as error:
+        assert 'Load /Game/Walkthrough/HouseGardenSync20260913' in str(error)
+    (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'level': '../Other'}))
+    try:
+        renderer['render']()
+        raise AssertionError('Level names outside /Game/Walkthrough must be rejected')
+    except ValueError as error:
+        assert 'level' in str(error)
 
     (root / 'generated' / 'video-options.json').write_text(json.dumps({'preview': True, 'projection': 'dome'}))
     try:
