@@ -7,7 +7,9 @@ export function buildWalkingDoor(THREE,model,buildModel) {
   pivot.position.fromArray(model.doorMotion.pivot);
   leaf.position.copy(pivot.position).multiplyScalar(-1);
   group.add(pivot);pivot.add(leaf);
-  const fixed=model.parts.filter(part=>!moving.has(part.name));
+  // Collision uses box footprints only; the mitred casings are meshes that lie on the wall
+  // face, where the wall already blocks the walker.
+  const fixed=model.parts.filter(part=>part.type==='box'&&!moving.has(part.name));
   const panel=model.parts.find(part=>part.name===`${model.name}_leaf`);
   const movingPanels=model.parts.filter(part=>moving.has(part.name));
   group.userData.walkDoor={id:model.name,opening:model.opening,pivot,leaf,model,fixed,panel,movingPanels,open:false};

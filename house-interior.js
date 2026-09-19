@@ -176,12 +176,14 @@ for (const [key, spec] of Object.entries(HOUSE_OPENINGS)) {
     depth1: spec.kind === 'window' ? wall.b[cross] : wall.b[0] - 0.07 };
 }
 
+const INTERIOR_DOOR_FRAME = { casingWidth: 0.065, casingProjection: 0.012, liningThickness: 0.025, leafThickness: 0.04, leafGap: 0.003 };
+
 HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false, specification = null } = {}) {
   const internalDoors = { 'W12:0':'D09', 'W13:0':'D11', 'W14:0':'D10', 'W15:0':'D08', 'W21:0':'D07',
     'W24:0':'D05', 'W27:0':'D03', 'W27:1':'D02', 'W27:2':'D01', 'P10:0':'loft-D01' };
   const key = `${wall.id}:${index}`, doorId = internalDoors[key];
   const fallback = doorId ? { kind:'door', doorId, width:opening.w, height:opening.h,
-    leafWidth:opening.w-.1, leafHeight:opening.h-.1,
+    leafWidth:opening.w-.1, leafHeight:opening.h-.06,
     hinge:key==='W13:0'?'south':wall.b[0]-wall.a[0]>wall.b[1]-wall.a[1]?'west':'north',
     reverseSwing:key==='W13:0',
     pocket:['W15:0','W24:0'].includes(key),pocketDirection:key==='W15:0'?-1:1,
@@ -217,12 +219,25 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     if (moving && doorOpen) {
       const hinge = hingeAtStart ? start + doorEdge : end - (spec.kind === 'entrance' ? .06 : doorEdge);
       const direction = (hingeAtStart ? 1 : -1) * (spec.reverseSwing ? -1 : 1);
-      position = [depth - direction * (z - hinge), hinge + direction * (x - depth), y];
+      position = [pivotDepth - direction * (z - hinge), hinge + direction * (x - pivotDepth), y];
       size = [d, w, h];
     }
     if (spec.kind !== 'window' && alongX) { position = [position[1], position[0], y]; size = [size[1], size[0], h]; }
     parts.push({ name: `${prefix}_${name}`, type: 'box', position, size, material, category: 'openings', bevel: 0.0015 });
     if(moving)movingParts.push(`${prefix}_${name}`);
+  };
+  const addPrism = (name, crossA, crossB, outline) => {
+    const place = (crossAt, [along, height]) => alongX ? [along, crossAt, height] : [crossAt, along, height];
+    const count = outline.length, vertices = [...outline.map(point => place(crossA, point)), ...outline.map(point => place(crossB, point))];
+    const ring = [...Array(count).keys()];
+    const faces = [ring, ring.map(i => i + count), ...ring.map(i => [i, (i + 1) % count, (i + 1) % count + count, i + count])];
+    const centre = vertices.reduce((sum, v) => sum.map((value, i) => value + v[i] / vertices.length), [0, 0, 0]);
+    const outward = face => {
+      const [a, b, c] = face.map(i => vertices[i]), u = b.map((v, i) => v - a[i]), w = c.map((v, i) => v - a[i]);
+      const normal = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+      return normal.reduce((sum, value, i) => sum + value * (a[i] - centre[i]), 0) > 0 ? face : [...face].reverse();
+    };
+    parts.push({ name: `${prefix}_${name}`, type: 'mesh', vertices, faces: faces.map(outward), material: 'casing', category: 'openings' });
   };
   const rail = (name, a, b, bottom, top, material, thickness = 0.075, x = depth, moving = false) =>
     addBox(name, x, (a + b) / 2, (bottom + top) / 2, thickness, b - a, top - bottom, material, moving);
@@ -232,7 +247,7 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     rail(`${name}_head`, a + edge, b - edge, top - edge, top, material, thickness, x);
     rail(`${name}_sill`, a + edge, b - edge, bottom, bottom + sillEdge, material, thickness, x);
   };
-  let leafWidth = spec.leafWidth, leafHeight = spec.leafHeight, doorMotion;
+  let leafWidth = spec.leafWidth, leafHeight = spec.leafHeight, doorMotion, pivotDepth = depth;
   if (spec.kind === 'window') {
     const edge=spec.sliding?.025:.06,divider=start+spec.width*(spec.split??.5),mullion=spec.sliding?.0125:.03;
     const bottomEdge=spec.lowThreshold?.02:edge;
@@ -281,14 +296,50 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     }
   } else {
     const entrance = spec.kind === 'entrance', edge = entrance ? 0.06 : doorEdge;
-    const frameMaterial = entrance ? 'frame' : 'casing';
-    rail('jamb_north', start, start + edge, 0, spec.height, frameMaterial, entrance ? 0.085 : 0.14);
-    rail('jamb_south', end - edge, end, 0, spec.height, frameMaterial, entrance ? 0.085 : 0.14);
-    rail('head', start + edge, end - edge, spec.height - 0.08, spec.height, frameMaterial, 0.14);
     const leafStart = entrance ? start + spec.width * 0.28 + 0.03 : start + edge;
     const leafEnd = end - edge;
+    const bottom = spec.bottomGap ?? .01;
     leafWidth = leafEnd - leafStart;
-    leafHeight = entrance ? spec.height - 0.095 : spec.leafHeight;
+    let leafDepth = depth, leafThickness = 0.075;
+    if (entrance) {
+      leafHeight = spec.height - 0.095;
+      rail('jamb_north', start, start + edge, 0, spec.height, 'frame', 0.085);
+      rail('jamb_south', end - edge, end, 0, spec.height, 'frame', 0.085);
+      rail('head', start + edge, end - edge, spec.height - 0.08, spec.height, 'frame', 0.14);
+    } else if (opening.reveal) {
+      // Doors set back inside a stepped wall reveal keep a plain block frame: a wrap-around
+      // lining frame does not describe that detail.
+      leafThickness = 0.042;
+      rail('jamb_north', start, start + edge, 0, spec.height, 'casing', 0.14);
+      rail('jamb_south', end - edge, end, 0, spec.height, 'casing', 0.14);
+      rail('head', start + edge, end - edge, spec.height - 0.08, spec.height, 'casing', 0.14);
+    } else {
+      // Sapeli NORMAL lining frame for rebateless leaves: a lining across the wall thickness
+      // and a 65 mm casing lying on each wall face, mitred at the head. The casing projection
+      // and lining thickness are not in the supplier sheet and stay provisional.
+      const frame = INTERIOR_DOOR_FRAME, wallThickness = Math.abs(wall.b[cross] - wall.a[cross]);
+      const wallCentre = (wall.a[cross] + wall.b[cross]) / 2;
+      const clearTop = opening.h - frame.leafGap - frame.liningThickness;
+      leafHeight = Math.min(spec.leafHeight, clearTop - bottom);
+      const leafTop = bottom + leafHeight, innerStart = leafStart - frame.leafGap, innerEnd = leafEnd + frame.leafGap;
+      const innerTop = leafTop + frame.leafGap, outerTop = innerTop + frame.casingWidth;
+      // A rebateless leaf sits flush with the casing on the side it opens toward; hinged
+      // leaves open toward the lower cross coordinate unless the swing is reversed.
+      const openSide = spec.reverseSwing ? 1 : -1;
+      leafThickness = frame.leafThickness;
+      leafDepth = pivotDepth = spec.pocket ? wallCentre : wallCentre + openSide * (wallThickness / 2 + frame.casingProjection - leafThickness / 2);
+      const pocketAtStart = spec.pocket && spec.pocketDirection < 0, pocketAtEnd = spec.pocket && spec.pocketDirection > 0;
+      if (!pocketAtStart) rail('jamb_north', innerStart - frame.liningThickness, innerStart, 0, innerTop, 'casing', wallThickness, wallCentre);
+      if (!pocketAtEnd) rail('jamb_south', innerEnd, innerEnd + frame.liningThickness, 0, innerTop, 'casing', wallThickness, wallCentre);
+      rail('head', innerStart - frame.liningThickness, innerEnd + frame.liningThickness, innerTop, innerTop + frame.liningThickness, 'casing', wallThickness, wallCentre);
+      for (const side of [-1, 1]) {
+        const face = wallCentre + side * wallThickness / 2, outer = face + side * frame.casingProjection, label = side < 0 ? 'low' : 'high';
+        const outerStart = innerStart - frame.casingWidth, outerEnd = innerEnd + frame.casingWidth;
+        addPrism(`casing_${label}_north`, face, outer, [[outerStart, 0], [innerStart, 0], [innerStart, innerTop], [outerStart, outerTop]]);
+        addPrism(`casing_${label}_south`, face, outer, [[innerEnd, 0], [outerEnd, 0], [outerEnd, outerTop], [innerEnd, innerTop]]);
+        addPrism(`casing_${label}_head`, face, outer, [[innerStart, innerTop], [innerEnd, innerTop], [outerEnd, outerTop], [outerStart, outerTop]]);
+      }
+    }
     if (entrance) {
       const mullion = start + spec.width * 0.28;
       rail('sidelight_mullion', mullion - 0.03, mullion + 0.03, 0.025, spec.height - 0.06, 'frame', 0.085);
@@ -296,11 +347,10 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
       rail('sidelight_glass', start + edge + 0.013, mullion - 0.043, 0.038, spec.height - 0.073, 'glass', 0.026);
       rail('threshold', start + edge, end - edge, 0, 0.02, 'metal', 0.095);
     }
-    const bottom = spec.bottomGap ?? .01;
-    rail('leaf', leafStart, leafEnd, bottom, bottom + leafHeight, 'door', entrance ? 0.075 : 0.042, depth, true);
-    if (spec.acousticThreshold) rail('drop_seal', leafStart+.004, leafEnd-.004, 0, bottom, 'seal', .035, depth, true);
+    rail('leaf', leafStart, leafEnd, bottom, bottom + leafHeight, 'door', leafThickness, leafDepth, true);
+    if (spec.acousticThreshold) rail('drop_seal', leafStart+.004, leafEnd-.004, 0, bottom, 'seal', .035, leafDepth, true);
     const hinge = hingeAtStart ? leafStart : leafEnd;
-    doorMotion={pivot:alongX?[hinge,0,depth]:[depth,0,hinge],angle:(alongX?1:-1)*(hingeAtStart?1:-1)*(spec.reverseSwing?-1:1)*Math.PI/2,movingParts};
+    doorMotion={pivot:alongX?[hinge,0,pivotDepth]:[pivotDepth,0,hinge],angle:(alongX?1:-1)*(hingeAtStart?1:-1)*(spec.reverseSwing?-1:1)*Math.PI/2,movingParts};
     if(spec.pocket){
       const travel=spec.pocketDirection*(spec.width-doorEdge);
       doorMotion={kind:'slide',pivot:[0,0,0],offset:alongX?[travel,0,0]:[0,0,travel],movingParts};
@@ -308,29 +358,30 @@ HOUSE_INTERIOR.buildOpening = function (wall, opening, index, { doorOpen = false
     if (entrance) for (const [j, y] of [0.2, 1.05, 1.94].entries())
       addBox(`door_hinge_${j}`, depth - 0.025, hinge, y, 0.023, 0.025, 0.075, 'metal');
     if (!entrance) {
-      rail('edge_north', leafStart, leafStart + 0.003, bottom, bottom + leafHeight, 'frame', 0.043, depth, true);
-      rail('edge_south', leafEnd - 0.003, leafEnd, bottom, bottom + leafHeight, 'frame', 0.043, depth, true);
-      rail('edge_top', leafStart + 0.003, leafEnd - 0.003, leafHeight + bottom-.003, leafHeight + bottom, 'frame', 0.043, depth, true);
-      rail('edge_bottom', leafStart + 0.003, leafEnd - 0.003, bottom, bottom+.003, 'frame', 0.043, depth, true);
+      const edgeThickness = Math.round((leafThickness + 0.001) * 1000) / 1000;
+      rail('edge_north', leafStart, leafStart + 0.003, bottom, bottom + leafHeight, 'frame', edgeThickness, leafDepth, true);
+      rail('edge_south', leafEnd - 0.003, leafEnd, bottom, bottom + leafHeight, 'frame', edgeThickness, leafDepth, true);
+      rail('edge_top', leafStart + 0.003, leafEnd - 0.003, leafHeight + bottom-.003, leafHeight + bottom, 'frame', edgeThickness, leafDepth, true);
+      rail('edge_bottom', leafStart + 0.003, leafEnd - 0.003, bottom, bottom+.003, 'frame', edgeThickness, leafDepth, true);
     }
     const latch = (spec.pocket?spec.pocketDirection<0:hingeAtStart) ? leafEnd - 0.055 : leafStart + 0.055;
     for (const side of [-1, 1]) {
-      const surface = entrance ? 0.044 : 0.027;
+      const surface = entrance ? 0.044 : leafThickness / 2 + 0.006;
       if(spec.pocket){
-        addBox(`flush_pull_${side}`,depth+side*.021,latch,1.03,.001,.04,.10,'metal',true);
+        addBox(`flush_pull_${side}`,leafDepth+side*(leafThickness/2+.001),latch,1.03,.001,.04,.10,'metal',true);
         continue;
       }
       if (entrance && side === 1) {
         for (const [j, y] of [0.89, 1.39].entries())
-          addBox(`pull_mount_${j}`, depth + surface + 0.025, latch, y, 0.06, 0.025, 0.025, 'metal', true);
-        addBox('exterior_pull', depth + surface + 0.053, latch, 1.14, 0.026, 0.026, 0.58, 'metal', true);
+          addBox(`pull_mount_${j}`, leafDepth + surface + 0.025, latch, y, 0.06, 0.025, 0.025, 'metal', true);
+        addBox('exterior_pull', leafDepth + surface + 0.053, latch, 1.14, 0.026, 0.026, 0.58, 'metal', true);
       } else {
-        addBox(`escutcheon_${side}`, depth + side * surface, latch, 1.03, 0.012, 0.045, 0.045, 'metal', true);
-        addBox(`lever_stem_${side}`, depth + side * (surface + 0.02), latch, 1.03, 0.04, 0.016, 0.016, 'metal', true);
-        addBox(`lever_${side}`, depth + side * (surface + 0.038), latch + (hingeAtStart ? -0.045 : 0.045), 1.03,
+        addBox(`escutcheon_${side}`, leafDepth + side * surface, latch, 1.03, 0.012, 0.045, 0.045, 'metal', true);
+        addBox(`lever_stem_${side}`, leafDepth + side * (surface + 0.02), latch, 1.03, 0.04, 0.016, 0.016, 'metal', true);
+        addBox(`lever_${side}`, leafDepth + side * (surface + 0.038), latch + (hingeAtStart ? -0.045 : 0.045), 1.03,
           0.018, 0.115, 0.018, 'metal', true);
       }
-      addBox(`keyhole_${side}`, depth + side * surface, latch, 0.94, 0.01, 0.027, 0.037, 'metal', true);
+      addBox(`keyhole_${side}`, leafDepth + side * surface, latch, 0.94, 0.01, 0.027, 0.037, 'metal', true);
     }
   }
   return { name: prefix, floorHeight: 0, materials, parts, lights: [], ...(doorMotion?{doorMotion}:{}),
