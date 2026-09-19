@@ -87,7 +87,8 @@ def fake_unreal(world, state):
         EditorAssetLibrary=SimpleNamespace(does_asset_exist=lambda path: path in state.get('existing', ()),
                                            does_directory_exist=lambda path: path in state.get('existing', ()),
                                            save_directory=lambda *args, **kwargs: True),
-        EditorLoadingAndSavingUtils=SimpleNamespace(load_map=load_map, save_map=save_map),
+        EditorLoadingAndSavingUtils=SimpleNamespace(load_map=load_map, save_map=save_map,
+                                                    get_dirty_map_packages=lambda: state.get('dirty_maps', [])),
         InterchangeManager=SimpleNamespace(get_interchange_manager_scripted=lambda: SimpleNamespace(
             create_source_data=lambda path: path, import_scene=import_scene)),
         ImportAssetParameters=lambda: SimpleNamespace(),
@@ -117,6 +118,18 @@ def run(options, existing=()):
 
 OPTIONS = {'sourceLevel': 'HouseGarden', 'newLevel': 'HouseFresh', 'assetFolder': 'HouseFreshAssets',
            'replaceAssetFolders': ['HouseOld', 'HousePatch']}
+for dirty_path in ('/Game/Walkthrough/HouseGarden', '/Game/OtherMap'):
+    dirty_world = World()
+    dirty_state = {'dirty_maps': [SimpleNamespace(get_name=lambda: dirty_path)]}
+    with patch.dict(sys.modules, unreal=fake_unreal(dirty_world, dirty_state)):
+        module = runpy.run_path(str(ROOT / 'rebuild-level.py'))
+        module['rebuild'].__globals__['read_options'] = lambda: (OPTIONS, {'HouseOld'}, Path('house.glb'))
+        try:
+            module['rebuild']()
+            raise AssertionError('Unsaved maps must block rebuilding')
+        except RuntimeError as error:
+            assert 'Save pending' in str(error), str(error)
+    assert not dirty_state.get('loaded') and 'saved_as' not in dirty_state and 'imported' not in dirty_state
 report, world, state, written = run(OPTIONS)
 assert report == written
 assert state['loaded'] == ['/Game/Walkthrough/HouseGarden', '/Game/Walkthrough/HouseFresh'] and state['saved_as'] == '/Game/Walkthrough/HouseFresh'
