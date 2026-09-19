@@ -242,7 +242,10 @@ const PerennialModel = (() => {
         mesh.userData.stale = true;
         for (const instance of members) instance.mesh = mesh;
         mesh.userData.members = members;
-        mesh.onBeforeRender = mesh.onBeforeShadow = () => sync(mesh);
+        mesh.updateMatrixWorld = function(force) {
+          sync(this);
+          THREE.InstancedMesh.prototype.updateMatrixWorld.call(this, force);
+        };
         meshes.push(mesh);
         parent.add(mesh);
       }

@@ -24,7 +24,7 @@ const single = specs.map((spec, i) => {
   root.position.copy(batched[i].position);
   return root;
 });
-const render = () => { scene.updateMatrixWorld(true); for (const mesh of meshes) mesh.onBeforeRender(); };
+const render = () => { scene.updateMatrixWorld(true); };
 const expected = new THREE.Matrix4(), actual = new THREE.Matrix4(), color = new THREE.Color();
 function compare(month) {
   for (let i = 0; i < specs.length; i++) {
@@ -63,4 +63,23 @@ for (const root of [...single, ...batched]) root.scale.multiplyScalar(.45);
 render();
 compare(7);
 for (const invalid of [{ profile: 'unknown' }, { height: 0 }]) assert.throws(() => batch.add(invalid));
+
+const bedScene=new THREE.Scene(),bed=PerennialModel.createBatch(THREE);
+const flower=bed.add({profile:'daisy',height:1,spread:.5,seed:7,bloom:[6,7]});
+flower.position.set(30,0,30);bedScene.add(flower);
+const bedMeshes=bed.build(bedScene);
+const camera=new THREE.PerspectiveCamera(60,1,.1,100);
+camera.position.set(30,2,35);camera.lookAt(30,.5,30);camera.updateMatrixWorld(true);
+const frustum=new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));
+const blossoms=bedMeshes.find(mesh=>mesh.name==='perennial-flower');
+for(const month of [7,1,7]){
+  PerennialModel.update(flower,month);
+  bedScene.updateMatrixWorld(true);
+  assert.equal(blossoms.count,month===7?1:0,'Seasonal visibility updates before culling');
+  if(month===7)assert(frustum.intersectsObject(blossoms),'Summer flowers are in view before draw callbacks');
+}
+flower.position.x=60;bedScene.updateMatrixWorld(true);
+assert(!frustum.intersectsObject(blossoms),'Moving a root updates bounds before culling');
+flower.position.x=30;bedScene.updateMatrixWorld(true);
+assert(frustum.intersectsObject(blossoms),'Moving a root back into view restores visible bounds');
 console.log(JSON.stringify({ plants: specs.length, instancedMeshes: meshes.length, monthsCompared: 7 }));
