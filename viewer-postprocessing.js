@@ -10,6 +10,7 @@ export function createViewerPostprocessing({THREE,renderer,scene,camera,samples=
   const size=renderer.getSize(new THREE.Vector2()),ratio=renderer.getPixelRatio();
   const target=new THREE.WebGLRenderTarget(size.width*ratio,size.height*ratio,{type:THREE.HalfFloatType,samples,colorSpace:THREE.SRGBColorSpace});
   const composer=new EffectComposer(renderer,target);
+  composer.setSize(size.width,size.height);
   for(const buffer of [composer.renderTarget1,composer.renderTarget2])buffer.isXRRenderTarget=true;
   const passes=[new RenderPass(scene,camera),new SMAAPass()];
   for(const pass of passes)composer.addPass(pass);
