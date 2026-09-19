@@ -62,6 +62,8 @@ def rebuild():
     if unreal.EditorAssetLibrary.does_directory_exist(assets):
         raise RuntimeError(f'{assets} already exists; choose a new asset folder')
     loading = unreal.EditorLoadingAndSavingUtils
+    if loading.get_dirty_map_packages():
+        raise RuntimeError('Save pending map changes before rebuilding the level')
     loading.load_map(source)
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     if not loading.save_map(world, target):
