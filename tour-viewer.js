@@ -69,15 +69,16 @@ export function mountTour(THREE,VRButton,{source}){
     if(!tour||index<0||index>=tour.stills.length)return;
     const still=tour.stills[index];
     current=tourState(tour,index);
+    const selection=current;
     status.textContent=`Loading ${still.name}…`;
     hotspotGroup.clear();
     for(const hotspot of still.hotspots)hotspotGroup.add(ring(hotspot,still));
     select.value=String(index);
     previous.disabled=!current.hasPrevious;next.disabled=!current.hasNext;
     const url=new URL(still.file,source).href;
-    const apply=texture=>{setTexture(texture,tour.stereo);status.textContent=still.name;};
+    const apply=texture=>{if(current!==selection)return;setTexture(texture,tour.stereo);status.textContent=still.name;};
     if(textures.has(url))apply(textures.get(url));
-    else loader.load(url,texture=>{textures.set(url,texture);apply(texture);},undefined,()=>{status.textContent=`Could not load ${still.file}`;});
+    else loader.load(url,texture=>{textures.set(url,texture);apply(texture);},undefined,()=>{if(current===selection)status.textContent=`Could not load ${still.file}`;});
   }
   previous.onclick=()=>show(current.index-1);
   next.onclick=()=>show(current.index+1);

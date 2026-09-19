@@ -107,6 +107,7 @@ const checks=[
   'verify-render-scheduler.mjs',
   'verify-adaptive-resolution.mjs',
   'verify-viewer-postprocessing.mjs',
+  'verify-tour-loading.mjs',
   'verify-bathroom-fixtures.mjs',
   'verify-bathroom-vanities.mjs',
   'docs/verify-utility-joinery.mjs',
