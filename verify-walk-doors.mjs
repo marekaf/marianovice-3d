@@ -21,7 +21,7 @@ globalThis.document={createElement(){return{getContext(){return{createImageData(
 const bedroomWall=data.intWalls.find(w=>w.id==='W13');
 const bedroom=data.buildOpening(bedroomWall,bedroomWall.openings[0],0);
 assert.equal(bedroom.opening.hinge,'south','Bedroom D11 is hinged at the south jamb');
-assert(new THREE.Vector3(...bedroom.doorMotion.pivot).distanceTo(new THREE.Vector3(5.775,0,3.35))<1e-9);
+assert(new THREE.Vector3(...bedroom.doorMotion.pivot).distanceTo(new THREE.Vector3(5.842,0,3.35))<1e-9,'The reversed bedroom leaf hinges flush with the casing on the high side of its 150 mm wall');
 const bedroomGroup=buildWalkingDoor(THREE,bedroom,buildModel);
 const bedroomFrame=new THREE.Box3().setFromObject(bedroomGroup.userData.categories.openings);
 const bedroomController=createWalkDoors(THREE,{data,doors:[bedroomGroup],floorY:0});
@@ -31,7 +31,7 @@ assert(bedroomLeaf.min.x>5.74&&bedroomLeaf.max.x>6.57,'Open D11 extends east int
 assert(Math.abs(bedroomLeaf.getCenter(new THREE.Vector3()).z-3.35)<.01);
 assert.deepEqual(new THREE.Box3().setFromObject(bedroomGroup.userData.categories.openings),bedroomFrame);
 const bedroomClosed=bedroom.parts.find(p=>p.name==='opening_W13_0_leaf');
-assert(new THREE.Vector3(...bedroomClosed.size).distanceTo(new THREE.Vector3(.042,.8,2))<1e-9,'Orientation does not change leaf dimensions');
+assert(new THREE.Vector3(...bedroomClosed.size).distanceTo(new THREE.Vector3(.04,.8,2.04))<1e-9,'Orientation does not change leaf dimensions: 40 mm thick, 800 wide, 50 mm clear of the 2.10 m opening head');
 const bedroomStatic=data.buildOpening(bedroomWall,bedroomWall.openings[0],0,{doorOpen:true,specification:{...bedroom.opening,provisional:false}});
 const staticLeaf=bedroomStatic.parts.find(p=>p.name==='opening_W13_0_leaf');
 assert(staticLeaf.position[0]>6.1&&Math.abs(staticLeaf.position[1]-3.35)<.01,'Static open leaf also extends east from the south jamb');

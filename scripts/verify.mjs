@@ -101,6 +101,7 @@ const checks=[
   'verify-utility-pillar.mjs',
   'verify-viewer-loading.mjs',
   'verify-walk-interior-loading.mjs',
+  'verify-interior-door-frames.mjs',
   'verify-walk-movement.mjs',
   'verify-walk-vr-locomotion.mjs',
   'verify-render-scheduler.mjs',
