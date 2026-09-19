@@ -35,8 +35,13 @@ def source_folder(actor):
 
 def remove_house(subsystem, folders):
     removed = 0
+    ancestors = set()
     for actor in subsystem.get_all_level_actors():
         if source_folder(actor) in folders:
+            parent = actor.get_attach_parent_actor()
+            while parent is not None and parent not in ancestors:
+                ancestors.add(parent)
+                parent = parent.get_attach_parent_actor()
             subsystem.destroy_actor(actor)
             removed += 1
     pruned = 0
@@ -44,7 +49,10 @@ def remove_house(subsystem, folders):
     # gone they are empty, and removing a leaf can empty its parent, so repeat until stable.
     while True:
         empties = [actor for actor in subsystem.get_all_level_actors()
-                   if actor.get_class().get_name() == 'Actor' and not actor.get_attached_actors()]
+                   if actor in ancestors and actor.get_class().get_name() == 'Actor'
+                   and not actor.get_attached_actors()
+                   and all(component.get_class().get_name() == 'SceneComponent'
+                           for component in actor.get_components_by_class(unreal.ActorComponent))]
         if not empties:
             return removed, pruned
         for actor in empties:

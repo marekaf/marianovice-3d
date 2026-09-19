@@ -24,16 +24,27 @@ class StaticMeshActor:
     def get_attached_actors(self):
         return []
 
+    def get_attach_parent_actor(self):
+        return self.parent
+
 
 class Group:
-    def __init__(self, world, parent=None):
+    def __init__(self, world, parent=None, components=('SceneComponent',)):
         self.world, self.parent, self.kind = world, parent, 'Actor'
+        self.components = components
 
     def get_class(self):
         return SimpleNamespace(get_name=lambda: 'Actor')
 
     def get_attached_actors(self):
         return [actor for actor in self.world.actors if actor.parent is self]
+
+    def get_attach_parent_actor(self):
+        return self.parent
+
+    def get_components_by_class(self, component_class):
+        return [SimpleNamespace(get_class=lambda name=name: SimpleNamespace(get_name=lambda: name))
+                for name in self.components]
 
 
 class Light:
@@ -84,6 +95,7 @@ def fake_unreal(world, state):
 
     fake = SimpleNamespace(
         StaticMeshActor=StaticMeshActor,
+        ActorComponent=object,
         EditorAssetLibrary=SimpleNamespace(does_asset_exist=lambda path: path in state.get('existing', ()),
                                            does_directory_exist=lambda path: path in state.get('existing', ()),
                                            save_directory=lambda *args, **kwargs: True),
@@ -155,3 +167,20 @@ for existing in ('/Game/Walkthrough/HouseFresh', '/Game/HouseFreshAssets'):
     except RuntimeError as error:
         assert 'already exists' in str(error)
 print('Rebuild level: copies the source level, removes only the listed house imports, prunes emptied groups, keeps garden, context and lights, imports the fresh house, and refuses overwrites.')
+
+for matched in (True, False):
+    world = World()
+    unrelated_empty = Group(world)
+    unrelated_light = Group(world, components=('SceneComponent', 'PointLightComponent'))
+    ancestor_with_mesh = Group(world, components=('SceneComponent', 'StaticMeshComponent'))
+    empty_room = Group(world, ancestor_with_mesh)
+    house = StaticMeshActor('HouseOld', empty_room)
+    world.actors = [unrelated_empty, unrelated_light, ancestor_with_mesh, empty_room, house]
+    with patch.dict(sys.modules, unreal=fake_unreal(world, {})):
+        module = runpy.run_path(str(ROOT / 'rebuild-level.py'))
+        subsystem = module['unreal'].get_editor_subsystem('actors')
+        removed, pruned = module['remove_house'](subsystem, {'HouseOld' if matched else 'Absent'})
+    assert unrelated_empty in world.actors and unrelated_light in world.actors, 'Unrelated actors survive pruning'
+    assert ancestor_with_mesh in world.actors, 'Ancestors with mesh components are not empty'
+    assert (removed, pruned) == ((1, 1) if matched else (0, 0))
+    assert (empty_room in world.actors) is not matched
