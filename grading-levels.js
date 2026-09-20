@@ -1,7 +1,7 @@
 const GradingLevels = (() => {
   const number=value=>value.toFixed(2).replace('.',',').replace('-','−');
   const relative=value=>Math.abs(value)<.005?'±0,00':(value>0?'+':'')+number(value);
-  function controls({garden,terrain,site,survey,quantities}) {
+  function controls({garden,terrain,site,survey,quantities,banks}) {
     const absolute=h=>terrain.bpvDatum+h-terrain.houseFFLInternal;
     const finish=(id,position,label,height,offset=[0,0])=>({id,position,label,surface:'finish',proposed:absolute(height),offset});
     const ground=(id,position,label,box)=>({id,position,label,box,surface:'ground',existing:absolute(survey.height(...position)),proposed:absolute(site.height(...position))});
@@ -9,11 +9,15 @@ const GradingLevels = (() => {
     const terrace=garden.elements.find(e=>e.id==='eastTerrace').parts.find(p=>p.kind==='rect');
     const sw=site.spec.fixedFences.segments.flatMap(s=>[s.start,s.end]).filter(p=>p[1]>house[3]).sort((a,b)=>a[0]-b[0])[0];
     return [
-      ground('north-west',[12,2],'SEVER · ZÁPAD',[230,42]),
-      ground('north-middle',[20,2],'SEVER · STŘED',[360,42]),
+      ground('north-west',[12,2],'SEVER · ZÁPAD',[90,42]),
+      ground('north-middle',[20,2],'SEVER · STŘED',[220,42]),
+      ...banks.filter(b=>b.id==='pergola-north').flatMap(bank=>[
+        ground('pergola-ground',bank.spotCrest,'PERGOLA · TERÉN',[350,42]),
+        ground('pergola-fence',bank.spotFoot,'PLOT U PERGOLY',[480,42])
+      ]),
       ...garden.gradingBanks.filter(b=>b.id==='north').flatMap(bank=>[
-        ground('north-crest',bank.spotCrest,'HORNÍ HRANA SVAHU',[540,42]),
-        ground('north-foot',bank.spotFoot,'SEVERNÍ PLOT',[690,42])
+        ground('north-crest',bank.spotCrest,'HORNÍ HRANA SVAHU',[610,42]),
+        ground('north-foot',bank.spotFoot,'SEVERNÍ PLOT',[740,42])
       ]),
       ...garden.gradingBanks.filter(b=>b.id==='east').map(bank=>ground('east-foot',bank.spotFoot,'VÝCHODNÍ PLOT',[810,180])),
       ground('southwest',sw,'JIHOZÁPADNÍ PLOT',[100,600]),
@@ -27,8 +31,8 @@ const GradingLevels = (() => {
       })
     ];
   }
-  function svg({garden,terrain,site,survey,quantities,px,pz}) {
-    return controls({garden,terrain,site,survey,quantities}).map(mark=>{
+  function svg({garden,terrain,site,survey,quantities,banks,px,pz}) {
+    return controls({garden,terrain,site,survey,quantities,banks}).map(mark=>{
       const x=px(mark.position[0]),y=pz(mark.position[1]);
       const [cx,cy]=mark.box??[x+mark.offset[0],y+mark.offset[1]];
       const ground=mark.surface==='ground',width=ground?96:56,left=cx-width/2,top=cy-15;

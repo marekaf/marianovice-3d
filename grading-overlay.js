@@ -15,6 +15,22 @@ const GradingOverlay = (() => {
   }
   function terrainMarks(garden,quantities) {
     const banks=(garden.gradingBanks??[]).map(bank=>({...bank,from:bank.id==='north'&&bank.spotCrest&&bank.spotFoot?bank.spotCrest.map((v,i)=>v+(bank.spotFoot[i]-v)*.25):bank.spotCrest,to:bank.spotFoot}));
+    const pergola=garden.elements.find(e=>e.id==='pergola')?.parts.find(p=>p.kind==='rect');
+    if(pergola){
+      const northFence=(quantities.fenceSegments??[]).filter(s=>Math.max(s.start[1],s.end[1])<pergola.y);
+      const fenceAt=x=>northFence.flatMap(({start:a,end:b})=>{
+        if(x<Math.min(a[0],b[0])||x>Math.max(a[0],b[0])||a[0]===b[0])return [];
+        return [[x,a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0])]];
+      }).sort((a,b)=>b[1]-a[1])[0];
+      const left=fenceAt(pergola.x),right=fenceAt(pergola.x+pergola.w),foot=fenceAt(pergola.x+pergola.w/2);
+      if(left&&right&&foot){
+        const bends=northFence.flatMap(s=>[s.start,s.end]).filter(p=>p[0]>left[0]&&p[0]<right[0]);
+        const fence=[left,...bends,right].sort((a,b)=>a[0]-b[0]).filter((p,i,points)=>i===0||p[0]!==points[i-1][0]||p[1]!==points[i-1][1]);
+        const crest=[foot[0],pergola.y];
+        const arrowX=pergola.x+pergola.w*.8;
+        banks.push({id:'pergola-north',points:[...fence,[right[0],pergola.y],[left[0],pergola.y]],spotCrest:crest,spotFoot:foot,from:[arrowX,pergola.y],to:fenceAt(arrowX)});
+      }
+    }
     const flats=(quantities.levelMarks??[]).filter(mark=>mark.id!=='raisedBeds').map(mark=>({id:mark.id,position:mark.id==='C'?[29.5,12.9]:[mark.position[0],mark.position[1]+.9]}));
     for(const id of ['D','G']){const zone=quantities.zones.find(zone=>zone.id===id);if(zone)flats.push({id,position:[zone.label[0],zone.label[1]+1.4]});}
     for(const id of ['A','G']){const zone=quantities.zones.find(zone=>zone.id===id),mark=flats.find(mark=>mark.id===id);if(zone&&mark)mark.position=[zone.label[0]+1.6,zone.label[1]];}
@@ -46,11 +62,11 @@ const GradingOverlay = (() => {
   function svgTerrainLegend(x,y) {
     return terrainLegend.map(([kind,label],i)=>`${svgTerrainSymbol(kind,x+10,y+i*19)}<text x="${x+26}" y="${y+i*19+4}" font-size="11">${label}</text>`).join('');
   }
-  function svgTerrainMarks(garden,px,pz,quantities) {
+  function svgTerrainMarks(garden,px,pz,quantities,{bankFill=true}={}) {
     const marks=terrainMarks(garden,quantities);
     let out='';
     for(const bank of [...marks.banks,...marks.slopes]) {
-      if(bank.points) {
+      if(bank.points&&bankFill) {
         const points=bank.points.map(([x,z])=>`${px(x)},${pz(z)}`).join(' '),id='bank-hatch-'+bank.id;
         out+=`<defs><pattern id="${id}" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M-2 2L2 -2M0 9L9 0M7 11L11 7" stroke="#93502e" stroke-opacity=".48" stroke-width="1"/></pattern></defs><polygon data-terrain-bank="${bank.id}" points="${points}" fill="url(#${id})" stroke="#93502e" stroke-width=".8"/>`;
       }

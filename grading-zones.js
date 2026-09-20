@@ -105,7 +105,7 @@ const GradingZones = (() => {
       ['G','Sauna a užitková zahrada',[rect(productiveMinX,1.8,9.48-productiveMinX,productiveMaxZ-1.8)],[4,8],'#8fac75'],
       ['L','Strmý svah u plotu bez sečení',(garden.gradingBanks??[]).map(b=>b.points),[41,9],'#a86642'],
       ['H','Nízká část pro násyp',[rect(garageEast,-10,30,29.38)],[36,10],'#78aeb4'],
-      ['C','Rovná zahrada nad garáží a přístřeškem',[rect(house[2],-10,garageEast-house[2],29.38)],[28,12],'#9aba93'],
+      ['C','Zahrada nad garáží a přístřeškem',[rect(house[2],-10,garageEast-house[2],29.38)],[28,12],'#9aba93'],
       ['O','Západní zahrada',[rect(-100,-100,house[0]+100,house[3]+100)],[5,23],'#7c9674'],
       ['P','Východní zahrada u vodovodní šachty',[rampNorthEdge?half(eastGarden,...rampNorthEdge,false):eastGarden],[39,21.5],'#9b7d99'],
       ['I','Jižní zahrada a svahy',[bounds],[14,30],'#c4c3a7']
