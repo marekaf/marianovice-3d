@@ -81,6 +81,8 @@ const checks=[
   'verify-driveway-check.mjs',
   'verify-grading-data.mjs',
   'verify-grading-report.mjs',
+  'verify-grading-technical.mjs',
+  'verify-grading-notation.mjs',
   'verify-plan-terrain.mjs',
   'verify-grading-layout.mjs',
   'verify-boundary-fence.mjs',

@@ -35,8 +35,10 @@ try {
   assert.equal(await page.locator('aside [data-zone-features]').count(),8);
   assert.equal(await page.locator('[data-zone-features="G"]').textContent(),'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník');
   assert.equal(await page.locator('[data-zone-features="L"]').textContent(),'Skalník (Cotoneaster)');
-  assert.equal(await page.locator('[data-level-mark]').count(),4);
-  for(const value of await page.locator('[data-level-mark]:not([data-level-mark="raisedBeds"]) text').allTextContents())assert.equal(value,'−0,50');
+  assert.equal(await page.locator('[data-elevation][data-surface="finish"]').count(),6);
+  for(const id of ['carport','A','C'])assert.equal(await page.locator(`[data-elevation="${id}"]`).getAttribute('data-proposed'),'396.50000');
+  assert.equal(await page.locator('[data-gate-width]').getAttribute('data-gate-width'),'4.000');
+  assert.equal(await page.locator('[data-bank-hachure]').count(),2);
   assert.equal(await page.locator('[data-bank-spot]').count(),0);
   assert.equal(await page.getByText('Řezy terénem a návaznosti',{exact:false}).count(),0);
   for(const id of ['driveway','raisedBed1','raisedBed2','raisedBed3','raisedBed4','greenhouse','sauna','compost','waterSource','rainTank'])assert(await page.locator(`[data-feature="${id}"]`).isVisible(),`${id} visible on plan`);
