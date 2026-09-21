@@ -34,18 +34,19 @@ const GradingSurfaceNotation=(()=>{
     const zone=p=>(quantities?.zones??[]).find(z=>z.polygons.some(poly=>inside(poly,...p)))?.id??'';
     const vertices=garden.plot.vertices,minX=Math.min(...vertices.map(p=>p[0])),minZ=Math.min(...vertices.map(p=>p[1]));
     const maxX=Math.max(...vertices.map(p=>p[0])),maxZ=Math.max(...vertices.map(p=>p[1]));
-    const candidates=[],steep=[];
+    const candidates=[],steep=[],crestReasons=new Map();
     function trace(start,sign,limit){
-      const points=[start];
+      const points=[start];let termination='limit';
       for(let distance=0;distance<limit;distance+=.05){
         const p=points.at(-1),g=gradient(...p),slope=Math.hypot(...g);
-        if(slope<threshold*.85)break;
+        if(slope<threshold*.85){termination='low-gradient';break;}
         const next=p.map((v,i)=>v+sign*g[i]/slope*.05),mid=p.map((v,i)=>(v+next[i])/2);
-        if(!allowed(...next)||!allowed(...mid)||sign*(height(...next)-height(...p))<1e-6)break;
-        if(sign>0&&Math.hypot(...gradient(...next))<threshold*.85)break;
+        if(!allowed(...next)||!allowed(...mid)){termination='boundary';break;}
+        if(sign*(height(...next)-height(...p))<1e-6){termination='nonmonotonic';break;}
+        if(sign>0&&Math.hypot(...gradient(...next))<threshold*.85){termination='low-gradient';break;}
         points.push(next);
       }
-      return points;
+      return {points,termination};
     }
     for(let x=minX+.075;x<maxX;x+=.15)for(let z=minZ+.075;z<maxZ;z+=.15){
       if(!allowed(x,z))continue;
@@ -54,7 +55,8 @@ const GradingSurfaceNotation=(()=>{
       const p=[x,z];steep.push(p);
       const uphill=p.map((v,i)=>v+g[i]/slope*.22);
       if(!allowed(...uphill)||Math.hypot(...gradient(...uphill))<threshold){
-        const crest=trace(p,1,1).at(-1);
+        const uphillTrace=trace(p,1,1),crest=uphillTrace.points.at(-1);
+        crestReasons.set(crest,uphillTrace.termination);
         if(!candidates.some(q=>Math.hypot(q[0]-crest[0],q[1]-crest[1])<.38))candidates.push(crest);
       }
     }
@@ -71,9 +73,9 @@ const GradingSurfaceNotation=(()=>{
       for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++)for(const q of occupied.get(key(p[0]+dx*.5,p[1]+dz*.5))??[])if(Math.hypot(p[0]-q[0],p[1]-q[1])<distance)return true;
       return false;
     };
-    function add(crest,short){
+    function add(crest,short,crestTermination='coverage'){
       if(nearby(crest,.27))return;
-      let full=trace(crest,-1,10);
+      const downhill=trace(crest,-1,10);let full=downhill.points;
       if(full.length<2)return;
       const toe=full.at(-1);
       const count=short?Math.max(3,Math.ceil(full.length*.43)):full.length;
@@ -82,7 +84,7 @@ const GradingSurfaceNotation=(()=>{
       for(const p of full){if(nearby(p,.12))break;points.push(p);}
       if(points.length<2)return;
       const slope=Math.hypot(...gradient(...points[0]))*100;
-      strokes.push({points,zone:zone(points[0]),slope,short,toe});
+      strokes.push({points,zone:zone(points[0]),slope,short,toe,crestTermination,toeTermination:downhill.termination});
       for(const p of points){const k=key(...p);if(!occupied.has(k))occupied.set(k,[]);occupied.get(k).push(p);}
     }
     let chain=[],last=null,index=0;
@@ -91,14 +93,14 @@ const GradingSurfaceNotation=(()=>{
       if(last)for(let i=1;i<candidates.length;i++)if(Math.hypot(candidates[i][0]-last[0],candidates[i][1]-last[1])<Math.hypot(candidates[next][0]-last[0],candidates[next][1]-last[1]))next=i;
       const crest=candidates.splice(next,1)[0];
       if(last&&Math.hypot(crest[0]-last[0],crest[1]-last[1])>1){if(chain.length>1)shoulders.push(chain);chain=[];index=0;}
-      add(crest,index++%2===1);chain.push(crest);last=crest;
+      add(crest,index++%2===1,crestReasons.get(crest));chain.push(crest);last=crest;
     }
     if(chain.length>1)shoulders.push(chain);
     for(let i=0;i<steep.length;i+=3){const p=steep[i];if(!nearby(p,.7)){
-      const crest=trace(p,1,10).at(-1);
-      add(crest,false);
+      const uphillTrace=trace(p,1,10),crest=uphillTrace.points.at(-1);
+      add(crest,false,uphillTrace.termination);
       if(!nearby(p,.7)){
-        const uphill=trace(p,1,10),open=[];
+        const uphill=trace(p,1,10).points,open=[];
         for(const q of uphill){if(nearby(q,.3))break;open.push(q);}
         if(open.length)add(open.at(-1),false);
       }
@@ -110,6 +112,7 @@ const GradingSurfaceNotation=(()=>{
       const g=gradient(...p),m=Math.hypot(...g);
       if(Math.abs((q[0]-p[0])*g[0]+(q[1]-p[1])*g[1])>length*m*.55)continue;
       for(const [kind,points] of [['crest',[p,q]],['toe',[a.toe,b.toe]]]){
+        if(![a,b].every(s=>['low-gradient','boundary'].includes(s[`${kind}Termination`])))continue;
         if(Math.hypot(points[0][0]-points[1][0],points[0][1]-points[1][1])>1.2)continue;
         if([0,.25,.5,.75,1].every(t=>allowed(...points[0].map((v,j)=>v+(points[1][j]-v)*t))))edges.push({kind,points});
       }

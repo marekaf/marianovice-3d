@@ -40,6 +40,12 @@ checkGeometry(surface,garden,site);
 assert(!N.eligible(garden,3,4.5));
 assert(!N.eligible(garden,-1,3));
 assert.equal(N.create({garden,site:{height:()=>0}}).strokes.length,0,'Flat ground stays unhatched');
+const longPlane=N.create({garden:{plot:{vertices:[[0,0],[3,0],[3,24],[0,24]]},elements:[]},site:{height:(x,z)=>z*.4}});
+assert(longPlane.strokes.some(s=>length(s)>9.9),'Constant-plane fixture reaches the trace limit');
+for(const edge of longPlane.edges){
+  if(edge.kind==='toe')assert(edge.points.every(p=>p[1]<.1),'A capped trace cannot fabricate a toe line inside a constant slope');
+  if(edge.kind==='crest')assert(edge.points.every(p=>p[1]>23.9),'Coverage seeds cannot fabricate a crest inside a constant slope');
+}
 console.log('Bank notation: attached long/short combs, downhill direction and masked geometry passed.');
 const {GARDEN}=require('./layout.js'),{TERRAIN}=require('./terrain.js'),{SURVEY_TERRAIN}=require('./docs/survey-terrain.js');
 const {GradingSite}=require('./grading-site.js'),{GradingZones}=require('./grading-zones.js');
@@ -47,6 +53,11 @@ const actual=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:SURVEY_TER
 const quantities=GradingZones.create(GARDEN),start=performance.now();
 const drawing=N.create({garden:GARDEN,site:actual,quantities,datum:TERRAIN.houseFFLInternal});
 checkGeometry(drawing,GARDEN,actual);
+const falseToe=[8.039734673636687,17.2552884482572];
+assert(!drawing.edges.some(e=>e.kind==='toe'&&e.points.some(p=>Math.hypot(p[0]-falseToe[0],p[1]-falseToe[1])<1e-7)),'The known capped trace endpoint is not rendered as a toe');
+for(const edge of drawing.edges)for(const point of edge.points){
+  assert(drawing.strokes.some(s=>(edge.kind==='toe'?s.toe:s.points[0])===point&&['low-gradient','boundary'].includes(s[`${edge.kind}Termination`])),'Every edge endpoint retains genuine slope-break or boundary provenance');
+}
 const buckets=new Map(),key=(x,z)=>`${Math.floor(x)},${Math.floor(z)}`;
 for(const line of drawing.strokes)for(const p of line.points){const k=key(...p);if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(p);}
 const covered=(x,z)=>{
