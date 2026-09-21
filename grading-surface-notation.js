@@ -21,118 +21,105 @@ const GradingSurfaceNotation=(()=>{
   }
   function eligible(garden,x,z){return eligibility(garden)(x,z);}
   function create({garden,site,quantities,datum=0}){
-    const allowed=eligibility(garden),contours=[],strokes=[],cache=new Map();
+    const allowed=eligibility(garden),threshold=.08,cache=new Map(),strokes=[],shoulders=[];
     const height=(x,z)=>{const key=`${x.toFixed(5)},${z.toFixed(5)}`;if(!cache.has(key))cache.set(key,site.height(x,z));return cache.get(key);};
     const gradient=(x,z)=>{
       const h=height(x,z),d=.025;
-      const derivative=(axis)=>{
+      return [0,1].map(axis=>{
         const a=[x,z],b=[x,z];a[axis]-=d;b[axis]+=d;
-        const ha=allowed(...a)?height(...a):h,hb=allowed(...b)?height(...b):h;
-        const span=(allowed(...a)?d:0)+(allowed(...b)?d:0);
-        return span?(hb-ha)/span:0;
-      };
-      return [derivative(0),derivative(1)];
+        const aa=allowed(...a),bb=allowed(...b),span=(aa?d:0)+(bb?d:0);
+        return span?((bb?height(...b):h)-(aa?height(...a):h))/span:0;
+      });
     };
     const zone=p=>(quantities?.zones??[]).find(z=>z.polygons.some(poly=>inside(poly,...p)))?.id??'';
-    const vertices=garden.plot.vertices,minX=Math.floor(Math.min(...vertices.map(p=>p[0]))/.25)*.25,minZ=Math.floor(Math.min(...vertices.map(p=>p[1]))/.25)*.25;
+    const vertices=garden.plot.vertices,minX=Math.min(...vertices.map(p=>p[0])),minZ=Math.min(...vertices.map(p=>p[1]));
     const maxX=Math.max(...vertices.map(p=>p[0])),maxZ=Math.max(...vertices.map(p=>p[1]));
-    function clipped(a,b){
-      const count=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/.02));
-      const pieces=[];let run=[];
-      for(let i=0;i<=count;i++){
-        const p=a.map((v,j)=>v+(b[j]-v)*i/count);
-        if(allowed(...p))run.push(p);else{if(run.length>1)pieces.push([run[0],run.at(-1)]);run=[];}
-      }
-      if(run.length>1)pieces.push([run[0],run.at(-1)]);
-      return pieces;
-    }
-    for(let x=minX;x<maxX;x+=.25)for(let z=minZ;z<maxZ;z+=.25){
-      const p=[[x,z],[x+.25,z],[x+.25,z+.25],[x,z+.25]];
-      if(!p.some(v=>allowed(...v))&&!allowed(x+.125,z+.125))continue;
-      const heights=p.map(v=>height(...v));
-      for(const ids of [[0,1,2],[0,2,3]]){
-        if(!ids.every(i=>allowed(...p[i])))continue;
-        const low=Math.min(...ids.map(i=>heights[i])),high=Math.max(...ids.map(i=>heights[i]));
-        if(!Number.isFinite(low+high)||high-low<1e-8)continue;
-        for(let k=Math.ceil((low-datum)/.5);datum+k*.5<high;k++){
-          const level=Number((datum+k*.5).toFixed(6)),crossings=[];
-          for(let j=0;j<3;j++){
-            const a=ids[j],b=ids[(j+1)%3],ha=heights[a],hb=heights[b];
-            if((ha<=level&&hb>level)||(hb<=level&&ha>level)){
-              let lo=0,hi=1,t=(level-ha)/(hb-ha),point;
-              for(let iteration=0;iteration<12;iteration++){
-                point=p[a].map((v,axis)=>v+(p[b][axis]-v)*t);
-                const value=height(...point);
-                if(Math.abs(value-level)<.0001)break;
-                if((value<level)===(ha<level))lo=t;else hi=t;
-                t=(lo+hi)/2;
-              }
-              crossings.push(point);
-            }
-          }
-          if(crossings.length===2)for(const points of clipped(...crossings)){
-            const checks=Math.max(2,Math.ceil(Math.hypot(points[1][0]-points[0][0],points[1][1]-points[0][1])/.015));
-            const accurate=Array.from({length:checks+1},(_,i)=>i/checks).every(t=>Math.abs(height(...points[0].map((v,axis)=>v+(points[1][axis]-v)*t))-level)<=.02);
-            if(accurate)contours.push({level,points,major:k%2===0,zone:zone(points[0])});
-          }
-        }
-      }
-    }
-    const seeds=new Map(),bucket=(x,z)=>`${Math.floor(x/.5)},${Math.floor(z/.5)}`;
-    const covered=(x,z)=>{
-      for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)for(const p of seeds.get(bucket(x+dx*.5,z+dz*.5))??[])if(Math.hypot(p[0]-x,p[1]-z)<.43)return true;
-      return false;
-    };
-    function seed(x,z,index){
-      if(!allowed(x,z))return;
-      const g=gradient(x,z),slope=Math.hypot(...g);
-      if(!Number.isFinite(slope)||slope<.005)return;
-      const points=[[x,z]],length=index%2?.75:1;
-      for(let d=0;d<length-1e-8;d+=.05){
-        const p=points.at(-1),grad=gradient(...p),m=Math.hypot(...grad);
-        if(m<.005)break;
-        const next=p.map((v,j)=>v-grad[j]/m*.05),mid=p.map((v,j)=>(v+next[j])/2);
-        if(!allowed(...next)||!allowed(...mid)||height(...next)>=height(...p)-1e-7)break;
+    const candidates=[],steep=[];
+    function trace(start,sign,limit){
+      const points=[start];
+      for(let distance=0;distance<limit;distance+=.05){
+        const p=points.at(-1),g=gradient(...p),slope=Math.hypot(...g);
+        if(slope<threshold*.85)break;
+        const next=p.map((v,i)=>v+sign*g[i]/slope*.05),mid=p.map((v,i)=>(v+next[i])/2);
+        if(!allowed(...next)||!allowed(...mid)||sign*(height(...next)-height(...p))<1e-6)break;
+        if(sign>0&&Math.hypot(...gradient(...next))<threshold*.85)break;
         points.push(next);
       }
-      if(points.length<2)return;
-      strokes.push({points,zone:zone(points[0]),slope:slope*100});
-      for(const p of points){const key=bucket(...p);if(!seeds.has(key))seeds.set(key,[]);seeds.get(key).push(p);}
+      return points;
     }
-    let index=0;
-    for(let x=minX+.325;x<maxX;x+=.65)for(let z=minZ+.325;z<maxZ;z+=.65)seed(x,z,index++);
-    for(let x=minX+.0625;x<maxX;x+=.125)for(let z=minZ+.0625;z<maxZ;z+=.125)if(allowed(x,z)&&!covered(x,z))seed(x,z,index++);
-    const selected=[],remaining=strokes.slice(),contourPoints=contours.flatMap(c=>c.points);
-    const distances=remaining.map(s=>Math.min(100,...contourPoints.map(p=>Math.hypot(p[0]-s.points[0][0],p[1]-s.points[0][1]))));
-    const choose=index=>{
-      const stroke=remaining[index];selected.push(stroke);distances[index]=-1;
-      for(let i=0;i<remaining.length;i++)if(distances[i]>=0){
-        const p=remaining[i].points[0];
-        for(const q of stroke.points)distances[i]=Math.min(distances[i],Math.hypot(p[0]-q[0],p[1]-q[1]));
+    for(let x=minX+.075;x<maxX;x+=.15)for(let z=minZ+.075;z<maxZ;z+=.15){
+      if(!allowed(x,z))continue;
+      const g=gradient(x,z),slope=Math.hypot(...g);
+      if(slope<threshold)continue;
+      const p=[x,z];steep.push(p);
+      const uphill=p.map((v,i)=>v+g[i]/slope*.22);
+      if(!allowed(...uphill)||Math.hypot(...gradient(...uphill))<threshold){
+        const crest=trace(p,1,1).at(-1);
+        if(!candidates.some(q=>Math.hypot(q[0]-crest[0],q[1]-crest[1])<.38))candidates.push(crest);
       }
+    }
+    for(const zone of quantities?.zones??[])for(const polygon of zone.polygons)for(let i=0;i<polygon.length;i++){
+      const a=polygon[i],b=polygon[(i+1)%polygon.length],dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
+      for(let distance=.1;distance<length;distance+=.3)for(const offset of [-.04,.04]){
+        const p=[a[0]+dx*distance/length-dz/length*offset,a[1]+dz*distance/length+dx/length*offset];
+        if(allowed(...p)&&Math.hypot(...gradient(...p))>=threshold)steep.push(p);
+      }
+    }
+    const occupied=new Map(),key=(x,z)=>`${Math.floor(x/.5)},${Math.floor(z/.5)}`;
+    const nearby=(p,distance)=>{
+      const radius=Math.ceil(distance/.5);
+      for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++)for(const q of occupied.get(key(p[0]+dx*.5,p[1]+dz*.5))??[])if(Math.hypot(p[0]-q[0],p[1]-q[1])<distance)return true;
+      return false;
     };
-    for(const id of new Set(strokes.map(s=>s.zone))){
-      let best=-1;
-      for(let i=0;i<remaining.length;i++)if(remaining[i].zone===id&&(best<0||distances[i]>distances[best]))best=i;
-      if(best>=0)choose(best);
+    function add(crest,short){
+      if(nearby(crest,.27))return;
+      let full=trace(crest,-1,10);
+      if(full.length<2)return;
+      const toe=full.at(-1);
+      const count=short?Math.max(3,Math.ceil(full.length*.43)):full.length;
+      full=full.slice(0,count);
+      const points=[];
+      for(const p of full){if(nearby(p,.12))break;points.push(p);}
+      if(points.length<2)return;
+      const slope=Math.hypot(...gradient(...points[0]))*100;
+      strokes.push({points,zone:zone(points[0]),slope,short,toe});
+      for(const p of points){const k=key(...p);if(!occupied.has(k))occupied.set(k,[]);occupied.get(k).push(p);}
     }
-    while(selected.length<95){
-      let best=-1;
-      for(let i=0;i<remaining.length;i++)if(distances[i]>=0&&(best<0||distances[i]>distances[best]))best=i;
-      if(best<0||(selected.length>=70&&distances[best]<1.55))break;
-      choose(best);
+    let chain=[],last=null,index=0;
+    while(candidates.length){
+      let next=0;
+      if(last)for(let i=1;i<candidates.length;i++)if(Math.hypot(candidates[i][0]-last[0],candidates[i][1]-last[1])<Math.hypot(candidates[next][0]-last[0],candidates[next][1]-last[1]))next=i;
+      const crest=candidates.splice(next,1)[0];
+      if(last&&Math.hypot(crest[0]-last[0],crest[1]-last[1])>1){if(chain.length>1)shoulders.push(chain);chain=[];index=0;}
+      add(crest,index++%2===1);chain.push(crest);last=crest;
     }
-    return {contours,strokes:selected,datum,contourInterval:.5,majorInterval:1,gridStep:.25};
+    if(chain.length>1)shoulders.push(chain);
+    for(let i=0;i<steep.length;i+=3){const p=steep[i];if(!nearby(p,.7)){
+      const crest=trace(p,1,10).at(-1);
+      add(crest,false);
+      if(!nearby(p,.7)){
+        const uphill=trace(p,1,10),open=[];
+        for(const q of uphill){if(nearby(q,.3))break;open.push(q);}
+        if(open.length)add(open.at(-1),false);
+      }
+    }}
+    const edges=[];
+    for(let i=1;i<strokes.length;i++){
+      const a=strokes[i-1],b=strokes[i],p=a.points[0],q=b.points[0],length=Math.hypot(p[0]-q[0],p[1]-q[1]);
+      if(length>.8)continue;
+      const g=gradient(...p),m=Math.hypot(...g);
+      if(Math.abs((q[0]-p[0])*g[0]+(q[1]-p[1])*g[1])>length*m*.55)continue;
+      for(const [kind,points] of [['crest',[p,q]],['toe',[a.toe,b.toe]]]){
+        if(Math.hypot(points[0][0]-points[1][0],points[0][1]-points[1][1])>1.2)continue;
+        if([0,.25,.5,.75,1].every(t=>allowed(...points[0].map((v,j)=>v+(points[1][j]-v)*t))))edges.push({kind,points});
+      }
+    }
+    return {contours:[],strokes,shoulders,edges,datum,bankThreshold:threshold*100,contourInterval:null,majorInterval:null,gridStep:.15};
   }
   function svg({surface,px,pz}){
     const path=points=>points.map((p,i)=>`${i?'L':'M'}${px(p[0]).toFixed(3)} ${pz(p[1]).toFixed(3)}`).join('');
     const safe=value=>String(value).replace(/[^a-zA-Z0-9_.-]/g,'');
-    const arrow=s=>{
-      const end=s.points.at(-1),previous=s.points.at(-2),x=px(end[0]),z=pz(end[1]),dx=x-px(previous[0]),dz=z-pz(previous[1]),length=Math.hypot(dx,dz),ux=dx/length,uz=dz/length;
-      const head=`M${(x-ux*3-uz*1.8).toFixed(3)} ${(z-uz*3+ux*1.8).toFixed(3)}L${x.toFixed(3)} ${z.toFixed(3)}L${(x-ux*3+uz*1.8).toFixed(3)} ${(z-uz*3-ux*1.8).toFixed(3)}`;
-      return `<path data-surface-slope="${safe(s.zone)}" data-slope="${s.slope.toFixed(2)}" d="${path(s.points)}${head}" stroke="#635447" stroke-width=".8" opacity=".8"/>`;
-    };
-    return `<g fill="none" stroke-linecap="round">${surface.contours.map(c=>`<path data-surface-contour="${c.level}" data-zone="${safe(c.zone)}" d="${path(c.points)}" stroke="#806b54" stroke-width="${c.major?.65:.45}" opacity="${c.major?.55:.35}"/>`).join('')}${surface.strokes.map(arrow).join('')}</g>`;
+    return `<g data-bank-hachure="terrain" fill="none" stroke="#68635c" stroke-linecap="butt" stroke-width=".55">${(surface.edges??[]).map(e=>`<path data-bank-edge="${e.kind}" d="${path(e.points)}" stroke-width=".4"/>`).join('')}${surface.strokes.map(s=>`<path data-surface-slope="${safe(s.zone)}" data-bank-length="${s.short?'short':'long'}" data-slope="${s.slope.toFixed(2)}" d="${path(s.points)}"/>`).join('')}</g>`;
   }
   return {create,svg,eligible};
 })();

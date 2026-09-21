@@ -1,6 +1,6 @@
 const GradingLevels = (() => {
   const number=value=>value.toFixed(2).replace('.',',').replace('-','−');
-  const relative=value=>Math.abs(value)<.005?'±0,00':(value>0?'+':'')+number(value);
+  const relative=value=>Math.abs(value)<.0005?'±0,000':(value>0?'+':'')+value.toFixed(3).replace('.',',').replace('-','−');
   function controls({garden,terrain,site,survey,quantities,banks}) {
     const absolute=h=>terrain.bpvDatum+h-terrain.houseFFLInternal;
     const finish=(id,position,label,height,offset=[0,0])=>({id,position,label,surface:'finish',proposed:absolute(height),offset});
@@ -61,14 +61,10 @@ const GradingLevels = (() => {
     return controls({garden,terrain,site,survey,quantities,banks}).filter(mark=>mapIds.has(mark.id)).map(mark=>{
       const x=px(mark.position[0]),y=pz(mark.position[1]);
       const [cx,cy]=mark.box??[x+mark.offset[0],y+mark.offset[1]];
-      const ground=mark.surface==='ground'&&mark.compare!==false,width=ground?96:56,left=cx-width/2,top=cy-15;
+      const ground=mark.surface==='ground'&&mark.compare!==false,width=56,left=cx-width/2,top=cy-15;
       const existing=mark.surface==='ground'?mark.existing.toFixed(5):'';
-      const values=ground?[mark.existing,mark.proposed]:[mark.proposed];
-      const rows=values.map((value,i)=>{
-        const tx=left+(ground?24+i*48:28),color=ground&&i===0?'#666':'#9e3028';
-        return `<text x="${tx}" y="${cy-3}" text-anchor="middle" font-size="10" style="fill:${color}">${number(value)}</text><text x="${tx}" y="${cy+10}" text-anchor="middle" font-size="10" style="fill:${color}">${relative(value-terrain.bpvDatum)}</text>`;
-      }).join('');
-      return `<g data-elevation="${mark.id}" data-surface="${mark.surface}" data-existing="${existing}" data-proposed="${mark.proposed.toFixed(5)}"><title>${mark.label}: ${ground?'stávající / upravený terén':mark.surface==='ground'?'upravený terén':'hotový povrch'} · Bpv / relativní výška</title><path d="M${x-3} ${y}h6M${x} ${y-3}v6M${x} ${y}L${cx} ${cy+15}" fill="none" stroke="#555" stroke-width=".6"/><rect data-level-box="${mark.id}" x="${left}" y="${top}" width="${width}" height="30" fill="white" stroke="#555" stroke-width=".6"/><path d="M${left} ${cy}h${width}${ground?`M${cx} ${top}v30`:''}" stroke="#888" stroke-width=".4"/><text x="${cx}" y="${top-13}" text-anchor="middle" font-size="8" font-weight="600" stroke="white" stroke-width="2.5" paint-order="stroke">${mark.label}</text>${ground?`<text x="${cx-24}" y="${top-3}" text-anchor="middle" font-size="8">ST</text><text x="${cx+24}" y="${top-3}" text-anchor="middle" font-size="8" style="fill:#9e3028">UT</text>`:''}${rows}</g>`;
+      const rows=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="10">${number(mark.proposed)}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="10">${relative(mark.proposed-terrain.bpvDatum)}</text>`;
+      return `<g data-elevation="${mark.id}" data-surface="${mark.surface}" data-existing="${existing}" data-proposed="${mark.proposed.toFixed(5)}"><title>${mark.label}: ${mark.surface==='ground'?'upravený terén':'hotový povrch'} · Bpv / relativní výška</title><path d="M${x-3} ${y}h6M${x} ${y-3}v6M${x} ${y}L${cx} ${cy+15}" fill="none" stroke="#555" stroke-width=".6"/><rect data-level-box="${mark.id}" x="${left}" y="${top}" width="${width}" height="30" fill="white" stroke="#222" stroke-width=".6"/><path d="M${left} ${cy}h${width}" stroke="#222" stroke-width=".4"/><text x="${cx}" y="${top-5}" text-anchor="middle" font-size="8" font-weight="600" stroke="white" stroke-width="2.5" paint-order="stroke">${mark.label}</text>${ground?`<text data-existing-height="${mark.id}" x="${cx}" y="${cy+26}" text-anchor="middle" font-size="8" style="fill:#888">st. ${number(mark.existing)}</text>`:''}${rows}</g>`;
     }).join('');
   }
   function schedule({garden,terrain,site,survey,quantities,banks}) {

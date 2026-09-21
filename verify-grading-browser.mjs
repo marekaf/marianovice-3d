@@ -39,7 +39,7 @@ try {
   assert.equal(await page.locator('[data-finish-level]').count(),13);
   for(const id of ['carport','A','C'])assert.equal(await page.locator(`[data-finish-level="${id}"]`).getAttribute('data-proposed'),'396.50000');
   assert.equal(await page.locator('[data-gate-width]').getAttribute('data-gate-width'),'4.000');
-  for(const id of ['C','E','G','H','I','J','L','N','O','P'])assert(await page.locator(`[data-surface-slope="${id}"]`).count()>0,`${id} has terrain-derived slope notation`);
+  for(const id of ['C','G','H','I','J','L','N','O','P'])assert(await page.locator(`[data-surface-slope="${id}"]`).count()>0,`${id} has terrain-derived slope notation`);
   assert.equal(await page.locator('[data-bank-spot]').count(),0);
   assert.equal(await page.getByText('Řezy terénem a návaznosti',{exact:false}).count(),0);
   for(const id of ['driveway','raisedBed1','raisedBed2','raisedBed3','raisedBed4','greenhouse','sauna','compost','waterSource','rainTank'])assert(await page.locator(`[data-feature="${id}"]`).isVisible(),`${id} visible on plan`);

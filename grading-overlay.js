@@ -64,10 +64,11 @@ const GradingOverlay = (() => {
   function svgTerrainLegend(x,y) {
     return terrainLegend.map(([kind,label],i)=>`${svgTerrainSymbol(kind,x+10,y+i*19)}<text x="${x+26}" y="${y+i*19+4}" font-size="11">${label}</text>`).join('');
   }
-  function svgTerrainMarks(garden,px,pz,quantities,{bankFill=true}={}) {
+  function svgTerrainMarks(garden,px,pz,quantities,{bankFill=true,technical=false}={}) {
     const marks=terrainMarks(garden,quantities);
     let out='';
     for(const bank of [...marks.banks,...marks.slopes]) {
+      if(technical&&bank.points)continue;
       if(bank.points&&bankFill) {
         const points=bank.points.map(([x,z])=>`${px(x)},${pz(z)}`).join(' '),id='bank-hatch-'+bank.id;
         out+=`<defs><pattern id="${id}" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M-2 2L2 -2M0 9L9 0M7 11L11 7" stroke="#93502e" stroke-opacity=".48" stroke-width="1"/></pattern></defs><polygon data-terrain-bank="${bank.id}" points="${points}" fill="url(#${id})" stroke="#93502e" stroke-width=".8"/>`;
@@ -77,9 +78,9 @@ const GradingOverlay = (() => {
       const length=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/length,uy=(b[1]-a[1])/length;
       const inset=bank.points?Math.min(13,length*.18):0;
       const start=[a[0]+ux*inset,a[1]+uy*inset],end=[b[0]-ux*inset,b[1]-uy*inset];
-      out+=`<path data-terrain-downhill="${bank.id}" d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#fffef9" stroke-width="5"/><path d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#93502e" stroke-width="2.3"/>`;
+      out+=`<path data-terrain-downhill="${bank.id}" d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="#fffef9" stroke-width="${technical?3:5}"/><path d="M${start}L${end}M${end[0]-ux*8-uy*4} ${end[1]-uy*8+ux*4}L${end}L${end[0]-ux*8+uy*4} ${end[1]-uy*8-ux*4}" fill="none" stroke="${technical?'#222':'#93502e'}" stroke-width="${technical?.85:2.3}"/>`;
     }
-    for(const mark of marks.flats)out+=`<g data-terrain-flat="${mark.id}">${svgTerrainSymbol('flat',px(mark.position[0]),pz(mark.position[1]))}</g>`;
+    if(!technical)for(const mark of marks.flats)out+=`<g data-terrain-flat="${mark.id}">${svgTerrainSymbol('flat',px(mark.position[0]),pz(mark.position[1]))}</g>`;
     return out;
   }
   function create({THREE,scene,ground,garden,height,panel,quantities}) {

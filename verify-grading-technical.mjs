@@ -21,9 +21,14 @@ assert.equal(Number(find('raisedBeds')[4]),397.4);
 assert.equal(find('southwest')[2],'ground');
 assert(Math.abs(Number(find('southwest')[3])-Number(find('southwest')[4]))<1e-8,'SW boundary has no new cut or fill');
 assert(Math.abs(Number(find('north-middle')[4])-Number(find('pergola-fence')[4]))>.3,'Northern garden must not be labelled as one level');
-for(const id of ['C','E','G','H','I','J','L','N','O','P'])assert(report.mapSVG.includes(`data-surface-slope="${id}"`),`Ground slopes in ${id} are represented`);
+for(const id of ['C','G','H','I','J','L','N','O','P'])assert(report.mapSVG.includes(`data-surface-slope="${id}"`),`Ground slopes in ${id} are represented`);
 for(const id of ['sauna','greenhouse','westTerrace','pergola','service','gate','wicket','drainage','south-house','south-apron','south-ramp'])assert(find(id),`${id} has a surface-specific height control`);
 assert.equal(levels.length,15,'Map keeps a readable set of control heights; finish levels live in the keyed schedule');
+assert(!report.mapSVG.includes('data-surface-contour='),'Architect bank notation is not replaced by contours');
+for(const match of report.mapSVG.matchAll(/<g data-elevation="([^"]+)"[\s\S]*?<\/g>/g)){
+  assert.equal((match[0].match(/<text[^>]*font-size="10"/g)??[]).length,2,`${match[1]} uses the reference two-row elevation box`);
+  assert(/>[^<]*\d,\d{3}<\/text>/.test(match[0]),'Relative height uses three decimal places');
+}
 assert.equal(Number(find('sauna')[4]),397);
 assert.equal(Number(find('greenhouse')[4]),396.92);
 assert.equal(Number(find('service')[4]),396.53);

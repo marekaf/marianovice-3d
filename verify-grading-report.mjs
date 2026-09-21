@@ -90,8 +90,12 @@ for(const [id,hint] of Object.entries(featureHints)){
   for(const line of GradingOverlay.featureLines(zone))assert(result.exportSVG.includes(line));
 }
 assert(!result.mapSVG.includes('data-zone-features='),'Feature hints belong only to the legend');
-for(const bank of GARDEN.gradingBanks)assert(result.mapSVG.includes(`data-terrain-bank="${bank.id}"`));
-for(const [,label] of GradingOverlay.terrainLegend)for(const output of [result.html,result.exportSVG])assert(output.includes(label));
+assert(result.mapSVG.includes('data-bank-hachure='),'Actual slopes use the reference bank notation');
+for(const output of [result.html,result.exportSVG]){
+  assert(output.includes('Šrafy svahu: dlouhé / krátké čáry od horní hrany'));
+  assert(output.includes('Šedá kóta st.: stávající terén'));
+  assert(!output.includes('Vrstevnice'));
+}
 for(const output of [result.html,result.exportSVG])assert(!/data-terrain-preserve|Zachovat výšku zaměřeného plotu/.test(output));
 for(const output of [result.html,result.exportSVG]){
   assert(!output.includes('Tmavá přerušovaná čára: zaměřený plot'));
