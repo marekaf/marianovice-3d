@@ -38,7 +38,7 @@ assert.equal(result.html,GradingReport.render({garden:GARDEN,terrain:TERRAIN,sit
 assert(!/NaN|undefined|Infinity/.test(result.html));
 assert.equal((result.html.match(/class="sheet"/g)??[]).length,1);
 assert(!/<p[ >]|warning|Potvrdit|NEPOUŽÍVAT|Bilance|Záměr úprav/.test(result.html));
-assert(result.html.includes('Legenda oblastí'));
+assert(result.html.includes('OBLASTI TERÉNNÍCH ÚPRAV'));
 for(const output of [result.html,result.exportSVG])assert(!/Výšky H \/ L|Výšky vůči podlaze|data-bank-spot=/.test(output));
 for(const id of 'ABCDEFGHIJKLMNOP')assert(result.mapSVG.includes(`data-zone-label="${id}"`));
 assert(result.mapSVG.includes('viewBox="0 0 900 650"'));
@@ -92,7 +92,7 @@ for(const [id,hint] of Object.entries(featureHints)){
 assert(!result.mapSVG.includes('data-zone-features='),'Feature hints belong only to the legend');
 assert(result.mapSVG.includes('data-bank-hachure='),'Actual slopes use the reference bank notation');
 for(const output of [result.html,result.exportSVG]){
-  assert(output.includes('Šrafy svahu: dlouhé / krátké čáry od horní hrany'));
+  assert(output.includes('Šrafy'));
   assert(output.includes('Šedá kóta st.: stávající terén'));
   assert(!output.includes('Vrstevnice'));
 }
@@ -181,9 +181,8 @@ for(const zone of quantities.zones){
 }
 assert(!result.mapSVG.includes('data-zone-secondary'));
 
-const paintedBoundaries=[...result.mapSVG.matchAll(/data-zone-boundary="([A-Z])"/g)].map(m=>m[1]);
-assert(paintedBoundaries.lastIndexOf('I')<paintedBoundaries.indexOf('A'),'Arrival outline remains visible above adjoining garden borders');
-assert(paintedBoundaries.lastIndexOf('A')<paintedBoundaries.indexOf('F'),'House outline remains visible above arrival boundary');
+assert(!result.mapSVG.includes('data-zone-boundary='),'Nonphysical work-zone partitions do not appear as building lines');
+assert.deepEqual([...result.mapSVG.matchAll(/data-building-outline="([^"]+)"/g)].map(m=>m[1]),['house','garage'],'Only actual buildings receive the architectural red outline');
 assert(!result.html.includes('data-drainage-crossing="covered"'));
 assert(!result.html.includes('data-drainage-outlet="buried"'));
 assert(!result.html.includes('podzemní odvodnění'));

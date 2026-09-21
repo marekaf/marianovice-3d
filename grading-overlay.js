@@ -8,6 +8,7 @@ const GradingOverlay = (() => {
   }
   const boundaryOrder=zones=>zones.slice().sort((a,b)=>({I:0,A:2,E:2,F:3,M:3}[a.id]??1)-({I:0,A:2,E:2,F:3,M:3}[b.id]??1));
   function svgLabels(zones,px,pz,fontSize=11,{technical=false}={}) {
+    if(technical)return zones.map(zone=>`<text data-zone-label="${zone.id}" x="${px(zone.label[0])+8}" y="${pz(zone.label[1])-8}" text-anchor="middle" font-size="7" style="fill:#777">${zone.id}</text>`).join('');
     return zones.map(zone=>{const x=px(zone.label[0]),y=pz(zone.label[1]),color=colorFor(zone);return `<g data-zone-label="${zone.id}" class="grading-zone-label"><circle cx="${x}" cy="${y}" r="${technical?8:11}" fill="#fffef9" stroke="${color}" stroke-width="${technical?1.2:2.5}"/><text x="${x}" y="${y+(technical?3.5:4)}" text-anchor="middle" font-size="${fontSize+2}" font-weight="${technical?500:700}" style="fill:${color}">${zone.id}</text></g>`;}).join('');
   }
   function svgLevelMarks(marks,px,pz) {

@@ -57,22 +57,26 @@ const GradingLevels = (() => {
       })
     ];
   }
-  const mapIds=new Set(['north-middle','pergola-ground','pergola-fence','north-crest','north-foot','west-middle','east-foot','east-lower','southwest','south-house','south-apron','south-ramp','drainage','house','eastTerrace']);
+  const mapIds=new Set(['north-middle','pergola-ground','pergola-fence','north-crest','north-foot','east-foot','southwest','drainage']);
   function svg({garden,terrain,site,survey,quantities,banks,px,pz}) {
-    return controls({garden,terrain,site,survey,quantities,banks}).filter(mark=>mapIds.has(mark.id)).map(mark=>{
+    return controls({garden,terrain,site,survey,quantities,banks}).filter(mark=>mapIds.has(mark.id)||mark.surface==='finish'&&mark.id!=='house').map(mark=>{
       const x=px(mark.position[0]),y=pz(mark.position[1]);
       const nearby={
-        'north-middle':[0,12],'pergola-ground':[0,42],'pergola-fence':[-18,-37],
-        'north-crest':[45,32],'north-foot':[0,-37],'east-foot':[43,0],
-        'east-lower':[43,0],'southwest':[-30,42],'south-house':[0,42],
-        'south-apron':[0,42],'south-ramp':[0,30]
+        'north-middle':[-5,5],'pergola-ground':[0,34],'pergola-fence':[-10,-28],
+        'north-crest':[35,25],'north-foot':[0,-28],'east-foot':[35,0],
+        'southwest':[-20,30],'drainage':[-8,0],
+        'eastTerrace':[0,0],'westTerrace':[0,0],'sauna':[0,22],
+        'greenhouse':[28,0],'pergola':[0,15],'service':[-20,27],
+        'gate':[-24,13],'wicket':[30,20],'carport':[0,15],
+        'A':[0,0],'C':[0,0],'raisedBeds':[43,0]
       }[mark.id];
       const [cx,cy]=nearby?[x+nearby[0],y+nearby[1]]:mark.box??[x+mark.offset[0],y+mark.offset[1]];
-      const ground=mark.surface==='ground'&&mark.compare!==false,width=56,left=cx-width/2,top=cy-15;
-      const leader=[Math.max(left,Math.min(left+width,x)),Math.max(top,Math.min(top+30,y))];
+      const ground=mark.surface==='ground'&&mark.compare!==false,width=34,left=cx-width/2,top=cy-12;
+      const leader=[Math.max(left,Math.min(left+width,x)),Math.max(top,Math.min(top+24,y))];
       const existing=mark.surface==='ground'?mark.existing.toFixed(5):'';
-      const rows=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="10">${number(mark.proposed)}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="10">${relative(mark.proposed-terrain.bpvDatum)}</text>`;
-      return `<g data-elevation="${mark.id}" data-surface="${mark.surface}" data-existing="${existing}" data-proposed="${mark.proposed.toFixed(5)}"><title>${mark.label}: ${mark.surface==='ground'?'upravený terén':'hotový povrch'} · Bpv / relativní výška</title><path d="M${x-3} ${y}h6M${x} ${y-3}v6M${x} ${y}L${leader[0]} ${leader[1]}" fill="none" stroke="#555" stroke-width=".6"/><rect data-level-box="${mark.id}" x="${left}" y="${top}" width="${width}" height="30" fill="white" stroke="#222" stroke-width=".6"/><path d="M${left} ${cy}h${width}" stroke="#222" stroke-width=".4"/><text x="${cx}" y="${top-5}" text-anchor="middle" font-size="8" font-weight="600" stroke="white" stroke-width="2.5" paint-order="stroke">${mark.label}</text>${ground?`<text data-existing-height="${mark.id}" x="${cx}" y="${cy+26}" text-anchor="middle" font-size="8" style="fill:#888">st. ${number(mark.existing)}</text>`:''}${rows}</g>`;
+      const label={gate:'BRÁNA',wicket:'BRANKA',service:'SERVIS',raisedBeds:'ZÁHONY',C:'TRÁVNÍK',drainage:'TERÉN', 'pergola-ground':'TERÉN'}[mark.id]??(ground?mark.label:'');
+      const rows=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="9">${number(mark.proposed)}</text><text x="${cx}" y="${cy+9}" text-anchor="middle" font-size="9">${relative(mark.proposed-terrain.bpvDatum)}</text>`;
+      return `<g data-elevation="${mark.id}" data-surface="${mark.surface}" data-existing="${existing}" data-proposed="${mark.proposed.toFixed(5)}"><title>${mark.label}: ${mark.surface==='ground'?'upravený terén':'hotový povrch'} · Bpv / relativní výška</title><path d="M${x-2} ${y}h4M${x} ${y-2}v4M${x} ${y}L${leader[0]} ${leader[1]}" fill="none" stroke="#555" stroke-width=".45"/><rect data-level-box="${mark.id}" x="${left}" y="${top}" width="${width}" height="24" fill="white" stroke="#222" stroke-width=".5"/><path d="M${left} ${cy}h${width}" stroke="#222" stroke-width=".35"/>${label?`<text x="${cx}" y="${top-3}" text-anchor="middle" font-size="6.5" stroke="white" stroke-width="2" paint-order="stroke">${label}</text>`:''}${ground?`<text data-existing-height="${mark.id}" x="${cx}" y="${cy+21}" text-anchor="middle" font-size="7" style="fill:#999">${number(mark.existing)}</text>`:''}${rows}</g>`;
     }).join('');
   }
   function schedule({garden,terrain,site,survey,quantities,banks}) {

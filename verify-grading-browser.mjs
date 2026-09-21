@@ -21,7 +21,7 @@ try {
   if (process.env.REQUIRE_GRADING_VIEWS) assert(hasViews, 'All five model views must load');
   assert.equal(await page.locator('#report p, #report .warning').count(),0);
   const zoneIds=await page.evaluate(()=>GradingZones.create(GARDEN).zones.map(zone=>zone.id));
-  for(const id of zoneIds){const label=page.locator(`[data-zone-label="${id}"]`);assert.equal(await label.count(),1);assert(await label.isVisible());assert.equal((await label.locator('text').allTextContents()).join(''),id);}
+  for(const id of zoneIds){const label=page.locator(`[data-zone-label="${id}"]`);assert.equal(await label.count(),1);assert(await label.isVisible());assert.equal(await label.textContent(),id);}
   assert.equal(await page.locator('[data-zone-secondary]').count(),0);
   assert.equal(await page.locator('[data-measured-fence]').count(),0);
   const saunaDimensions=page.locator('[data-dimension-label^="sauna"]');
@@ -35,9 +35,9 @@ try {
   assert.equal(await page.locator('aside [data-zone-features]').count(),8);
   assert.equal(await page.locator('[data-zone-features="G"]').textContent(),'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník');
   assert.equal(await page.locator('[data-zone-features="L"]').textContent(),'Skalník (Cotoneaster)');
-  assert.equal(await page.locator('[data-elevation][data-surface="finish"]').count(),2);
-  assert.equal(await page.locator('[data-finish-level]').count(),13);
-  for(const id of ['carport','A','C'])assert.equal(await page.locator(`[data-finish-level="${id}"]`).getAttribute('data-proposed'),'396.50000');
+  assert.equal(await page.locator('[data-elevation][data-surface="finish"]').count(),13);
+  assert.equal(await page.locator('.level-schedule').count(),0);
+  for(const id of ['carport','A','C'])assert.equal(await page.locator(`[data-elevation="${id}"]`).getAttribute('data-proposed'),'396.50000');
   assert.equal(await page.locator('[data-gate-width]').getAttribute('data-gate-width'),'4.000');
   for(const id of ['boundary-north','boundary-east','pergola-north','terrace-0','terrace-1','drainage-0-3','south-facade-2','raisedBedsPad-1','raisedBedsPad-3'])assert(await page.locator(`[data-bank-region="${id}"]`).count()>0,`${id} has a feature-anchored bank band`);
   assert.equal(await page.locator('[data-bank-spot]').count(),0);
