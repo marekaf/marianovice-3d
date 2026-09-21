@@ -7,12 +7,13 @@ const GradingLevels = (() => {
     const ground=(id,position,label,box,compare=true)=>({id,position,label,box,compare,surface:'ground',existing:absolute(survey.height(...position)),proposed:absolute(site.height(...position))});
     const house=garden.elements.find(e=>e.id==='house').meta.bbox;
     const terrace=garden.elements.find(e=>e.id==='eastTerrace').parts.find(p=>p.kind==='rect');
+    const pergola=garden.elements.find(e=>e.id==='pergola').parts.find(p=>p.kind==='rect');
     const sw=site.spec.fixedFences.segments.flatMap(s=>[s.start,s.end]).filter(p=>p[1]>house[3]).sort((a,b)=>a[0]-b[0])[0];
     return [
       ground('north-west',[12,2],'SEVER · ZÁPAD',[90,42]),
       ground('north-middle',[20,2],'SEVER · STŘED',[220,42]),
       ...banks.filter(b=>b.id==='pergola-north').flatMap(bank=>[
-        ground('pergola-ground',bank.spotCrest,'PERGOLA · TERÉN',[350,42]),
+        ground('pergola-ground',[bank.spotCrest[0],pergola.y+pergola.d*.8],'PERGOLA · TERÉN',[350,42]),
         ground('pergola-fence',bank.spotFoot,'PLOT U PERGOLY',[480,42])
       ]),
       ...garden.gradingBanks.filter(b=>b.id==='north').flatMap(bank=>[
@@ -60,11 +61,18 @@ const GradingLevels = (() => {
   function svg({garden,terrain,site,survey,quantities,banks,px,pz}) {
     return controls({garden,terrain,site,survey,quantities,banks}).filter(mark=>mapIds.has(mark.id)).map(mark=>{
       const x=px(mark.position[0]),y=pz(mark.position[1]);
-      const [cx,cy]=mark.box??[x+mark.offset[0],y+mark.offset[1]];
+      const nearby={
+        'north-middle':[0,12],'pergola-ground':[0,42],'pergola-fence':[-18,-37],
+        'north-crest':[45,32],'north-foot':[0,-37],'east-foot':[43,0],
+        'east-lower':[43,0],'southwest':[-30,42],'south-house':[0,42],
+        'south-apron':[0,42],'south-ramp':[0,30]
+      }[mark.id];
+      const [cx,cy]=nearby?[x+nearby[0],y+nearby[1]]:mark.box??[x+mark.offset[0],y+mark.offset[1]];
       const ground=mark.surface==='ground'&&mark.compare!==false,width=56,left=cx-width/2,top=cy-15;
+      const leader=[Math.max(left,Math.min(left+width,x)),Math.max(top,Math.min(top+30,y))];
       const existing=mark.surface==='ground'?mark.existing.toFixed(5):'';
       const rows=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="10">${number(mark.proposed)}</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="10">${relative(mark.proposed-terrain.bpvDatum)}</text>`;
-      return `<g data-elevation="${mark.id}" data-surface="${mark.surface}" data-existing="${existing}" data-proposed="${mark.proposed.toFixed(5)}"><title>${mark.label}: ${mark.surface==='ground'?'upravený terén':'hotový povrch'} · Bpv / relativní výška</title><path d="M${x-3} ${y}h6M${x} ${y-3}v6M${x} ${y}L${cx} ${cy+15}" fill="none" stroke="#555" stroke-width=".6"/><rect data-level-box="${mark.id}" x="${left}" y="${top}" width="${width}" height="30" fill="white" stroke="#222" stroke-width=".6"/><path d="M${left} ${cy}h${width}" stroke="#222" stroke-width=".4"/><text x="${cx}" y="${top-5}" text-anchor="middle" font-size="8" font-weight="600" stroke="white" stroke-width="2.5" paint-order="stroke">${mark.label}</text>${ground?`<text data-existing-height="${mark.id}" x="${cx}" y="${cy+26}" text-anchor="middle" font-size="8" style="fill:#888">st. ${number(mark.existing)}</text>`:''}${rows}</g>`;
+      return `<g data-elevation="${mark.id}" data-surface="${mark.surface}" data-existing="${existing}" data-proposed="${mark.proposed.toFixed(5)}"><title>${mark.label}: ${mark.surface==='ground'?'upravený terén':'hotový povrch'} · Bpv / relativní výška</title><path d="M${x-3} ${y}h6M${x} ${y-3}v6M${x} ${y}L${leader[0]} ${leader[1]}" fill="none" stroke="#555" stroke-width=".6"/><rect data-level-box="${mark.id}" x="${left}" y="${top}" width="${width}" height="30" fill="white" stroke="#222" stroke-width=".6"/><path d="M${left} ${cy}h${width}" stroke="#222" stroke-width=".4"/><text x="${cx}" y="${top-5}" text-anchor="middle" font-size="8" font-weight="600" stroke="white" stroke-width="2.5" paint-order="stroke">${mark.label}</text>${ground?`<text data-existing-height="${mark.id}" x="${cx}" y="${cy+26}" text-anchor="middle" font-size="8" style="fill:#888">st. ${number(mark.existing)}</text>`:''}${rows}</g>`;
     }).join('');
   }
   function schedule({garden,terrain,site,survey,quantities,banks}) {

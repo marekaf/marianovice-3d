@@ -7,8 +7,8 @@ const GradingOverlay = (() => {
     return lines;
   }
   const boundaryOrder=zones=>zones.slice().sort((a,b)=>({I:0,A:2,E:2,F:3,M:3}[a.id]??1)-({I:0,A:2,E:2,F:3,M:3}[b.id]??1));
-  function svgLabels(zones,px,pz,fontSize=11) {
-    return zones.map(zone=>{const x=px(zone.label[0]),y=pz(zone.label[1]),color=colorFor(zone);return `<g data-zone-label="${zone.id}" class="grading-zone-label"><circle cx="${x}" cy="${y}" r="11" fill="#fffef9" stroke="${color}" stroke-width="2.5"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fontSize+2}" font-weight="700" style="fill:${color}">${zone.id}</text></g>`;}).join('');
+  function svgLabels(zones,px,pz,fontSize=11,{technical=false}={}) {
+    return zones.map(zone=>{const x=px(zone.label[0]),y=pz(zone.label[1]),color=colorFor(zone);return `<g data-zone-label="${zone.id}" class="grading-zone-label"><circle cx="${x}" cy="${y}" r="${technical?8:11}" fill="#fffef9" stroke="${color}" stroke-width="${technical?1.2:2.5}"/><text x="${x}" y="${y+(technical?3.5:4)}" text-anchor="middle" font-size="${fontSize+2}" font-weight="${technical?500:700}" style="fill:${color}">${zone.id}</text></g>`;}).join('');
   }
   function svgLevelMarks(marks,px,pz) {
     return (marks??[]).map(mark=>{const x=px(mark.position[0]),y=pz(mark.position[1]),value=(mark.relativeLevel>0?'+':'')+mark.relativeLevel.toFixed(2).replace('.',',').replace('-','−');return `<g data-level-mark="${mark.id}"><path d="M${x-5} ${y}H${x+5}L${x} ${y+5}Z" fill="#17649e"/><text x="${x}" y="${y-5}" text-anchor="middle" font-size="11" font-weight="700" style="fill:#17649e" stroke="white" stroke-width="3" paint-order="stroke">${value}</text></g>`;}).join('');
