@@ -83,6 +83,7 @@ const checks=[
   'verify-grading-report.mjs',
   'verify-grading-technical.mjs',
   'verify-grading-notation.mjs',
+  'verify-grading-surface-notation.mjs',
   'verify-plan-terrain.mjs',
   'verify-grading-layout.mjs',
   'verify-boundary-fence.mjs',

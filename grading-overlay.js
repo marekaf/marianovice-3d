@@ -34,6 +34,8 @@ const GradingOverlay = (() => {
     const flats=(quantities.levelMarks??[]).filter(mark=>mark.id!=='raisedBeds').map(mark=>({id:mark.id,position:mark.id==='C'?[29.5,12.9]:[mark.position[0],mark.position[1]+.9]}));
     for(const id of ['D','G']){const zone=quantities.zones.find(zone=>zone.id===id);if(zone)flats.push({id,position:[zone.label[0],zone.label[1]+1.4]});}
     for(const id of ['A','G']){const zone=quantities.zones.find(zone=>zone.id===id),mark=flats.find(mark=>mark.id===id);if(zone&&mark)mark.position=[zone.label[0]+1.6,zone.label[1]];}
+    const bedCourt=garden.elements.find(e=>e.id==='raisedBedsPad')?.parts.find(p=>p.kind==='rect');
+    if(bedCourt)flats.find(mark=>mark.id==='G').position=[bedCourt.x+.3,bedCourt.y+.3];
     const slopes=[
       {id:'north-house',from:[12,6.95],to:[20,6.95]},
       {id:'south-house',from:[12,27.5],to:[16,27.5]},
@@ -54,7 +56,7 @@ const GradingOverlay = (() => {
     }
     return {banks,slopes,flats};
   }
-  const terrainLegend=[['flat','Rovná plocha'],['slope','Svah · šipka dolů']];
+  const terrainLegend=[['flat','Rovina pouze u značky'],['slope','Svah · šipka dolů']];
   function svgTerrainSymbol(kind,x,y) {
     if(kind==='flat')return `<path d="M${x-7} ${y-3}h14M${x-7} ${y+3}h14" fill="none" stroke="#17649e" stroke-width="2.2"/>`;
     return `<path d="M${x-9} ${y}h18m-5 -4l5 4l-5 4" fill="none" stroke="#93502e" stroke-width="2"/>`;
