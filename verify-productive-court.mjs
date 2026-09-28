@@ -9,21 +9,21 @@ const survey=existsSync(new URL('./docs/survey-terrain.js',import.meta.url))?req
 const {site}=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey});
 const close=(a,b,label)=>assert(Math.abs(a-b)<1e-8,label);
 const court=site.spec.productiveCourt;
-close(court.finish,TERRAIN.houseFFLInternal+.4,'Productive ground is 40 cm above the west terrace');
+close(court.finish,TERRAIN.houseFFLInternal+.5,'Productive ground is 50 cm above the west terrace');
 for(let x=court.x0;x<=court.x1+.001;x+=.2)for(let z=court.z0;z<=court.z1+.001;z+=.2)
-  close(site.routeHeight(x,z),2.865,'Entire productive court has one level finish');
+  close(site.routeHeight(x,z),TERRAIN.houseFFLInternal+.5,'Entire productive court has one level finish');
 for(const x of [court.x0,court.x1,court.x0-court.blend,court.x1+court.blend])for(let z=9.5;z<=17;z+=.05)
   assert(Math.abs(site.height(x-1e-6,z)-site.height(x+1e-6,z))<1e-5,'Court and bank vertical seams remain continuous');
 for(const z of [court.z0,court.z1,court.z0-court.blend,court.z1+court.blend])for(let x=.4;x<=6.6;x+=.05)
   assert(Math.abs(site.height(x,z-1e-6)-site.height(x,z+1e-6))<1e-5,'Court and bank horizontal seams remain continuous');
 const builtGreenhouse=GreenhouseModel.build(GARDEN,site.baseHeight,{floorHeight:site.spec.productiveCourt.greenhouseFinish});
-close(builtGreenhouse.floorHeight,2.385,'Greenhouse stays level at chosen finish');
+close(builtGreenhouse.floorHeight,TERRAIN.houseFFLInternal+.5,'Greenhouse stays level at chosen finish');
 const entrance=builtGreenhouse.parts.find(p=>p.name==='entrance_pad');
 for(const x of [entrance.position[0]-.39,entrance.position[0],entrance.position[0]+.39])for(let z=entrance.position[1]-entrance.size[1]/2;z<=entrance.position[1]+entrance.size[1]/2+1e-9;z+=.025)
   close(entrance.position[2]+entrance.size[2]/2+builtGreenhouse.floorHeight,site.routeHeight(x,z),'Greenhouse entrance joins route across its width');
 const beds=RaisedBedsModel.build(GARDEN,{surfaceHeight:site.routeHeight,groundHeight:site.height,court:site.spec.productiveCourt});
 for(const bed of beds.beds) {
-  const expected=2.865;
+  const expected=TERRAIN.houseFFLInternal+.5;
   close(bed.floorHeight,expected,'Each bed has its own level base');
   const soil=beds.parts.find(p=>p.name===`${bed.id}_soil`);
   close(soil.position[2]+soil.size[2]/2+beds.floorHeight,bed.floorHeight+.53,'Soil remains level in its bed');

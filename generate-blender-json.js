@@ -22,7 +22,8 @@ const { GradingSite } = require("./grading-site.js");
 const { SurveySurface } = require("./survey-surface.js");
 const VehicleModel = require("./vehicle-model.js");
 const { ExteriorFurnitureModel } = require("./exterior-furniture-model.js");
-const {buildEntranceStairs}=require('./entrance-landing.js');
+const {buildEntranceStairs,entrancePavingDatum}=require('./entrance-landing.js');
+const {SiteTerrain}=require('./site-terrain.js');
 const {HousePlinth}=require('./house-plinth.js');
 const {HOUSE_INTERIOR}=require('./house-interior.js');
 const { buildHouseRoofExport } = require("./house-roof-export.js");
@@ -56,7 +57,7 @@ if (surveySurface || fenceSurvey) {
 }
 fs.writeFileSync(out, JSON.stringify({
   ...GARDEN,
-  houseEntranceStairs:buildEntranceStairs(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,TERRAIN.houseFFLInternal-.5),
+  houseEntranceStairs:buildEntranceStairs(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,entrancePavingDatum(GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z))),
   housePlinth: HousePlinth.build(HOUSE_INTERIOR,siteTerrain.spec.houseBaseY,siteTerrain.height),
   cotoneasterModel:CotoneasterModel.build(GARDEN,siteTerrain.height),
   pergolaRoses: buildRoseModel(GARDEN.elements.find(e=>e.id==='pergola')),
@@ -66,7 +67,7 @@ fs.writeFileSync(out, JSON.stringify({
   gateRunbackModel: GateRunbackModel.build(siteTerrain.spec.gateRunback,siteTerrain.baseHeight),
   gradingAreas: GradingZones.create(GARDEN),
   gardenRouteGeometry: GardenRouteModel.geometry(GARDEN.gardenRoutes,siteTerrain.routeHeight,.12,[...GardenRouteModel.surfaceExclusions(GARDEN),{kind:"rect",...raisedBedsModel.surfaceFootprint},{kind:"rect",...HiddenBenchModel.build(GARDEN,siteTerrain.height).groundPatch}]),
-  saunaModel: SaunaModel.build(GARDEN, siteTerrain.spec.deckTop),
+  saunaModel: SaunaModel.build(GARDEN, siteTerrain.spec.saunaFinish),
   pergolaModel,
   garageModel,
   vehicleModels: GARDEN.vehicles.map(v => VehicleModel.build(v)),

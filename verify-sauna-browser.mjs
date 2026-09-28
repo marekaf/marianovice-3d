@@ -7,7 +7,7 @@ try {
   await mkdir(output,{recursive:true});
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
-  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.saunaCheck={THREE,scene,camera,controls,renderer,saunaGroup,saunaModel,boundaryFence,gradingOverlay};ViewerLoading.finish();')}));
+  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.saunaCheck={THREE,scene,camera,controls,renderer,saunaGroup,saunaModel,boundaryFence,gradingOverlay,siteTerrain,walkingHeight};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
   await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
   const result=await page.evaluate(()=>{
@@ -24,12 +24,31 @@ try {
         }
       }
     });
-    return {roof:[bounds.max.x-bounds.min.x,bounds.max.z-bounds.min.z],minimum,vertices,
+    let pathSamples=0,pathError=0,walkError=0;
+    const world=new t.THREE.Vector3();
+    t.scene.traverse(mesh=>{if(mesh.name!=='garden-stepping-slab')return;
+      const center=mesh.getWorldPosition(new t.THREE.Vector3());
+      if(!GARDEN.elements.find(e=>e.id==='saunaPath').parts.some(p=>p.kind==='rect'&&center.x>=p.x&&center.x<=p.x+p.w&&center.z>=p.y&&center.z<=p.y+p.d))return;
+      const p=mesh.geometry.attributes.position;
+      for(let i=0;i<p.count;i++){
+        world.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);
+        const delta=t.siteTerrain.routeHeight(world.x,world.z)-world.y;
+        pathError=Math.max(pathError,Math.min(Math.abs(delta),Math.abs(delta-.065)));pathSamples++;
+      }
+      walkError=Math.max(walkError,Math.abs(t.walkingHeight(center.x,center.z)-t.siteTerrain.routeHeight(center.x,center.z)));
+    });
+    const saunaRect=GARDEN.elements.find(e=>e.id==='sauna').parts.find(p=>p.kind==='rect');
+    walkError=Math.max(walkError,Math.abs(t.walkingHeight(saunaRect.x+.5,saunaRect.y+.5)-t.saunaModel.floorHeight));
+    return {roof:[bounds.max.x-bounds.min.x,bounds.max.z-bounds.min.z],minimum,vertices,pathSamples,pathError,walkError,
+      saunaRise:t.saunaModel.floorHeight-t.siteTerrain.spec.deckTop,
       dimensions:t.gradingOverlay.data.dimensions.filter(d=>['saunaFacility','saunaFenceGap'].includes(d.id)).map(d=>({id:d.id,value:d.value})),
       hallBenchParts:t.saunaModel.parts.filter(p=>p.name.startsWith('hall_bench')).length,
       upperBenchParts:t.saunaModel.parts.filter(p=>p.name.startsWith('bench_upper_slat')).length,
       lowerBenchParts:t.saunaModel.parts.filter(p=>p.name.startsWith('bench_lower_slat')).length};
   });
+  assert(Math.abs(result.saunaRise-.5)<1e-8,'Sauna floor is 50 cm above house floor');
+  assert(result.pathSamples>0&&result.pathError<2e-6,'Rendered access slab vertices follow the graded route');
+  assert(result.walkError<1e-8,'Walking support follows the access slope and raised sauna floor');
   assert(Math.abs(result.roof[0]-5)<1e-4&&Math.abs(result.roof[1]-2.5)<1e-4,'Rendered continuous roof must be 5 × 2.5 m');
   assert(result.minimum>=2-1e-4&&result.minimum<2.001,'Rendered roof must retain 2 m measured-fence clearance');
   assert(result.vertices>100&&result.hallBenchParts>0&&result.upperBenchParts>0&&result.lowerBenchParts>0,'Roof, hall bench and both sauna bench tiers must be built');

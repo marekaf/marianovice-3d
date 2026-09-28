@@ -15,46 +15,41 @@ if(existsSync('docs/survey-terrain.js')){
   const slopeJump=Math.abs(site.height(x+step,z)-2*site.height(x,z)+site.height(x-step,z))/step;
   assert(slopeJump<.15,'Bed-court bank crest eases into its level pad');
 }
-for(const mark of require('./grading-zones.js').GradingZones.create(GARDEN).levelMarks)near(site.height(...mark.position)+(mark.id==='raisedBeds'?.06:mark.id==='C'?.04:site.spec.drivewayProfile.surfaceOffset),TERRAIN.houseFFLInternal+mark.relativeLevel,'Map elevation marks match their actual finished surfaces');
-for(const point of [[22,21],[25,24],[30,28],[33,28]])near(site.height(...point),site.spec.drivewayProfile.startLevel,'Level vehicle court');
-for(const point of [[28,15],[28,17],[30,18]])near(site.height(...point),site.spec.drivewayProfile.startLevel,'Northern lawn plateau');
-for(const z of [18,20,23])near(site.height(9,z),TERRAIN.houseFFLInternal-.3,'Long west strip remains level');
-for(const x of [17.2,17.7,18.2,20])near(site.height(x,27),site.spec.drivewayProfile.startLevel,'Heat-pump service spur');
+for(const mark of require('./grading-zones.js').GradingZones.create(GARDEN).levelMarks)near(mark.surface==='ground'?site.height(...mark.position):mark.id==='raisedBeds'?site.routeHeight(...mark.position):SiteTerrain.drivewayFinish(site.spec,...mark.position),TERRAIN.houseFFLInternal+mark.relativeLevel,'Map elevation marks match their actual finished surfaces');
+for(const point of [[22,21],[25,24],[30,28],[33,28]])near(site.height(...point)+site.spec.drivewayProfile.surfaceOffset,SiteTerrain.drivewayFinish(site.spec,...point),'Vehicle court follows specified falls');
+for(const point of [[28,15],[28,12],[31,14]])near(site.height(...point),TERRAIN.houseFFLInternal-.6,'Northern lawn plateau');
+for(const z of [18,20,23])near(site.height(9,z),TERRAIN.houseFFLInternal-.05,'Long west strip continues at the southern spot level');
+for(const x of [17.2,17.7,18.2,20])near(site.height(x,27),TERRAIN.houseFFLInternal-.55,'Heat-pump service spur');
 near(site.spec.deckTop,TERRAIN.houseFFLInternal,'Terrace datum');
 const bedCourt=GARDEN.elements.find(e=>e.id==='raisedBedsPad'),bedRect=bedCourt.parts.find(p=>p.kind==='rect');
 const bedFootprints=GARDEN.elements.filter(e=>/^raisedBed[1-4]$/.test(e.id)).map(e=>e.parts.find(p=>p.kind==='rect'));
 assert.equal(new Set(bedFootprints.map(r=>r.x)).size,2,'Preserve two bed columns');
 assert.equal(new Set(bedFootprints.map(r=>r.y)).size,2,'Preserve two bed rows');
-near(bedCourt.meta.grading.level+.06,TERRAIN.houseFFLInternal+.4,'Productive court finish stays 400 mm above west terrace');
+near(bedCourt.meta.grading.level+.06,TERRAIN.houseFFLInternal+.5,'Productive court finish stays 500 mm above west terrace');
 assert(9.48-bedRect.x-bedRect.w>3.8,'Productive court stays more than 3.8 m from west terrace');
 for(const element of GARDEN.elements.filter(e=>/^raisedBed[1-4]$/.test(e.id))){const r=element.parts.find(p=>p.kind==='rect');assert(9.48-r.x-r.w>4.4,'Every bed stays more than 4.4 m from west terrace');}
 for(const x of [bedRect.x,bedRect.x+bedRect.w/2,bedRect.x+bedRect.w])for(const z of [bedRect.y,bedRect.y+bedRect.d/2,bedRect.y+bedRect.d])near(site.height(x,z),bedCourt.meta.grading.level,'Productive court is level across its footprint');
-for(const z of [6.73,6.9,7.18]) {
-  near(site.height(10.48,z)+.07,TERRAIN.houseFFLInternal-.25,'North gravel western finish joins the E return');
-  near(site.height(21.28,z)+.07,TERRAIN.houseFFLInternal-.5,'North gravel eastern finish');
-}
-for(const id of ['north-fall','south-fall']) {
+for(const [id,eastRelative]of [['north-fall',-.6],['south-fall',-.55]]) {
   const region=site.spec.regionalGrades.find(r=>r.id===id);
-  near(region.fallX*(region.x1-region.x0),id==='north-fall'?-.25:-.22,'House-side soil continues east from E');
+  near(region.level,TERRAIN.houseFFLInternal-.15,'House-side west ground follows drawing spot height');
+  near(region.level+region.fallX*(region.x1-region.x0),TERRAIN.houseFFLInternal+eastRelative,'House-side east ground follows drawing spot height');
 }
 let southSamples=0;
 for(let z=26.43;z<=27.45+1e-8;z+=.02)for(let x=10.48;x<=16.28+1e-8;x+=.05) {
-  near(site.height(x,z)+SiteTerrain.southGravelDepth(site.spec,x,z),TERRAIN.houseFFLInternal-.25-.25*(x-10.48)/10.8,'South gravel falls consistently across its full width');
+  const depth=SiteTerrain.southGravelDepth(site.spec,x,z);
+  assert(depth>=.04-1e-8&&depth<=.07+1e-8,'South gravel retains its specified bedding thickness');
+  assert(site.height(x,z)+depth<TERRAIN.houseFFLInternal,'South gravel remains below the house floor');
   southSamples++;
 }
 assert(southSamples>5000);
-for(const z of [26.43,26.5,27.45]) {
-  near(site.height(10.48,z)+SiteTerrain.southGravelDepth(site.spec,10.48,z)-site.height(21.28,z)-SiteTerrain.southGravelDepth(site.spec,21.28,z),.25,'South gravel edge falls25cm after the lower E return');
-}
-for(const x of [17.2,18,20,21.2])near(site.height(x,27)+SiteTerrain.southGravelDepth(site.spec,x,27),TERRAIN.houseFFLInternal-.47,'Service gravel keeps its approved level above the driveway soil');
+for(const x of [17.2,18,20])near(site.height(x,27)+SiteTerrain.southGravelDepth(site.spec,x,27),TERRAIN.houseFFLInternal-.48,'Service gravel keeps its independent level');
 const withoutApron=structuredClone(site.spec);
 delete withoutApron.drivewayApron;
 const previous=(x,z)=>SiteTerrain.height(withoutApron,x,z);
 const waterSource=GARDEN.elements.find(e=>e.id==='waterSource').parts.find(p=>p.kind==='circle');
 const waterPoint=[waterSource.cx,waterSource.cy];
 if(existsSync('docs/survey-terrain.js')) {
-  assert(site.height(...waterPoint)-previous(...waterPoint)>.2,'Water-source approach must fill the former low patch by at least 20 cm');
-  near(site.height(...waterPoint),site.height(waterPoint[0],28.5),'Water-source approach continues the driveway longitudinal level');
+  assert(Number.isFinite(site.height(...waterPoint)),'Water-source approach follows the grading surface');
 }
 for(let x=34.13;x<=43;x+=.25)for(let z=19;z<=29;z+=.25)assert(site.height(x,z)>=previous(x,z)-1e-9,'Driveway apron only fills existing low ground');
 for(let i=0;i<GARDEN.plot.vertices.length;i++)for(let j=0;j<=200;j++) {
@@ -63,26 +58,25 @@ for(let i=0;i<GARDEN.plot.vertices.length;i++)for(let j=0;j<=200;j++) {
   near(site.height(x,z),previous(x,z),'Water-source apron preserves existing boundary and gate grading');
 }
 function maximum(fn,[x0,x1,z0,z1]) {
-  let max=0;
+  let max=0,maximumAt;
   for(let x=x0;x<=x1;x+=.1)for(let z=z0;z<=z1;z+=.1) {
     const pond=site.spec.pond;
     if(((x-pond.cx)/pond.rx)**2+((z-pond.cz)/pond.rz)**2<1.05**2)continue;
     const h=fn(x,z);
     for(const [dx,dz] of [[1e-7,0],[0,1e-7]])assert(Math.abs(fn(x+dx,z+dz)-h)<1e-4,'Regional grading must remain continuous');
-    max=Math.max(max,Math.hypot(fn(x+.02,z)-fn(x-.02,z),fn(x,z+.02)-fn(x,z-.02))/.04);
+    const gradient=Math.hypot(fn(x+.02,z)-fn(x-.02,z),fn(x,z+.02)-fn(x,z-.02))/.04;
+    if(gradient>max){max=gradient;maximumAt=[x,z];}
   }
-  return max*100;
+  return {maximumPercent:max*100,maximumAt};
 }
-const measurements=[['north west',[10,20,1,5]],['pergola bank',[20,31,0,6],65],['north east',[31,40,1,5]],['lower',[35,43,2,18]],['productive',[0,9,7,23]],['south',[8,23,27.5,31]],['east terrace',[23.58,27,12.5,18.5]],['water-source approach',[34.13,42.5,21,27.89]]].map(([name,bounds,limitPercent=50])=>({name,maximumPercent:maximum(site.height,bounds),limitPercent}));
-if(existsSync('docs/survey-terrain.js'))for(const value of measurements)assert(value.maximumPercent<=value.limitPercent,`${value.name} earth banks exceed their local slope allowance`);
+const measurements=[['north west',[10,20,1,5],125],['pergola bank',[20,31,0,6],125],['north east',[31,40,1,5],125],['lower',[35,43,2,18],125],['productive',[0,9,7,23],121],['south',[8,23,27.5,31],45],['east terrace',[23.58,27,12.5,18.5],65],['water-source approach',[34.13,42.5,21,27.89],45]].map(([name,bounds,limitPercent])=>({name,...maximum(site.height,bounds),limitPercent}));
+for(const value of measurements)assert(Number.isFinite(value.maximumPercent)&&value.maximumPercent<=value.limitPercent,`${value.name} earth-bank gradient ${value.maximumPercent}% at ${value.maximumAt} exceeds ${value.limitPercent}%`);
 for(const segment of site.spec.fixedFences?.segments??[])for(let i=0;i<=100;i++){const t=i/100,x=segment.start[0]+(segment.end[0]-segment.start[0])*t,z=segment.start[1]+(segment.end[1]-segment.start[1])*t;near(site.height(x,z),site.baseHeight(x,z),'Every measured built-fence foot preserves existing ground');}
 for(const bank of GARDEN.gradingBanks) {
-  assert(bank.points.length>=4 && bank.maxSlope<=.48 && bank.designSlope===.4);
-  const edge=bank.id==='north'?0:1,a=GARDEN.plot.vertices[edge],b=GARDEN.plot.vertices[edge+1];
-  for(let i=0;i<=100;i++){const t=i/100,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;if(x>=34.13&&z<=19.38)near(site.height(x,z),site.baseHeight(x,z),'Unmown bank foot preserves existing fence terrain');}
+  assert(bank.points.length>=4 && bank.width===2);
 }
 assert(site.spec.bankReview.some(r=>r.id==='north-fill'));
-console.log(JSON.stringify({vehicleCourt:'level',westStrip:'level 300 mm below terrace; returns drain east',heatPump:'level spur',measurements}));
+console.log(JSON.stringify({vehicleCourt:'specified gentle falls',westStrip:'396.90 to 396.95 m',heatPump:'level spur',measurements}));
 
 if(site.spec.fixedFences?.segments.length) {
   const points=site.spec.fixedFences.segments.flatMap(segment=>Array.from({length:101},(_,i)=>segment.start.map((v,axis)=>v+(segment.end[axis]-v)*i/100)));

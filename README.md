@@ -69,6 +69,8 @@ The viewer and gallery use the published Floorify Champagne reference by default
 
 ## Model previews
 
+The terrain follows the September 2026 C.4 drawing. [Grading reconciliation](grading-reconciliation.md) records its levels, retained garden features and the remaining gate-slope and drawing-label discrepancies. Run `node verify-september-grading.mjs` to check the drawing controls and agreement between the browser and Blender samplers.
+
 The house roof uses a 250 mm normal depth for the main overhangs and a 227 mm normal build-up for the western wing: 160 mm rafters plus 67 mm of roof layers. The western enclosed finish is illustrative; its additional lining thickness is not confirmed. Roof elevations and window positions remain fixed. Exterior wall tops follow the western underside in both garden and walk views.
 
 Run `node verify-house-roof.mjs` and `node verify-roof-wall-cap.mjs` to check depths, closed junctions, gutter clearance and wall caps. With Playwright and Chrome available, `node verify-roof-browser.mjs` checks the rendered garden and furnished walk geometry. Set `PLAYWRIGHT_MODULE` to a local Playwright module path if needed, and `ROOF_SCREENSHOT_DIR` to an existing directory to save six exterior views.

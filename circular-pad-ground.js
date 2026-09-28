@@ -81,7 +81,7 @@ export async function levelCircularGroundAsync(THREE,ground,pads,sample) {
 
 export function gradingGroundBoundaries(garden,spec) {
   const boundaries=[],pond=spec.pond;
-  const lawn=spec.regionalGrades?.find(p=>p.id==='north-lawn');
+  const lawn=spec.drawingGrades?.find(p=>p.id==='main-lawn')??spec.regionalGrades?.find(p=>p.id==='north-lawn');
   if(lawn)boundaries.push({id:'north-lawn',boundary:[[lawn.x0,lawn.z0],[lawn.x1,lawn.z0],[lawn.x1,lawn.z1],[lawn.x0,lawn.z1]]});
   if(pond)boundaries.push({id:'pond-rim',boundary:Array.from({length:1024},(_,i)=>{
     const angle=i*Math.PI/512,scale=1/Math.cos(Math.PI/1024);
@@ -92,13 +92,13 @@ export function gradingGroundBoundaries(garden,spec) {
 }
 
 export function gradingGroundRefinement(spec) {
-  const lawn=spec.regionalGrades.find(p=>p.id==='north-lawn'),garage=spec.protectedPads[0];
-  return {x0:garage.x0,x1:lawn.x1,z0:lawn.z0-6.2,z1:garage.z0+.02,level:spec.drivewayProfile.startLevel,tolerance:.0005,maxDepth:8};
+  const lawn=spec.drawingGrades?.find(p=>p.id==='main-lawn')??spec.regionalGrades.find(p=>p.id==='north-lawn'),garage=spec.protectedPads[0];
+  return {x0:garage.x0,x1:lawn.x1,z0:lawn.z0-6.2,z1:garage.z0+.02,level:lawn.level,tolerance:.0005,maxDepth:8,detailRegions:(spec.drainageStrips??[]).map(({x0,x1,z0,z1})=>({x0,x1,z0,z1,tolerance:.0005}))};
 }
 
 // Probe heights are requested in batches, so a caller may sample them on another thread. The
 // height field is pure, so batching changes no vertex, no triangle and no order.
-export function* refinePlateauGroundSteps(THREE,ground,{x0,x1,z0,z1,level,tolerance=.00025,maxDepth=10}) {
+export function* refinePlateauGroundSteps(THREE,ground,{x0,x1,z0,z1,level,tolerance=.00025,maxDepth=10,detailRegions=[]}) {
   const position=ground.attributes.position,texture=ground.attributes.uv,vertices=[],lookup=new Map();
   const vertex=p=>{
     let row=lookup.get(p[0]);if(!row)lookup.set(p[0],row=new Map());
@@ -119,12 +119,15 @@ export function* refinePlateauGroundSteps(THREE,ground,{x0,x1,z0,z1,level,tolera
   const midHeights=new Map();let centroids=[];
   const mid=(a,b,i)=>(0+vertices[a][i]+vertices[b][i])/2;
   for(let depth=0;depth<maxDepth;depth++) {
-    const count=triangles.length/3,candidates=[],xs=[],zs=[],pendingEdges=new Map(),pendingCentroids=[];
+    const count=triangles.length/3,candidates=[],details=new Map(),xs=[],zs=[],pendingEdges=new Map(),pendingCentroids=[];
     for(let t=0;t<count;t++) {
       if(verified[t])continue;
       const a=triangles[t*3],b=triangles[t*3+1],c=triangles[t*3+2],pa=vertices[a],pb=vertices[b],pc=vertices[c];
-      if(Math.max(pa[0],pb[0],pc[0])<x0||Math.min(pa[0],pb[0],pc[0])>x1||Math.max(pa[2],pb[2],pc[2])<z0||Math.min(pa[2],pb[2],pc[2])>z1)continue;
-      if(Math.abs(pa[1]-level)<1e-7&&Math.abs(pb[1]-level)<1e-7&&Math.abs(pc[1]-level)<1e-7)continue;
+      const intersects=r=>Math.max(pa[0],pb[0],pc[0])>=r.x0&&Math.min(pa[0],pb[0],pc[0])<=r.x1&&Math.max(pa[2],pb[2],pc[2])>=r.z0&&Math.min(pa[2],pb[2],pc[2])<=r.z1;
+      const detail=detailRegions.find(intersects);
+      if(!detail&&!intersects({x0,x1,z0,z1}))continue;
+      if(!detail&&Math.abs(pa[1]-level)<1e-7&&Math.abs(pb[1]-level)<1e-7&&Math.abs(pc[1]-level)<1e-7)continue;
+      if(detail)details.set(t,detail);
       candidates.push(t);
       for(let i=0;i<3;i++){
         const p=triangles[t*3+i],q=triangles[t*3+(i+1)%3],key=edge(p,q);
@@ -143,10 +146,11 @@ export function* refinePlateauGroundSteps(THREE,ground,{x0,x1,z0,z1,level,tolera
       const pa=vertices[triangles[t*3]],pb=vertices[triangles[t*3+1]],pc=vertices[triangles[t*3+2]];
       const probe=i=>i===3?centroids[t]:midHeights.get(edge(triangles[t*3+i],triangles[t*3+(i+1)%3]));
       const probeY=i=>i===3?((0+pa[1]+pb[1])+pc[1])/3:mid(triangles[t*3+i],triangles[t*3+(i+1)%3],1);
-      let nearFlat=Math.abs(pa[1]-level)<1e-7||Math.abs(pb[1]-level)<1e-7||Math.abs(pc[1]-level)<1e-7;
-      for(let i=0;i<4&&!nearFlat;i++)nearFlat=Math.abs(probe(i)-level)<1e-7;
+      let nearFlat=Math.abs(pa[1]-level)<.005||Math.abs(pb[1]-level)<.005||Math.abs(pc[1]-level)<.005;
+      for(let i=0;i<4&&!nearFlat;i++)nearFlat=Math.abs(probe(i)-level)<.005;
       let needs=false;
-      if(nearFlat)for(let i=0;i<4&&!needs;i++){const actual=probe(i);needs=Math.abs(actual-level)<.1&&Math.abs(probeY(i)-actual)>tolerance;}
+      const detail=details.get(t);
+      if(detail||nearFlat)for(let i=0;i<4&&!needs;i++){const actual=probe(i);needs=(detail||Math.abs(actual-level)<.1)&&Math.abs(probeY(i)-actual)>(detail?.tolerance??tolerance);}
       if(!needs){verified[t]=true;continue;}
       for(let i=0;i<3;i++){
         const p=triangles[t*3+i],q=triangles[t*3+(i+1)%3],key=edge(p,q);

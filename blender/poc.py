@@ -21,7 +21,7 @@ from model_parts import build_model
 from garden_routes import build_routes
 from house_roof import build_house_roof
 from garden_details import verified_manifest, import_details
-from site_terrain import height as site_height, south_gravel_depth
+from site_terrain import height as site_height, south_gravel_depth, route_height, driveway_finish
 from terrain_mesh import align_level_pads, align_circular_pads, refine_plateau_ground
 from procedural_plants import plant_template
 
@@ -1177,7 +1177,7 @@ for i, (vehicle, model) in enumerate(zip(GARDEN["vehicles"], GARDEN["vehicleMode
     for ob in list(collection.objects):
         if ob != root:
             ob.parent = root
-    root.location = (vehicle["cx"], -cy, GF if vehicle["bay"] == "garage" else ground_h(vehicle["cx"], cy) + GARDEN["siteTerrain"]["drivewayProfile"]["surfaceOffset"])
+    root.location = (vehicle["cx"], -cy, GF if vehicle["bay"] == "garage" else driveway_finish(SITE_TERRAIN, vehicle["cx"], cy))
     root.rotation_euler.z = math.pi if vehicle.get("reversed") else 0
 build_model(GARDEN["exteriorFurnitureModel"])
 
@@ -1236,12 +1236,21 @@ sloped_slab("carport_roof", c["x"], g_ridge_x, cp_west - 0.08, cp_east - 0.08,
 roof_seams("cp", c["x"], cp_west + 0.001, g_ridge_x, cp_east + 0.001,
            c["y"], c["y"] + c["d"], MAT["roof"])
 
-# Terraces and house-level stepping slabs.
 stone_materials = [mat_concrete("garden_slab_%d" % i, hexc(color), hexc("#b4ab98"))
                    for i, color in enumerate(("#c1baaa", "#bcb5a6", "#c8c1b2", "#b6af9f"))]
 
 
-def level_paving(name, r):
+def level_paving(name, r, surface_height=lambda x, y: DECK_TOP):
+    def support(name, x0, y0, x1, y1, lower, upper, material):
+        corners = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+        vertices = [(px, -py, sample(px, py)) for sample in (lower, upper) for px, py in corners]
+        mesh = bpy.data.meshes.new(name)
+        mesh.from_pydata(vertices, [], [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)])
+        mesh.update()
+        ob = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(ob)
+        mesh.materials.append(material)
+
     narrow = r["w"] <= 1.1
     nx = 1 if narrow else math.ceil(r["w"] / 0.95)
     ny = math.ceil(r["d"] / 0.72)
@@ -1249,12 +1258,12 @@ def level_paving(name, r):
         for iy in range(ny):
             w, d = r["w"] / nx, r["d"] / ny
             x, y = r["x"] + (ix + 0.5) * w, r["y"] + (iy + 0.5) * d
-            bottom = min(DECK_TOP - 0.1, min(ground_h(px, py) for px in (x - w / 2, x + w / 2)
+            bottom = min(surface_height(x, y) - 0.1, min(ground_h(px, py) for px in (x - w / 2, x + w / 2)
                                                     for py in (y - d / 2, y + d / 2)) - 0.04)
-            box_p("%s_soil_%d_%d" % (name, ix, iy), x - w / 2, y - d / 2, x + w / 2, y + d / 2,
-                  bottom, DECK_TOP - 0.018, MAT["soil_pot"])
-            box_p("%s_turf_%d_%d" % (name, ix, iy), x - w / 2, y - d / 2, x + w / 2, y + d / 2,
-                  DECK_TOP - 0.019, DECK_TOP - 0.017, MAT["soil"])
+            support("%s_soil_%d_%d" % (name, ix, iy), x - w / 2, y - d / 2, x + w / 2, y + d / 2,
+                    lambda px, py: bottom, lambda px, py: surface_height(px, py) - 0.018, MAT["soil_pot"])
+            support("%s_turf_%d_%d" % (name, ix, iy), x - w / 2, y - d / 2, x + w / 2, y + d / 2,
+                    lambda px, py: surface_height(px, py) - 0.019, lambda px, py: surface_height(px, py) - 0.017, MAT["soil"])
             variation = (ix * 13 + iy * 7) % 11
             gap = 0.09 if narrow else 0.045
             sw = w - (0.16 if narrow else gap) - variation * 0.002
@@ -1266,7 +1275,8 @@ def level_paving(name, r):
                        (-sw / 2, sd / 2 - corner), (-sw / 2 + 0.006, -sd / 2 + corner)]
             x += (variation - 5) * 0.003
             y += (variation % 3 - 1) * 0.007
-            vertices = [(x + dx, -(y + dy), z) for z in (DECK_TOP - 0.065, DECK_TOP) for dx, dy in outline]
+            vertices = [(x + dx, -(y + dy), surface_height(x + dx, y + dy) + offset)
+                        for offset in (-0.065, 0) for dx, dy in outline]
             faces = [tuple(range(8)), tuple(reversed(range(8, 16)))]
             faces += [(j, j + 8, (j + 1) % 8 + 8, (j + 1) % 8) for j in range(8)]
             mesh = bpy.data.meshes.new("garden_stepping_slab")
@@ -1280,7 +1290,7 @@ def level_paving(name, r):
 for i, prt in enumerate(x for x in els["westTerrace"]["parts"] if x["kind"] == "rect"):
     level_paving("westTerrace_%d" % i, prt)
 for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect" and x.get("role") != "saunaLanding"):
-    level_paving("saunaPath_%d" % i, prt)
+    level_paving("saunaPath_%d" % i, prt, lambda x, y: route_height(SITE_TERRAIN, x, y))
 if not DETAILS_PATH:
     for i, r in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
         for j in range(math.ceil(r["d"] / 0.142)):
@@ -1305,7 +1315,7 @@ if not DETAILS_PATH:
 
 
 # driveway + carport + parking bay: one continuous DITON large-format paver surface
-draped_poly("driveway", dpoly, GARDEN["siteTerrain"]["drivewayProfile"]["surfaceOffset"], MAT["pavers"], subdiv=6)
+draped_poly("driveway", dpoly, lambda x, y: driveway_finish(SITE_TERRAIN, x, y) - ground_h(x, y), MAT["pavers"], subdiv=6)
 
 # stepping-stone paths: flat stone discs draped on the terrain
 MAT["step_stone"] = mat_concrete("step_stone", hexc("#9a958c"), hexc("#7f7a72"),

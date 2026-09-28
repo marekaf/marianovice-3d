@@ -6,7 +6,8 @@ const SAUNA_BUILDING_NAME = "Sauna + Softub · 5 × 2,5 m";
 const GARDEN = {
   m2px: 18,
   gridCellM: 2,
-  gradingBanks: [{"id":"north","spotFoot":[35.701,-0.6585],"spotCrest":[35.78805148016373,4.340742146545947],"width":5,"designSlope":0.4,"maxSlope":0.48,"points":[[34.13,-0.6311442786069628],[41.529999999999994,-0.759999999999998],[41.61705148016373,4.239242146545946],[34.13,4.369613689732877]]},{"id":"east","spotFoot":[42.059,5.799],"spotCrest":[37.573788372089524,6.1635224997948495],"width":4.5,"designSlope":0.4,"maxSlope":0.48,"points":[[41.529999999999994,-0.759999999999998],[41.989999999999995,4.950000000000003],[42.68,13.439999999999998],[43.182254791431795,19.38],[38.66619708064055,19.38],[38.19538257682798,13.811833801576725],[37.50465950696631,5.312936898496222],[37.04453176295158,-0.39864879351273474]]}],
+  gradingPlan: {source:'C.4 09/2026',westPlatform:{x:.98,y:1.93,w:7,d:15,bpv:397.5},westBank:{width:.5,northFootBpv:396.9,southFootBpv:396.95},westCounterfall:{transitionDepth:.5,stripDepth:.5,westBpv:397.48,eastBpv:397.45,geometryApproximate:true},southApronStrip:{depth:.5,westBpv:396.4,eastBpv:396.35,geometryApproximate:true},mainLawnBpv:396.4,eastStripBpv:395.4,northBankWidth:2,eastBankWidth:2},
+  gradingBanks: [{"id":"north","spotFoot":[35.701,-0.6585],"spotCrest":[35.735820592065494,1.3411968586183787],"width":2,"points":[[34.13,-0.6311442786069628],[41.529999999999994,-0.759999999999998],[41.61705148016373,1.240000000000002],[34.13,1.3688557213930372]]},{"id":"east","spotFoot":[42.059,5.799],"spotCrest":[40.065572609817565,5.961009999908822],"width":2,"points":[[41.529999999999994,-0.759999999999998],[41.989999999999995,4.950000000000003],[42.68,13.439999999999998],[43.182254791431795,19.38],[41.17511803108013,19.38],[40.686836700812435,13.605259467367432],[39.99651533642947,5.111305288220545],[39.53645856131181,-0.5993994637834366]]}],
   title: "Zahrada · situace a terénní úpravy",
   docMeta: { project: "Zahrada Mariánovice", place: "Mariánovice, Benešov", drawing: "Situace — osazovací koncept", revision: "R1" },
   plot: {
@@ -40,7 +41,7 @@ const GARDEN = {
     {"id":"Wellness access","points":[[9.98,7.2],[9.98,5.188663694038809],[6.6,5.188663694038809]],"width":1},
     {"id":"Productive access","points":[[6.6,5.188663694038809],[6.6,6.3208596399847545],[6.6,13.2],[5.6,13.2],[3.5,13.2]],"width":1,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":9.8},"levelFractions":[0,0,1,1,1]},
     {id:"Bed access",points:[[3.5,10.6],[3.5,13.2],[1.8,13.2]],width:1,bankSlope:.48},
-    {"id":"Greenhouse access","points":[[2.5,5.188663694038809],[2.5,6.95]],"width":0.8,"bankSlope":0.35,"startRelativeLevel":0,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":6.95}},
+    {"id":"Greenhouse access","points":[[2.5,5.188663694038809],[2.5,6.95]],"width":0.8,"bankSlope":0.35,"startRelativeLevel":0.5,"levelAxis":{"axis":"z","start":6.3208596399847545,"end":6.95}},
     {"id":"Daily dining","levelAxis":{"axis":"z","start":11.4,"end":6.2},"points":[[23,12],[24.4,12],[24.4,8],[25.42785414913,5.38127450503]],"width":1.2},
     {id:"Quiet garden approach",surfaceStep:.03,points:[[9.98,18.6],[8,18.6],[6.8,19]],width:1},
     {"id":"Gathering connection","points":[[27.9,4.6],[28.8,4.6],[30.15,5.75]],"width":1.2,"startLanding":1.2,"endLanding":.5},
@@ -49,12 +50,12 @@ const GARDEN = {
   ],
   gardenReserves: [{"id":"Eastern utilities: verify extent","kind":"rect","x":38,"y":19,"w":5,"d":7,"type":"reserve"},{"id":"Low ground: drainage investigation","kind":"rect","x":37.8,"y":0.2,"w":4.1,"d":5.8,"type":"reserve"}],
   elements: [
-    {id:'heatPumpService',name:'Rovná servisní odbočka k tepelnému čerpadlu',short:'Servis TČ',meta:{grading:{relativeLevel:-.54}},parts:[{kind:'rect',x:17.125,y:26.7,w:4.155,d:.6,fill:'#c8c2b0',opacity:.65,stroke:'#77715f',sw:.7},{kind:'text',x:19.3,y:27.15,text:'servis TČ',cls:'lbl-sm'}]},
+    {id:'heatPumpService',name:'Rovná servisní odbočka k tepelnému čerpadlu',short:'Servis TČ',meta:{grading:{relativeLevel:-.55}},parts:[{kind:'rect',x:17.125,y:26.7,w:4.155,d:.6,fill:'#c8c2b0',opacity:.65,stroke:'#77715f',sw:.7},{kind:'text',x:19.3,y:27.15,text:'servis TČ',cls:'lbl-sm'}]},
     {id:'heatPumpPad',name:'Základ pod venkovní jednotkou TČ',short:'Základ TČ',parts:[{kind:'rect',x:17.125,y:26.7,w:1.15,d:.6,fill:'#8d8a84',opacity:.9,stroke:'#666',sw:.7}]},
-    {id:'westDrainageStrip',name:'Snížený pás zeleně kolem západní terasy',short:'Západní průleh',meta:{plant:'perennials',palette:'bedTerrace',maxHeight:.45,grading:{relativeLevel:-.3,coveredCrossings:[{x:9.48,y:6.43,w:1,d:.75,routeId:"Wellness access"},{x:8.73,y:18.1,w:.75,d:1,routeId:"Quiet garden approach",surfaceReference:{relativeLevel:-.3,bankSlope:.4}}]}},parts:[
-      {kind:'rect',x:8.73,y:7.18,w:.75,d:20,grading:{relativeLevel:-.3},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
-      {kind:'rect',x:8.73,y:6.43,w:1.75,d:.75,grading:{relativeLevel:-.3,fallX:-.02,xStart:9.48,minimumSurface:true},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
-      {kind:'rect',x:9.48,y:26.43,w:1,d:.75,grading:{relativeLevel:-.3,fallX:-.02,minimumSurface:true},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8}
+    {id:'westDrainageStrip',name:'Snížený pás zeleně kolem západní terasy',short:'Západní průleh',meta:{plant:'perennials',palette:'bedTerrace',maxHeight:.45,grading:{relativeLevel:-.1,coveredCrossings:[{x:9.48,y:6.43,w:1,d:.75,routeId:"Wellness access"},{x:8.48,y:18.1,w:1,d:1,routeId:"Quiet garden approach",surfaceReference:{relativeLevel:-.1,bankSlope:.4}}]}},parts:[
+      {kind:'rect',x:8.48,y:1.93,w:1,d:25.25,grading:{relativeLevel:-.1,fallZ:.05/9.75,zStart:7.18,zEnd:16.93,bankSlope:1.2},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
+      {kind:'rect',x:8.73,y:6.43,w:1.75,d:.75,grading:{relativeLevel:-.1,fallX:-.05,xStart:9.48,minimumSurface:true},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8},
+      {kind:'rect',x:9.48,y:26.43,w:1,d:.75,grading:{relativeLevel:-.05,fallX:-.1,minimumSurface:true},fill:'#8fa05a',opacity:.5,stroke:'#6a7a3a',sw:.8}
     ]},
     {id:'arrivalStrip',name:'Kvetoucí pás podél jižní hranice příjezdu',meta:{palette:'arrivalStrip',plant:'perennials',maxHeight:.9},parts:[{kind:'polygon',points:[[21.4,30.1],[38.9,32.3],[38.9,33.5],[21.4,31.8]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},
     {id:'tankCover',name:'Nízká zeleň nad nádrží: mocnost zeminy a zatížení k ověření',meta:{plant:'perennials',utilityCover:true,maxHeight:.25},parts:[{kind:'polygon',points:[[35.63,16.7],[38.63,16.7],[38.63,20.2],[35.63,20.2]],fill:'#8fa05a',opacity:.4,stroke:'#6a7a3a',sw:1}]},
@@ -115,7 +116,7 @@ const GARDEN = {
     },
     {
       id: "saunaPath",
-      name: "Bezbariérové propojení domu a sauny",
+      name: "Výškové propojení domu a sauny",
       parts: [
         {kind: "rect", role: "saunaLanding", x: 2.3, y: 4.488663694038809, w: 5, d: 1.2, fill: "#cdc1ad", opacity: 0.7},
         {kind: "rect", x: 7.3, y: 4.688663694038809, w: 3.18, d: 1, fill: "#cdc1ad", opacity: 0.7},
@@ -180,12 +181,12 @@ const GARDEN = {
     },
     {
       id: "rainTank",
-      name: "Podzemní dešťová nádrž 12 m³",
-      meta: {capacityM3: 12, source: "Projekt C.3, str. 1: 2 m od východní stěny garáže; severojižní poloha a délka odměřeny z výkresu", positionApproximate: true, accessCover: {x:37.13,z:17.8}},
+      name: "Podzemní dešťová nádrž 8–10 m³",
+      meta: {capacityRangeM3: [8, 10], source: "Projekt C.4, 09/2026: 2 m od východní stěny garáže; severojižní poloha a délka odměřeny z výkresu", positionApproximate: true, accessCover: {x:37.13,z:17.8}},
       parts: [
         { kind: "rect", x: 36.13, y: 17.2, w: 2, d: 2.5, fill: "#3a7ab8", opacity: 0.35, stroke: "#1f3a5f", sw: 1.5, dash: "4,3" },
         { kind: "text", x: 37.13, y: 18.25, text: "dešťová nádrž", cls: "lbl-sm", weight: 700 },
-        { kind: "text", x: 37.13, y: 19, text: "12 m³", cls: "dim" }
+        { kind: "text", x: 37.13, y: 19, text: "8–10 m³", cls: "dim" }
       ]
     },
     {
@@ -290,7 +291,7 @@ const GARDEN = {
     {
       id: "pergola",
       name: "Pergola a gril 6 × 4 m",
-      meta: {grading: {level: 1.915, blend: 1.2, fenceBankSlope: .65}},
+      meta: {grading: {level: 1.765, blend: 1.2, fenceBankSlope: .65}},
       parts: [
         {kind: "rect", x: 22.42785414913, y: 1.68127450503, w: 6, d: 4, fill: "#c8a878", opacity: 0.55, stroke: "#7a5e3e", sw: 1.5, dash: "6, 3"},
         {kind: "rect", role: "paving", x: 22.62785414913, y: 1.88127450503, w: 5.6, d: 3.6, fill: "#d8d2c8", opacity: 0.9},
@@ -303,7 +304,7 @@ const GARDEN = {
     {
       id: "raisedBedsPad",
       name: "Užitková zahrada: plocha záhonů 4,2 × 6,2 m",
-      meta: {grading: {level: 2.805, blend: 1, bankSlope: .48}},
+      meta: {grading: {level: 2.905, blend: 1, bankSlope: .48}},
       parts: [
         {kind: "rect", x: 1.4, y: 10.1, w: 4.2, d: 6.2, fill: "#c8c2b0", opacity: 0.55, stroke: "#9a9074", sw: 1}
       ]
@@ -369,7 +370,7 @@ const GARDEN = {
       id: "greenhouse",
       name: "Skleník 2 × 2 m (návrh)",
       short: "Skleník",
-      meta: {entrancePadDepth: .15, grading: {finishedLevel: 2.385}},
+      meta: {entrancePadDepth: .15, grading: {finishedLevel: 2.965}},
       parts: [
         {kind: "rect", x: 1.5, y: 7.1, w: 2, d: 2, clipToPlot: true, fill: "#cfe8ef", opacity: 0.8, stroke: "#5f93a8", sw: 1.2},
         {kind: "text", x: 2.5, y: 8.1, text: "skleník", cls: "lbl-sm", fill: "#245a6a", rotate: -90}

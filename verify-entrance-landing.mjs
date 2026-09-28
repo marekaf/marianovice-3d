@@ -23,7 +23,7 @@ for(let x=landing.x0+.005;x<landing.x1;x+=.01)for(let z=landing.z0+.005;z<landin
 }
 console.log('Entrance reveal landing joins measured frame and existing stairs at house floor level');
 
-const {buildEntranceStairs}=await import('./entrance-landing.js');
+const {buildEntranceStairs,entrancePavingDatum}=await import('./entrance-landing.js');
 const {GARDEN}=createRequire(import.meta.url)('./layout.js');
 const {GradingSite}=createRequire(import.meta.url)('./grading-site.js');
 const {TERRAIN}=createRequire(import.meta.url)('./terrain.js');
@@ -45,6 +45,25 @@ for(const [i,part] of stairs.parts.slice(1).entries()){
 assert(Math.abs(levels[0]-2.465)<1e-12,'Large upper platform meets the door floor without another step');
 for(let i=0;i<3;i++)assert(Math.abs(levels[i]-(levels[i+1]??1.965)-.5/3)<1e-9,'Rises are equal down to finished paving');
 const {site}=GradingSite.create({garden:GARDEN,terrain:TERRAIN});
-assert(Math.abs(site.height(22.15,21.84)+site.spec.drivewayProfile.surfaceOffset-1.965)<1e-9,'Stair base uses paving finish rather than soil');
+const {SiteTerrain}=createRequire(import.meta.url)('./site-terrain.js');
+const finish=(x,z)=>SiteTerrain.drivewayFinish(site.spec,x,z),datum=entrancePavingDatum(GARDEN,finish);
+assert(Math.abs(datum-1.9504609929078012)<1e-9,'Stair datum meets the lowest graded carport contact');
+const graded=buildEntranceStairs(house,GARDEN,TERRAIN.houseFFLInternal,datum);
+let supports=0,maximumEmbed=0,minimumRise=Infinity,maximumRise=-Infinity;
+for(const part of graded.parts){
+ const [x,z,y]=part.position,[w,d,h]=part.size,bottom=y-h/2;
+ for(let px=x-w/2;px<=x+w/2+1e-9;px+=.02)for(let pz=z-d/2;pz<=z+d/2+1e-9;pz+=.02){
+  assert(Math.abs(bottom-datum)<1e-9,'Every stair box shares the pavement datum');
+  if(px<21.28-1e-9)continue;
+  const support=finish(Math.max(21.28,px),pz);
+  assert(bottom<=support+1e-8,'Every pavement contact supports the stair base');supports++;
+  maximumEmbed=Math.max(maximumEmbed,support-bottom);
+ }
+}
+const bottomTread=graded.walkSurfaces.at(-1).y,rise=(TERRAIN.houseFFLInternal-datum)/3;
+for(let z=19.4;z<=22.6+1e-9;z+=.01){const value=bottomTread-finish(21.94,z);minimumRise=Math.min(minimumRise,value);maximumRise=Math.max(maximumRise,value);}
+assert(Math.abs(maximumRise-rise)<1e-8&&Math.abs(maximumRise-minimumRise-.01*3.2/7.05)<1e-8,'Pavement crossfall changes the bottom rise by only 4.54 mm');
+assert(maximumEmbed<.00454&&supports>5000);
+console.log(JSON.stringify({gradedStairDatum:datum,supports,maximumEmbed,minimumRise,maximumRise}));
 assert.equal(JSON.stringify([house,GARDEN]),inputs);assert.equal(JSON.stringify(house.exteriorOpenings()),openings,'Fixed openings remain unchanged');
 console.log(`Entrance stairs: ${rays} full-platform mesh rays, equal finished rises and fixed inputs pass`);

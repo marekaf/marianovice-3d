@@ -5,18 +5,9 @@ const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
 const { TERRAIN } = require('./terrain.js');
 const { SaunaModel } = require('./sauna-model.js');
-const { SiteTerrain } = require('./site-terrain.js');
-const { GarageModel } = require('./garage-model.js');
-const { PergolaModel } = require('./pergola-model.js');
-const { GreenhouseModel } = require('./greenhouse-model.js');
-const { RaisedBedsModel } = require('./raised-beds-model.js');
-const site = SiteTerrain.create(GARDEN, TERRAIN.plane, {
-  garage: GarageModel.groundPatch(GARDEN, TERRAIN.houseFFLInternal - 0.5),
-  pergola: PergolaModel.build(GARDEN).groundPatch,
-  greenhouse: GreenhouseModel.build(GARDEN, TERRAIN.plane).groundPatch,
-  raisedBeds: RaisedBedsModel.build(GARDEN).groundPatch,
-});
-const model = SaunaModel.build(GARDEN, site.spec.deckTop);
+const { GradingSite } = require('./grading-site.js');
+const { site } = GradingSite.create({garden:GARDEN,terrain:TERRAIN});
+const model = SaunaModel.build(GARDEN, site.spec.saunaFinish);
 const parts = new Map(model.parts.map(p => [p.name, p]));
 const rect = id => GARDEN.elements.find(e => e.id === id).parts.find(p => p.kind === 'rect');
 const sauna = rect('sauna');
@@ -27,12 +18,12 @@ const bounds = p => ({ min: p.position.map((v, i) => v - p.size[i] / 2), max: p.
 const overlaps = (a, b) => a.min.every((v, i) => Math.min(a.max[i], b.max[i]) - Math.max(v, b.min[i]) > 0.001);
 
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
-assert.deepEqual(model, SaunaModel.build(GARDEN, site.spec.deckTop), 'Geometry must be repeatable');
-near(model.floorHeight, site.spec.deckTop);
+assert.deepEqual(model, SaunaModel.build(GARDEN, site.spec.saunaFinish), 'Geometry must be repeatable');
+near(model.floorHeight, site.spec.deckTop + .5);
 assert.ok(!model.parts.some(p => /^entry_(step|tread)/.test(p.name)), 'House-to-sauna route must not contain stairs');
 for (const r of GARDEN.elements.filter(e => ['sauna', 'saunaShelter', 'saunaPath'].includes(e.id)).flatMap(e => e.parts.filter(p => p.kind === 'rect'))) {
   for (let x = r.x; x <= r.x + r.w; x += 0.1) for (let z = r.y; z <= r.y + r.d; z += 0.1)
-    assert.ok(site.height(x, z) <= model.floorHeight - 0.1, 'Soil must stay below sauna decks and approach');
+    assert.ok(site.height(x, z) <= site.routeHeight(x,z) - 0.1 + 1e-8, 'Soil must stay below sauna decks and graded approach');
 }
 for (const part of model.parts) {
   assert.ok(['N', 'S', 'E', 'W', 'floor', 'roof', 'furniture', 'outdoor'].includes(part.category), `${part.name}: missing cutaway owner`);

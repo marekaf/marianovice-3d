@@ -153,7 +153,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=a35a95f2711b"></script>
+<script src="layout.js?v=9f36d33e773e"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=68757001ef24"></script>
@@ -185,21 +185,21 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="fence-model.js?v=650724c57661"></script>
 <script src="boundary-fence-model.js?v=0112fa12d8b8"></script>
 <script src="utility-pillar-model.js"></script>
-<script src="site-terrain.js?v=9d79dae537eb"></script>
+<script src="site-terrain.js?v=f18793c1e371"></script>
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
-<script src="grading-zones.js?v=39c5fc53e38a"></script>
-<script src="grading-overlay.js?v=23ab2d5e595d"></script>
+<script src="grading-zones.js?v=d5cfcd66f77b"></script>
+<script src="grading-overlay.js?v=2eb1f1995e4e"></script>
 <script type="module">
 import * as THREE from 'three';
-import { buildEntranceStairs } from './entrance-landing.js?v=1cb023b3f393';
+import { buildEntranceStairs, entrancePavingDatum } from './entrance-landing.js?v=4564211fbdea';
 import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=08daa6e001b5';
 import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
 import { GroundSurfaceModel } from './ground-surface-model.js';
-import {levelCircularGroundAsync,gradingGroundBoundaries,refinePlateauGroundAsync,gradingGroundRefinement} from "./circular-pad-ground.js?v=75705cec92a1";
+import {levelCircularGroundAsync,gradingGroundBoundaries,refinePlateauGroundAsync,gradingGroundRefinement} from "./circular-pad-ground.js?v=68a7515ba6ed";
 import { createTerrainSampler, TERRAIN_WORKER_SCRIPTS } from './terrain-sampler.js?v=9800311fdc06';
 import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=a15eb452d53a';
 import { ShrubModel } from './shrub-model.js';
@@ -1064,7 +1064,8 @@ const entranceWalkSurfaces=[];
 const walkSurfaces = [
   { x0: GA.x, z0: GA.y, x1: GA.x + GA.w, z1: GA.y + GA.d, y: garageFloorY },
   ...['eastTerrace','westTerrace'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.deckTop}))),
-  ...['sauna','saunaShelter','saunaPath'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.deckTop}))),
+  ...['sauna','saunaShelter'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.saunaFinish}))),
+  ...EL.saunaPath.parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,height:siteTerrain.routeHeight})),
   ...EL.pergola.parts.filter(p=>p.role==='paving').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:pergolaModel.floorHeight})),
   ...EL.greenhouse.parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:greenhouseModel.floorHeight})),
 ];
@@ -1081,9 +1082,9 @@ function walkingHeight(x,z){
   if(Number.isFinite(stepHeight))return stepHeight;
   if(GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<=0)return siteTerrain.routeHeight(x,z);
   const surface=walkSurfaces.find(s=>x>=s.x0&&x<=s.x1&&z>=s.z0&&z<=s.z1);
-  if(surface)return surface.y;
+  if(surface)return surface.height?surface.height(x,z):surface.y;
   if(insidePolygon(houseVerts,x,z))return houseBaseY;
-  return terrainHeight(x,z)+(insidePolygon(EL.driveway.parts.find(p=>p.kind==='polygon').points,x,z)?siteTerrain.spec.drivewayProfile.surfaceOffset:0);
+  return insidePolygon(EL.driveway.parts.find(p=>p.kind==='polygon').points,x,z)?SiteTerrain.drivewayFinish(siteTerrain.spec,x,z):terrainHeight(x,z);
 }
 
 // Garage pult roof — high at the carport junction (west), low at the east eave
@@ -1170,7 +1171,7 @@ const carportPostMaterial = new THREE.MeshStandardMaterial({ color: 0x5a3e25, ro
 // ───────────────────────── SAUNA + HOT TUB + SHELTER ─────────────────────────
 const SA = rectOf('sauna');
 const SH = rectOf('saunaShelter');
-const saunaModel = SaunaModel.build(GARDEN, siteTerrain.spec.deckTop);
+const saunaModel = SaunaModel.build(GARDEN, siteTerrain.spec.saunaFinish);
 const saunaFloorY = saunaModel.floorHeight;
 const saunaGroup = buildModel(THREE, saunaModel);
 scene.add(saunaGroup);
@@ -1246,7 +1247,7 @@ const gardenStoneMaterials = [0xffffff, 0xf5f2e9, 0xece8dc, 0xf7f5ef].map(color 
   new THREE.MeshStandardMaterial({ color, map: gardenStoneTex, bumpMap: gardenStoneTex, bumpScale: 0.003, roughness: 0.96 }));
 const gardenJointMaterial = new THREE.MeshStandardMaterial({ color: 0xdfe6d8, map: grassTex, roughness: 1 });
 const gardenSoilMaterial = new THREE.MeshStandardMaterial({ color: 0x645747, roughness: 1 });
-function addLevelPaving(r) {
+function addLevelPaving(r, surfaceHeight = () => deckTop) {
   const group = new THREE.Group();
   group.name = 'west-paving';
   const adjoining = [...EL.westTerrace.parts, ...EL.saunaPath.parts].filter(p => p.kind === 'rect');
@@ -1258,7 +1259,7 @@ function addLevelPaving(r) {
     const x = r.x + (ix + 0.5) * w, z = r.y + (iz + 0.5) * d;
     const groundY = Math.min(...[x - w / 2, x + w / 2].flatMap(px =>
       [z - d / 2, z + d / 2].map(pz => terrainHeight(px, pz))));
-    const baseBottom = Math.min(groundY - 0.04, deckTop - 0.1);
+    const baseBottom = Math.min(groundY - 0.04, surfaceHeight(x,z) - 0.1);
     const variation = (ix * 13 + iz * 7) % 11;
     const gap = narrow ? 0.09 : 0.045;
     const sw = w - (narrow ? 0.16 : gap) - variation * 0.002;
@@ -1277,8 +1278,11 @@ function addLevelPaving(r) {
     const slab = new THREE.Mesh(new THREE.ExtrudeGeometry(outline, { depth: 0.065, bevelEnabled: false, steps: 1 }),
       gardenStoneMaterials[variation % gardenStoneMaterials.length]);
     slab.name = 'garden-stepping-slab';
-    slab.rotation.x = Math.PI / 2;
-    slab.position.set(x + (variation - 5) * 0.003, deckTop, z + (variation % 3 - 1) * 0.007);
+    slab.position.set(x + (variation - 5) * 0.003, 0, z + (variation % 3 - 1) * 0.007);
+    slab.geometry.rotateX(Math.PI / 2);
+    const slabVertices=slab.geometry.attributes.position;
+    for(let i=0;i<slabVertices.count;i++)slabVertices.setY(i,slabVertices.getY(i)+surfaceHeight(slab.position.x+slabVertices.getX(i),slab.position.z+slabVertices.getZ(i)));
+    slabVertices.needsUpdate=true;slab.geometry.computeVertexNormals();
     const bounds = { x0: x-w/2, x1: x+w/2, z0: z-d/2, z1: z+d/2 };
     const support = { x0: slab.position.x-sw/2, x1: slab.position.x+sw/2,
       z0: slab.position.z-sd/2, z1: slab.position.z+sd/2 };
@@ -1290,8 +1294,9 @@ function addLevelPaving(r) {
         [pz-bounds.z0, .014, px, bounds.z0-.0001],
         [bounds.z1-pz, .014, px, bounds.z1+.0001],
       ]) if (!covered(outsideX, outsideZ)) t = Math.min(t, Math.max(0, distance / Math.max(.001, width)));
-      const ground = Math.min(deckTop-.017, terrainHeight(px,pz));
-      return ground+(deckTop-.017-ground)*Math.min(1,t);
+      const finish=surfaceHeight(px,pz);
+      const ground = Math.min(finish-.017, terrainHeight(px,pz));
+      return ground+(finish-.017-ground)*Math.min(1,t);
     };
     const axisSamples = (lo, hi, innerLo, innerHi, axis) => [...new Set([lo,hi,innerLo,innerHi,
       ...adjoining.flatMap(p => axis === 'x' ? [p.x,p.x+p.w] : [p.y,p.y+p.d]),
@@ -1329,7 +1334,7 @@ addLevelPaving(wtAtrium);
 
 // Chodníček sauna → terasa Z
 for (const path of EL.saunaPath.parts.filter(p => p.kind === 'rect' && p.role !== 'saunaLanding')) {
-  addLevelPaving(path);
+  addLevelPaving(path, siteTerrain.routeHeight);
 }
 
 // ───────────────────────── DRIVEWAY ─────────────────────────
@@ -1375,7 +1380,7 @@ const drivewayGeom = (() => {
     }
     return out;
   };
-  const addV = (x, z) => { const id = verts.length / 3; verts.push(x, terrainHeight(x, z) + siteTerrain.spec.drivewayProfile.surfaceOffset, z); return id; };
+  const addV = (x, z) => { const id = verts.length / 3; verts.push(x, SiteTerrain.drivewayFinish(siteTerrain.spec,x,z), z); return id; };
   for (const part of dwParts) for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
     const cell = clipCell([
       [x0 + i * step, z0 + j * step], [x0 + (i + 1) * step, z0 + j * step],
@@ -1754,7 +1759,7 @@ const exteriorWalkingDoors=[];
     scene.add(d2);
   }
   if(localHouseData){
-    const stairs=buildEntranceStairs(localHouseData,GARDEN,ty,garageFloorY);
+    const stairs=buildEntranceStairs(localHouseData,GARDEN,ty,entrancePavingDatum(GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z)));
     scene.add(buildModel(THREE,stairs));
     entranceWalkSurfaces.push(...stairs.walkSurfaces);
   }
@@ -1888,7 +1893,7 @@ scene.add(vehiclesGroup);
 for (const v of GARDEN.vehicles) {
   const cz = v.noseZ + v.l / 2;
   const g = INTERIORS3D.buildVehicle(THREE, v, buildModel);
-  g.position.set(v.cx, v.bay === 'garage' ? garageFloorY : terrainHeight(v.cx, cz) + 0.05, cz);
+  g.position.set(v.cx, v.bay === 'garage' ? garageFloorY : walkingHeight(v.cx, cz), cz);
   if (v.reversed) g.rotation.y = Math.PI;
   vehiclesGroup.add(g);
 }

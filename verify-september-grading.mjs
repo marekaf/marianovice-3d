@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {runPythonJson} from './scripts/python-json.mjs';
+const require=createRequire(import.meta.url);
+const {GARDEN}=require('./layout.js'),{TERRAIN}=require('./terrain.js'),{GradingSite}=require('./grading-site.js');
+const {SURVEY_TERRAIN}=require('./docs/survey-terrain.js');
+const {SiteTerrain}=require('./site-terrain.js');
+const {site}=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:SURVEY_TERRAIN});
+const near=(a,b,label)=>assert(Math.abs(a-b)<1e-7,`${label}: ${a} != ${b}`);
+near(TERRAIN.bpv(site.spec.saunaFinish),397.5,'Sauna finish');
+for(const x of [.98,7.98])for(const z of [1.93,16.93])near(TERRAIN.bpv(site.height(x,z)),397.5,'Platform corner');
+for(const [x,z,bpv] of [[7.5,12,397.5],[7.98,7.18,397.5],[8.23,7.18,397.2],[8.48,7.18,396.9],[11,6.6,396.85-.45*.52/10.8],[21.28,6.6,396.4],[10.48,27,396.85],[20.9,27,396.45],[35,9,396.4],[40,8,395.4]])near(TERRAIN.bpv(site.height(x,z)),bpv,`Terrain ${x},${z}`);
+for(const [x,z,bpv] of [[9.98,7.2,397],[6.6,5.188663694038809,397.5],[6.6,12,397.5],[2.5,6.95,397.5]])near(TERRAIN.bpv(site.routeHeight(x,z)),bpv,`Route ${x},${z}`);
+for(const [x,z,bpv] of [[.98,17.43,397.48],[7.98,17.43,397.45],[.98,17.93,397.48],[7.98,17.93,397.45],[4.48,17.18,397.4825]])near(TERRAIN.bpv(site.height(x,z)),bpv,'West counterfall control');
+for(const z of [16.93,17.43,17.93])for(const x of [.98,4.48,7.98])for(const dz of [-1e-6,1e-6])assert(Math.abs(site.height(x,z)-site.height(x,z+dz))<1e-5,'Counterfall edges stay continuous');
+for(const [x,z,bpv] of [[21.28,30.93,396.4],[34.13,30.93,396.35],[27.705,30.93,396.375],[27.705,30.68,396.3925],[27.705,30.43,396.41]])near(TERRAIN.bpv(site.height(x,z)),bpv,'South apron lowstrip');
+for(const x of [21.28,27.705,34.13])for(const z of [30.43,30.93])for(const dz of [-1e-6,1e-6])assert(Math.abs(site.height(x,z)-site.height(x,z+dz))<1e-5,'South apron band edges stay continuous');
+near(TERRAIN.bpv(SiteTerrain.drivewayFinish(site.spec,30,26.43)),396.48,'Apron top');
+assert.deepEqual(GARDEN.elements.find(e=>e.id==='rainTank').meta.capacityRangeM3,[8,10]);
+const points=[];for(let x=0;x<=43;x+=.73)for(let z=0;z<=33;z+=.81)points.push([x,z]);
+for(const segment of site.spec.fixedFences.segments)for(let i=0;i<=20;i++){const p=segment.start.map((v,j)=>v+(segment.end[j]-v)*i/20);near(site.height(...p),site.baseHeight(...p),'Fixed fence');points.push(p);}
+for(const x of [7.98,8.48,9.48])for(const z of [1.8,1.93,4.6301,5.93,7.18,12,16.93,17])for(const dx of [-1e-6,1e-6])assert(Math.abs(site.height(x,z)-site.height(x+dx,z))<1e-5,`West bank exact boundary continuity at ${x},${z}`);
+for(const [x,z] of [[10.7,5],[8.2,22.9],[9.3,27.5],[24.88,12.7]])assert(Math.hypot(site.height(x+.01,z)-site.height(x-.01,z),site.height(x,z+.01)-site.height(x,z-.01))/.02<=.42,'Broad garden shoulders stay near40%');
+const result=runPythonJson('from blender.site_terrain import height, route_height, driveway_finish\nimport json,sys\np=json.load(sys.stdin)\nprint(json.dumps([[height(p["spec"],*v),route_height(p["spec"],*v),driveway_finish(p["spec"],*v)] for v in p["points"]]))',{spec:site.spec,points});
+result.forEach(([h,r,d],i)=>{near(h,site.height(...points[i]),'Python terrain parity');near(r,site.routeHeight(...points[i]),'Python route parity');near(d,SiteTerrain.drivewayFinish(site.spec,...points[i]),'Python paving parity');});
+console.log(`September grading: elevations, routes, fixed fences and ${points.length} sampler comparisons passed`);
