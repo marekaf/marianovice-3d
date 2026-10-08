@@ -25,16 +25,19 @@ const PortalDrainModel = {
       materials: { channel: { color: '#303537', roughness: .65, metalness: .25 },
         grate: { color: '#707779', roughness: .4, metalness: .65 } }, parts, lights: [] };
   },
+  // Boards stop 4 mm clear of the channel; a board that does not reach the channel stays whole.
   boardPieces(board, model) {
-    const f = model.footprint;
+    const f = model.footprint, clear = f.x + f.w + .004;
+    if (board.x >= clear || board.x + board.w <= f.x || board.y >= f.y + f.d || board.y + board.d <= f.y) return [board];
     const cuts = [board.y, f.y, f.y + f.d, board.y + board.d]
       .filter(z => z >= board.y && z <= board.y + board.d).sort((a, b) => a - b);
     return cuts.slice(1).flatMap((end, i) => {
       const start = cuts[i];
       if (end - start < .0001) return [];
       const besideDrain = start < f.y + f.d && end > f.y;
-      const x = besideDrain ? f.x + f.w + .004 : board.x + model.facadeGap;
-      return [{ x, y: start, w: board.x + board.w - x, d: end - start }];
+      const x = besideDrain ? Math.max(board.x, clear) : board.x;
+      const w = board.x + board.w - x;
+      return w < .005 ? [] : [{ x, y: start, w, d: end - start }];
     });
   },
 };

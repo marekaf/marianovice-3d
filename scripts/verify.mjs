@@ -24,6 +24,7 @@ const checks=[
   'verify-cotoneaster.mjs',
   'verify-privacy-screens.mjs',
   'verify-portal-drain.mjs',
+  'verify-terrace-decks.mjs',
   'verify-climber-model.mjs',
   'verify-sauna.mjs',
   'verify-pergola.mjs',

@@ -6,9 +6,20 @@ export function entranceLanding(entry, origin, facadeX, floorY, groundY) {
     y:floorY+.001,bottom:groundY};
 }
 
-const stairDepths=[.68,.34,.34],stairZ=[19.4,22.6];
+const stairDepths=[.68,.34,.34];
+const entranceOpening=house=>{
+  const entry=house.exteriorOpenings().find(item=>item.model.opening.kind==='entrance');
+  if(!entry)throw new Error('House entrance opening is required for the stairs');
+  return entry;
+};
+// The stairs are exactly as wide as the door opening.
+const stairSpan=house=>{
+  const opening=entranceOpening(house).model.opening;
+  return [house.originPlot.z+opening.center-opening.width/2,house.originPlot.z+opening.center+opening.width/2];
+};
 
-export function entrancePavingDatum(garden,sampleFinish) {
+export function entrancePavingDatum(garden,sampleFinish,house) {
+  const stairZ=stairSpan(house);
   const facadeX=garden.elements.find(element=>element.id==='house').meta.eNotch[0];
   const carport=garden.elements.find(element=>element.id==='carport').parts.find(part=>part.kind==='rect');
   const xs=[Math.max(facadeX,carport.x),Math.min(facadeX+stairDepths.reduce((sum,depth)=>sum+depth,0),carport.x+carport.w)];
@@ -20,8 +31,7 @@ export function entrancePavingDatum(garden,sampleFinish) {
 }
 
 export function buildEntranceStairs(house,garden,floorY,pavingY) {
-  const entry=house.exteriorOpenings().find(item=>item.model.opening.kind==='entrance');
-  if(!entry)throw new Error('House entrance opening is required for the stairs');
+  const entry=entranceOpening(house),stairZ=stairSpan(house);
   if(!(floorY>pavingY))throw new Error('Entrance floor must be above the finished paving');
   const facadeX=garden.elements.find(element=>element.id==='house').meta.eNotch[0];
   const bridge=entranceLanding(entry,house.originPlot,facadeX,floorY,pavingY);
@@ -35,4 +45,21 @@ export function buildEntranceStairs(house,garden,floorY,pavingY) {
     add(`entrance_step_${index}`,surface);walkSurfaces.push(surface);x0+=depth;
   }
   return {name:'house_entrance_stairs',floorHeight:0,materials:{stairFinish:{color:'#b9b4ab',roughness:.9}},parts,lights:[],walkSurfaces};
+}
+
+// Level soil in the recess between the east deck and the stairs, held by an edge on the carport side.
+// The edge material and section are not decided; the model shows plain concrete.
+export function buildEntranceRecess(house,garden,floorY,pavingY) {
+  const stairZ=stairSpan(house);
+  const facadeX=garden.elements.find(element=>element.id==='house').meta.eNotch[0];
+  const carport=garden.elements.find(element=>element.id==='carport').parts.find(part=>part.kind==='rect');
+  const deck=garden.elements.find(element=>element.id==='eastTerrace').parts.find(part=>part.kind==='rect');
+  const z0=deck.y+deck.d,z1=stairZ[0],edgeWidth=.08,soilY=floorY-.05,edgeY=floorY-.02;
+  if(!(z1>z0))throw new Error('Entrance recess requires the stairs to start south of the deck');
+  const box=(name,x0,x1,top,material)=>({name,type:'box',position:[(x0+x1)/2,(z0+z1)/2,(top+pavingY)/2],
+    size:[x1-x0,z1-z0,top-pavingY],material,category:'structure',bevel:0});
+  return {name:'house_entrance_recess',floorHeight:0,soil:{x0:facadeX,x1:carport.x-edgeWidth,z0,z1,y:soilY},
+    materials:{recessSoil:{color:'#5d4b3a',roughness:1},recessEdge:{color:'#a3a19a',roughness:.88}},
+    parts:[box('entrance_recess_soil',facadeX,carport.x-edgeWidth,soilY,'recessSoil'),
+      box('entrance_recess_edge',carport.x-edgeWidth,carport.x,edgeY,'recessEdge')],lights:[]};
 }

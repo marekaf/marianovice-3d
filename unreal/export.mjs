@@ -82,9 +82,12 @@ try{
     const entranceStairs=s.scene.children.find(object=>object.name==="house_entrance_stairs");
     if(!entranceStairs)throw new Error("Missing house entrance stairs");
     roots.push({name:"house_entrance_stairs",object:entranceStairs});
-    const decks=s.scene.children.filter(o=>o.name==='east-cedar-deck');
-    if(!decks.length)throw new Error('Missing east terrace');
-    roots.push(...decks.map((object,i)=>({name:`east_deck_${i}`,object})),{name:'portal_drains',object:s.portalDrainGroup});
+    const entranceRecess=s.scene.children.find(object=>object.name==="house_entrance_recess");
+    if(!entranceRecess)throw new Error("Missing house entrance recess");
+    roots.push({name:"house_entrance_recess",object:entranceRecess});
+    const decks=s.scene.children.find(o=>o.name==='terrace-decks');
+    if(!decks)throw new Error('Missing terrace decks');
+    roots.push({name:'terrace_decks',object:decks},{name:'portal_drains',object:s.portalDrainGroup});
     const east=s.buildModel(THREE,{...s.outdoorLoungeModel,parts:s.outdoorLoungeModel.parts.filter(p=>/^(east_|outdoor_kitchen)/.test(p.name))});
     roots.push({name:'east_furniture',object:east},{name:'chimney',object:s.houseChimney.root});
     const roofWindows=window.RoofWindows.build({gable:s.GABLE,ridgeY:s.houseRoofSpec.ridgeY,eaveY:s.houseRoofSpec.ridgeY-s.roofWindowRun});

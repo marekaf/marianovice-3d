@@ -29,9 +29,9 @@ try{
   assert(Math.abs(center.height-2.465)<2e-6,`Large landing must be at door level: ${JSON.stringify(center)}`);
   const measurements=await page.evaluate(()=>{
     const {THREE,scene,walkingHeight,camera,controls,renderer,siteTerrain}=entranceCheck;
-    const stairs=scene.getObjectByName('house_entrance_stairs'),ray=new THREE.Raycaster(),datum=1.9504609929078012,levels=[0,1,2].map(i=>2.465-(2.465-datum)*i/3),edges=[20.58,21.26,21.60,21.94];
+    const stairs=scene.getObjectByName('house_entrance_stairs'),ray=new THREE.Raycaster(),datum=1.950528368794326,levels=[0,1,2].map(i=>2.465-(2.465-datum)*i/3),edges=[20.58,21.26,21.60,21.94];
     let count=0,maxError=0,walkError=0;
-    for(let i=0;i<3;i++)for(let x=edges[i]+.01;x<edges[i+1]-.005;x+=.04)for(let z=19.41;z<22.595;z+=.04){
+    for(let i=0;i<3;i++)for(let x=edges[i]+.01;x<edges[i+1]-.005;x+=.04)for(let z=21.1375;z<22.5425;z+=.04){
       ray.set(new THREE.Vector3(x,2.7,z),new THREE.Vector3(0,-1,0));const hit=ray.intersectObject(stairs,true)[0];
       if(!hit)throw new Error(`Missing stair surface at${x},${z}`);
       maxError=Math.max(maxError,Math.abs(hit.point.y-levels[i]));
@@ -39,14 +39,14 @@ try{
     }
     let supportSamples=0,maxGap=-Infinity,maxEmbed=0;
     stairs.traverse(mesh=>{if(!mesh.isMesh)return;const bounds=new THREE.Box3().setFromObject(mesh);
-      for(let x=Math.max(bounds.min.x,21.28);x<=bounds.max.x+1e-8;x+=.02)for(let z=Math.max(bounds.min.z,19.4);z<=Math.min(bounds.max.z,22.6)+1e-8;z+=.02){
+      for(let x=Math.max(bounds.min.x,21.28);x<=bounds.max.x+1e-8;x+=.02)for(let z=Math.max(bounds.min.z,21.1275);z<=Math.min(bounds.max.z,22.5525)+1e-8;z+=.02){
         const paving=SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),gap=bounds.min.y-paving;maxGap=Math.max(maxGap,gap);maxEmbed=Math.max(maxEmbed,-gap);supportSamples++;
       }
     });
     camera.position.set(23.9,4.5,24.4);controls.target.set(20.85,2.35,21.45);controls.update();renderer.render(scene,camera);
     return {count,maxError,walkError,supportSamples,maxGap,maxEmbed,paving:walkingHeight(22.15,21.84)};
   });
-  assert(measurements.maxError<2e-6);assert(measurements.walkError<1e-8);assert(Math.abs(measurements.paving-1.9515390070921985)<1e-8);assert(measurements.supportSamples>5000&&measurements.maxGap<2e-6&&measurements.maxEmbed<.00455,`Rendered stair bases meet the sloping pavement over their entire contact: ${JSON.stringify(measurements)}`);assert.deepEqual(errors,[]);
+  assert(measurements.maxError<2e-6);assert(measurements.walkError<1e-8);assert(Math.abs(measurements.paving-1.9515390070921985)<1e-8);assert(measurements.supportSamples>2000&&measurements.maxGap<2e-6&&measurements.maxEmbed<.00203,`Rendered stair bases meet the sloping pavement over their entire contact: ${JSON.stringify(measurements)}`);assert.deepEqual(errors,[]);
   const output=process.env.ENTRANCE_OUTPUT||'/tmp/entrance-stairs';await mkdir(output,{recursive:true});
   await page.evaluate(()=>{const toggle=document.getElementById("toggleVehicles");toggle.checked=false;toggle.dispatchEvent(new Event("change",{bubbles:true}));});
   await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
