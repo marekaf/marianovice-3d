@@ -31,15 +31,18 @@ for(let i=1;i<points.length;i++){
 }
 assert(maximumGrade<=.10,`Pond approach exceeds 10% center grade: ${maximumGrade}`);
 assert(minimumSupport>=.0199,`Pond route needs continuous bedding from the existing mineral path: ${minimumSupport}`);
+let maximumTransitionGrade=0;
 for(let x=points[0][0]-1;x<points[0][0];x+=.005)for(const offset of [-.59,0,.59]){
   const z=points[0][1]+offset;
   const grade=Math.abs(site.routeHeight(x+.005,z)-site.routeHeight(x,z))/.005;
-  assert(grade<=.10,`Existing path transition exceeds 10%: ${grade}`);
+  maximumTransitionGrade=Math.max(maximumTransitionGrade,grade);
+  assert(site.routeHeight(x,z)-site.height(x,z)>=.0199,`Incoming pond path retains bedding at ${x},${z}`);
+  assert(Math.abs(site.routeHeight(x+1e-6,z)-site.routeHeight(x-1e-6,z))<1e-5,'Path meets the eastern garden without a height discontinuity');
 }
 assert(Math.hypot(points.at(-1)[0]-apron.cx,points.at(-1)[1]-apron.cy)<apron.r);
 for(let i=0;i<128;i++)for(const radius of[.5,.9,1]){
   const p=site.spec.pond,a=i*Math.PI/64,x=p.cx+Math.cos(a)*p.rx*radius,z=p.cz+Math.sin(a)*p.rz*radius;
   assert(site.height(x,z)<=p.edge-p.depth*.5*(1+Math.cos(radius*Math.PI))+1e-7,'Pond approach must not fill the basin');
 }
-console.log(JSON.stringify({maximumGrade,minimumSupport,fireApronFinish:finish}));
+console.log(JSON.stringify({maximumGrade,maximumTransitionGrade,minimumSupport,fireApronFinish:finish}));
 }

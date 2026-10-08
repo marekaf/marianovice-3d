@@ -15,24 +15,25 @@ const GradingOverlay = (() => {
   }
   function terrainMarks(garden,quantities) {
     const banks=(garden.gradingBanks??[]).map(bank=>({...bank,from:bank.id==='north'&&bank.spotCrest&&bank.spotFoot?bank.spotCrest.map((v,i)=>v+(bank.spotFoot[i]-v)*.25):bank.spotCrest,to:bank.spotFoot}));
-    const flats=(quantities.levelMarks??[]).filter(mark=>mark.id!=='raisedBeds').map(mark=>({id:mark.id,position:mark.id==='C'?[29.5,12.9]:[mark.position[0],mark.position[1]+.9]}));
+    const flats=(quantities.levelMarks??[]).filter(mark=>mark.id!=='raisedBeds'&&(!garden.gradingPlan||!['A','carport'].includes(mark.id))).map(mark=>({id:mark.id,position:mark.id==='C'?[29.5,12.9]:[mark.position[0],mark.position[1]+.9]}));
     for(const id of ['D','G']){const zone=quantities.zones.find(zone=>zone.id===id);if(zone)flats.push({id,position:[zone.label[0],zone.label[1]+1.4]});}
     for(const id of ['A','G']){const zone=quantities.zones.find(zone=>zone.id===id),mark=flats.find(mark=>mark.id===id);if(zone&&mark)mark.position=[zone.label[0]+1.6,zone.label[1]];}
     const slopes=[
       {id:'north-house',from:[12,6.95],to:[20,6.95]},
       {id:'south-house',from:[12,27.5],to:[16,27.5]},
       {id:'east-terrace',from:[23.65,15],to:[24.55,15]},
-      {id:'north-terrace',from:[22.5,11.5],to:[22.5,10.6]},
-      {id:'south-driveway',from:[26,32],to:[26,30.5]},
+      {id:'north-terrace',from:[22.5,garden.gradingPlan?11.3:11.5],to:[22.5,10.6]},
+      {id:'south-driveway',from:[25,30.93],to:[28,30.93]},
       {id:'driveway-ramp',from:[35,29],to:[41,30]},
-      {id:'east-garage',from:[38,24],to:[40,26]},
-      {id:'west-bed',from:[-1.0436216216,12],to:[1.4,12]}
+      {id:'east-garage',from:garden.gradingPlan?[37,22]:[38,24],to:garden.gradingPlan?[41,22]:[40,26]},
+      {id:'west-bed',from:[garden.gradingPlan?-.6:-1.0436216216,12],to:[garden.gradingPlan?1.3:1.4,12]}
     ];
+    if(garden.gradingPlan)slopes.push({id:'carport-fall',from:[24.5,20],to:[24.5,25.5]},{id:'apron-fall',from:[30,27],to:[30,30]});
     const drainage=garden.elements.find(e=>e.id==='westDrainageStrip');
     const mainDrainage=drainage?.parts.find(p=>p.kind==='rect');
     if(mainDrainage&&!mainDrainage.grading?.fallX&&!mainDrainage.grading?.fallZ)flats.push({id:'E',position:[9.105,22]});
-    for(const [i,p] of (drainage?.parts??[]).entries())if(p.grading?.fallX||p.grading?.fallZ) {
-      const a=p.grading.fallX?[p.grading.xStart??p.x,p.y+p.d/2]:[p.x+p.w/2,p.y];
+    for(const [i,p] of (drainage?.parts??[]).entries())if((p.grading?.fallX||p.grading?.fallZ)&&!(garden.gradingPlan&&i===1)) {
+      const a=p.grading.fallX?[p.grading.xStart??p.x,p.y+p.d/2]:[p.x+p.w/2,p.grading.zStart??p.y];
       const b=p.grading.fallX?[p.x+p.w,p.y+p.d/2]:[p.x+p.w/2,p.grading.zEnd??p.y+p.d];
       slopes.push({id:'drainage-'+i,from:(p.grading.fallX??p.grading.fallZ)<0?a:b,to:(p.grading.fallX??p.grading.fallZ)<0?b:a});
     }

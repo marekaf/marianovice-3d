@@ -104,7 +104,7 @@ const syntheticSurvey = [[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5],[18,17,2.7]
 const surveySurface = SurveySurface.create(syntheticSurvey,TERRAIN.plane).data;
 const surveyed = SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{surveySurface,houseFFL:TERRAIN.houseFFLInternal});
 const fixedFallback = SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{houseFFL:TERRAIN.houseFFLInternal});
-assert.equal(fixedFallback.routeHeight(4.6,13),2.865,'Bed court retains its chosen finish without a survey');
+assert.equal(fixedFallback.routeHeight(4.6,13),TERRAIN.houseFFLInternal+.5,'Bed court retains its chosen finish without a survey');
 function verifyProductiveFinishes(sample){
   const court=sample.spec.productiveCourt;
   const snapshot=JSON.stringify(sample.spec);
@@ -167,7 +167,7 @@ for(const [x,z] of surveyed.spec.houseExcavation.points)for(const [dx,dz] of [[1
 for(const pad of surveyed.spec.finishPads)for(let ix=0;ix<=4;ix++)for(let iz=0;iz<=4;iz++) {
   const x=pad.x0+(pad.x1-pad.x0)*ix/4,z=pad.z0+(pad.z1-pad.z0)*iz/4;
   const protectedEdge=surveyed.spec.protectedPads.slice(0,1).some(p=>Math.hypot(Math.max(p.x0-x,0,x-p.x1),Math.max(p.z0-z,0,z-p.z1))<p.blend);
-  if(!protectedEdge)assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.04+1e-10,`Finished soil and route bedding must stay below level access surfaces at ${x},${z}: ${surveyed.height(x,z)}`);
+  if(!protectedEdge)assert.ok(surveyed.height(x,z)<=pad.finish-.04+1e-10,`Finished soil and route bedding must stay below level access surfaces at ${x},${z}: ${surveyed.height(x,z)}`);
   else assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.12+1e-10,'Vehicle pad must stay clear under adjacent terrace edge');
   checks.push([x,z]);
 }
@@ -181,14 +181,16 @@ for(const pad of [...surveyed.spec.cutRects,...surveyed.spec.levelPads,...survey
     }
   }
 }
-for(const pad of surveyed.spec.protectedPads.slice(0,1))for(let ix=0;ix<=12;ix++)for(let iz=0;iz<=12;iz++) {
-  const x=pad.x0+(pad.x1-pad.x0)*ix/12,z=pad.z0+(pad.z1-pad.z0)*iz/12;
-  assert.ok(Math.abs(surveyed.height(x,z)-pad.level)<1e-10,'Garage/carport ground must stay at its fixed datum');
+for(const id of ['garage','carport'])for(let ix=1;ix<12;ix++)for(let iz=1;iz<12;iz++) {
+  const pad=GARDEN.elements.find(e=>e.id===id).parts.find(p=>p.kind==='rect');
+  const x=pad.x+pad.w*ix/12,z=pad.y+pad.d*iz/12;
+  const expected=id==='garage'?patches.garage.level:SiteTerrain.drivewayFinish(surveyed.spec,x,z)-surveyed.spec.drivewayProfile.surfaceOffset;
+  assert.ok(Math.abs(surveyed.height(x,z)-expected)<.001,'Garage soil remains level and carport soil follows its paving falls');
   checks.push([x,z]);
 }
 for(const vehicle of GARDEN.vehicles)for(const side of [-1,1])for(const axle of [.2,.8]) {
   const x=vehicle.cx+side*vehicle.w*.4,z=vehicle.noseZ+vehicle.l*axle;
-  assert.ok(Math.abs(surveyed.height(x,z)-patches.garage.level)<1e-10,'Vehicle tire ground must not be raised by terrace banks');
+  assert.ok(Math.abs(surveyed.height(x,z)-(vehicle.bay==='garage'?patches.garage.level:SiteTerrain.drivewayFinish(surveyed.spec,x,z)-surveyed.spec.drivewayProfile.surfaceOffset))<1e-10,'Vehicle tire ground must not be raised by terrace banks');
   checks.push([x,z]);
 }
 for(const x of [17.7-.575,17.7,17.7+.575])for(const z of [26.7,27,27.3]) {
@@ -198,7 +200,7 @@ for(const x of [17.7-.575,17.7,17.7+.575])for(const z of [26.7,27,27.3]) {
 function verifyDriveway(sample) {
   const p=sample.spec.drivewayProfile;
   assert.ok(Math.abs(sample.height(...p.gate)+p.surfaceOffset-sample.baseHeight(...p.gate))<1e-10,'Driveway paving must meet interpolated surveyed gate grade');
-  let previous=p.startLevel;
+  let previous=sample.height(p.startX,27.4);
   for(let i=0;i<=100;i++) {
     const t=i/100,x=p.startX+(p.gate[0]-p.startX)*t,z=27.4+(p.gate[1]-27.4)*t;
     const h=sample.height(x,z);
@@ -216,7 +218,7 @@ if(existsSync(new URL('./docs/survey-terrain.js',import.meta.url))) {
   verifyProductiveFinishes(productiveSite.site);
   const actual=SiteTerrain.create(GARDEN,TERRAIN.plane,patches,{surveySurface:SurveySurface.create(SURVEY_TERRAIN.points,TERRAIN.plane).data,houseFFL:TERRAIN.houseFFLInternal});
   verifyDriveway(actual);
-  for(const vehicle of GARDEN.vehicles)for(const side of [-1,1])for(const axle of [.2,.8])assert.ok(Math.abs(actual.height(vehicle.cx+side*vehicle.w*.4,vehicle.noseZ+vehicle.l*axle)-patches.garage.level)<1e-10);
+  for(const vehicle of GARDEN.vehicles)for(const side of [-1,1])for(const axle of [.2,.8]){const x=vehicle.cx+side*vehicle.w*.4,z=vehicle.noseZ+vehicle.l*axle;assert.ok(Math.abs(actual.height(x,z)-(vehicle.bay==='garage'?patches.garage.level:SiteTerrain.drivewayFinish(actual.spec,x,z)-actual.spec.drivewayProfile.surfaceOffset))<1e-10);}
   const corridor=actual.spec.gateRunback;
   let maximumFill=0,maximumCut=0;
   for(let t=corridor.from;t<=corridor.to;t+=.05)for(const inset of [.05,.18,.75]){

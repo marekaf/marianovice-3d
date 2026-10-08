@@ -14,11 +14,11 @@ assert.equal(west.w,1);
 assert(strip.w>=.5&&strip.w<=1);
 assert(Math.abs(strip.x+strip.w-west.x)<1e-8);
 assert(court.x+court.w<strip.x,'Productive court leaves room for the lowered strip and access');
-assert.equal(element('westDrainageStrip').meta.grading.relativeLevel,-.3);
+assert.equal(element('westDrainageStrip').meta.grading.relativeLevel,-.1);
 const greenhouse=rect('greenhouse');
 assert.equal(greenhouse.w*greenhouse.d,4);
 const model=GreenhouseModel.build(GARDEN,()=>100);
-assert(Math.abs(model.floorHeight-(TERRAIN.houseFFLInternal-.08))<1e-8,'Greenhouse floor allows the bank to the higher bed ground');
+assert(Math.abs(model.floorHeight-(TERRAIN.houseFFLInternal+.5))<1e-8,'Greenhouse floor shares the west platform finish');
 const pergola=rect('pergola');
 assert(pergola.x<25,'Pergola moves closer to the house');
 assert(pergola.y+pergola.d+.25<8.42,'Pergola roof clears the full bedroom window sightline to the east');
@@ -48,7 +48,7 @@ for(let i=0;i<360;i++){
   assert(zoneC.polygons.some(p=>contains(p,x,z)),'Entire firepit seating circle belongs to zone C');
 }
 const fireFinish=fire.meta.grading.level+fire.meta.grading.surfaceOffset+.008;
-assert(Math.abs(fireFinish-(TERRAIN.houseFFLInternal-.5))<1e-8,'Firepit apron shares the C finished level');
+assert(Math.abs(fireFinish-(TERRAIN.houseFFLInternal-.5))<1e-8,'Firepit apron retains its independent finished level');
 if(existsSync(new URL('./docs/survey-terrain.js',import.meta.url))){
   const {site}=require('./grading-site.js').GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:require('./docs/survey-terrain.js').SURVEY_TERRAIN});
   for(let radius=0;radius<=circle.r+.001;radius+=.1)for(let i=0;i<72;i++){

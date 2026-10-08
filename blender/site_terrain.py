@@ -109,7 +109,180 @@ def route_bank_clearance(route, x, y):
     return min((max(0, route_sample(other, x, y)[0]-other['width']/2) for other in route.get('bankAvoidRoutes', [])), default=math.inf)
 
 
+def natural_height(spec, x, z):
+    p = spec['plane']
+    return survey_height(spec['surveySurface'], x, z) if spec.get('surveySurface') else max(0, p['a']*x+p['b']*z+p['c'])
+
+
+def driveway_finish(spec, x, z):
+    c = spec.get('carportSurface')
+    if c and rect_distance(c, x, z) == 0:
+        return c['finishNorth']+(c['finishSouth']-c['finishNorth'])*max(0,min(1,(z-c['z0'])/(c['z1']-c['z0'])))
+    p = spec['drivewayProfile']
+    t = max(0,min(1,(x-p['startX'])/(p['gate'][0]-p['startX'])))
+    apron = p['apronNorth']+(p['apronSouth']-p['apronNorth'])*max(0,min(1,(z-p['apronZ0'])/(p['apronZ1']-p['apronZ0'])))
+    return apron+(p['gateLevel']+p['surfaceOffset']-apron)*t
+
+
+def route_footprint_distance(route,x,z,distance):
+    return min(max(0,distance-route['width']/2-.002),min((rect_distance(p,x,z) for p in route.get('pavingRects',[])),default=math.inf))
+
+
+def route_surface_bedding(spec,x,z):
+    bedding=.02
+    for r in spec['routeProfiles']:
+        distance,level=route_sample(r,x,z)
+        d=route_footprint_distance(r,x,z,distance)
+        blend=r.get('bankBlend',.5)
+        if d<blend:
+            bedding=max(bedding,.02+(route_bedding(r,x,z)-.02)*(1-smoothstep(d/blend)))
+    for p in spec['finishPads']+[p for p in spec['protectedPads'] if 'finish' in p]:
+        d=rect_distance(p,x,z)
+        if d<.3:
+            bedding=(p['finish']-p['level'])+(bedding-p['finish']+p['level'])*smoothstep(d/.3)
+    return bedding
+
+
+def grade_envelope(value,level,slope,distance):
+    return max(level-slope*distance,min(level+slope*distance,value))
+
+
+def drawing_height(spec, x, z, skip_bank=False):
+    h = natural_height(spec, x, z)
+    def apply(p, level, blend=None):
+        nonlocal h
+        if blend is None:
+            blend = p.get('blend', 1)
+        d = rect_distance(p,x,z)
+        if p.get('gradingMode')=='blend':
+            if d<p['blend']:
+                h=level+(h-level)*smoothstep(d/p['blend'])
+        else:
+            h = grade_envelope(h,level,p.get('bankSlope',.4),d)
+    for p in spec['drawingGrades']:
+        dx=max(0,min(p['x1']-p['x0'],x-p['x0']))
+        level=p['level']+p.get('fallX',0)*dx
+        if 'southLevel' in p:
+            level+=(p['southLevel']+p.get('southFallX',0)*dx-level)*max(0,min(1,(z-p['z0'])/(p['z1']-p['z0'])))
+        apply(p,level)
+    if spec.get('drivewayProfile'):
+        p=spec['drivewayProfile']
+        d=polygon_distance(p['points'],x,z)
+        h=grade_envelope(h,driveway_finish(spec,x,z)-p['surfaceOffset'],.4,d)
+    for p in spec.get('gatheringPads',[]):
+        d=rect_distance(p,x,z) if 'radius' not in p else max(0,math.hypot(x-p['cx'],z-p['cz'])-p['radius'])
+        h=grade_envelope(h,p['level'],.4,d)
+    for p in spec.get('protectedPads',[]):
+        apply(p,p['level']+p.get('fallX',0)*max(0,min(p['x1']-p['x0'],x-p['x0'])),p.get('blend',1))
+    for p in spec['finishPads']:
+        apply(p,p['level'],p['blend'])
+    for strip in spec['drainageStrips'][1:]+spec['drainageStrips'][:1]:
+        d=rect_distance(strip,x,z)
+        slope=.4+.8*(1-smoothstep(max(0,z-spec['westBank'].get('endZ',spec['westPlatform']['z1']))/2))*(1-smoothstep((x-strip['x0'])/.5))
+        h=grade_envelope(h,drainage_level(strip,x,z),slope,d)
+    bedding=route_surface_bedding(spec,x,z)
+    for r in spec['routeProfiles']:
+        distance,level=route_sample(r,x,z)
+        d=route_footprint_distance(r,x,z,distance)
+        h=grade_envelope(h,level-bedding,r.get('bankSlope',.4),d)
+    for p in spec['finishPads']:
+        d=rect_distance(p,x,z)
+        if d<.25:
+            h=min(h,p['level']+(h-p['level'])*smoothstep(d/.25))
+    for p in spec.get('gatheringPads',[]):
+        if 'radius' not in p:
+            apply(p,p['level'],.3)
+    for strip in spec['drainageStrips']:
+        d=rect_distance(strip,x,z)
+        if d<.2:
+            clear=min([rect_distance(p,x,z) for p in spec['finishPads']]+[max(0,route_sample(route,x,z)[0]-route['width']/2) for route in spec['routeProfiles']])
+            h+=(drainage_level(strip,x,z)-h)*(1-smoothstep(d/.2))*smoothstep(clear/.5)
+    for p in sorted([p for p in spec['protectedPads'] if p.get('id') in ['north-facade','south-facade','heat-pump-service']],key=lambda p:p.get('id')=='heat-pump-service'):
+        d=rect_distance(p,x,z)
+        if d<p['blend']:
+            level=p['level']+p.get('fallX',0)*max(0,min(p['x1']-p['x0'],x-p['x0']))
+            h+=(grade_envelope(h,level,p.get('bankSlope',.4),d)-h)*(1-smoothstep(d/p['blend']))
+    pond=spec['pond']
+    r=math.hypot((x-pond['cx'])/pond['rx'],(z-pond['cz'])/pond['rz'])
+    if r<1:
+        h=min(h,pond['edge']-pond['depth']*.5*(1+math.cos(r*math.pi)))
+    elif r<1.5:
+        h=min(h,pond['edge']+(h-pond['edge'])*smoothstep((r-1)/.5))
+    if spec.get('benchPad'):
+        p=spec['benchPad']
+        d=math.hypot(max(p['x0']-x,0,x-p['x1'])/p['blend'],max(p['z0']-z,0)/p['blend'],max(z-p['z1'],0)/p['southBlend'])
+        if d<1:
+            h=p['level']+(h-p['level'])*smoothstep(d)
+    if spec.get('houseExcavation'):
+        p=spec['houseExcavation']
+        d=polygon_distance(p['points'],x,z)
+        if d<p['blend']:
+            h=min(h,p['level']+(h-p['level'])*smoothstep(d/p['blend']))
+    if spec.get('drivewayProfile'):
+        p=spec['drivewayProfile']
+        d=polygon_distance(p['points'],x,z)
+        level=driveway_finish(spec,x,z)-p['surfaceOffset']
+        h=min(h,grade_envelope(h,level,.4,d))
+    c=spec.get('carportSurface')
+    if c:
+        apply(c,c['finishNorth']+(c['finishSouth']-c['finishNorth'])*max(0,min(1,(z-c['z0'])/(c['z1']-c['z0'])))-.04,.3)
+    for p in [spec.get('gateRunback'),spec.get('wicketLanding')]:
+        if p:
+            d=polygon_distance(p['points'],x,z)
+            if d<p['blend']:
+                h=p['level']+(h-p['level'])*smoothstep(d/p['blend'])
+    west=spec['westPlatform']
+    end_blend=1-smoothstep(max(west['z0']-z,0,z-spec['westBank'].get('endZ',west['z1']))/1.5)
+    bank=spec['westBank']
+    if not skip_bank and west['x1']<=x<west['x1']+bank['width']:
+        foot=drawing_height(spec,west['x1']+bank['width'],z,True)
+        crest=drawing_height(spec,west['x1'],z,True)
+        target=crest+(foot-crest)*(x-west['x1'])/bank['width']
+        h+=(target-h)*end_blend
+    if skip_bank:
+        return h
+    fence_weight,fence_level,fence_distance=0,0,1
+    for segment in spec.get('fixedFences',{}).get('segments',[]):
+        a,b=segment['start'],segment['end']
+        dx,dz=b[0]-a[0],b[1]-a[1]
+        t=max(0,min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)))
+        bx,bz=a[0]+dx*t,a[1]+dz*t
+        d=math.hypot(x-bx,z-bz)
+        if d<1e-9:
+            return natural_height(spec,x,z)
+        width=max(.1,min(spec['boundaryBankWidth'],min(rect_distance(p,bx,bz) for p in spec.get('boundaryGradePads',[spec['westPlatform']]))))
+        if d<width:
+            w=(1-d/width)/(d*d)
+            fence_level+=natural_height(spec,bx,bz)*w
+            fence_weight+=w
+            fence_distance=min(fence_distance,d/width)
+    if fence_weight:
+        h=fence_level/fence_weight+(h-fence_level/fence_weight)*fence_distance
+    return h
+
+
+def route_height(spec,x,z):
+    bedding=route_surface_bedding(spec,x,z)
+    h=height(spec,x,z)+bedding
+    for r in spec['routeProfiles']:
+        distance,level=route_sample(r,x,z)
+        d=route_footprint_distance(r,x,z,distance)
+        h=max(h,level-r.get('bankSlope',.4)*d)
+    pads=spec['finishPads']+[p for p in spec['protectedPads'] if 'finish' in p]+[{**p,'finish':p['level']+.1} for p in spec['gatheringPads'] if 'radius' not in p]
+    for p in pads:
+        d=rect_distance(p,x,z)
+        if d<.6:
+            h=max(h,p['finish']+(h-p['finish'])*smoothstep(d/.6))
+    for p in spec.get('crossingPads',[]):
+        d=rect_distance(p,x,z)
+        if d<p['blend']:
+            h=max(height(spec,x,z)+.02,p['finish']+(h-p['finish'])*smoothstep(d/p['blend']))
+    return h
+
+
 def height(spec, x, y):
+    if spec.get('drawingGrades'):
+        return drawing_height(spec,x,y)
     plane = spec["plane"]
     base = survey_height(spec['surveySurface'], x, y) if spec.get('surveySurface') else max(0.0, plane["a"] * x + plane["b"] * y + plane["c"])
     continuous = spec.get('continuousGrading', False)

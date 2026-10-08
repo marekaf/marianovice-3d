@@ -126,7 +126,6 @@ def refine_plateau_ground(mesh, spec, options):
 
     if not options:
         return
-    x0, x1, z0, z1 = (options[key] for key in ('x0', 'x1', 'z0', 'z1'))
     tolerance = options.get('tolerance', .00025)
     level = options['level']
     sampled = {}
@@ -137,9 +136,12 @@ def refine_plateau_ground(mesh, spec, options):
             sampled[key] = height(spec, x, -y)
         return sampled[key]
 
+    def intersects(face, region):
+        return (min(v.co.x for v in face.verts) <= region['x1'] and max(v.co.x for v in face.verts) >= region['x0']
+                and min(-v.co.y for v in face.verts) <= region['z1'] and max(-v.co.y for v in face.verts) >= region['z0'])
+
     def local(face):
-        return (min(v.co.x for v in face.verts) <= x1 and max(v.co.x for v in face.verts) >= x0
-                and min(-v.co.y for v in face.verts) <= z1 and max(-v.co.y for v in face.verts) >= z0)
+        return intersects(face, options) or any(intersects(face, region) for region in options.get('detailRegions', []))
 
     for vertex in {v for face in mesh.faces if local(face) for v in face.verts}:
         vertex.co.z = sample(vertex.co.x, vertex.co.y)
@@ -149,16 +151,17 @@ def refine_plateau_ground(mesh, spec, options):
             if not local(face):
                 continue
             a, b, c = (v.co for v in face.verts)
-            if all(abs(point.z-level) < 1e-7 for point in (a, b, c)):
+            detail = next((region for region in options.get('detailRegions', []) if intersects(face, region)), None)
+            if not detail and all(abs(point.z-level) < 1e-7 for point in (a, b, c)):
                 continue
             probes = [(a+b)/2, (b+c)/2, (c+a)/2, (a+b+c)/3]
-            near_flat = any(abs(point.z-level) < 1e-7 for point in (a, b, c)) or any(
-                abs(sample(point.x, point.y)-level) < 1e-7 for point in probes)
-            if not near_flat:
+            near_flat = any(abs(point.z-level) < .005 for point in (a, b, c)) or any(
+                abs(sample(point.x, point.y)-level) < .005 for point in probes)
+            if not detail and not near_flat:
                 continue
             for point in probes:
                 expected = sample(point.x, point.y)
-                if abs(expected-level) < .1 and abs(point.z-expected) > tolerance:
+                if (detail or abs(expected-level) < .1) and abs(point.z-expected) > (detail['tolerance'] if detail else tolerance):
                     edges.update(face.edges)
                     break
         if not edges:

@@ -80,6 +80,7 @@ const checks=[
   'verify-corona-bed.mjs',
   'verify-driveway-check.mjs',
   'verify-grading-data.mjs',
+  'verify-september-grading.mjs',
   'verify-grading-report.mjs',
   'verify-plan-terrain.mjs',
   'verify-grading-layout.mjs',

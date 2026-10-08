@@ -20,7 +20,7 @@ const inside = (point, box, margin = 0) => point.every((v, i) =>
 assert.equal(parts.size, model.parts.length, 'Part names must be unique');
 assert.deepEqual(model, PergolaModel.build(GARDEN), 'Geometry must be repeatable');
 near(model.floorHeight - model.groundPatch.level, 0.1);
-near(TERRAIN.houseFFLInternal - model.floorHeight, .45, 'Pergola finish follows the shared northern garden datum');
+near(TERRAIN.houseFFLInternal - model.floorHeight, .6, 'Pergola finish follows the 396.40 m grading datum');
 assert.deepEqual([model.groundPatch.x,model.groundPatch.y,model.groundPatch.w,model.groundPatch.d],[22.42785414913,1.68127450503,6,4]);
 near(model.groundPatch.level, element.meta.grading.level);
 const { site } = require('./grading-site.js').GradingSite.create({garden:GARDEN,terrain:TERRAIN});
@@ -28,8 +28,8 @@ const diningRoute=GARDEN.gardenRoutes.find(route=>route.id==='Daily dining');
 near(site.routeHeight(...diningRoute.points.at(-1)),model.floorHeight,'Terrace approach must meet the lowered pergola');
 const gatheringRoute=GARDEN.gardenRoutes.find(route=>route.id==='Gathering connection');
 near(site.routeHeight(...gatheringRoute.points[0]),model.floorHeight,'Firepit connection must start at the lowered pergola');
-near(site.routeHeight(...gatheringRoute.points.at(-1)),1.965,'Firepit finish stays below the pergola');
-assert(site.routeHeight(...gatheringRoute.points.at(-1))<=model.floorHeight,'Firepit cannot sit above the pergola');
+near(site.routeHeight(...gatheringRoute.points.at(-1)),1.965,'Firepit retains its 396.50 m finish');
+near(site.routeHeight(...gatheringRoute.points.at(-1))-model.floorHeight,.1,'Connection rises 10 cm from the pergola to the retained firepit');
 near(site.height(28,3.5),model.floorHeight-.1,'Ground and paving must lower together');
 for (const part of model.parts) {
   assert.ok(model.materials[part.material], `${part.name}: unknown material`);

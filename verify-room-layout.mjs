@@ -32,7 +32,7 @@ assert.deepEqual(['raisedBed1','raisedBed2','raisedBed3','raisedBed4'].map(footp
   [[2,10.7,1,2],[4,10.7,1,2],[2,13.7,1,2],[4,13.7,1,2]]);
 const table = element('pergola').parts.find(part => part.role === 'table');
 assert.deepEqual([table.w, table.d], [2.4, 1.1]);
-assert.equal(element('pergola').meta.grading.level, 1.915);
+assert.equal(element('pergola').meta.grading.level, 1.765);
 assert.equal(element('firePit').meta.grading.level, 1.865);
 const fire = element('firePit').parts.filter(part => part.kind === 'circle');
 assert.deepEqual(fire.map(part => [part.cx, part.cy, part.r]), [[31.5,6.5,2],[31.5,6.5,.5],[31.5,6.5,.496]]);

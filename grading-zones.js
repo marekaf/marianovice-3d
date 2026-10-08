@@ -84,25 +84,26 @@ const GradingZones = (() => {
     const house=el('house')?.meta?.bbox??[10.48,7.18,21.28,26.43],west=r('westTerrace'),east=r('eastTerrace'),garage=r('garage');
     const productiveMinX=Math.min(1.5,...['greenhouse','raisedBedsPad','sauna'].map(id=>r(id)?.x).filter(Number.isFinite));
     const productiveMaxZ=Math.max(15.8,...['greenhouse','sauna','raisedBedsPad'].map(id=>{const p=r(id);return p?p.y+p.d+.5:0;}));
+    const westPlatform=garden.gradingPlan?.westPlatform;
     const plot=triangles(garden.plot.vertices), plotArea=sum(plot), bounds=rect(-100,-100,300,300);
     const garageEast=garage?garage.x+garage.w:34.13;
     const drivewayParts=parts(el('driveway'));
     const rampNorthEdge=(el('driveway')?.parts??[]).filter(p=>p.kind==='polygon').flatMap(p=>p.points.map((a,i)=>[a,p.points[(i+1)%p.points.length]])).find(([a,b])=>Math.abs(a[0]-garageEast)<1e-7&&b[0]>a[0]);
     const eastGarden=rect(garageEast,-100,200,300);
     const buildingFootprints=ids=>ids.flatMap(id=>parts({parts:(el(id)?.parts??[]).filter(p=>p.kind==='polygon'||p.kind==='rect').slice(0,1)}));
-    const terraceBankWidth=1.05;
+    const terraceBankWidth=garden.gradingPlan?1:1.05;
     const terraceBanks=east?[rect(east.x,east.y-terraceBankWidth,east.w,terraceBankWidth),rect(east.x+east.w,east.y,terraceBankWidth,east.d),[[east.x+east.w,east.y],...Array.from({length:33},(_,i)=>{const angle=-Math.PI/2+i*Math.PI/64;return [east.x+east.w+terraceBankWidth*Math.cos(angle),east.y+terraceBankWidth*Math.sin(angle)];})]]:[];
     const masks=[
       ['F','Dům',buildingFootprints(['house']),[16,12],'#8470ad'],
       ['M','Garáž a přístřešek',buildingFootprints(['garage','carport']),[30.5,22.5],'#447fa3'],
       ['E','Západní snížený pás',parts(el('westDrainageStrip')),[9.1,20],'#b29845'],
-      ['A','Rovný příjezd a servis tepelného čerpadla',[...drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100])).filter(p=>p.length),...parts(el('heatPumpService'))],[28,28],'#848e98'],
+      ['A','Příjezd s příčným spádem a servis tepelného čerpadla',[...drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100])).filter(p=>p.length),...parts(el('heatPumpService'))],[28,28],'#848e98'],
       ['B','Sjezd k bráně',drivewayParts.map(p=>half(p,[garageEast,-100],[garageEast,100],false)).filter(p=>p.length),[39,29],'#bd946e'],
       ['D','Východní terasa',parts(el('eastTerrace')),[22.8,14],'#cfb174'],
       ['N','Svahy kolem východní terasy',terraceBanks,[24.1,17],'#b15c64'],
       ['K','Západní terasa a atrium',parts(el('westTerrace')),[12.5,17.5],'#c07c4f'],
       ['J','Zahrada severně od domu',[rect(house[0],-10,house[2]-house[0],house[1]+10)],[12,4],'#669f9d'],
-      ['G','Sauna a užitková zahrada',[rect(productiveMinX,1.8,9.48-productiveMinX,productiveMaxZ-1.8)],[4,8],'#8fac75'],
+      ['G','Sauna a užitková zahrada',[westPlatform?rect(westPlatform.x,westPlatform.y,westPlatform.w,westPlatform.d):rect(productiveMinX,1.8,9.48-productiveMinX,productiveMaxZ-1.8)],[4,8],'#8fac75'],
       ['L','Strmý svah u plotu bez sečení',(garden.gradingBanks??[]).map(b=>b.points),[41,9],'#a86642'],
       ['H','Nízká část pro násyp',[rect(garageEast,-10,30,29.38)],[36,10],'#78aeb4'],
       ['C','Rovná zahrada nad garáží a přístřeškem',[rect(house[2],-10,garageEast-house[2],29.38)],[28,12],'#9aba93'],
@@ -153,7 +154,9 @@ const GradingZones = (() => {
       dimensions.push({id:'saunaFacility',name:'Sauna se zádveřím a krytou vířivkou',value:`${(x1-x0).toFixed(2)} × ${(z1-z0).toFixed(2)} m`,from:[x0,z1],to:[x1,z1],displayOffset:[0,.55]});
       dimensions.push({id:'saunaFacilityDepth',name:'Sauna s vířivkou – hloubka',value:(z1-z0).toFixed(2)+' m',from:[x1,z0],to:[x1,z1],displayOffset:[.5,0],table:false});
     }
-    if(west)dimensions.push({name:'Západní pás',value:`0,75 × ${west.d.toFixed(2)} m`,from:[west.x-.75,west.y+west.d],to:[west.x,west.y+west.d]});
+    const drainage=r('westDrainageStrip');
+    if(west&&drainage)dimensions.push({name:'Západní pás',value:`${drainage.w.toFixed(2)} × ${drainage.d.toFixed(2)} m`,from:[drainage.x,drainage.y+drainage.d],to:[west.x,drainage.y+drainage.d]});
+    if(westPlatform)dimensions.push({id:'westPlatform',name:'Západní plošina',value:`${westPlatform.w.toFixed(2)} × ${westPlatform.d.toFixed(2)} m`,from:[westPlatform.x,westPlatform.y+westPlatform.d],to:[westPlatform.x+westPlatform.w,westPlatform.y+westPlatform.d]});
     const driveway=el('driveway')?.parts.find(p=>p.kind==='polygon');
     if(garage&&driveway) {
       const x0=house[2],x1=garage.x+garage.w;
@@ -189,13 +192,14 @@ const GradingZones = (() => {
     const drivewayBreakdown=['A','B'].map(id=>({id,name:id==='A'?'Rovný příjezd včetně přístřešku':'Klesající příjezd k bráně',area:sum(drivewayPolygons.map(p=>half(p,[garageEast,-100],[garageEast,100],id==='A')).filter(p=>p.length))}));
     for(const dimension of dimensions)dimension.value=dimension.value.replaceAll('.',',');
     const carport=r('carport');
+    const design=garden.gradingPlan;
     const levelMarks=carport?[
-      {id:'carport',position:[carport.x+carport.w/2,carport.y+carport.d/2],relativeLevel:-.5},
-      {id:'A',position:[31,29.3],relativeLevel:-.5},
-      {id:'C',position:[28,13.8],relativeLevel:-.5}
+      {id:'carport',position:[carport.x+carport.w/2,carport.y+(design?0:carport.d/2)],relativeLevel:design?-.51:-.5,surface:'paving'},
+      {id:'A',position:design?[31,el('driveway').meta.apron.y+el('driveway').meta.apron.d]:[31,29.3],relativeLevel:design?-.55:-.5,surface:'paving'},
+      {id:'C',position:[28,13.8],relativeLevel:design?Number((design.mainLawnBpv-397).toFixed(3)):-.5,surface:design?'ground':'paving'}
     ]:[];
     const bedCourt=r('raisedBedsPad');
-    if(bedCourt)levelMarks.push({id:'raisedBeds',position:[bedCourt.x+bedCourt.w/2,bedCourt.y+bedCourt.d/2],relativeLevel:.4});
+    if(bedCourt)levelMarks.push({id:'raisedBeds',position:[bedCourt.x+bedCourt.w/2,bedCourt.y+bedCourt.d/2],relativeLevel:design?design.westPlatform.bpv-397:.4,surface:'paving'});
     return {zones,surfaces,dimensions,plotArea,drivewayBreakdown,levelMarks,fenceSegments};
   }
   return {create,area,triangles,split,subtract};

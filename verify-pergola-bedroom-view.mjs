@@ -4,10 +4,10 @@ const require=createRequire(import.meta.url);
 const {GARDEN}=require('./layout.js');
 const pergola=GARDEN.elements.find(e=>e.id==='pergola');
 const roof=pergola.parts.find(p=>p.kind==='rect');
-assert.equal(pergola.meta.grading.level,1.915,'Pergola follows the northern garden datum');
+assert.equal(pergola.meta.grading.level,1.765,'Pergola soil allows 10 cm paving below the 396.40 m finish');
 const fire=GARDEN.elements.find(e=>e.id==='firePit').parts.find(p=>p.kind==='circle');
 const fireGrading=GARDEN.elements.find(e=>e.id==='firePit').meta.grading;
-assert(fireGrading.level+fireGrading.surfaceOffset+.008<=pergola.meta.grading.level+.1,'Firepit seating must not sit above the pergola terrace');
+assert(Math.abs(fireGrading.level+fireGrading.surfaceOffset+.008-(pergola.meta.grading.level+.1)-.1)<1e-9,'Retained firepit is 10 cm above the pergola finish');
 assert.deepEqual([fire.cx,fire.cy,fire.r],[31.5,6.5,2],'Keep the firepit and its seating area in the level garden');
 assert(roof.y+roof.d<7.18,'Pergola belongs near the north fence, clear of the bedroom foreground');
 for(const windowZ of [8.52,9.38,10.24])for(const targetZ of [fire.cy-1,fire.cy,fire.cy+1]){

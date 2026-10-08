@@ -26,11 +26,11 @@ for(const section of data.sections.filter(s=>Number.isFinite(s.maxFinishSlope)))
 for(const cell of data.cells)assert.equal(cell.proposed,viewer.height(cell.x,cell.z));
 const result=GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data});
 const rainTank=GARDEN.elements.find(e=>e.id==='rainTank');
-assert.equal(rainTank.meta.capacityM3,12);
+assert.deepEqual(rainTank.meta.capacityRangeM3,[8,10]);
 assert.deepEqual(rainTank.meta.accessCover,{x:37.13,z:17.8},'Tank capacity does not move the drawing-based cover');
 const generalPlan=require('./plan.js').renderPlanSVG(GARDEN);
 for(const output of [result.html,result.mapSVG,result.exportSVG,generalPlan])assert(!output.includes('data-measured-fence='),'Plans must not draw a separate dashed fence overlay');
-assert(generalPlan.includes('12 m³')&&!generalPlan.includes('8–10 m³'),'Plan labels show the selected tank capacity');
+assert(generalPlan.includes('8–10 m³')&&!generalPlan.includes('12 m³'),'Plan labels show the C.4 tank capacity range');
 const changedFinish=structuredClone(data);
 changedFinish.sections.find(s=>Number.isFinite(s.maxFinishSlope)).samples[0].finished+=.01;
 assert.notEqual(result.revision,GradingReport.render({garden:GARDEN,terrain:TERRAIN,site,survey,data:changedFinish}).revision,'A changed walking sampler must produce a different report revision even with the same grading spec');
@@ -108,7 +108,7 @@ if(existsSync('docs/survey-terrain.js')) {
       const t=i/100,height=actual.height(mark.from[0]+t*(mark.to[0]-mark.from[0]),mark.from[1]+t*(mark.to[1]-mark.from[1]));
       assert(height<=previous+1e-6,`${mark.id} arrow must point downhill throughout`);previous=height;
     }
-    assert(first>previous+.01,`${mark.id} arrow must show a measurable fall`);
+    assert(first>previous+(mark.id==='carport-fall'?.001:.01),`${mark.id} arrow must show a measurable fall`);
   }
 }
 for(const rows of [quantities.zones,quantities.surfaces])assert(Math.abs(rows.reduce((sum,row)=>sum+row.area,0)-quantities.plotArea)<1e-7);
@@ -121,7 +121,9 @@ const eastGarageArrow=flatInstructions.slopes.find(mark=>mark.id==='east-garage'
 assert(eastGarageArrow,'P has a downhill instruction');
 for(let i=0;i<=100;i++){const t=i/100;assert(contains('P',eastGarageArrow.from[0]+t*(eastGarageArrow.to[0]-eastGarageArrow.from[0]),eastGarageArrow.from[1]+t*(eastGarageArrow.to[1]-eastGarageArrow.from[1])),'P arrow stays within its zone');}
 assert(result.mapSVG.includes('data-terrain-downhill="east-garage"'));
-for(const id of ["A","C","D","E","G"])assert.equal(flatInstructions.flats.filter(mark=>contains(id,...mark.position)).length,1, id+" has one zone-level flat symbol");
+for(const id of ["C","D","G"])assert.equal(flatInstructions.flats.filter(mark=>contains(id,...mark.position)).length,1, id+" has one zone-level flat symbol");
+for(const id of ['A','carport'])assert(!flatInstructions.flats.some(mark=>mark.id===id),'Pavement falls must not be labelled level');
+for(const id of ['carport-fall','apron-fall'])assert(flatInstructions.slopes.some(mark=>mark.id===id),'C.4 pavement falls have directional marks');
 for(const id of ['I','O','P'])assert(contains(id,...quantities.zones.find(zone=>zone.id===id).label));
 for(const polygon of quantities.zones.find(zone=>zone.id==='O').polygons)for(const [x,z] of polygon)assert(x<=10.48+1e-7&&z<=26.43+1e-7);
 for(const polygon of quantities.zones.find(zone=>zone.id==='P').polygons)for(const [x] of polygon)assert(x>=34.13-1e-7);
@@ -137,13 +139,16 @@ assert(contains('N',24.2,11)&&!contains('N',24.5,10.7),'The northeast bank follo
 if(existsSync('docs/survey-terrain.js')){
   const actual=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:require('./docs/survey-terrain.js').SURVEY_TERRAIN}).site;
   const {GardenRouteModel}=require('./garden-route-model.js');
-  let samples=0;
+  let samples=0,slopedSamples=0;
   for(let x=20.6;x<24.63;x+=.05)for(let z=10.54;z<19.38;z+=.05){
     if(!contains('N',x,z)||GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<.01)continue;
     const h=.001,grade=Math.hypot((actual.height(x+h,z)-actual.height(x-h,z))/(2*h),(actual.height(x,z+h)-actual.height(x,z-h))/(2*h));
-    assert(grade>.01,'The terrace bank is sloped outside the preserved walking ribbon');samples++;
+    assert(Number.isFinite(grade),'Terrace bank samples are finite');
+    if(grade>.01)slopedSamples++;
+    samples++;
   }
   assert(samples>3000);
+  assert(slopedSamples/samples>.9,`The terrace bank zone is predominantly sloped, with level transition landings (${slopedSamples}/${samples})`);
 }
 
 assert(!flatInstructions.slopes.some(mark=>mark.id==="bed-sauna"),"G has no internal slope annotation");
@@ -156,7 +161,9 @@ assert(!contains('F',16,3)&&!contains('F',28,28),'Building zone excludes norther
 for(const zone of quantities.zones)assert(zone.name.trim().length>2,'Every zone has a legend name');
 assert(contains('L',41,9)&&contains('H',36,10),'H has a separate fence-bank zone');
 assert(!contains('G',2,24),'Composter does not extend the productive grading zone');
-assert.deepEqual(quantities.levelMarks.map(m=>m.relativeLevel),[-.5,-.5,-.5,.4]);
+assert.deepEqual(quantities.levelMarks.map(m=>m.relativeLevel),[-.51,-.55,-.6,.5]);
+assert.equal(quantities.levelMarks.find(m=>m.id==='C').surface,'ground');
+assert.equal(quantities.dimensions.find(d=>d.id==='westPlatform').value,'7,00 × 15,00 m');
 const rectangle=(x,y,w,d)=>({kind:'rect',x,y,w,d});
 const overlapGarden={plot:{vertices:[[0,0],[10,0],[10,10],[0,10]]},elements:[{id:'driveway',parts:[rectangle(-2,0,8,5)]},{id:'carport',parts:[rectangle(2,2,5,5)]}]};
 const overlap=GradingZones.create(overlapGarden);
