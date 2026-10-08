@@ -12,11 +12,9 @@ assert.deepEqual(sizes, [[7.65, 3], [8.75, 1], [7.25, 1], [3.25, 1.6]], 'Decks f
 assert.ok(near(sizes.reduce((sum, [a, b]) => sum + a * b, 0), 44.15), 'Laying plan area is 44.15 m²');
 
 const area = r => r.w * r.d, overlap = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.d, b.y + b.d) - Math.max(a.y, b.y));
-const outline = rects('westTerrace'), paving = GARDEN.elements.find(e => e.id === 'westTerrace').meta.paving, west = rects('westDeck');
-const tiles = [...west, ...paving];
-for (const tile of tiles) assert.ok(near(outline.reduce((sum, r) => sum + overlap(r, tile), 0), area(tile)), 'Deck and paving stay inside the west outline');
-for (let i = 0; i < tiles.length; i++) for (let j = i + 1; j < tiles.length; j++) assert.ok(overlap(tiles[i], tiles[j]) < 1e-9, 'Deck and paving do not overlap');
-assert.ok(near(tiles.reduce((sum, r) => sum + area(r), 0), outline.reduce((sum, r) => sum + area(r), 0)), 'Deck and paving fill the west outline');
+const outline = rects('westTerrace'), west = rects('westDeck');
+for (const deck of west) assert.ok(near(outline.reduce((sum, r) => sum + overlap(r, deck), 0), area(deck)), 'West decks stay inside the level grading outline');
+for (let i = 0; i < west.length; i++) for (let j = i + 1; j < west.length; j++) assert.ok(overlap(west[i], west[j]) < 1e-9, 'West decks do not overlap');
 const atrium = west.find(r => near(r.w, 1.6));
 assert.ok(near(atrium.x + atrium.w, 14.93), 'Atrium deck sits against the portal wall');
 const east = rects('eastTerrace')[0];
@@ -54,4 +52,30 @@ for (const part of model.parts) {
   if (part.name.includes('_pad_')) assert.ok(near(top, -.08), `${part.name}: 80 mm build-up`);
 }
 assert.equal(new Set(model.parts.map(p => p.name)).size, model.parts.length);
-console.log(`Terrace decks: ${model.decks.length} Twinson decks, ${model.decks.reduce((n, d) => n + d.boards.length, 0)} board pieces on joists; west outline tiled by deck and paving`);
+const { AtriumStonesModel } = require('./atrium-stones-model.js');
+const { ExteriorFurnitureModel } = require('./exterior-furniture-model.js');
+const ground = floor - .12, stones = AtriumStonesModel.build(GARDEN, () => ground);
+const atriumRect = { x: 9.48, y: 15.93, w: atrium.x - 9.48, d: 3.25 }, blocked = [...GARDEN.elements.find(e => e.id === 'atriumBeds').parts.map(p => p.points)];
+const inside = (points, x, z) => points.reduce((hit, [xi, zi], i) => { const [xj, zj] = points.at(i - 1); return (zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi ? !hit : hit; }, false);
+assert.equal(stones.stones.length, 7);
+assert.deepEqual(stones, AtriumStonesModel.build(GARDEN, () => ground), 'Stone outlines are stable between builds');
+for (const [i, stone] of stones.stones.entries()) {
+  assert.ok(near(stone.top, ground + .03), 'Stones sit 3 cm proud of the lawn');
+  for (const [x, z] of stone.points) {
+    assert.ok(x >= atriumRect.x && x <= atriumRect.x + atriumRect.w && z >= atriumRect.y && z <= atriumRect.y + atriumRect.d, 'Stones stay on the atrium lawn, clear of the deck');
+    assert.ok(!blocked.some(bed => inside(bed, x, z)), 'Stones stay out of the facade beds');
+  }
+  if (i) { const previous = stones.stones[i - 1], step = Math.hypot(stone.cx - previous.cx, stone.cy - previous.cy); assert.ok(step > previous.r + stone.r && step < .75, 'Stones are separate and within one stride'); }
+}
+const turns = stones.stones.slice(2).map((s, i) => Math.sign((stones.stones[i + 1].cx - stones.stones[i].cx) * (s.cy - stones.stones[i + 1].cy) - (stones.stones[i + 1].cy - stones.stones[i].cy) * (s.cx - stones.stones[i + 1].cx)));
+assert.ok(turns.includes(1) && turns.includes(-1), 'The path bends both ways');
+const seats = ExteriorFurnitureModel.build(GARDEN, floor).footprints.filter(p => p.name.startsWith('atrium_'));
+assert.deepEqual(seats.map(p => p.name), ['atrium_north_chair', 'atrium_low_table', 'atrium_south_chair']);
+for (const seat of seats) assert.ok(seat.x >= atrium.x && seat.x + seat.w <= atrium.x + atrium.w && seat.y >= atrium.y && seat.y + seat.d <= atrium.y + atrium.d, `${seat.name} stands on the atrium deck`);
+assert.ok(seats[2].y + seats[2].d < atrium.y + atrium.d * .82, 'Seating keeps to the north part of the deck');
+const pots = GARDEN.elements.find(e => e.id === 'atriumPots').parts.filter(p => p.kind === 'circle');
+assert.equal(pots.length, 1);
+const pot = pots[0];
+assert.ok(pot.cx - pot.r >= atrium.x && pot.cy + pot.r <= atrium.y + atrium.d, 'The pot stands in the south-west deck corner');
+for (const seat of seats) assert.ok(Math.hypot(Math.max(seat.x - pot.cx, 0, pot.cx - seat.x - seat.w), Math.max(seat.y - pot.cy, 0, pot.cy - seat.y - seat.d)) > pot.r, 'The pot clears the seating');
+console.log(`Terrace decks: ${model.decks.length} Twinson decks, ${model.decks.reduce((n, d) => n + d.boards.length, 0)} board pieces on joists; atrium lawn with ${stones.stones.length} stepping stones`);

@@ -97,13 +97,35 @@ const GARDEN = {
       id: "westTerrace",
       name: "Západní terasa: atrium a chodník šířky 1 m",
       short: "Západní terasa",
-      // The rects are the level finish outline; westDeck and meta.paving tile it exactly.
-      meta: { paving: [{ x: 9.48, y: 15.93, w: 1, d: 3.25 }, { x: 10.48, y: 15.93, w: 2.85, d: 3.25 }] },
+      // The rects are the level grading outline. westDeck covers part of it; the rest of the atrium is lawn.
       parts: [
-        { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 19.25, fill: "#cdc1ad", opacity: 0.7, stroke: "#8a7f6c", sw: 0.8 },
-        { kind: "rect", x: 10.48, y: 15.93, w: 4.45, d: 3.25, fill: "#cdc1ad", opacity: 0.7, stroke: "#8a7f6c", sw: 0.8 },
-        { kind: "text", x: 11.9, y: 17.33, text: "západní terasa", cls: "lbl-sm" },
-        { kind: "text", x: 11.9, y: 18.11, text: "atrium + chodník 1 m", cls: "dim" }
+        { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 19.25, fill: "#9cc27a", opacity: 0.45, stroke: "#6a7a3a", sw: 0.8 },
+        { kind: "rect", x: 10.48, y: 15.93, w: 4.45, d: 3.25, fill: "#9cc27a", opacity: 0.45, stroke: "#6a7a3a", sw: 0.8 },
+        { kind: "text", x: 11.9, y: 17.1, text: "atrium", cls: "lbl-sm" }
+      ]
+    },
+    {
+      id: "atriumBeds",
+      name: "Trvalky u fasády v atriu",
+      short: "Záhony v atriu",
+      meta: { palette: "bedTerrace", plant: "perennials", maxHeight: 0.65 },
+      parts: [
+        { kind: "polygon", points: [[10.48, 15.93], [13.33, 15.93], [13.33, 16.5], [12.4, 16.75], [11.4, 16.6], [10.48, 16.5]], fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1 },
+        { kind: "polygon", points: [[10.48, 19.18], [10.48, 18.95], [11.6, 18.75], [12.5, 18.6], [13.33, 18.75], [13.33, 19.18]], fill: "#8fa05a", opacity: 0.4, stroke: "#6a7a3a", sw: 1 }
+      ]
+    },
+    {
+      id: "atriumStones",
+      name: "Nášlapné kameny v atriu",
+      short: "Nášlapné kameny",
+      parts: [
+        { kind: "circle", cx: 9.85, cy: 18.5, r: 0.27, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 10.42, cy: 18.25, r: 0.25, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 10.98, cy: 17.9, r: 0.28, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 11.55, cy: 17.75, r: 0.26, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 12.1, cy: 17.95, r: 0.28, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 12.66, cy: 18.02, r: 0.25, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 13.08, cy: 17.74, r: 0.22, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 }
       ]
     },
     {
@@ -405,13 +427,11 @@ const GARDEN = {
 
     {
       id: "atriumPots",
-      name: "Nádoby v atriu: muchovník a stínomilná výsadba",
-      short: "Nádoby v atriu",
+      name: "Nádoba na palubě v atriu",
+      short: "Nádoba v atriu",
       meta: { plant: "shrubs" },
       parts: [
-        { kind: "circle", cx: 11.3, cy: 16.4, r: 0.35, fill: "#6a8e5a", opacity: 0.8 },
-        { kind: "circle", cx: 13.6, cy: 16.5, r: 0.6, fill: "#6a8e5a", opacity: 0.8 },
-        { kind: "circle", cx: 13.9, cy: 18.5, r: 0.35, fill: "#6a8e5a", opacity: 0.8 }
+        { kind: "circle", cx: 13.73, cy: 18.78, r: 0.35, fill: "#6a8e5a", opacity: 0.8 }
       ]
     },
     {

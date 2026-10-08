@@ -2768,13 +2768,15 @@
     <g class="el" data-id="terraceFrontage"><title>Nízká výsadba před terasou</title>
       <polygon points="450,212.4 460.8,230.4 460.8,284.4 450,298.8 442.8,288 442.8,225" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
     </g>
+    <g class="el" data-id="atriumBeds"><title>Trvalky u fasády v atriu</title>
+      <polygon points="188.64,286.74 239.94,286.74 239.94,297 223.2,301.5 205.2,298.8 188.64,297" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
+      <polygon points="188.64,345.24 188.64,341.1 208.8,337.5 225,334.8 239.94,337.5 239.94,345.24" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
+    </g>
     <g class="el" data-id="orchardMeadow"><title>Sad s loukou</title>
       <polygon points="27,414 156.6,414 156.6,532.8 57.6,532.8 57.6,495 27,495" fill="#b5c98a" opacity="0.35"/>
     </g>
-    <g class="el" data-id="atriumPots"><title>Nádoby v atriu: muchovník a stínomilná výsadba</title>
-      <circle cx="203.4" cy="295.2" r="6.3" fill="#6a8e5a" opacity="0.8"/>
-      <circle cx="244.8" cy="297" r="10.8" fill="#6a8e5a" opacity="0.8"/>
-      <circle cx="250.2" cy="333" r="6.3" fill="#6a8e5a" opacity="0.8"/>
+    <g class="el" data-id="atriumPots"><title>Nádoba na palubě v atriu</title>
+      <circle cx="247.14" cy="338.04" r="6.3" fill="#6a8e5a" opacity="0.8"/>
     </g>
 <polyline data-route="Wellness access" points="179.64,129.6 179.64,93.4 118.8,93.4" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Wellness access</title></polyline>
 <polyline data-route="Productive access" points="118.8,93.4 118.8,113.78 118.8,237.6 100.8,237.6 63,237.6" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Productive access</title></polyline>
@@ -2798,10 +2800,18 @@
       <text x="324.54" y="343.08" class="lbl">10.8 × 19.25 m</text>
     </g>
     <g class="el" data-id="westTerrace"><title>Západní terasa: atrium a chodník šířky 1 m</title>
-      <rect x="170.64" y="129.24" width="18" height="346.5" fill="#cdc1ad" opacity="0.7" stroke="#8a7f6c" stroke-width="0.8"/>
-      <rect x="188.64" y="286.74" width="80.1" height="58.5" fill="#cdc1ad" opacity="0.7" stroke="#8a7f6c" stroke-width="0.8"/>
-      <text x="214.2" y="311.94" class="lbl-sm">západní terasa</text>
-      <text x="214.2" y="325.98" class="dim">atrium + chodník 1 m</text>
+      <rect x="170.64" y="129.24" width="18" height="346.5" fill="#9cc27a" opacity="0.45" stroke="#6a7a3a" stroke-width="0.8"/>
+      <rect x="188.64" y="286.74" width="80.1" height="58.5" fill="#9cc27a" opacity="0.45" stroke="#6a7a3a" stroke-width="0.8"/>
+      <text x="214.2" y="307.8" class="lbl-sm">atrium</text>
+    </g>
+    <g class="el" data-id="atriumStones"><title>Nášlapné kameny v atriu</title>
+      <circle cx="177.3" cy="333" r="4.86" fill="#b9b4a8" opacity="0.9" stroke="#8a867c" stroke-width="0.6"/>
+      <circle cx="187.56" cy="328.5" r="4.5" fill="#b9b4a8" opacity="0.9" stroke="#8a867c" stroke-width="0.6"/>
+      <circle cx="197.64" cy="322.2" r="5.04" fill="#b9b4a8" opacity="0.9" stroke="#8a867c" stroke-width="0.6"/>
+      <circle cx="207.9" cy="319.5" r="4.68" fill="#b9b4a8" opacity="0.9" stroke="#8a867c" stroke-width="0.6"/>
+      <circle cx="217.8" cy="323.1" r="5.04" fill="#b9b4a8" opacity="0.9" stroke="#8a867c" stroke-width="0.6"/>
+      <circle cx="227.88" cy="324.36" r="4.5" fill="#b9b4a8" opacity="0.9" stroke="#8a867c" stroke-width="0.6"/>
+      <circle cx="235.44" cy="319.32" r="3.96" fill="#b9b4a8" opacity="0.9" stroke="#8a867c" stroke-width="0.6"/>
     </g>
     <g class="el" data-id="westDeck"><title>Západní paluba Twinson: chodník 1 m a atrium 3,25 × 1,6 m</title>
       <rect x="170.64" y="129.24" width="18" height="157.5" fill="#6d5842" opacity="0.85" stroke="#5a3e25" stroke-width="0.8"/>

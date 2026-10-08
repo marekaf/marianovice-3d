@@ -25,6 +25,7 @@ const { ExteriorFurnitureModel } = require("./exterior-furniture-model.js");
 const {buildEntranceStairs,buildEntranceRecess,entrancePavingDatum}=require('./entrance-landing.js');
 const { TerraceDeckModel } = require("./terrace-deck-model.js");
 const { PortalDrainModel } = require("./portal-drain-model.js");
+const { AtriumStonesModel } = require("./atrium-stones-model.js");
 const {SiteTerrain}=require('./site-terrain.js');
 const {HousePlinth}=require('./house-plinth.js');
 const {HOUSE_INTERIOR}=require('./house-interior.js');
@@ -62,6 +63,7 @@ fs.writeFileSync(out, JSON.stringify({
   ...GARDEN,
   houseEntranceStairs:buildEntranceStairs(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,entrancePaving),
   houseEntranceRecess:buildEntranceRecess(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,entrancePaving),
+  atriumStonesModel:AtriumStonesModel.build(GARDEN,siteTerrain.height),
   terraceDeckModel:TerraceDeckModel.build(GARDEN,siteTerrain.spec.deckTop,siteTerrain.height,PortalDrainModel.build(GARDEN,siteTerrain.spec.deckTop,HOUSE_INTERIOR.exteriorOpenings())),
   housePlinth: HousePlinth.build(HOUSE_INTERIOR,siteTerrain.spec.houseBaseY,siteTerrain.height),
   cotoneasterModel:CotoneasterModel.build(GARDEN,siteTerrain.height),

@@ -61,7 +61,7 @@ export const GroundSurfaceModel = {
       ctx.beginPath();route.points.forEach(([x,z],i)=>i?ctx.lineTo(x,z):ctx.moveTo(x,z));ctx.lineWidth=route.width+.06;ctx.stroke();
     }
     ctx.restore();
-    const hardscape = new Set(['house', 'garage', 'eastTerrace', 'westTerrace', 'sauna', 'saunaShelter', 'saunaPath', 'driveway', 'pond']);
+    const hardscape = new Set(['house', 'garage', 'eastTerrace', 'westDeck', 'sauna', 'saunaShelter', 'saunaPath', 'driveway', 'pond']);
     for (const el of garden.elements.filter(e => hardscape.has(e.id))) {
       for (const part of surfaceParts(el)) { ctx.beginPath(); outline(part); ctx.fill(); }
     }
