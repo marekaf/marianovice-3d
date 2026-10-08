@@ -57,7 +57,7 @@ const TerraceDeckModel = (() => {
       joist: { color: '#8d9296', roughness: .45, metalness: .6 },
       pad: { color: '#97958d', roughness: .95 },
     };
-    ['#986a54', '#9c6e57', '#93664f', '#a07259'].forEach((color, i) => {
+    ['#6d5842', '#715c45', '#69543f', '#745f48'].forEach((color, i) => {
       materials[`board_x_${i}`] = { color, roughness: .72, grain: 'x' };
       materials[`board_y_${i}`] = { color, roughness: .72, grain: 'y' };
     });

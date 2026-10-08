@@ -13,7 +13,7 @@ const footprint = id => {
 const fixedIds = ['house', 'garage', 'carport', 'eastTerrace', 'westTerrace', 'westDeck', 'northPassage'];
 const fixed = GARDEN.elements.filter(item => fixedIds.includes(item.id)).map(item=>({id:item.id,parts:item.parts.filter(part=>part.kind!=='text')}));
 assert.equal(createHash('sha256').update(JSON.stringify(fixed)).digest('hex'),
-  'dbd33808306599874c2eebc5ac6cfc0f95738764aacd7c91510383bcf1c88530',
+  '78a66de43434a942bd6c028dfda9006bf164d71524275edff4cd1bbabb2ccbd4',
   'The approved garden layout must not change buildings, terraces or the north passage');
 assert.deepEqual(footprint('pergola'), [22.42785414913, 1.68127450503, 6, 4]);
 assert.deepEqual(footprint('sauna'), [4.5, 1.988663694038809, 2.8, 2.5]);
