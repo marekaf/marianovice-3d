@@ -70,12 +70,16 @@ for (const [i, stone] of stones.stones.entries()) {
 const turns = stones.stones.slice(2).map((s, i) => Math.sign((stones.stones[i + 1].cx - stones.stones[i].cx) * (s.cy - stones.stones[i + 1].cy) - (stones.stones[i + 1].cy - stones.stones[i].cy) * (s.cx - stones.stones[i + 1].cx)));
 assert.ok(turns.includes(1) && turns.includes(-1), 'The path bends both ways');
 const seats = ExteriorFurnitureModel.build(GARDEN, floor).footprints.filter(p => p.name.startsWith('atrium_'));
-assert.deepEqual(seats.map(p => p.name), ['atrium_north_chair', 'atrium_low_table', 'atrium_south_chair']);
-for (const seat of seats) assert.ok(seat.x >= atrium.x && seat.x + seat.w <= atrium.x + atrium.w && seat.y >= atrium.y && seat.y + seat.d <= atrium.y + atrium.d, `${seat.name} stands on the atrium deck`);
-assert.ok(seats[2].y + seats[2].d < atrium.y + atrium.d * .82, 'Seating keeps to the north part of the deck');
+assert.deepEqual(seats.map(p => p.name), ['atrium_glass_chair', 'atrium_wall_chair', 'atrium_low_table']);
+const slidingEnd = atrium.y + atrium.d / 2;
+for (const seat of seats) {
+  assert.ok(seat.x >= atrium.x && seat.x + seat.w <= atrium.x + atrium.w && seat.y + seat.d <= atrium.y + atrium.d, `${seat.name} stands on the atrium deck`);
+  assert.ok(seat.y >= slidingEnd - .06, `${seat.name} keeps clear of the sliding north half of the portal`);
+}
+assert.ok(stones.stones.at(-1).cy < slidingEnd - .3, 'The stone path arrives at the sliding half');
 const pots = GARDEN.elements.find(e => e.id === 'atriumPots').parts.filter(p => p.kind === 'circle');
 assert.equal(pots.length, 1);
 const pot = pots[0];
-assert.ok(pot.cx - pot.r >= atrium.x && pot.cy + pot.r <= atrium.y + atrium.d, 'The pot stands in the south-west deck corner');
+assert.ok(pot.cx + pot.r <= atrium.x + atrium.w && pot.cy + pot.r <= atrium.y + atrium.d && pot.cy - pot.r >= slidingEnd, 'The pot stands in the south-east deck corner');
 for (const seat of seats) assert.ok(Math.hypot(Math.max(seat.x - pot.cx, 0, pot.cx - seat.x - seat.w), Math.max(seat.y - pot.cy, 0, pot.cy - seat.y - seat.d)) > pot.r, 'The pot clears the seating');
 console.log(`Terrace decks: ${model.decks.length} Twinson decks, ${model.decks.reduce((n, d) => n + d.boards.length, 0)} board pieces on joists; atrium lawn with ${stones.stones.length} stepping stones`);

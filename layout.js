@@ -119,13 +119,13 @@ const GARDEN = {
       name: "Nášlapné kameny v atriu",
       short: "Nášlapné kameny",
       parts: [
-        { kind: "circle", cx: 9.85, cy: 18.5, r: 0.27, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
-        { kind: "circle", cx: 10.42, cy: 18.25, r: 0.25, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
-        { kind: "circle", cx: 10.98, cy: 17.9, r: 0.28, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
-        { kind: "circle", cx: 11.55, cy: 17.75, r: 0.26, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
-        { kind: "circle", cx: 12.1, cy: 17.95, r: 0.28, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
-        { kind: "circle", cx: 12.66, cy: 18.02, r: 0.25, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
-        { kind: "circle", cx: 13.08, cy: 17.74, r: 0.22, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 }
+        { kind: "circle", cx: 9.85, cy: 18.4, r: 0.27, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 10.42, cy: 18.1, r: 0.25, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 10.98, cy: 17.7, r: 0.28, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 11.55, cy: 17.45, r: 0.26, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 12.1, cy: 17.5, r: 0.28, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 12.66, cy: 17.25, r: 0.25, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 },
+        { kind: "circle", cx: 13.08, cy: 16.95, r: 0.22, fill: "#b9b4a8", opacity: 0.9, stroke: "#8a867c", sw: 0.6 }
       ]
     },
     {
@@ -431,7 +431,7 @@ const GARDEN = {
       short: "Nádoba v atriu",
       meta: { plant: "shrubs" },
       parts: [
-        { kind: "circle", cx: 13.73, cy: 18.78, r: 0.35, fill: "#6a8e5a", opacity: 0.8 }
+        { kind: "circle", cx: 14.53, cy: 18.78, r: 0.35, fill: "#6a8e5a", opacity: 0.8 }
       ]
     },
     {
