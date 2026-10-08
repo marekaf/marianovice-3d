@@ -67,15 +67,15 @@ const ExteriorFurnitureModel = (() => {
     const circulation = [
       { name:'east_pergola_route', x:east.x+east.w-1, y:east.y, w:1, d:east.d },
       { name:'east_slider_approach', x:east.x, y:14.18, w:.9, d:2.58 },
-      { name:'atrium_slider_approach', x:atriumDeck.x, y:atriumDeck.y, w:atriumDeck.w, d:1.55 },
+      { name:'atrium_slider_approach', x:atriumDeck.x, y:atriumDeck.y, w:atriumDeck.w, d:1.45 },
       { name:'atrium_stone_path', x:atrium[0], y:16.8, w:atriumDeck.x-atrium[0], d:1.55 },
     ];
     lounge('east_sofa', 21.08, 17.8, 1.64, 'east');
     table('east_low_table', 22.05, 17.8);
     // The north half of the atrium portal slides, so all seating keeps to the fixed glass in the south half.
     const deckSouth=atriumDeck.y+atriumDeck.d,glassSeat=deckSouth-1.33;
-    lounge('atrium_glass_chair', atriumDeck.x+atriumDeck.w-.43, glassSeat, .7, 'west');
-    lounge('atrium_wall_chair', atriumDeck.x+.42, deckSouth-.43, .7, -1);
+    lounge('atrium_glass_chair', atriumDeck.x+atriumDeck.w-.43, glassSeat, .89, 'west');
+    lounge('atrium_wall_chair', atriumDeck.x+.445, deckSouth-.43, .89, -1);
     table('atrium_low_table', atriumDeck.x+.42, glassSeat);
     const notch=garden.elements.find(e=>e.id==='house').meta.eNotch;
     const kitchenEnd=circulation.find(r=>r.name==='east_slider_approach').y;

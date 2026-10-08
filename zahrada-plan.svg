@@ -2776,7 +2776,7 @@
       <polygon points="27,414 156.6,414 156.6,532.8 57.6,532.8 57.6,495 27,495" fill="#b5c98a" opacity="0.35"/>
     </g>
     <g class="el" data-id="atriumPots"><title>Nádoba na palubě v atriu</title>
-      <circle cx="261.54" cy="338.04" r="6.3" fill="#6a8e5a" opacity="0.8"/>
+      <circle cx="262.44" cy="338.04" r="6.3" fill="#6a8e5a" opacity="0.8"/>
     </g>
 <polyline data-route="Wellness access" points="179.64,129.6 179.64,93.4 118.8,93.4" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Wellness access</title></polyline>
 <polyline data-route="Productive access" points="118.8,93.4 118.8,113.78 118.8,237.6 100.8,237.6 63,237.6" fill="none" stroke="#c8bea5" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><title>Productive access</title></polyline>

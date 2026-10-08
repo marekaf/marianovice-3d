@@ -431,7 +431,7 @@ const GARDEN = {
       short: "Nádoba v atriu",
       meta: { plant: "shrubs" },
       parts: [
-        { kind: "circle", cx: 14.53, cy: 18.78, r: 0.35, fill: "#6a8e5a", opacity: 0.8 }
+        { kind: "circle", cx: 14.58, cy: 18.78, r: 0.35, fill: "#6a8e5a", opacity: 0.8 }
       ]
     },
     {
