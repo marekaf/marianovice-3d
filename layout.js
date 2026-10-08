@@ -133,16 +133,16 @@ const GARDEN = {
       name: "Západní paluba Twinson: chodník 1 m a atrium 3,25 × 1,6 m",
       short: "Západní paluba",
       parts: [
-        { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 8.75, fill: "#6d5842", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 },
-        { kind: "rect", x: 9.48, y: 19.18, w: 1, d: 7.25, fill: "#6d5842", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 },
-        { kind: "rect", x: 13.33, y: 15.93, w: 1.6, d: 3.25, fill: "#6d5842", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 }
+        { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 8.75, fill: "#c4a68e", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 },
+        { kind: "rect", x: 9.48, y: 19.18, w: 1, d: 7.25, fill: "#c4a68e", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 },
+        { kind: "rect", x: 13.33, y: 15.93, w: 1.6, d: 3.25, fill: "#c4a68e", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 }
       ]
     },
     {
       id: "eastTerrace",
       name: "Východní terasa 3 × 7,65 m",
       parts: [
-        { kind: "rect", x: 20.58, y: 11.58, w: 3, d: 7.65, fill: "#6d5842", opacity: 0.85, stroke: "#5a3e25", sw: 1.2 },
+        { kind: "rect", x: 20.58, y: 11.58, w: 3, d: 7.65, fill: "#c4a68e", opacity: 0.85, stroke: "#5a3e25", sw: 1.2 },
         { kind: "text", x: 22.08, y: 16.39, text: "východní terasa", cls: "lbl-w" },
         { kind: "text", x: 22.08, y: 17.28, text: "(E.02)", cls: "lbl-sm-w" },
         { kind: "text", x: 22.08, y: 17.6, text: "3 × 7.65 m", cls: "dim", fill: "#fff" }

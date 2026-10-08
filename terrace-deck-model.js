@@ -57,7 +57,9 @@ const TerraceDeckModel = (() => {
       joist: { color: '#8d9296', roughness: .45, metalness: .6 },
       pad: { color: '#97958d', roughness: .95 },
     };
-    ['#6d5842', '#715c45', '#69543f', '#745f48'].forEach((color, i) => {
+    // Twinson 522 reads #c4a68e on the maker's chart. The viewer's sky light and tone mapping wash out warm
+    // tones, so the albedo is set warmer until the sunlit deck measures that colour on screen.
+    ['#ebb181', '#efb585', '#e6ac7c', '#f0b889'].forEach((color, i) => {
       materials[`board_x_${i}`] = { color, roughness: .72, grain: 'x' };
       materials[`board_y_${i}`] = { color, roughness: .72, grain: 'y' };
     });
