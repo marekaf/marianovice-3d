@@ -153,13 +153,14 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=93882c10d014"></script>
+<script src="layout.js?v=b96fd18c6d0a"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=68757001ef24"></script>
 <script src="vehicle-model.js"></script>
 <script src="exterior-furniture-model.js"></script>
 <script src="portal-drain-model.js?v=ee065151398f"></script>
+<script src="atrium-stones-model.js?v=ac43b6767fdf"></script>
 <script src="terrace-deck-model.js?v=d669d79b6df1"></script>
 <script src="house-plinth.js?v=040c4551c729"></script>
 <script src="planting-preview.js"></script>
@@ -1064,7 +1065,7 @@ const garageGateClosed = gar.gateClosed, garageGateOpen = gar.gateOpen;
 const entranceWalkSurfaces=[];
 const walkSurfaces = [
   { x0: GA.x, z0: GA.y, x1: GA.x + GA.w, z1: GA.y + GA.d, y: garageFloorY },
-  ...['eastTerrace','westTerrace'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.deckTop}))),
+  ...['eastTerrace','westDeck'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.deckTop}))),
   ...['sauna','saunaShelter'].flatMap(id=>EL[id].parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:siteTerrain.spec.saunaFinish}))),
   ...EL.saunaPath.parts.filter(p=>p.kind==='rect').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,height:siteTerrain.routeHeight})),
   ...EL.pergola.parts.filter(p=>p.role==='paving').map(p=>({x0:p.x,z0:p.y,x1:p.x+p.w,z1:p.y+p.d,y:pergolaModel.floorHeight})),
@@ -1201,8 +1202,7 @@ const terraceDecks = buildModel(THREE, terraceDeckModel);
 terraceDecks.name = 'terrace-decks';
 scene.add(terraceDecks);
 
-// Terasa Z has stone paving only in the atrium and in the path gap at its mouth; the rest is decked.
-// Paving shares the house threshold datum.
+// Level stone paving shares the house threshold datum.
 const [wtSidewalk] = EL.westTerrace.parts.filter(p => p.kind === 'rect');
 const gardenStoneTex = speckleTexture('#c1baaa', [32, 48], [8, 18], [42, 72], 18000);
 const gardenStoneMaterials = [0xffffff, 0xf5f2e9, 0xece8dc, 0xf7f5ef].map(color =>
@@ -1291,7 +1291,7 @@ function addLevelPaving(r, surfaceHeight = () => deckTop) {
   }
   scene.add(group);
 }
-for (const r of EL.westTerrace.meta.paving) addLevelPaving(r);
+scene.add(buildModel(THREE, AtriumStonesModel.build(GARDEN, terrainHeight)));
 
 // Chodníček sauna → terasa Z
 for (const path of EL.saunaPath.parts.filter(p => p.kind === 'rect' && p.role !== 'saunaLanding')) {

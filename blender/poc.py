@@ -663,7 +663,7 @@ for utility_id in ('rainTank', 'waterSource', 'sewerInspection'):
 
 # ---------------- grass exclusion mask ----------------
 EXCL_RECTS = []
-for eid in ["westTerrace", "eastTerrace", "saunaPath", "carport", "garage",
+for eid in ["westDeck", "eastTerrace", "saunaPath", "carport", "garage",
             "sauna", "saunaShelter", "pergola", "greenhouse", "raisedBed1", "raisedBed2", "raisedBed3", "raisedBed4"]:
     for prt in els[eid]["parts"]:
         if prt["kind"] == "rect":
@@ -1288,8 +1288,7 @@ def level_paving(name, r, surface_height=lambda x, y: DECK_TOP):
             mesh.materials.append(stone_materials[variation % len(stone_materials)])
 
 
-for i, prt in enumerate(els["westTerrace"]["meta"]["paving"]):
-    level_paving("westTerrace_%d" % i, prt)
+build_model(GARDEN["atriumStonesModel"])
 for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect" and x.get("role") != "saunaLanding"):
     level_paving("saunaPath_%d" % i, prt, lambda x, y: route_height(SITE_TERRAIN, x, y))
 if not DETAILS_PATH:

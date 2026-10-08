@@ -41,7 +41,8 @@ assert len(roots) == len(garden["vehicles"])
 assert bpy.data.objects.get("car3_body") is None
 assert bpy.data.objects.get("et_table") is None
 assert not any(obj.name.startswith("et_seat") for obj in bpy.data.objects)
-assert any(obj.name.startswith("westTerrace_0_slab") for obj in bpy.data.objects)
+assert not any(obj.name.startswith("westTerrace_") for obj in bpy.data.objects)
+assert bpy.data.objects.get("atrium_stone_0") is not None
 assert any(obj.name.startswith("saunaPath_0_slab") for obj in bpy.data.objects)
 if details is None:
     assert any(obj.name.startswith("eastTerrace_0_board_") for obj in bpy.data.objects)

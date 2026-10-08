@@ -10,8 +10,8 @@ const intersects = (a,b) => a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.d && a
 const routes = [
   {name:'east route toward pergola',x:22.58,y:11.58,w:1,d:7.65},
   {name:'east sliding doorway approach',x:20.58,y:14.18,w:.9,d:2.58},
-  {name:'atrium opening approach',x:13.73,y:15.93,w:1.2,d:3.25},
-  {name:'atrium opening to west path',x:10.48,y:15.93,w:4.45,d:1.1},
+  {name:'atrium sliding door approach',x:13.33,y:15.93,w:1.6,d:1.45},
+  {name:'atrium stone path',x:10.48,y:16.8,w:2.85,d:1.55},
 ];
 for (const route of routes) for (const item of lounge.footprints)
   assert.ok(!intersects(route,item), `${item.name} blocks ${route.name}`);

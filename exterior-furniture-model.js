@@ -13,13 +13,14 @@ const ExteriorFurnitureModel = (() => {
     };
     const parts = [], footprints = [], feet = [];
     function lounge(name, cx, cy, width, facing = 1) {
-      const point = (u, v, h) => facing==='east'?[cx+v,cy-u,h]:[cx + u, cy + v * facing, h];
+      const sideways = facing==='east'||facing==='west';
+      const point = (u, v, h) => facing==='east'?[cx+v,cy-u,h]:facing==='west'?[cx-v,cy+u,h]:[cx + u, cy + v * facing, h];
       const box = (suffix, u, v, h, w, d, z, material, bevel) => parts.push({ name: `${name}_${suffix}`,
-        type: 'box', position: point(u, v, h), size: facing==='east'?[d,w,z]:[w, d, z], material, bevel, category: 'furniture' });
+        type: 'box', position: point(u, v, h), size: sideways?[d,w,z]:[w, d, z], material, bevel, category: 'furniture' });
       const beam = (suffix, a, b, w, d, material = 'lounge_frame') => parts.push({ name: `${name}_${suffix}`,
         type: 'beam', start: point(...a), end: point(...b), width: w, depth: d, material, bevel: .012, category: 'furniture' });
       const half = width / 2;
-      footprints.push(facing==='east'?{name,x:cx-.4,y:cy-half,w:.8,d:width,height:.72}:{ name, x: cx - half, y: cy - .4, w: width, d: .8, height: .72 });
+      footprints.push(sideways?{name,x:cx-.4,y:cy-half,w:.8,d:width,height:.72}:{ name, x: cx - half, y: cy - .4, w: width, d: .8, height: .72 });
       for (const [i, u] of [-half + .105, half - .105].entries()) {
         for (const [j, v] of [-.285, .285].entries()) {
           box(`foot_${i}_${j}`, u, v, .008, .045, .045, .016, 'lounge_feet', .004);
@@ -62,17 +63,20 @@ const ExteriorFurnitureModel = (() => {
     }
     const east = garden.elements.find(e => e.id === 'eastTerrace').parts.find(p => p.kind === 'rect');
     const atrium = garden.elements.find(e => e.id === 'house').meta.atrium;
+    const atriumDeck = garden.elements.find(e => e.id === 'westDeck').parts.find(p => p.kind === 'rect' && Math.abs(p.x + p.w - atrium[2]) < 1e-9);
     const circulation = [
       { name:'east_pergola_route', x:east.x+east.w-1, y:east.y, w:1, d:east.d },
       { name:'east_slider_approach', x:east.x, y:14.18, w:.9, d:2.58 },
-      { name:'atrium_slider_approach', x:atrium[2]-1.2, y:atrium[1], w:1.2, d:atrium[3]-atrium[1] },
-      { name:'atrium_west_route', x:atrium[0], y:atrium[1], w:atrium[2]-atrium[0], d:1.1 },
+      { name:'atrium_slider_approach', x:atriumDeck.x, y:atriumDeck.y, w:atriumDeck.w, d:1.45 },
+      { name:'atrium_stone_path', x:atrium[0], y:16.8, w:atriumDeck.x-atrium[0], d:1.55 },
     ];
     lounge('east_sofa', 21.08, 17.8, 1.64, 'east');
     table('east_low_table', 22.05, 17.8);
-    lounge('atrium_west_chair', atrium[0]+.77, atrium[3]-.63, .89, -1);
-    lounge('atrium_east_chair', atrium[0]+2.07, atrium[3]-.63, .89, -1);
-    table('atrium_low_table', atrium[0]+1.42, atrium[3]-1.78);
+    // The north half of the atrium portal slides, so all seating keeps to the fixed glass in the south half.
+    const deckSouth=atriumDeck.y+atriumDeck.d,glassSeat=deckSouth-1.33;
+    lounge('atrium_glass_chair', atriumDeck.x+atriumDeck.w-.43, glassSeat, .89, 'west');
+    lounge('atrium_wall_chair', atriumDeck.x+.445, deckSouth-.43, .89, -1);
+    table('atrium_low_table', atriumDeck.x+.42, glassSeat);
     const notch=garden.elements.find(e=>e.id==='house').meta.eNotch;
     const kitchenEnd=circulation.find(r=>r.name==='east_slider_approach').y;
     const worktable = { name:'outdoor_kitchen_table', x:notch[0], y:notch[1], w:notch[2]-notch[0], d:kitchenEnd-notch[1], height:.8 };
