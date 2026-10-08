@@ -1012,6 +1012,7 @@ hp_fan.rotation_euler.x = math.pi / 2
 MAT["sokl"] = mat_pbr("sokl", "plastered_wall_02", scale=2.0,
                       tint=hexc("#453f38"), tint_fac=0.85, tint_mode="MIX")  # marmolit MAR2 M092, dark
 build_model(GARDEN["houseEntranceStairs"])
+build_model(GARDEN["houseEntranceRecess"])
 for part in GARDEN["housePlinth"]["parts"]:
     px, py, pz = part["position"]
     width, depth, height = part["size"]
@@ -1287,31 +1288,12 @@ def level_paving(name, r, surface_height=lambda x, y: DECK_TOP):
             mesh.materials.append(stone_materials[variation % len(stone_materials)])
 
 
-for i, prt in enumerate(x for x in els["westTerrace"]["parts"] if x["kind"] == "rect"):
+for i, prt in enumerate(els["westTerrace"]["meta"]["paving"]):
     level_paving("westTerrace_%d" % i, prt)
 for i, prt in enumerate(x for x in els["saunaPath"]["parts"] if x["kind"] == "rect" and x.get("role") != "saunaLanding"):
     level_paving("saunaPath_%d" % i, prt, lambda x, y: route_height(SITE_TERRAIN, x, y))
 if not DETAILS_PATH:
-    for i, r in enumerate(x for x in els["eastTerrace"]["parts"] if x["kind"] == "rect"):
-        for j in range(math.ceil(r["d"] / 0.142)):
-            depth = min(0.137, r["d"] - j * 0.142)
-            if depth >= 0.005:
-                box_p("east_deck_board_%d_%d" % (i, j), r["x"], r["y"] + j * 0.142,
-                      r["x"] + r["w"], r["y"] + j * 0.142 + depth, DECK_TOP - 0.022, DECK_TOP, MAT["wood"])
-        joists = math.ceil((r["w"] - 0.12) / 0.4)
-        supports = math.ceil((r["d"] - 0.24) / 1.2)
-        for j in range(joists + 1):
-            x = r["x"] + 0.06 + (r["w"] - 0.12) * j / joists
-            box_p("east_deck_joist_%d_%d" % (i, j), x - 0.0225, r["y"] + 0.04, x + 0.0225, r["y"] + r["d"] - 0.04,
-                  DECK_TOP - 0.067, DECK_TOP - 0.022, MAT["wood"])
-            for k in range(supports + 1):
-                y = r["y"] + 0.12 + (r["d"] - 0.24) * k / supports
-                ground = [ground_h(x + dx, y + dy) for dx in (-0.09, 0, 0.09) for dy in (-0.09, 0, 0.09)]
-                bottom, top = min(ground) - 0.08, max(ground) + 0.025
-                if top < DECK_TOP - 0.067:
-                    box_p("east_deck_pad_%d_%d_%d" % (i, j, k), x - 0.09, y - 0.09, x + 0.09, y + 0.09, bottom, top, MAT["gravel"])
-                    add_cyl("east_deck_pedestal_%d_%d_%d" % (i, j, k), x, y, (top + DECK_TOP - 0.067) / 2,
-                            0.04, DECK_TOP - 0.067 - top, MAT["frame"], verts=12)
+    build_model(GARDEN["terraceDeckModel"])
 
 
 # driveway + carport + parking bay: one continuous DITON large-format paver surface

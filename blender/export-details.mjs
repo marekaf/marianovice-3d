@@ -52,8 +52,8 @@ try{
       import('three/addons/exporters/GLTFExporter.js'),import('three/addons/loaders/GLTFLoader.js'),import('/unreal/garden-detail-scene.mjs')]);
     s.treesGroup.visible=true;s.seasonalPlanting.update(196);
     for(const plant of s.perennialPlants)s.PerennialModel.update(plant,7);
-    const decks=s.scene.children.filter(object=>object.name==='east-cedar-deck');
-    if(!decks.length)throw new Error('East cedar deck is missing');
+    const decks=s.scene.children.filter(object=>object.name==='terrace-decks');
+    if(!decks.length)throw new Error('Terrace decks are missing');
     const roots=[{name:'planting',object:s.treesGroup},{name:'pond',object:s.pondModel.group},
       ...decks.map((object,i)=>({name:`deck_${i}`,object})),{name:'drain',object:s.portalDrainGroup}];
     for(const root of roots)if(!root.object?.visible)throw new Error('Missing or hidden detail root '+root.name);

@@ -97,21 +97,33 @@ const GARDEN = {
       id: "westTerrace",
       name: "Západní terasa: atrium a chodník šířky 1 m",
       short: "Západní terasa",
+      // The rects are the level finish outline; westDeck and meta.paving tile it exactly.
+      meta: { paving: [{ x: 9.48, y: 15.93, w: 1, d: 3.25 }, { x: 10.48, y: 15.93, w: 2.85, d: 3.25 }] },
       parts: [
-        { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 19.25, fill: "#a87d4a", opacity: 0.55, stroke: "#5a3e25", sw: 0.8 },
-        { kind: "rect", x: 10.48, y: 15.93, w: 4.45, d: 3.25, fill: "#a87d4a", opacity: 0.55, stroke: "#5a3e25", sw: 0.8 },
-        { kind: "text", x: 12.61, y: 17.33, text: "západní terasa", cls: "lbl-sm" },
-        { kind: "text", x: 12.61, y: 18.11, text: "atrium + chodník 1 m", cls: "dim" }
+        { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 19.25, fill: "#cdc1ad", opacity: 0.7, stroke: "#8a7f6c", sw: 0.8 },
+        { kind: "rect", x: 10.48, y: 15.93, w: 4.45, d: 3.25, fill: "#cdc1ad", opacity: 0.7, stroke: "#8a7f6c", sw: 0.8 },
+        { kind: "text", x: 11.9, y: 17.33, text: "západní terasa", cls: "lbl-sm" },
+        { kind: "text", x: 11.9, y: 18.11, text: "atrium + chodník 1 m", cls: "dim" }
+      ]
+    },
+    {
+      id: "westDeck",
+      name: "Západní paluba Twinson: chodník 1 m a atrium 3,25 × 1,6 m",
+      short: "Západní paluba",
+      parts: [
+        { kind: "rect", x: 9.48, y: 7.18, w: 1, d: 8.75, fill: "#986a54", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 },
+        { kind: "rect", x: 9.48, y: 19.18, w: 1, d: 7.25, fill: "#986a54", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 },
+        { kind: "rect", x: 13.33, y: 15.93, w: 1.6, d: 3.25, fill: "#986a54", opacity: 0.85, stroke: "#5a3e25", sw: 0.8 }
       ]
     },
     {
       id: "eastTerrace",
-      name: "Východní terasa 3 × 7,82 m",
+      name: "Východní terasa 3 × 7,65 m",
       parts: [
-        { kind: "rect", x: 20.58, y: 11.58, w: 3, d: 7.82, fill: "#a87d4a", opacity: 0.78, stroke: "#5a3e25", sw: 1.2 },
+        { kind: "rect", x: 20.58, y: 11.58, w: 3, d: 7.65, fill: "#986a54", opacity: 0.85, stroke: "#5a3e25", sw: 1.2 },
         { kind: "text", x: 22.08, y: 16.39, text: "východní terasa", cls: "lbl-w" },
         { kind: "text", x: 22.08, y: 17.28, text: "(E.02)", cls: "lbl-sm-w" },
-        { kind: "text", x: 22.08, y: 17.6, text: "3 × 7.82 m", cls: "dim", fill: "#fff" }
+        { kind: "text", x: 22.08, y: 17.6, text: "3 × 7.65 m", cls: "dim", fill: "#fff" }
       ]
     },
     {
