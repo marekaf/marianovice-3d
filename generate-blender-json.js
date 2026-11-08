@@ -22,7 +22,7 @@ const { GradingSite } = require("./grading-site.js");
 const { SurveySurface } = require("./survey-surface.js");
 const VehicleModel = require("./vehicle-model.js");
 const { ExteriorFurnitureModel } = require("./exterior-furniture-model.js");
-const {buildEntranceStairs,buildEntranceRecess,entrancePavingDatum}=require('./entrance-landing.js');
+const {buildEntranceLuneta,entranceLunetaPavingDatum}=require('./entrance-luneta-model.js');
 const { TerraceDeckModel } = require("./terrace-deck-model.js");
 const { PortalDrainModel } = require("./portal-drain-model.js");
 const { AtriumStonesModel } = require("./atrium-stones-model.js");
@@ -50,7 +50,7 @@ const {site:siteTerrain} = GradingSite.create({garden:GARDEN,terrain:TERRAIN,sur
 const greenhouseModel = GreenhouseModel.build(GARDEN, existingGround,{floorHeight:siteTerrain.spec.productiveCourt.greenhouseFinish});
 const raisedBedsModel = RaisedBedsModel.build(GARDEN,{surfaceHeight:siteTerrain.routeHeight,groundHeight:siteTerrain.height,court:siteTerrain.spec.productiveCourt});
 
-const entrancePaving=entrancePavingDatum(GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),HOUSE_INTERIOR);
+const entrancePaving=entranceLunetaPavingDatum(HOUSE_INTERIOR,GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z));
 const out = path.join(__dirname, "blender", "garden.json");
 if (surveySurface || fenceSurvey) {
   // Survey coordinates must never be written into a tracked or stageable export.
@@ -61,8 +61,7 @@ if (surveySurface || fenceSurvey) {
 }
 fs.writeFileSync(out, JSON.stringify({
   ...GARDEN,
-  houseEntranceStairs:buildEntranceStairs(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,entrancePaving),
-  houseEntranceRecess:buildEntranceRecess(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,entrancePaving),
+  houseEntranceStairs:buildEntranceLuneta(HOUSE_INTERIOR,GARDEN,siteTerrain.spec.houseBaseY,entrancePaving),
   atriumStonesModel:AtriumStonesModel.build(GARDEN,siteTerrain.height),
   terraceDeckModel:TerraceDeckModel.build(GARDEN,siteTerrain.spec.deckTop,siteTerrain.height,PortalDrainModel.build(GARDEN,siteTerrain.spec.deckTop,HOUSE_INTERIOR.exteriorOpenings())),
   housePlinth: HousePlinth.build(HOUSE_INTERIOR,siteTerrain.spec.houseBaseY,siteTerrain.height),

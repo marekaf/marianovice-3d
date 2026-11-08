@@ -51,6 +51,7 @@ const checks=[
   'verify-house-wall-backing.mjs',
   'verify-entrance-jamb.mjs',
   'verify-entrance-landing.mjs',
+  'verify-entrance-luneta.mjs',
   'verify-entrance-controls.mjs',
   'verify-entrance-drawing.mjs',
   'verify-kitchen-upper-modules.mjs',
