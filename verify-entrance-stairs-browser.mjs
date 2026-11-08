@@ -19,7 +19,7 @@ try{
   const page=await browser.newPage({viewport:{width:1500,height:1100}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   const output=process.env.ENTRANCE_OUTPUT||'/tmp/entrance-stairs';await mkdir(output,{recursive:true});
-  for(const variant of ['aligned','sketch']){
+  for(const variant of ['straight','aligned','sketch']){
     await page.goto(`http://127.0.0.1:${server.address().port}/index.html?entrance=${variant}`);
     await page.waitForFunction(()=>window.entranceCheck,null,{timeout:180000});
     await page.locator('#viewerLoading').waitFor({state:'detached',timeout:30000});
@@ -29,8 +29,16 @@ try{
       const datum=entranceLunetaPavingDatum(localHouseData,GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),{variant});
       const model=buildEntranceLuneta(localHouseData,GARDEN,houseTerrainY,datum,{variant});
       const stairs=scene.getObjectByName(model.name),ray=new THREE.Raycaster();
+      const posts=scene.getObjectByName('carport_posts');
+      if(!posts)throw new Error('Carport supports missing');
       if(!stairs)throw new Error('Entrance model missing from scene');
       scene.updateMatrixWorld(true);
+      const {carportPostLayout}=await import('./carport-posts-model.js');
+      for(const post of carportPostLayout(GARDEN)){
+        ray.set(new THREE.Vector3(post.x,20,post.z),new THREE.Vector3(0,-1,0));
+        const hit=ray.intersectObject(posts,true)[0];
+        if(!hit||hit.point.y<houseTerrainY+2)throw new Error(`Missing full-height carport post: ${post.id}`);
+      }
       let count=0,maxError=0,walkError=0;
       for(const surface of model.walkSurfaces){
         const x=(surface.x0+surface.x1)/2,z=(surface.z0+surface.z1)/2;
@@ -57,7 +65,7 @@ try{
       camera.position.set(24.2,4.4,24.5);controls.target.set(21.8,2.1,21);controls.update();renderer.render(scene,camera);
       return {variant,count,maxError,walkError,rise:model.dimensions.rise,datum};
     },variant);
-    assert(measurements.count>=5);assert(measurements.maxError<2e-6,JSON.stringify(measurements));assert(measurements.walkError<1e-7,JSON.stringify(measurements));
+    assert(measurements.count>=(variant==='straight'?4:6));assert(measurements.maxError<2e-6,JSON.stringify(measurements));assert(measurements.walkError<1e-7,JSON.stringify(measurements));
     await page.screenshot({path:`${output}/entrance-${variant}.png`});
     console.log(JSON.stringify(measurements));
   }

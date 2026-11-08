@@ -23,6 +23,7 @@ const { SurveySurface } = require("./survey-surface.js");
 const VehicleModel = require("./vehicle-model.js");
 const { ExteriorFurnitureModel } = require("./exterior-furniture-model.js");
 const {buildEntranceLuneta,entranceLunetaPavingDatum}=require('./entrance-luneta-model.js');
+const {buildCarportPosts}=require("./carport-posts-model.js");
 const { TerraceDeckModel } = require("./terrace-deck-model.js");
 const { PortalDrainModel } = require("./portal-drain-model.js");
 const { AtriumStonesModel } = require("./atrium-stones-model.js");
@@ -76,6 +77,7 @@ fs.writeFileSync(out, JSON.stringify({
   saunaModel: SaunaModel.build(GARDEN, siteTerrain.spec.saunaFinish),
   pergolaModel,
   garageModel,
+  carportPosts:buildCarportPosts(GARDEN,x=>garageModel.dims.roofHigh-(garageModel.dims.rect.x+garageModel.dims.roofRidgeOffset-x)*garageModel.dims.carportPitch-.08,siteTerrain.height),
   vehicleModels: GARDEN.vehicles.map(v => VehicleModel.build(v)),
   exteriorFurnitureModel: ExteriorFurnitureModel.build(GARDEN, siteTerrain.spec.deckTop),
   fixtureModels: Object.fromEntries(FIXTURE_SAMPLES.map(sample => [sample.id, FurnitureModel.build(sample.furniture)])),

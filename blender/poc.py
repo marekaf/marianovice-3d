@@ -1227,10 +1227,7 @@ def cp_z(px):
     return cp_west + (px - c["x"]) * (cp_east - cp_west) / cp_roof_width
 
 
-for i, (px, py) in enumerate([(c["x"] + 0.3, c["y"] + 0.3), (c["x"] + c["w"] - 0.3, c["y"] + 0.3),
-                              (c["x"] + 0.3, c["y"] + c["d"] - 0.3),
-                              (c["x"] + c["w"] - 0.3, c["y"] + c["d"] - 0.3)]):
-    post("carport_post%d" % i, px, py, ground_h(px, py) - 0.2, cp_z(px) - 0.08, MAT["wood"], half=0.07)
+build_model(GARDEN["carportPosts"])
 sloped_slab("carport_roof", c["x"], g_ridge_x, cp_west - 0.08, cp_east - 0.08,
             c["y"] - g_roof_end_overhang, c["y"] + c["d"] + g_roof_end_overhang, 0.081, MAT["roof"])
 roof_seams("cp", c["x"], cp_west + 0.001, g_ridge_x, cp_east + 0.001,

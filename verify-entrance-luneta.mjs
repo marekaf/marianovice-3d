@@ -7,13 +7,13 @@ const {TERRAIN}=require('./terrain.js'),{GradingSite}=require('./grading-site.js
 const {site}=GradingSite.create({garden,terrain:TERRAIN});
 const finish=(x,z)=>SiteTerrain.drivewayFinish(site.spec,x,z),before=JSON.stringify([house,garden,house.exteriorOpenings()]);
 const close=(a,b)=>assert(Math.abs(a-b)<1e-8,`${a} != ${b}`);
-for(const variant of ['sketch','aligned']){
+for(const variant of ['sketch','aligned','straight']){
   const datum=entranceLunetaPavingDatum(house,garden,finish,{variant});
   const model=buildEntranceLuneta(house,garden,TERRAIN.houseFFLInternal,datum,{variant}),d=model.dimensions;
   assert.deepEqual(model,buildEntranceLuneta(house,garden,TERRAIN.houseFFLInternal,datum,{variant}));
-  close(d.footprint.x1,21.88);close(d.zSouth,variant==='aligned'?22.5525:22.53);close(d.footprint.z1,d.zSouth+.65);
+  close(d.footprint.x1,21.88);close(d.zSouth,variant==='sketch'?22.53:22.5525);close(d.footprint.z1,d.zSouth+2*d.southTread);
   close(d.floorY-3*d.rise,datum);assert(d.rise>.17&&d.rise<.18);
-  assert.equal(model.walkSurfaces.length,6);
+  assert.equal(model.walkSurfaces.length,variant==='straight'?4:6);
   const terrace=garden.elements.find(e=>e.id==='eastTerrace').parts.find(p=>p.kind==='rect');
   close(model.soil.z0,terrace.y+terrace.d);
   close(model.soil.x1,model.wallSegments.find(s=>s.name==='recess_east').x0);
@@ -65,3 +65,15 @@ for(const args of [[NaN,1], [2,Infinity],[1,2],[2,2]])assert.throws(()=>buildEnt
 assert.throws(()=>buildEntranceLuneta(house,garden,2.465,1.95,{variant:'unknown'}));
 assert.throws(()=>entranceLunetaPavingDatum(house,garden,()=>NaN));
 console.log('Entrance Luneta variants: supported tiled steps, equal rises, continuous walk surfaces and four wall courses verified');
+const {carportPostLayout}=await import('./carport-posts-model.js');
+const entrancePost=carportPostLayout(garden).find(post=>post.id==='entrance');
+const intersects=(surface,half)=>Math.min(surface.x1,entrancePost.x+half)>Math.max(surface.x0,entrancePost.x-half)+1e-8&&Math.min(surface.z1,entrancePost.z+half)>Math.max(surface.z0,entrancePost.z-half)+1e-8;
+for(const variant of ['straight','aligned','sketch']){
+  const datum=entranceLunetaPavingDatum(house,garden,finish,{variant});
+  const model=buildEntranceLuneta(house,garden,TERRAIN.houseFFLInternal,datum,{variant});
+  if(variant==='straight'){
+    assert(model.walkSurfaces.every(s=>!intersects(s,entrancePost.footingWidth/2)),'Straight treads avoid even the nominal footing plan envelope');
+    close(entrancePost.z-entrancePost.footingWidth/2-model.dimensions.zSouth,.0275);
+  }else assert(model.walkSurfaces.some(s=>intersects(s,entrancePost.width/2)),'Source wrap variants retain their documented post collision');
+}
+console.log('Straight descent avoids the entrance post; source wraps intersect it and remain comparison variants');

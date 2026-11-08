@@ -36,6 +36,7 @@ const checks=[
   'verify-perennial-sharing.mjs',
   'verify-perennial-batch.mjs',
   'verify-garage.mjs',
+  'verify-carport-posts.mjs',
   'verify-garage-roof-ends.mjs',
   'verify-loft-ceiling.mjs',
   'verify-attic-datum.mjs',

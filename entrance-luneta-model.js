@@ -1,6 +1,6 @@
 import {entranceLanding} from './entrance-landing.js';
 
-export function entranceLunetaPavingDatum(house,garden,sampleFinish,{variant='aligned'}={}) {
+export function entranceLunetaPavingDatum(house,garden,sampleFinish,{variant='straight'}={}) {
   const model=buildEntranceLuneta(house,garden,1,.49,{variant}),footprint=model.dimensions.footprint;
   const paving=garden.elements.find(element=>element.id==='carport')?.parts.find(part=>part.kind==='rect');
   if(!paving)throw new Error('Carport pavement is required');
@@ -11,14 +11,15 @@ export function entranceLunetaPavingDatum(house,garden,sampleFinish,{variant='al
   return Math.min(...levels);
 }
 
-export function buildEntranceLuneta(house,garden,floorY,pavingY,{variant='aligned'}={}) {
-  if(!['sketch','aligned'].includes(variant))throw new Error('Unknown entrance variant');
+export function buildEntranceLuneta(house,garden,floorY,pavingY,{variant='straight'}={}) {
+  if(!['sketch','aligned','straight'].includes(variant))throw new Error('Unknown entrance variant');
   if(!Number.isFinite(floorY)||!Number.isFinite(pavingY)||floorY-pavingY<=.18||floorY-pavingY>=.8)throw new Error('Entrance requires finite floor and paving levels with a supported stair rise');
   const entry=house.exteriorOpenings().find(item=>item.model.opening.kind==='entrance');
   const facadeX=garden.elements.find(element=>element.id==='house')?.meta.eNotch[0];
   if(!entry||!Number.isFinite(facadeX))throw new Error('House entrance and facade are required');
   const bridge=entranceLanding(entry,house.originPlot,facadeX,floorY,pavingY);
-  const zSouth=variant==='aligned'?bridge.z1:22.53,zNorth=zSouth-1.5,rise=(floorY-pavingY)/3;
+  const wrapping=variant!=='straight',southTread=wrapping?.325:0;
+  const zSouth=variant==='sketch'?22.53:bridge.z1,zNorth=zSouth-1.5,rise=(floorY-pavingY)/3;
   const parts=[],walkSurfaces=[],base=floorY-.8;
   const box=(name,x0,x1,z0,z1,bottom,top,material)=>{
     if(!(x1>x0&&z1>z0&&top>bottom))throw new Error(`Invalid entrance part ${name}`);
@@ -37,9 +38,9 @@ export function buildEntranceLuneta(house,garden,floorY,pavingY,{variant='aligne
   surface('entrance_reveal',bridge.x0,bridge.x1,bridge.z0,bridge.z1,floorY);
   surface('entrance_landing',facadeX,facadeX+.7,zNorth,zSouth,floorY,facadeX+.6,zSouth-.1);
   for(let i=1;i<=2;i++){
-    const previousX=facadeX+.7+(i-1)*.3,x=previousX+.3,previousZ=zSouth+(i-1)*.325,z=previousZ+.325,y=floorY-i*rise;
-    surface(`entrance_east_${i}`,previousX,x,zNorth,previousZ,y,x-.1);
-    surface(`entrance_south_${i}`,facadeX+.7,x,previousZ,z,y,x-.1,z-.1);
+    const previousX=facadeX+.7+(i-1)*.3,x=previousX+.3,previousZ=zSouth+(i-1)*southTread,z=previousZ+southTread,y=floorY-i*rise;
+    surface(`entrance_east_${i}`,previousX,x,zNorth,previousZ,y,x-.1,wrapping?previousZ:previousZ-.1);
+    if(wrapping)surface(`entrance_south_${i}`,facadeX+.7,x,previousZ,z,y,x-.1,z-.1);
   }
   const palisade=(name,x0,x1,z0,z1,top)=>{
     const alongX=x1-x0>z1-z0,length=alongX?x1-x0:z1-z0,n=Math.ceil(length/.1);
@@ -49,9 +50,9 @@ export function buildEntranceLuneta(house,garden,floorY,pavingY,{variant='aligne
     }
   };
   for(let i=0;i<3;i++){
-    const x=facadeX+.7+i*.3,z=zSouth+i*.325,y=floorY-i*rise;
+    const x=facadeX+.7+i*.3,z=zSouth+i*southTread,y=floorY-i*rise;
     palisade(`east_riser_${i}`,x-.1,x,zNorth,z-.1,y);
-    palisade(`south_riser_${i}`,i===0?facadeX:facadeX+.7,x,z-.1,z,y);
+    palisade(`south_riser_${i}`,i===0?facadeX:wrapping?facadeX+.7:x-.3,x,z-.1,z,y);
   }
   const wall={blockLength:.4,blockWidth:.2,courseHeight:.2,courses:4,top:floorY,bottom:base};
   const wallSegments=[
@@ -76,5 +77,5 @@ export function buildEntranceLuneta(house,garden,floorY,pavingY,{variant='aligne
   const proposedFill={x0:23.58,x1:24.48,z0:18.43,z1:19.23,y:floorY-.05,bottom:base,proposal:true};
   box('garden_return_fill',proposedFill.x0,proposedFill.x1,proposedFill.z0,proposedFill.z1,base,proposedFill.y,'soil');
   return {name:'entrance_luneta',floorHeight:0,materials:{paving:{color:'#b9b4ab',roughness:.9},palisade:{color:'#aaa69b',roughness:.9},stairFill:{color:'#8c8170',roughness:1},luneta:{color:'#a59c88',roughness:1},soil:{color:'#5d4b3a',roughness:1}},parts,lights:[],walkSurfaces,soil,proposedFill,wallSegments,
-    dimensions:{variant,facadeX,landingDepth:.7,upperWidth:1.5,eastTread:.3,southTread:.325,risers:3,rise,floorY,pavingY,zNorth,zSouth,footprint:{x0:facadeX,x1:facadeX+1.3,z0:zNorth,z1:zSouth+.65},wall}};
+    dimensions:{variant,facadeX,landingDepth:.7,upperWidth:1.5,eastTread:.3,southTread,risers:3,rise,floorY,pavingY,zNorth,zSouth,footprint:{x0:facadeX,x1:facadeX+1.3,z0:zNorth,z1:zSouth+2*southTread},wall}};
 }
