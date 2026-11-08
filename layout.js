@@ -27,9 +27,9 @@ const GARDEN = {
     { from: [34.78, 19.39], to: [44.11, 19.39], label: "9.35 m", at: [39.44, 19.17], anchor: "middle" }
   ],
   // Vehicle fleet — nominal manufacturer dimensions (m): length, width (excl. mirrors), turning
-  // circle Ø. Parked nose-north; cx = lane centre; noseZ = front bumper. Carport body clearances are
-  // 0.75 m to the entrance stairs, 0.75 m between cars and 0.56 m to the garage wall.
-  // Garage cars sit south of the north-wall workbench. hinge = A-pillar distance back from the front bumper; doorLen = front-door leaf
+  // circle Ø. Parked nose-north; cx = lane centre; noseZ = front bumper.
+  // Garage cars sit south of the north-wall workbench.
+  // hinge = A-pillar distance back from the front bumper; doorLen = front-door leaf
   // length (a coupe like the M4 has one long door, hatchbacks/estates shorter front doors).
   vehicles: [
     { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3a72b8", cx: 23.525, noseZ: 20.0, hinge: 1.65, doorLen: 1.00 },
