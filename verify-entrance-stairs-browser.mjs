@@ -8,7 +8,7 @@ const root=fileURLToPath(new URL('.',import.meta.url));
 const server=createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://localhost').pathname;
   let data=await readFile(resolve(root,'.'+path));
-  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();','window.entranceCheck={THREE,scene,camera,renderer,controls,walkingHeight,siteTerrain,localHouseData,houseTerrainY};ViewerLoading.finish();');
+  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();','window.entranceCheck={THREE,scene,camera,renderer,controls,walkingHeight,siteTerrain,localHouseData,houseTerrainY,GardenRouteModel,ground};ViewerLoading.finish();');
   if(['.html','.js','.mjs'].includes(extname(path)))data=data.toString().replaceAll('https://unpkg.com/three@0.186.0/','/node_modules/three/');
   res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css'}[extname(path)]||'application/octet-stream'}).end(data);
 }catch{res.writeHead(404).end();}});
@@ -25,7 +25,7 @@ try{
     await page.locator('#viewerLoading').waitFor({state:'detached',timeout:30000});
     const measurements=await page.evaluate(async variant=>{
       const {buildEntranceLuneta,entranceLunetaPavingDatum}=await import('./entrance-luneta-model.js');
-      const {THREE,scene,walkingHeight,camera,controls,renderer,siteTerrain,localHouseData,houseTerrainY}=entranceCheck;
+      const {THREE,scene,walkingHeight,camera,controls,renderer,siteTerrain,localHouseData,houseTerrainY,GardenRouteModel,ground}=entranceCheck;
       const datum=entranceLunetaPavingDatum(localHouseData,GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),{variant});
       const model=buildEntranceLuneta(localHouseData,GARDEN,houseTerrainY,datum,{variant});
       const stairs=scene.getObjectByName(model.name),ray=new THREE.Raycaster();
@@ -80,7 +80,12 @@ try{
         const x=(surface.x0+surface.x1)/2,z=(surface.z0+surface.z1)/2;
         const groundY=siteTerrain.height(x,z);
         if(Math.abs(groundY-surface.y)>1e-7)throw new Error('Shared grass terrain must meet the terrace-board datum');
-        walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-groundY));
+        const walkY=GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<=0?siteTerrain.routeHeight(x,z):groundY;
+        walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-walkY));
+        ray.set(new THREE.Vector3(x,houseTerrainY+.1,z),new THREE.Vector3(0,-1,0));
+        const groundHit=ray.intersectObject(ground,true)[0];
+        if(!groundHit||Math.abs(groundHit.point.y-groundY)>.002)throw new Error('Rendered shared lawn must meet its grading datum');
+        if(ray.intersectObject(stairs,true).length)throw new Error('The entrance model must not cap the shared grass terrain');
       }
       const toggle=document.getElementById('toggleVehicles');toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));
       camera.position.set(24.2,4.4,24.5);controls.target.set(21.8,2.1,21);controls.update();renderer.render(scene,camera);
