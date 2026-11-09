@@ -13,17 +13,29 @@ for(const variant of ['sketch','aligned','straight']){
   assert.deepEqual(model,buildEntranceLuneta(house,garden,TERRAIN.houseFFLInternal,datum,{variant}));
   close(d.footprint.x1,21.88);close(d.zSouth,variant==='sketch'?22.53:22.5525);close(d.footprint.z1,d.zSouth+2*d.southTread);
   close(d.floorY-3*d.rise,datum);assert(d.rise>.17&&d.rise<.18);
-  assert.equal(model.walkSurfaces.length,variant==='straight'?4:6);
+  assert.equal(model.walkSurfaces.length,variant==='straight'?6:8);
   const terrace=garden.elements.find(e=>e.id==='eastTerrace').parts.find(p=>p.kind==='rect');
-  close(model.soil.z0,terrace.y+terrace.d);
-  close(model.soil.x1,model.wallSegments.find(s=>s.name==='recess_east').x0);
+  close(model.recess.z0,terrace.y+terrace.d);
+  close(model.recess.x1,model.wallSegments.find(s=>s.name==='recess_east').x0);
   close(model.proposedFill.x0,terrace.x+terrace.w);
   close(model.proposedFill.x1,model.wallSegments.find(s=>s.name==='garden_return').x0);
   close(model.proposedFill.z1,model.wallSegments.find(s=>s.name==='terrace_south').z0);
-  close(model.proposedFill.y,d.floorY-.05);
+  close(model.proposedFill.y,d.floorY);
   close(model.proposedFill.bottom,d.wall.bottom);
   const fill=model.parts.find(p=>p.name==='garden_return_fill');
   close(fill.position[2]+fill.size[2]/2,model.proposedFill.y);
+  assert.equal(fill.material,'grass');
+  assert(model.parts.every(p=>p.material!=='soil'),'The entrance has paving and lawn, not exposed soil');
+  close(model.recess.y,d.floorY);
+  close(model.wallSegments.find(s=>s.name==='stair_north').x0,d.facadeX+.7);
+  for(let x=d.facadeX+.031;x<d.facadeX+.6;x+=.083)for(let z=model.recess.z0+.023;z<d.zSouth-.1;z+=.073){
+    const surfaces=model.walkSurfaces.filter(s=>x>s.x0&&x<s.x1&&z>s.z0&&z<s.z1);
+    assert.equal(surfaces.length,1,'The entire entrance-to-terrace connection is continuously walkable');
+    close(surfaces[0].y,d.floorY);
+    const tops=model.parts.filter(p=>x>p.position[0]-p.size[0]/2+1e-9&&x<p.position[0]+p.size[0]/2-1e-9&&z>p.position[1]-p.size[1]/2+1e-9&&z<p.position[1]+p.size[1]/2-1e-9&&Math.abs(p.position[2]+p.size[2]/2-d.floorY)<1e-8);
+    assert.equal(tops.length,1,'The connection has one visible finish without wall or paving overlap');
+    assert.equal(tops[0].material,'paving');
+  }
   for(const [i,a] of model.walkSurfaces.entries())for(const b of model.walkSurfaces.slice(i+1)){
     assert(Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0)<1e-8||Math.min(a.z1,b.z1)-Math.max(a.z0,b.z0)<1e-8,'Walking rectangles must not overlap');
   }

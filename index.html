@@ -195,7 +195,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-overlay.js?v=5aab9be18ed5"></script>
 <script type="module">
 import * as THREE from 'three';
-import { buildEntranceLuneta, entranceLunetaPavingDatum } from './entrance-luneta-model.js?v=d9ba00630d57';
+import { buildEntranceLuneta, entranceLunetaPavingDatum } from './entrance-luneta-model.js?v=cca0356bde73';
 import { buildCarportPosts } from "./carport-posts-model.js?v=b1cdad53352a";
 import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -1714,7 +1714,7 @@ const exteriorWalkingDoors=[];
     const entrancePaving=entranceLunetaPavingDatum(localHouseData,GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),{variant});
     const stairs=buildEntranceLuneta(localHouseData,GARDEN,ty,entrancePaving,{variant});
     scene.add(buildModel(THREE,stairs));
-    entranceWalkSurfaces.push(...stairs.walkSurfaces,stairs.soil,stairs.proposedFill);
+    entranceWalkSurfaces.push(...stairs.walkSurfaces,stairs.proposedFill);
   }
 }
 

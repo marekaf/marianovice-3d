@@ -56,7 +56,7 @@ export function buildEntranceLuneta(house,garden,floorY,pavingY,{variant='straig
   }
   const wall={blockLength:.4,blockWidth:.2,courseHeight:.2,courses:4,top:floorY,bottom:base};
   const wallSegments=[
-    {name:'stair_north',x0:facadeX,x1:facadeX+1.3,z0:zNorth-.2,z1:zNorth},
+    {name:'stair_north',x0:facadeX+.7,x1:facadeX+1.3,z0:zNorth-.2,z1:zNorth},
     {name:'recess_east',x0:facadeX+1.1,x1:facadeX+1.3,z0:19.43,z1:zNorth-.2},
     {name:'terrace_south',x0:facadeX+1.1,x1:24.48,z0:19.23,z1:19.43},
     {name:'garden_return',x0:24.48,x1:24.68,z0:18.43,z1:19.43,proposal:true}
@@ -72,10 +72,11 @@ export function buildEntranceLuneta(house,garden,floorY,pavingY,{variant='straig
       }
     }
   }
-  const soil={x0:facadeX,x1:facadeX+1.1,z0:19.23,z1:zNorth-.2,y:floorY-.05};
-  box('entrance_recess_soil',soil.x0,soil.x1,soil.z0,soil.z1,base,soil.y,'soil');
-  const proposedFill={x0:23.58,x1:24.48,z0:18.43,z1:19.23,y:floorY-.05,bottom:base,proposal:true};
-  box('garden_return_fill',proposedFill.x0,proposedFill.x1,proposedFill.z0,proposedFill.z1,base,proposedFill.y,'soil');
-  return {name:'entrance_luneta',floorHeight:0,materials:{paving:{color:'#b9b4ab',roughness:.9},palisade:{color:'#aaa69b',roughness:.9},stairFill:{color:'#8c8170',roughness:1},luneta:{color:'#a59c88',roughness:1},soil:{color:'#5d4b3a',roughness:1}},parts,lights:[],walkSurfaces,soil,proposedFill,wallSegments,
+  const recess={x0:facadeX,x1:facadeX+1.1,z0:19.23,z1:zNorth-.2,y:floorY};
+  surface('entrance_recess',recess.x0,recess.x1,recess.z0,recess.z1,recess.y);
+  surface('entrance_connection',facadeX,facadeX+.7,recess.z1,zNorth,floorY);
+  const proposedFill={x0:23.58,x1:24.48,z0:18.43,z1:19.23,y:floorY,bottom:base,proposal:true};
+  box('garden_return_fill',proposedFill.x0,proposedFill.x1,proposedFill.z0,proposedFill.z1,base,proposedFill.y,'grass');
+  return {name:'entrance_luneta',floorHeight:0,materials:{paving:{color:'#b9b4ab',roughness:.9},palisade:{color:'#aaa69b',roughness:.9},stairFill:{color:'#8c8170',roughness:1},luneta:{color:'#a59c88',roughness:1},grass:{color:'#63834a',roughness:1}},parts,lights:[],walkSurfaces,recess,proposedFill,wallSegments,
     dimensions:{variant,facadeX,landingDepth:.7,upperWidth:1.5,eastTread:.3,southTread,risers:3,rise,floorY,pavingY,zNorth,zSouth,footprint:{x0:facadeX,x1:facadeX+1.3,z0:zNorth,z1:zSouth+2*southTread},wall}};
 }

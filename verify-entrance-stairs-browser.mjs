@@ -57,7 +57,7 @@ try{
         walkError=Math.max(walkError,Math.abs(walkingHeight(walkX,walkZ)-surface.y));
         count++;
       }
-      for(const surface of [model.soil,model.proposedFill]){
+      for(const surface of [model.proposedFill]){
         const x=(surface.x0+surface.x1)/2,z=(surface.z0+surface.z1)/2;
         walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-surface.y));
       }
@@ -65,7 +65,7 @@ try{
       camera.position.set(24.2,4.4,24.5);controls.target.set(21.8,2.1,21);controls.update();renderer.render(scene,camera);
       return {variant,count,maxError,walkError,rise:model.dimensions.rise,datum};
     },variant);
-    assert(measurements.count>=(variant==='straight'?4:6));assert(measurements.maxError<2e-6,JSON.stringify(measurements));assert(measurements.walkError<1e-7,JSON.stringify(measurements));
+    assert(measurements.count>=(variant==='straight'?6:8));assert(measurements.maxError<2e-6,JSON.stringify(measurements));assert(measurements.walkError<1e-7,JSON.stringify(measurements));
     await page.screenshot({path:`${output}/entrance-${variant}.png`});
     console.log(JSON.stringify(measurements));
   }

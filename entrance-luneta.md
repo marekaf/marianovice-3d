@@ -1,6 +1,6 @@
 # Entrance stairs and Luneta retaining wall
 
-Shape coordination proposal, 8 November 2026. Dimensions are in millimetres unless noted. This is a dimensioned shape sketch, not a foundation, reinforcement or drainage design. Confirm the setting-out levels, wall system, post footing and drainage before construction.
+Shape coordination proposal, 9 November 2026. Dimensions are in millimetres unless noted. This is a dimensioned shape sketch, not a foundation, reinforcement or drainage design. Confirm the setting-out levels, wall system, post footing and drainage before construction.
 
 ## Sources and interpretation
 
@@ -35,6 +35,8 @@ The nominal house footprint returns at z=22.530, whereas the detailed door ends 
 The September graded carport falls from 396.490 to 396.480 m Bpv. At the straight lower southern corner, the modelled drop is 514.472 mm, giving three equal reference rises of 171.491 mm. The bottom riser varies slightly across sloping paving. Recalculate from surveyed finished levels; the nominal drawing drop of 510 mm implies 170 mm, not the current graded model value. For comparison, the former aligned wrapping shape used a 515.394 mm drop and 171.798 mm rises because its lower corner extends farther south.
 
 The drawing is horizontal finished geometry: tread falls, bedding, waterproof junctions and a drainage outlet remain to be detailed. The straight option avoids the timber post itself, but its foundation coordination remains a construction hold point.
+
+The whole entrance recess is paved continuously at house finished-floor height, matching the terrace boards. The 1100 mm-wide rear recess joins the 700 mm-deep upper landing through paving, with no transverse wall across the walking connection. The stair-side Luneta remains along the exposed 600 mm-wide tread edge. The eastern L-shaped return contains lawn at the same finished level, not exposed soil. These finishes do not set drainage falls or replace the required threshold waterproofing detail.
 
 ## Retaining wall proposal
 
