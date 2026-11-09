@@ -19,7 +19,7 @@ try{
   const page=await browser.newPage({viewport:{width:1500,height:1100}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   const output=process.env.ENTRANCE_OUTPUT||'/tmp/entrance-stairs';await mkdir(output,{recursive:true});
-  for(const variant of ['straight','aligned','sketch']){
+  for(const variant of ['aligned','straight','sketch']){
     await page.goto(`http://127.0.0.1:${server.address().port}/index.html?entrance=${variant}`);
     await page.waitForFunction(()=>window.entranceCheck,null,{timeout:180000});
     await page.locator('#viewerLoading').waitFor({state:'detached',timeout:30000});
@@ -32,7 +32,26 @@ try{
       const posts=scene.getObjectByName('carport_posts');
       if(!posts)throw new Error('Carport supports missing');
       if(!stairs)throw new Error('Entrance model missing from scene');
+      const driveway=scene.getObjectByName('driveway-paving');
       scene.updateMatrixWorld(true);
+      let pavingMeshes=0;
+      stairs.traverse(mesh=>{
+        if(!mesh.isMesh||!/_paving(?:_cut_\d+)?$/.test(mesh.name))return;
+        if(mesh.material!==driveway.material)throw new Error('Entrance paving must share the driveway material object');
+        const {position,uv}=mesh.geometry.attributes;
+        const point=new THREE.Vector3();
+        for(let i=0;i<position.count;i++){
+          point.fromBufferAttribute(position,i).applyMatrix4(mesh.matrixWorld);
+          if(Math.abs(point.x-uv.getX(i))>2e-6||Math.abs(point.z-uv.getY(i))>2e-6)throw new Error('Paving pattern must retain driveway world-coordinate alignment');
+        }
+        pavingMeshes++;
+      });
+      if(!pavingMeshes)throw new Error('Entrance driveway paving is missing');
+      for(const part of model.parts.filter(p=>p.material==='paving')){
+        ray.set(new THREE.Vector3(part.position[0],houseTerrainY+.1,part.position[1]),new THREE.Vector3(0,-1,0));
+        const hit=ray.intersectObject(stairs,true)[0];
+        if(!hit||hit.object.material!==driveway.material)throw new Error(`Paving part does not use driveway material: ${part.name}`);
+      }
       const {carportPostLayout}=await import('./carport-posts-model.js');
       for(const post of carportPostLayout(GARDEN)){
         ray.set(new THREE.Vector3(post.x,20,post.z),new THREE.Vector3(0,-1,0));
@@ -52,14 +71,16 @@ try{
           if(probe)bestError=Math.min(bestError,Math.abs(probe.point.y-surface.y));
         }
         maxError=Math.max(maxError,bestError);
-        const walkX=surface.name.startsWith('entrance_east_')?surface.x1-.04:x;
-        const walkZ=surface.name.startsWith('entrance_south_')?surface.z1-.04:z;
+        const walkX=surface.name.startsWith('entrance_east_')?surface.x1-Math.min(.04,(surface.x1-surface.x0)/2):x;
+        const walkZ=surface.name.startsWith('entrance_south_')?surface.z1-Math.min(.04,(surface.z1-surface.z0)/2):z;
         walkError=Math.max(walkError,Math.abs(walkingHeight(walkX,walkZ)-surface.y));
         count++;
       }
       for(const surface of [model.proposedFill]){
         const x=(surface.x0+surface.x1)/2,z=(surface.z0+surface.z1)/2;
-        walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-surface.y));
+        const groundY=siteTerrain.height(x,z);
+        if(Math.abs(groundY-surface.y)>1e-7)throw new Error('Shared grass terrain must meet the terrace-board datum');
+        walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-groundY));
       }
       const toggle=document.getElementById('toggleVehicles');toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));
       camera.position.set(24.2,4.4,24.5);controls.target.set(21.8,2.1,21);controls.update();renderer.render(scene,camera);

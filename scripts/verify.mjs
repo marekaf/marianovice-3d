@@ -54,6 +54,7 @@ const checks=[
   'verify-entrance-jamb.mjs',
   'verify-entrance-landing.mjs',
   'verify-entrance-luneta.mjs',
+  'verify-entrance-retained-soil.mjs',
   'verify-entrance-controls.mjs',
   'verify-entrance-drawing.mjs',
   'verify-kitchen-upper-modules.mjs',

@@ -150,6 +150,18 @@ def grade_envelope(value,level,slope,distance):
 def outside_east_deck(spec,p,x,z):
     return p.get('id')=='eastTerrace' and spec.get('eastTerraceApron') and x>=p['x1'] and p['z0']<=z<=p['z1']
 
+def retained_soil_height(spec,h,x,z):
+    p=spec.get('eastTerraceRetainedSoil')
+    if not p or x<p['x0'] or z>p['z1']:
+        return h
+    north=max(0,p['z0']-z)
+    if north>=p['northBlend']:
+        return h
+    east=(1 if x<=p['x1'] else 0) if north==0 else 1-smoothstep(max(0,x-p['x1'])/(p['wallWidth']+north))
+    weight=(1-smoothstep(north/p['northBlend']))*east
+    return h+(p['level']-h)*weight
+
+
 def drawing_height(spec, x, z, skip_bank=False):
     h = natural_height(spec, x, z)
     def apply(p, level, blend=None):
@@ -230,6 +242,7 @@ def drawing_height(spec, x, z, skip_bank=False):
     c=spec.get('carportSurface')
     if c:
         apply(c,c['finishNorth']+(c['finishSouth']-c['finishNorth'])*max(0,min(1,(z-c['z0'])/(c['z1']-c['z0'])))-.04,.3)
+    h=retained_soil_height(spec,h,x,z)
     for p in [spec.get('gateRunback'),spec.get('wicketLanding')]:
         if p:
             d=polygon_distance(p['points'],x,z)
@@ -271,6 +284,9 @@ def route_height(spec,x,z):
     bedding=route_surface_bedding(spec,x,z)
     if apron and rect_distance(apron,x,z)==0:
         bedding=min(bedding,.02+max(0,apron['level']-ground))
+    p=spec.get('eastTerraceRetainedSoil')
+    if p and p['x0']<=x<=p['x1'] and p['z0']-p['northBlend']<=z<=p['z1']:
+        bedding=min(bedding,.02+max(0,p['level']-ground))
     h=ground+bedding
     for r in spec['routeProfiles']:
         distance,level=route_sample(r,x,z)

@@ -153,7 +153,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=48a91c975e3b"></script>
+<script src="layout.js?v=92ca11a36b7f"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=68757001ef24"></script>
@@ -187,7 +187,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="fence-model.js?v=650724c57661"></script>
 <script src="boundary-fence-model.js?v=0112fa12d8b8"></script>
 <script src="utility-pillar-model.js"></script>
-<script src="site-terrain.js?v=47e65d890322"></script>
+<script src="site-terrain.js?v=4b1185ac61b9"></script>
 <script src="survey-surface.js"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
 <script src="terrain-preview.js"></script>
@@ -195,7 +195,8 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-overlay.js?v=5aab9be18ed5"></script>
 <script type="module">
 import * as THREE from 'three';
-import { buildEntranceLuneta, entranceLunetaPavingDatum } from './entrance-luneta-model.js?v=cca0356bde73';
+import { createDrivewayPavingMaterial, applyDrivewayPavingMaterial } from './driveway-paving-material.js';
+import { buildEntranceLuneta, entranceLunetaPavingDatum } from './entrance-luneta-model.js?v=ea836728f39d';
 import { buildCarportPosts } from "./carport-posts-model.js?v=b1cdad53352a";
 import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -799,30 +800,6 @@ grassTex.repeat.set(1 / 5.5, 1 / 5.5);
 const asphaltTex = speckleTexture('#b0b0aa', [40, 220], [0, 8], [55, 80], 4000);
 asphaltTex.repeat.set(1 / 3, 1 / 3);
 
-// DITON large-format pavers (MONACO/MILÁNO, natural grey), running bond, world-space UV.
-// Canvas covers a 2.4 m block (0.6×0.4 m units) so per-paver tone varies before it repeats.
-const paverTex = (() => {
-  const M = 2.4, S = 512, ppm = S / M;
-  const cv = document.createElement('canvas'); cv.width = cv.height = S;
-  const ctx = cv.getContext('2d');
-  ctx.fillStyle = '#66655f'; ctx.fillRect(0, 0, S, S);            // recessed joint (dark grey)
-  const pw = 0.6, ph = 0.4, j = 0.018;
-  let row = 0;
-  for (let z = 0; z < M; z += ph, row++) {
-    const off = (row % 2) * pw / 2;                               // half-paver running-bond shift
-    for (let x = -pw; x < M + pw; x += pw) {
-      const g = 154 + (Math.random() * 2 - 1) * 15;               // per-paver grey variation
-      ctx.fillStyle = `rgb(${g | 0},${(g - 3) | 0},${(g - 8) | 0})`;
-      ctx.fillRect((x + off + j) * ppm, (z + j) * ppm, (pw - 2 * j) * ppm, (ph - 2 * j) * ppm);
-    }
-  }
-  const t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.repeat.set(1 / M, 1 / M);
-  return t;
-})();
-
 // Wood-plank texture — near-white base so material color stays the multiplier
 const woodTex = (() => {
   const cv = document.createElement('canvas');
@@ -873,7 +850,7 @@ const groundGeom = await (async () => {
   const xs = plotVerts.map(p => p[0]), zs = plotVerts.map(p => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
   const contactPoints = hiddenBenchModel.feet.flatMap(foot => foot.bottomCorners);
-  const gradingRects = [...siteTerrain.spec.cutRects, ...siteTerrain.spec.fillPads, ...siteTerrain.spec.levelPads,
+  const gradingRects = [...[siteTerrain.spec.eastTerraceRetainedSoil].filter(Boolean).map(p=>({...p,blend:.05})), ...siteTerrain.spec.cutRects, ...siteTerrain.spec.fillPads, ...siteTerrain.spec.levelPads,
     ...siteTerrain.spec.postCuts, ...siteTerrain.spec.finishPads ?? [], ...siteTerrain.spec.protectedPads ?? [], ...siteTerrain.spec.fixedFences?.levelPads ?? [], ...siteTerrain.spec.drainageStrips ?? [], siteTerrain.spec.benchPad];
   const samples = (start, end, axis) => {
     const count = Math.ceil((end - start) / 0.7);
@@ -1351,7 +1328,7 @@ const drivewayGeom = (() => {
 })();
 const driveway = new THREE.Mesh(
   drivewayGeom,
-  new THREE.MeshStandardMaterial({ color: 0xffffff, map: paverTex, roughness: 0.85 })
+  createDrivewayPavingMaterial(THREE)
 );
 driveway.receiveShadow = true;
 driveway.name = 'driveway-paving';
@@ -1710,11 +1687,13 @@ const exteriorWalkingDoors=[];
   }
   if(localHouseData){
     const requestedEntrance=new URLSearchParams(location.search).get('entrance');
-    const variant=['sketch','aligned'].includes(requestedEntrance)?requestedEntrance:'straight';
+    const variant=['sketch','straight'].includes(requestedEntrance)?requestedEntrance:'aligned';
     const entrancePaving=entranceLunetaPavingDatum(localHouseData,GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),{variant});
     const stairs=buildEntranceLuneta(localHouseData,GARDEN,ty,entrancePaving,{variant});
-    scene.add(buildModel(THREE,stairs));
-    entranceWalkSurfaces.push(...stairs.walkSurfaces,stairs.proposedFill);
+    const stairModel=buildModel(THREE,stairs);
+    applyDrivewayPavingMaterial(THREE,stairModel,driveway.material);
+    scene.add(stairModel);
+    entranceWalkSurfaces.push(...stairs.walkSurfaces);
   }
 }
 

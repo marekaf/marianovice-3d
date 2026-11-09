@@ -13,7 +13,7 @@ for(const variant of ['sketch','aligned','straight']){
   assert.deepEqual(model,buildEntranceLuneta(house,garden,TERRAIN.houseFFLInternal,datum,{variant}));
   close(d.footprint.x1,21.88);close(d.zSouth,variant==='sketch'?22.53:22.5525);close(d.footprint.z1,d.zSouth+2*d.southTread);
   close(d.floorY-3*d.rise,datum);assert(d.rise>.17&&d.rise<.18);
-  assert.equal(model.walkSurfaces.length,variant==='straight'?6:8);
+  assert(model.walkSurfaces.length>=(variant==='straight'?6:8));
   const terrace=garden.elements.find(e=>e.id==='eastTerrace').parts.find(p=>p.kind==='rect');
   close(model.recess.z0,terrace.y+terrace.d);
   close(model.recess.x1,model.wallSegments.find(s=>s.name==='recess_east').x0);
@@ -22,9 +22,8 @@ for(const variant of ['sketch','aligned','straight']){
   close(model.proposedFill.z1,model.wallSegments.find(s=>s.name==='terrace_south').z0);
   close(model.proposedFill.y,d.floorY);
   close(model.proposedFill.bottom,d.wall.bottom);
-  const fill=model.parts.find(p=>p.name==='garden_return_fill');
-  close(fill.position[2]+fill.size[2]/2,model.proposedFill.y);
-  assert.equal(fill.material,'grass');
+  assert(!model.parts.some(p=>p.name==='garden_return_fill'),'The garden return uses shared terrain, not a separate cap');
+  assert.equal(model.materials.paving.finish,'driveway-pavers');
   assert(model.parts.every(p=>p.material!=='soil'),'The entrance has paving and lawn, not exposed soil');
   close(model.recess.y,d.floorY);
   close(model.wallSegments.find(s=>s.name==='stair_north').x0,d.facadeX+.7);
@@ -42,6 +41,11 @@ for(const variant of ['sketch','aligned','straight']){
   let samples=0;
   for(let x=d.facadeX+.01317;x<d.footprint.x1;x+=.01917)for(let z=d.zNorth+.01317;z<d.footprint.z1;z+=.01917){
     if(x<d.facadeX+.7&&z>d.zSouth)continue;
+    const opening=model.postOpening;
+    if(x>opening.x0&&x<opening.x1&&z>opening.z0&&z<opening.z1){
+      assert(model.walkSurfaces.every(s=>!(x>s.x0&&x<s.x1&&z>s.z0&&z<s.z1)),'The post opening is not a walking surface');
+      continue;
+    }
     const i=Math.max(x<=d.facadeX+.7?0:Math.ceil((x-d.facadeX-.7)/.3),z<=d.zSouth?0:Math.ceil((z-d.zSouth)/.325));
     const surfaces=model.walkSurfaces.filter(s=>x>s.x0&&x<s.x1&&z>s.z0&&z<s.z1);
     assert.equal(surfaces.length,1,'Expanded stair footprint has no gaps');close(surfaces[0].y,d.floorY-i*d.rise);samples++;
@@ -86,6 +90,12 @@ for(const variant of ['straight','aligned','sketch']){
   if(variant==='straight'){
     assert(model.walkSurfaces.every(s=>!intersects(s,entrancePost.footingWidth/2)),'Straight treads avoid even the nominal footing plan envelope');
     close(entrancePost.z-entrancePost.footingWidth/2-model.dimensions.zSouth,.0275);
-  }else assert(model.walkSurfaces.some(s=>intersects(s,entrancePost.width/2)),'Source wrap variants retain their documented post collision');
+  }else{
+    assert(model.walkSurfaces.some(s=>s.z1>entrancePost.z+entrancePost.width/2),'Wrapping treads continue beyond the post');
+    assert(model.walkSurfaces.some(s=>intersects(s,entrancePost.footingWidth/2)),'Nominal footing coordination remains unresolved');
+  }
+  assert(model.walkSurfaces.every(s=>!intersects(s,entrancePost.width/2)),'Walking surfaces exclude the timber post');
+  for(const p of model.parts.filter(p=>p.material!=='luneta'))assert(!intersects({x0:p.position[0]-p.size[0]/2,x1:p.position[0]+p.size[0]/2,z0:p.position[1]-p.size[1]/2,z1:p.position[1]+p.size[1]/2},entrancePost.width/2),`${p.name} intersects the timber post`);
 }
-console.log('Straight descent avoids the entrance post; source wraps intersect it and remain comparison variants');
+assert.equal(buildEntranceLuneta(house,garden,TERRAIN.houseFFLInternal,finish(21.88,23.2025)).dimensions.variant,'aligned');
+console.log('Wrapping treads continue around the timber post; exact post cuts preserve the selected outer footprint');

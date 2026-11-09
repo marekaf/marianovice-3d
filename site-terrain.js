@@ -124,6 +124,16 @@ const SiteTerrain = (() => {
   }
   const gradeEnvelope=(value,level,slope,distance)=>Math.max(level-slope*distance,Math.min(level+slope*distance,value));
   const outsideEastDeck=(spec,p,x,z)=>p.id==="eastTerrace"&&spec.eastTerraceApron&&x>=p.x1&&z>=p.z0&&z<=p.z1;
+
+  function retainedSoilHeight(spec,h,x,z) {
+    const p=spec.eastTerraceRetainedSoil;
+    if(!p||x<p.x0||z>p.z1)return h;
+    const north=Math.max(0,p.z0-z);
+    if(north>=p.northBlend)return h;
+    const east=north===0?(x<=p.x1?1:0):1-smoothstep(Math.max(0,x-p.x1)/(p.wallWidth+north));
+    const weight=(1-smoothstep(north/p.northBlend))*east;
+    return h+(p.level-h)*weight;
+  }
   function drawingHeight(spec,x,z,skipBank=false) {
     let h=naturalHeight(spec,x,z);
     const apply=(p,level)=>{const d=rectDistance(p,x,z);if(p.gradingMode==='blend'){if(d<p.blend)h=level+(h-level)*smoothstep(d/p.blend);}else h=gradeEnvelope(h,level,p.bankSlope??.4,d);};
@@ -146,6 +156,7 @@ const SiteTerrain = (() => {
     if(spec.houseExcavation){const p=spec.houseExcavation,d=polygonDistance(p.points,x,z);if(d<p.blend)h=Math.min(h,p.level+(h-p.level)*smoothstep(d/p.blend));}
     if(spec.drivewayProfile){const p=spec.drivewayProfile,d=polygonDistance(p.points,x,z),level=drivewayFinish(spec,x,z)-p.surfaceOffset;h=Math.min(h,gradeEnvelope(h,level,.4,d));}
     const c=spec.carportSurface;if(c)apply(c,c.finishNorth+(c.finishSouth-c.finishNorth)*Math.max(0,Math.min(1,(z-c.z0)/(c.z1-c.z0)))-.04,.3);
+    h=retainedSoilHeight(spec,h,x,z);
     for(const p of [spec.gateRunback,spec.wicketLanding].filter(Boolean)){const d=polygonDistance(p.points,x,z);if(d<p.blend)h=p.level+(h-p.level)*smoothstep(d/p.blend);}
     const west=spec.westPlatform;
     const endBlend=(1-smoothstep(Math.max(west.z0-z,0,z-(spec.westBank.endZ??west.z1))/1.5));
@@ -160,6 +171,8 @@ const SiteTerrain = (() => {
     const ground=height(spec,x,z),apron=spec.eastTerraceApron;
     let bedding=routeSurfaceBedding(spec,x,z);
     if(apron&&rectDistance(apron,x,z)===0)bedding=Math.min(bedding,.02+Math.max(0,apron.level-ground));
+    const p=spec.eastTerraceRetainedSoil;
+    if(p&&x>=p.x0&&x<=p.x1&&z>=p.z0-p.northBlend&&z<=p.z1)bedding=Math.min(bedding,.02+Math.max(0,p.level-ground));
     let h=ground+bedding;
     for(const r of spec.routeProfiles){const sample=routeSample(r,x,z),d=routeFootprintDistance(r,x,z,sample);h=Math.max(h,sample.level-(r.bankSlope??.4)*d);}
     const pads=[...spec.finishPads,...spec.protectedPads.filter(p=>p.finish!==undefined),...spec.gatheringPads.filter(p=>p.radius===undefined).map(p=>({...p,finish:p.level+.1}))];
@@ -392,6 +405,8 @@ const SiteTerrain = (() => {
       if(options.fixedFences?.length)spec.fixedFences={segments:options.fixedFences,bankSlope:.4};
       spec.houseBaseY = options.houseFFL;
       spec.deckTop = options.houseFFL;
+      const retained=garden.elements.find(e=>e.id==='eastTerrace')?.meta?.retainedSoil;
+      if(retained)spec.eastTerraceRetainedSoil={...retained,level:options.houseFFL+retained.levelOffset};
       spec.saunaFinish=garden.gradingPlan?options.houseFFL+garden.gradingPlan.westPlatform.bpv-397:options.houseFFL;
       spec.finishedSoil = options.houseFFL - .12;
       spec.houseExcavation = { points: garden.elements.find(e => e.id === 'house').parts.find(p => p.kind === 'polygon').points.map(p => p.slice()),
