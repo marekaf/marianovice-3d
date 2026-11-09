@@ -141,7 +141,7 @@ const GARDEN = {
     {
       id: "eastTerrace",
       name: "Východní terasa 3 × 7,65 m",
-      meta: {retainedSoil:{x0:23.58,x1:24.48,z0:18.43,z1:19.23,levelOffset:0,northBlend:2,wallWidth:.2}},
+      meta: {retainedSoil:{x0:23.58,x1:24.48,z0:18.43,z1:19.23,levelOffset:0,northBlend:2,wallWidth:.2,eastBankSlope:.25,southBankSlope:.58}},
       parts: [
         { kind: "rect", x: 20.58, y: 11.58, w: 3, d: 7.65, fill: "#c4a68e", opacity: 0.85, stroke: "#5a3e25", sw: 1.2 },
         { kind: "text", x: 22.08, y: 16.39, text: "východní terasa", cls: "lbl-w" },

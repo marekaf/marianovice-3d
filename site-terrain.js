@@ -127,12 +127,12 @@ const SiteTerrain = (() => {
 
   function retainedSoilHeight(spec,h,x,z) {
     const p=spec.eastTerraceRetainedSoil;
-    if(!p||x<p.x0||z>p.z1)return h;
+    if(!p||x<p.x0||(z>p.z1&&x<=p.x1))return h;
     const north=Math.max(0,p.z0-z);
     if(north>=p.northBlend)return h;
-    const east=north===0?(x<=p.x1?1:0):1-smoothstep(Math.max(0,x-p.x1)/(p.wallWidth+north));
-    const weight=(1-smoothstep(north/p.northBlend))*east;
-    return h+(p.level-h)*weight;
+    const east=Math.max(0,x-p.x1),south=east>0?Math.max(0,z-p.z0):0;
+    const level=p.level-p.eastBankSlope*east-p.southBankSlope*south;
+    return h+(Math.max(h,level)-h)*(1-smoothstep(north/p.northBlend));
   }
   function drawingHeight(spec,x,z,skipBank=false) {
     let h=naturalHeight(spec,x,z);

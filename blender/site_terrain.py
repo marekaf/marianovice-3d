@@ -152,14 +152,15 @@ def outside_east_deck(spec,p,x,z):
 
 def retained_soil_height(spec,h,x,z):
     p=spec.get('eastTerraceRetainedSoil')
-    if not p or x<p['x0'] or z>p['z1']:
+    if not p or x<p['x0'] or (z>p['z1'] and x<=p['x1']):
         return h
     north=max(0,p['z0']-z)
     if north>=p['northBlend']:
         return h
-    east=(1 if x<=p['x1'] else 0) if north==0 else 1-smoothstep(max(0,x-p['x1'])/(p['wallWidth']+north))
-    weight=(1-smoothstep(north/p['northBlend']))*east
-    return h+(p['level']-h)*weight
+    east=max(0,x-p['x1'])
+    south=max(0,z-p['z0']) if east>0 else 0
+    level=p['level']-p['eastBankSlope']*east-p['southBankSlope']*south
+    return h+(max(h,level)-h)*(1-smoothstep(north/p['northBlend']))
 
 
 def drawing_height(spec, x, z, skip_bank=False):

@@ -23,11 +23,14 @@ for(let i=0;i<=10;i++)for(let j=0;j<=10;j++) {
 }
 for(let x=p.x0+.01;x<=p.x1;x+=.03)for(const z of [p.z0-p.northBlend,p.z0])for(const dz of [-1e-6,1e-6])assert(Math.abs(site.height(x,z+dz)-site.height(x,z))<1e-5,'Open northern terrain joins continuously');
 for(const x of [p.x1+p.wallWidth+.0001,p.x1+.4,p.x1+.8])for(const dz of [-1e-6,1e-6])assert(Math.abs(site.height(x,p.z0+dz)-site.height(x,p.z0))<1e-5,'Northeast corner has no vertical step outside the wall footprint');
+const gradient=(x,z)=>Math.hypot(site.height(x+.01,z)-site.height(x-.01,z),site.height(x,z+.01)-site.height(x,z-.01))/.02;
+assert(gradient(24.58,18.4)<.65,'North wall tip must not concentrate the full level difference into the wall width');
+for(let x=p.x1+p.wallWidth+.02;x<=27;x+=.08)for(let z=p.z0-.5;z<=19.4;z+=.08)assert(gradient(x,z)<.65,'The bank around the wall tip and its exterior stays below 65 percent');
 for(let x=21.28;x<=27.63;x+=.25)for(let z=19.4;z<=26.45;z+=.25)near(site.height(x,z),previous.height(x,z),'Parking ground remains unchanged');
 for(const [x,z] of [[22,21.5],[23,15],[24,16],[26,20],[35,9]])near(site.height(x,z),previous.height(x,z),'Adjacent fixed terrain remains unchanged');
 
 const points=[];
-for(let x=23.5;x<=26;x+=.09)for(let z=16.3;z<=19.5;z+=.11)points.push([x,z]);
+for(let x=23.5;x<=27;x+=.09)for(let z=16.3;z<=19.5;z+=.11)points.push([x,z]);
 const result=runPythonJson('from blender.site_terrain import height,route_height\nimport json,sys\np=json.load(sys.stdin)\nprint(json.dumps([[height(p["spec"],*v),route_height(p["spec"],*v)] for v in p["points"]]))',{spec:site.spec,points});
 result.forEach(([h,r],i)=>{near(h,site.height(...points[i]),'Python terrain parity');near(r,site.routeHeight(...points[i]),'Python walking parity');});
 const raisedBase=structuredClone(site.spec);
