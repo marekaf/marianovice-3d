@@ -147,6 +147,9 @@ def grade_envelope(value,level,slope,distance):
     return max(level-slope*distance,min(level+slope*distance,value))
 
 
+def outside_east_deck(spec,p,x,z):
+    return p.get('id')=='eastTerrace' and spec.get('eastTerraceApron') and x>=p['x1'] and p['z0']<=z<=p['z1']
+
 def drawing_height(spec, x, z, skip_bank=False):
     h = natural_height(spec, x, z)
     def apply(p, level, blend=None):
@@ -175,7 +178,8 @@ def drawing_height(spec, x, z, skip_bank=False):
     for p in spec.get('protectedPads',[]):
         apply(p,p['level']+p.get('fallX',0)*max(0,min(p['x1']-p['x0'],x-p['x0'])),p.get('blend',1))
     for p in spec['finishPads']:
-        apply(p,p['level'],p['blend'])
+        if not outside_east_deck(spec,p,x,z):
+            apply(p,p['level'],p['blend'])
     for strip in spec['drainageStrips'][1:]+spec['drainageStrips'][:1]:
         d=rect_distance(strip,x,z)
         slope=.4+.8*(1-smoothstep(max(0,z-spec['westBank'].get('endZ',spec['westPlatform']['z1']))/2))*(1-smoothstep((x-strip['x0'])/.5))
@@ -187,7 +191,7 @@ def drawing_height(spec, x, z, skip_bank=False):
         h=grade_envelope(h,level-bedding,r.get('bankSlope',.4),d)
     for p in spec['finishPads']:
         d=rect_distance(p,x,z)
-        if d<.25:
+        if d<.25 and not outside_east_deck(spec,p,x,z):
             h=min(h,p['level']+(h-p['level'])*smoothstep(d/.25))
     for p in spec.get('gatheringPads',[]):
         if 'radius' not in p:
@@ -262,8 +266,12 @@ def drawing_height(spec, x, z, skip_bank=False):
 
 
 def route_height(spec,x,z):
+    ground=height(spec,x,z)
+    apron=spec.get('eastTerraceApron')
     bedding=route_surface_bedding(spec,x,z)
-    h=height(spec,x,z)+bedding
+    if apron and rect_distance(apron,x,z)==0:
+        bedding=min(bedding,.02+max(0,apron['level']-ground))
+    h=ground+bedding
     for r in spec['routeProfiles']:
         distance,level=route_sample(r,x,z)
         d=route_footprint_distance(r,x,z,distance)

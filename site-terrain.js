@@ -123,6 +123,7 @@ const SiteTerrain = (() => {
     return bedding;
   }
   const gradeEnvelope=(value,level,slope,distance)=>Math.max(level-slope*distance,Math.min(level+slope*distance,value));
+  const outsideEastDeck=(spec,p,x,z)=>p.id==="eastTerrace"&&spec.eastTerraceApron&&x>=p.x1&&z>=p.z0&&z<=p.z1;
   function drawingHeight(spec,x,z,skipBank=false) {
     let h=naturalHeight(spec,x,z);
     const apply=(p,level)=>{const d=rectDistance(p,x,z);if(p.gradingMode==='blend'){if(d<p.blend)h=level+(h-level)*smoothstep(d/p.blend);}else h=gradeEnvelope(h,level,p.bankSlope??.4,d);};
@@ -130,11 +131,11 @@ const SiteTerrain = (() => {
     if(spec.drivewayProfile){const p=spec.drivewayProfile,d=polygonDistance(p.points,x,z);h=gradeEnvelope(h,drivewayFinish(spec,x,z)-p.surfaceOffset,.4,d);}
     for(const p of spec.gatheringPads??[]){const d=p.radius===undefined?rectDistance(p,x,z):Math.max(0,Math.hypot(x-p.cx,z-p.cz)-p.radius);h=gradeEnvelope(h,p.level,.4,d);}
     for(const p of spec.protectedPads??[])apply(p,p.level+(p.fallX??0)*Math.max(0,Math.min(p.x1-p.x0,x-p.x0)),p.blend??1);
-    for(const p of spec.finishPads)apply(p,p.level,p.blend);
+    for(const p of spec.finishPads)if(!outsideEastDeck(spec,p,x,z))apply(p,p.level,p.blend);
     for(const strip of [...spec.drainageStrips.slice(1),spec.drainageStrips[0]]){const d=rectDistance(strip,x,z),slope=.4+.8*(1-smoothstep(Math.max(0,z-(spec.westBank.endZ??spec.westPlatform.z1))/2))*(1-smoothstep((x-strip.x0)/.5));h=gradeEnvelope(h,drainageLevel(strip,x,z),slope,d);}
     const bedding=routeSurfaceBedding(spec,x,z);
     for(const r of spec.routeProfiles){const s=routeSample(r,x,z),d=routeFootprintDistance(r,x,z,s);h=gradeEnvelope(h,s.level-bedding,r.bankSlope??.4,d);}
-    for(const p of spec.finishPads){const d=rectDistance(p,x,z);if(d<.25)h=Math.min(h,p.level+(h-p.level)*smoothstep(d/.25));}
+    for(const p of spec.finishPads){const d=rectDistance(p,x,z);if(d<.25&&!outsideEastDeck(spec,p,x,z))h=Math.min(h,p.level+(h-p.level)*smoothstep(d/.25));}
     for(const p of spec.gatheringPads??[]){if(p.radius===undefined)apply(p,p.level,.3);}
     for(const strip of spec.drainageStrips){const d=rectDistance(strip,x,z);if(d<.2){let clear=minRectDistance(spec.finishPads,x,z);for(const route of spec.routeProfiles){const sample=routeSample(route,x,z);clear=Math.min(clear,Math.max(0,sample.distance-route.width/2));}h+=(drainageLevel(strip,x,z)-h)*(1-smoothstep(d/.2))*smoothstep(clear/.5);}}
     for(const p of spec.protectedPads.filter(p=>['north-facade','south-facade','heat-pump-service'].includes(p.id)).sort((a,b)=>(a.id==='heat-pump-service')-(b.id==='heat-pump-service'))){const d=rectDistance(p,x,z);if(d<p.blend){const level=p.level+(p.fallX??0)*Math.max(0,Math.min(p.x1-p.x0,x-p.x0));h+=(gradeEnvelope(h,level,p.bankSlope??.4,d)-h)*(1-smoothstep(d/p.blend));}}
@@ -156,8 +157,10 @@ const SiteTerrain = (() => {
     return h;
   }
   function routeHeight(spec,x,z) {
-    const bedding=routeSurfaceBedding(spec,x,z);
-    let h=height(spec,x,z)+bedding;
+    const ground=height(spec,x,z),apron=spec.eastTerraceApron;
+    let bedding=routeSurfaceBedding(spec,x,z);
+    if(apron&&rectDistance(apron,x,z)===0)bedding=Math.min(bedding,.02+Math.max(0,apron.level-ground));
+    let h=ground+bedding;
     for(const r of spec.routeProfiles){const sample=routeSample(r,x,z),d=routeFootprintDistance(r,x,z,sample);h=Math.max(h,sample.level-(r.bankSlope??.4)*d);}
     const pads=[...spec.finishPads,...spec.protectedPads.filter(p=>p.finish!==undefined),...spec.gatheringPads.filter(p=>p.radius===undefined).map(p=>({...p,finish:p.level+.1}))];
     for(const p of pads){const d=rectDistance(p,x,z);if(d<.6)h=Math.max(h,p.finish+(h-p.finish)*smoothstep(d/.6));}
@@ -524,6 +527,11 @@ const SiteTerrain = (() => {
       spec.carportSurface={x0:21.28,x1:27.63,z0:19.4,z1:26.45,finishNorth:options.houseFFL-.51,finishSouth:options.houseFFL-.52};
       if(garden.gradingPlan){
       const plan=garden.gradingPlan,platform=plan.westPlatform;
+      const eastApron=plan.eastTerraceApron,eastDeck=spec.finishPads.find(p=>p.id==="eastTerrace");
+      if(eastApron&&eastDeck){
+        spec.eastTerraceApron={id:"east-terrace-apron",x0:eastDeck.x1,x1:eastDeck.x1+eastApron.width,z0:eastDeck.z0,z1:eastDeck.z1,level:options.houseFFL+eastApron.levelOffset,bankSlope:eastApron.bankSlope};
+        spec.protectedPads.push(spec.eastTerraceApron);
+      }
       spec.boundaryBankWidth=plan.northBankWidth;
       spec.westBank={width:plan.westBank.width,footNorth:options.houseFFL+plan.westBank.northFootBpv-397,footSouth:options.houseFFL+plan.westBank.southFootBpv-397,fallZ0:7.18,fallZ1:platform.y+platform.d};
       spec.westPlatform={id:'west-platform',x0:platform.x,x1:platform.x+platform.w,z0:platform.y,z1:platform.y+platform.d,level:options.houseFFL+platform.bpv-397,blend:.7};

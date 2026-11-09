@@ -92,7 +92,10 @@ const GradingZones = (() => {
     const eastGarden=rect(garageEast,-100,200,300);
     const buildingFootprints=ids=>ids.flatMap(id=>parts({parts:(el(id)?.parts??[]).filter(p=>p.kind==='polygon'||p.kind==='rect').slice(0,1)}));
     const terraceBankWidth=garden.gradingPlan?1:1.05;
-    const terraceBanks=east?[rect(east.x,east.y-terraceBankWidth,east.w,terraceBankWidth),rect(east.x+east.w,east.y,terraceBankWidth,east.d),[[east.x+east.w,east.y],...Array.from({length:33},(_,i)=>{const angle=-Math.PI/2+i*Math.PI/64;return [east.x+east.w+terraceBankWidth*Math.cos(angle),east.y+terraceBankWidth*Math.sin(angle)];})]]:[];
+    const apron=garden.gradingPlan?.eastTerraceApron;
+    const eastBankRun=apron?(397+apron.levelOffset-garden.gradingPlan.mainLawnBpv)/apron.bankSlope:terraceBankWidth;
+    const eastEarthworkWidth=apron?apron.width+eastBankRun:terraceBankWidth;
+    const terraceBanks=east?[rect(east.x,east.y-terraceBankWidth,east.w,terraceBankWidth),rect(east.x+east.w,east.y,eastEarthworkWidth,east.d),[[east.x+east.w,east.y],...Array.from({length:33},(_,i)=>{const angle=-Math.PI/2+i*Math.PI/64;return [east.x+east.w+terraceBankWidth*Math.cos(angle),east.y+terraceBankWidth*Math.sin(angle)];})]]:[];
     const masks=[
       ['F','Dům',buildingFootprints(['house']),[16,12],'#8470ad'],
       ['M','Garáž a přístřešek',buildingFootprints(['garage','carport']),[30.5,22.5],'#447fa3'],
@@ -115,6 +118,7 @@ const GradingZones = (() => {
       B:['Brána','revizní kanalizační šachta'],
       C:['Pergola','ohniště','jezírko','lavička'],
       D:['Posezení','venkovní kuchyň'],
+      N:apron?[`Rovný pás ${apron.width.toFixed(2).replace('.',',')} m před východní hranou`,`Navazující svah ${apron.bankSlope*100} %; konce navázat na cestu a přístřešek`]:[],
       G:['Dřevostavba sauny','vířivka','vyvýšené záhony','skleník'],
       H:['Podzemní dešťová nádrž'],
       L:['Skalník (Cotoneaster)'],
@@ -147,6 +151,11 @@ const GradingZones = (() => {
     }
     for(const id of ['pergola']) {
       const p=r(id);if(p)dimensions.push({id:id+'Depth',name:'Pergola – hloubka',value:p.d.toFixed(2)+' m',from:[p.x+p.w,p.y],to:[p.x+p.w,p.y+p.d]});
+    }
+    if(east&&apron){
+      const x=east.x+east.w,z=east.y+east.d/2;
+      dimensions.push({id:'eastTerraceApron',name:'Rovný pás před terasou',value:apron.width.toFixed(2)+' m',from:[x,z],to:[x+apron.width,z],displayOffset:[0,-.7]});
+      dimensions.push({id:'eastTerraceBank',name:'Svah před terasou',value: eastBankRun.toFixed(2)+' m / '+(apron.bankSlope*100).toFixed(0)+' %',from:[x+apron.width,z],to:[x+eastEarthworkWidth,z],displayOffset:[0,.7]});
     }
     const sauna=r('sauna'),shelter=r('saunaShelter');
     if(sauna&&shelter) {

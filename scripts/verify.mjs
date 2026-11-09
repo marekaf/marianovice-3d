@@ -25,6 +25,7 @@ const checks=[
   'verify-privacy-screens.mjs',
   'verify-portal-drain.mjs',
   'verify-terrace-decks.mjs',
+  'verify-east-terrace-grading.mjs',
   'verify-climber-model.mjs',
   'verify-sauna.mjs',
   'verify-pergola.mjs',

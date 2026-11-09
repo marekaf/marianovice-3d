@@ -6,7 +6,7 @@ const SAUNA_BUILDING_NAME = "Sauna + Softub · 5 × 2,5 m";
 const GARDEN = {
   m2px: 18,
   gridCellM: 2,
-  gradingPlan: {source:'C.4 09/2026',westPlatform:{x:.98,y:1.93,w:7,d:15,bpv:397.5},westBank:{width:.5,northFootBpv:396.9,southFootBpv:396.95},westCounterfall:{transitionDepth:.5,stripDepth:.5,westBpv:397.48,eastBpv:397.45,geometryApproximate:true},southApronStrip:{depth:.5,westBpv:396.4,eastBpv:396.35,geometryApproximate:true},mainLawnBpv:396.4,eastStripBpv:395.4,northBankWidth:2,eastBankWidth:2},
+  gradingPlan: {source:'C.4 09/2026',westPlatform:{x:.98,y:1.93,w:7,d:15,bpv:397.5},westBank:{width:.5,northFootBpv:396.9,southFootBpv:396.95},westCounterfall:{transitionDepth:.5,stripDepth:.5,westBpv:397.48,eastBpv:397.45,geometryApproximate:true},southApronStrip:{depth:.5,westBpv:396.4,eastBpv:396.35,geometryApproximate:true},eastTerraceApron:{width:1,bankSlope:.4,levelOffset:0},mainLawnBpv:396.4,eastStripBpv:395.4,northBankWidth:2,eastBankWidth:2},
   gradingBanks: [{"id":"north","spotFoot":[35.701,-0.6585],"spotCrest":[35.735820592065494,1.3411968586183787],"width":2,"points":[[34.13,-0.6311442786069628],[41.529999999999994,-0.759999999999998],[41.61705148016373,1.240000000000002],[34.13,1.3688557213930372]]},{"id":"east","spotFoot":[42.059,5.799],"spotCrest":[40.065572609817565,5.961009999908822],"width":2,"points":[[41.529999999999994,-0.759999999999998],[41.989999999999995,4.950000000000003],[42.68,13.439999999999998],[43.182254791431795,19.38],[41.17511803108013,19.38],[40.686836700812435,13.605259467367432],[39.99651533642947,5.111305288220545],[39.53645856131181,-0.5993994637834366]]}],
   title: "Zahrada · situace a terénní úpravy",
   docMeta: { project: "Zahrada Mariánovice", place: "Mariánovice, Benešov", drawing: "Situace — osazovací koncept", revision: "R1" },
@@ -81,7 +81,7 @@ const GARDEN = {
     {"id":"quietGardenBorder","name":"Květiny k řezu u užitkové zahrady","meta":{"palette":"prairieIsland","plant":"perennials","purpose":"cutting-bed","selectedFlowers":"cutting-daisies"},"parts":[{"kind":"polygon","points":[[1.5,16.3],[3.3,16.3],[6.6,16.6],[8.1,17.4],[7.7,17.8],[6.2,17.3],[3.5,17.2],[2.3,18],[2.5,20.5],[5,21.3],[7,20.8],[8.2,21.5],[6,22],[1.5,21.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"eastGatheringBorder","name":"Výsadba u posezení a jezírka","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond","selectedFlowers":"daisy-drifts"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[36.8,0.3],[37.4,6.5],[41.6,6.5],[41.86875,10.8],[32.4,10.8],[32.4,5.2],[28,5],[24,6],[22.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {id:"compactPondBorder",name:"Nízký lem jezírka",meta:{palette:"pondFringe",plant:"perennials",exclude:"pond",maxHeight:.45,maxSpread:.22},parts:[{kind:"ellipse",cx:30,cy:16,rx:1.85,ry:1.45,fill:"#8fa05a",opacity:.4,stroke:"#6a7a3a",sw:1}]},
-    {"id":"terraceFrontage","name":"Nízká výsadba před terasou","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[25,11.8],[25.6,12.8],[25.6,15.8],[25,16.6],[24.6,16],[24.6,12.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"terraceFrontage","name":"Nízká výsadba před terasou","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[23.98,13],[24.58,13.4],[24.58,15.8],[23.98,16.6],[23.58,16],[23.58,13.4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {
       id: "house",
       name: "Dům 10,8 × 19,25 m",

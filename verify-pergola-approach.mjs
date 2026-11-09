@@ -40,9 +40,9 @@ for(let offset=-.59;offset<=.59;offset+=.02){
 const {SiteTerrain}=require('./site-terrain.js');
 const withoutApproach=structuredClone(site.spec);
 withoutApproach.routeProfiles=withoutApproach.routeProfiles.filter(r=>r.id!=='Daily dining');
-for(const pad of [...site.spec.finishPads,...site.spec.protectedPads,...site.spec.gatheringPads.filter(p=>p.radius===undefined)]){
+for(const pad of [...site.spec.finishPads,...site.spec.protectedPads.filter(p=>p.id!=='east-terrace-apron'),...site.spec.gatheringPads.filter(p=>p.radius===undefined)]){
   for(let i=0;i<=8;i++)for(let j=0;j<=8;j++){
-    const x=pad.x0+(pad.x1-pad.x0)*i/8,z=pad.z0+(pad.z1-pad.z0)*j/8;
+    const x=pad.x0+(pad.x1-pad.x0)*i/8-(pad.id==='eastTerrace'&&i===8?1e-6:0),z=pad.z0+(pad.z1-pad.z0)*j/8;
     assert(Math.abs(site.height(x,z)-SiteTerrain.height(withoutApproach,x,z))<1e-9,`Approach soil blending cannot overrun a fixed slab core at ${x},${z}: ${site.height(x,z)} vs ${SiteTerrain.height(withoutApproach,x,z)}`);
   }
 }
@@ -65,7 +65,7 @@ const {GardenRouteModel}=require('./garden-route-model.js');
 let maxBankGrade=0,maxBankPoint;
 const fixed=GARDEN.elements.filter(e=>['house','eastTerrace','pergola'].includes(e.id)).flatMap(e=>e.parts.filter(p=>p.kind==='rect'));
 for(let x=22;x<=31;x+=.1)for(let z=10.8;z<=17.2;z+=.1){
-  if(fixed.some(p=>x>=p.x&&x<=p.x+p.w&&z>=p.y&&z<=p.y+p.d)||GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<=0)continue;
+  if(fixed.some(p=>[[x,z],[x-.02,z],[x+.02,z],[x,z-.02],[x,z+.02]].some(([px,pz])=>px>=p.x&&px<=p.x+p.w&&pz>=p.y&&pz<=p.y+p.d))||GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<=0)continue;
   const grade=Math.hypot(site.height(x+.02,z)-site.height(x-.02,z),site.height(x,z+.02)-site.height(x,z-.02))/.04;
   if(grade>maxBankGrade){maxBankGrade=grade;maxBankPoint=[x,z];}
 }
