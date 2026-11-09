@@ -11,7 +11,7 @@ const close=(a,b)=>assert(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 assert.equal(layout.length,3);assert.equal(model.parts.length,3);
 const house=garden.elements.find(e=>e.id==='house').meta;
 const carport=garden.elements.find(e=>e.id==='carport').parts.find(p=>p.kind==='rect');
-for(const [i,z] of [19.475,22.88,26.355].entries()){
+for(const [i,z] of [19.475,22.61,26.355].entries()){
   const post=layout[i],part=model.parts[i];
   close(post.x,21.405);close(post.z,z);close(post.width,.15);close(post.footingWidth,.6);
   close(post.x+post.width/2-house.eNotch[2],.2);
@@ -22,7 +22,8 @@ for(const [i,z] of [19.475,22.88,26.355].entries()){
   assert(part.size.every(n=>n>0&&Number.isFinite(n)));
 }
 close(layout[0].z-.075,carport.y);
-close(layout[1].z-house.eNotch[3],.35);
+close(layout[1].z-house.eNotch[3],.08);
+assert(layout[1].evidence.includes('not dimensioned'));
 close(layout[2].z+.075,house.bbox[3]);
 assert.equal(JSON.stringify(garden),before);
 assert.deepEqual(model,buildCarportPosts(garden,roofAt,site.height));

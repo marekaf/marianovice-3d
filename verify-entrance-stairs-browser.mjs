@@ -8,7 +8,7 @@ const root=fileURLToPath(new URL('.',import.meta.url));
 const server=createServer(async(req,res)=>{try{
   const path=new URL(req.url,'http://localhost').pathname;
   let data=await readFile(resolve(root,'.'+path));
-  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();','window.entranceCheck={THREE,scene,camera,renderer,controls,walkingHeight,siteTerrain,localHouseData,houseTerrainY};ViewerLoading.finish();');
+  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();','window.entranceCheck={THREE,scene,camera,renderer,controls,walkingHeight,siteTerrain,localHouseData,houseTerrainY,GardenRouteModel,ground};ViewerLoading.finish();');
   if(['.html','.js','.mjs'].includes(extname(path)))data=data.toString().replaceAll('https://unpkg.com/three@0.186.0/','/node_modules/three/');
   res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css'}[extname(path)]||'application/octet-stream'}).end(data);
 }catch{res.writeHead(404).end();}});
@@ -19,25 +19,53 @@ try{
   const page=await browser.newPage({viewport:{width:1500,height:1100}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   const output=process.env.ENTRANCE_OUTPUT||'/tmp/entrance-stairs';await mkdir(output,{recursive:true});
-  for(const variant of ['straight','aligned','sketch']){
+  for(const variant of ['aligned','straight','sketch']){
     await page.goto(`http://127.0.0.1:${server.address().port}/index.html?entrance=${variant}`);
     await page.waitForFunction(()=>window.entranceCheck,null,{timeout:180000});
     await page.locator('#viewerLoading').waitFor({state:'detached',timeout:30000});
     const measurements=await page.evaluate(async variant=>{
       const {buildEntranceLuneta,entranceLunetaPavingDatum}=await import('./entrance-luneta-model.js');
-      const {THREE,scene,walkingHeight,camera,controls,renderer,siteTerrain,localHouseData,houseTerrainY}=entranceCheck;
+      const {THREE,scene,walkingHeight,camera,controls,renderer,siteTerrain,localHouseData,houseTerrainY,GardenRouteModel,ground}=entranceCheck;
       const datum=entranceLunetaPavingDatum(localHouseData,GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),{variant});
       const model=buildEntranceLuneta(localHouseData,GARDEN,houseTerrainY,datum,{variant});
       const stairs=scene.getObjectByName(model.name),ray=new THREE.Raycaster();
       const posts=scene.getObjectByName('carport_posts');
       if(!posts)throw new Error('Carport supports missing');
       if(!stairs)throw new Error('Entrance model missing from scene');
+      const driveway=scene.getObjectByName('driveway-paving');
       scene.updateMatrixWorld(true);
+      let pavingMeshes=0;
+      stairs.traverse(mesh=>{
+        if(!mesh.isMesh||!/_paving(?:_cut_\d+)?$/.test(mesh.name))return;
+        if(mesh.material!==driveway.material)throw new Error('Entrance paving must share the driveway material object');
+        const {position,uv}=mesh.geometry.attributes;
+        const point=new THREE.Vector3();
+        for(let i=0;i<position.count;i++){
+          point.fromBufferAttribute(position,i).applyMatrix4(mesh.matrixWorld);
+          if(Math.abs(point.x-uv.getX(i))>2e-6||Math.abs(point.z-uv.getY(i))>2e-6)throw new Error('Paving pattern must retain driveway world-coordinate alignment');
+        }
+        pavingMeshes++;
+      });
+      if(!pavingMeshes)throw new Error('Entrance driveway paving is missing');
+      for(const part of model.parts.filter(p=>p.material==='paving')){
+        ray.set(new THREE.Vector3(part.position[0],houseTerrainY+.1,part.position[1]),new THREE.Vector3(0,-1,0));
+        const hit=ray.intersectObject(stairs,true)[0];
+        if(!hit||hit.object.material!==driveway.material)throw new Error(`Paving part does not use driveway material: ${part.name}`);
+      }
       const {carportPostLayout}=await import('./carport-posts-model.js');
       for(const post of carportPostLayout(GARDEN)){
         ray.set(new THREE.Vector3(post.x,20,post.z),new THREE.Vector3(0,-1,0));
         const hit=ray.intersectObject(posts,true)[0];
         if(!hit||hit.point.y<houseTerrainY+2)throw new Error(`Missing full-height carport post: ${post.id}`);
+      }
+      if(variant!=='straight'){
+        const post=carportPostLayout(GARDEN).find(p=>p.id==='entrance');
+        for(const dx of [-.085,0,.085])for(const dz of [-.085,0,.085]){
+          if(dx===0&&dz===0)continue;
+          ray.set(new THREE.Vector3(post.x+dx,houseTerrainY+.1,post.z+dz),new THREE.Vector3(0,-1,0));
+          const hit=ray.intersectObject(stairs,true)[0];
+          if(!hit||Math.abs(hit.point.y-(houseTerrainY-model.dimensions.rise))>2e-6)throw new Error('The whole timber post must emerge from the second tread from below');
+        }
       }
       let count=0,maxError=0,walkError=0;
       for(const surface of model.walkSurfaces){
@@ -52,20 +80,28 @@ try{
           if(probe)bestError=Math.min(bestError,Math.abs(probe.point.y-surface.y));
         }
         maxError=Math.max(maxError,bestError);
-        const walkX=surface.name.startsWith('entrance_east_')?surface.x1-.04:x;
-        const walkZ=surface.name.startsWith('entrance_south_')?surface.z1-.04:z;
-        walkError=Math.max(walkError,Math.abs(walkingHeight(walkX,walkZ)-surface.y));
         count++;
       }
-      for(const surface of [model.soil,model.proposedFill]){
+      for(const [i,offset] of [.35,.96,1.26].entries()){
+        const x=model.dimensions.facadeX+offset,z=(model.dimensions.zNorth+model.dimensions.zSouth)/2;
+        walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-(houseTerrainY-i*model.dimensions.rise)));
+      }
+      for(const surface of [model.proposedFill]){
         const x=(surface.x0+surface.x1)/2,z=(surface.z0+surface.z1)/2;
-        walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-surface.y));
+        const groundY=siteTerrain.height(x,z);
+        if(Math.abs(groundY-surface.y)>1e-7)throw new Error('Shared grass terrain must meet the terrace-board datum');
+        const walkY=GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<=0?siteTerrain.routeHeight(x,z):groundY;
+        walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-walkY));
+        ray.set(new THREE.Vector3(x,houseTerrainY+.1,z),new THREE.Vector3(0,-1,0));
+        const groundHit=ray.intersectObject(ground,true)[0];
+        if(!groundHit||Math.abs(groundHit.point.y-groundY)>.002)throw new Error('Rendered shared lawn must meet its grading datum');
+        if(ray.intersectObject(stairs,true).length)throw new Error('The entrance model must not cap the shared grass terrain');
       }
       const toggle=document.getElementById('toggleVehicles');toggle.checked=false;toggle.dispatchEvent(new Event('change',{bubbles:true}));
       camera.position.set(24.2,4.4,24.5);controls.target.set(21.8,2.1,21);controls.update();renderer.render(scene,camera);
       return {variant,count,maxError,walkError,rise:model.dimensions.rise,datum};
     },variant);
-    assert(measurements.count>=(variant==='straight'?4:6));assert(measurements.maxError<2e-6,JSON.stringify(measurements));assert(measurements.walkError<1e-7,JSON.stringify(measurements));
+    assert(measurements.count>=(variant==='straight'?6:8));assert(measurements.maxError<2e-6,JSON.stringify(measurements));assert(measurements.walkError<1e-7,JSON.stringify(measurements));
     await page.screenshot({path:`${output}/entrance-${variant}.png`});
     console.log(JSON.stringify(measurements));
   }
