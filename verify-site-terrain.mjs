@@ -176,7 +176,9 @@ for(const pad of [...surveyed.spec.cutRects,...surveyed.spec.levelPads,...survey
   for(const x of [pad.x0-blend,pad.x0,pad.x1,pad.x1+blend])for(const z of [pad.z0-blend,pad.z0,pad.z1,pad.z1+blend]) {
     const h=surveyed.height(x,z);
     for(const [dx,dz] of [[1e-7,0],[-1e-7,0],[0,1e-7],[0,-1e-7]]) {
-      assert.ok(Math.abs(surveyed.height(x+dx,z+dz)-h)<1e-5,'Continuous grading must not jump at rectangular bank edges');
+      const retained=surveyed.spec.eastTerraceRetainedSoil;
+      const retainedEdge=retained&&((Math.abs(x-retained.x0)<1e-6&&z>=retained.z0-retained.northBlend&&z<=retained.z1)||(Math.abs(x-retained.x1)<1e-6&&z>=retained.z0&&z<=retained.z1)||(Math.abs(z-retained.z1)<1e-6&&x>=retained.x0&&x<=retained.x1));
+      if(!retainedEdge)assert.ok(Math.abs(surveyed.height(x+dx,z+dz)-h)<1e-5,'Continuous grading must not jump outside retained wall and deck edges');
       checks.push([x+dx,z+dz]);
     }
   }
