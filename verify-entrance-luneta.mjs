@@ -87,12 +87,17 @@ const intersects=(surface,half)=>Math.min(surface.x1,entrancePost.x+half)>Math.m
 for(const variant of ['straight','aligned','sketch']){
   const datum=entranceLunetaPavingDatum(house,garden,finish,{variant});
   const model=buildEntranceLuneta(house,garden,TERRAIN.houseFFLInternal,datum,{variant});
-  if(variant==='straight'){
-    assert(model.walkSurfaces.every(s=>!intersects(s,entrancePost.footingWidth/2)),'Straight treads avoid even the nominal footing plan envelope');
-    close(entrancePost.z-entrancePost.footingWidth/2-model.dimensions.zSouth,.0275);
-  }else{
+  assert(model.walkSurfaces.some(s=>intersects(s,entrancePost.footingWidth/2)),'Post footing must be coordinated with the stair construction');
+  if(variant!=='straight'){
     assert(model.walkSurfaces.some(s=>s.z1>entrancePost.z+entrancePost.width/2),'Wrapping treads continue beyond the post');
     assert(model.walkSurfaces.some(s=>intersects(s,entrancePost.footingWidth/2)),'Nominal footing coordination remains unresolved');
+    for(const dx of [-.085,0,.085])for(const dz of [-.085,0,.085]){
+      if(dx===0&&dz===0)continue;
+      const x=entrancePost.x+dx,z=entrancePost.z+dz;
+      const surface=model.walkSurfaces.find(s=>x>=s.x0&&x<=s.x1&&z>=s.z0&&z<=s.z1);
+      assert(surface,'The second tread surrounds the timber post');
+      close(surface.y,model.dimensions.floorY-model.dimensions.rise);
+    }
   }
   assert(model.walkSurfaces.every(s=>!intersects(s,entrancePost.width/2)),'Walking surfaces exclude the timber post');
   for(const p of model.parts.filter(p=>p.material!=='luneta'))assert(!intersects({x0:p.position[0]-p.size[0]/2,x1:p.position[0]+p.size[0]/2,z0:p.position[1]-p.size[1]/2,z1:p.position[1]+p.size[1]/2},entrancePost.width/2),`${p.name} intersects the timber post`);

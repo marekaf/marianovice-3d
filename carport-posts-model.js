@@ -4,7 +4,7 @@ export function carportPostLayout(garden) {
   const width=.15,x=house.eNotch[2]+.125;
   return [
     {id:'north',z:carport.y+width/2,evidence:'Drawing 101: north face aligned to carport boundary; site position unverified'},
-    {id:'entrance',z:house.eNotch[3]+.35,evidence:'Owner confirms approximately 350 mm south of the facade return'},
+    {id:'entrance',z:house.eNotch[3]+.08,evidence:'Approximate position read from builder sketch: second tread from below; facade offset is not dimensioned and requires site measurement'},
     {id:'south',z:house.bbox[3]-width/2,evidence:'Drawing 101: south face aligned to house facade'},
   ].map(post=>({...post,x,width,footingWidth:.6}));
 }

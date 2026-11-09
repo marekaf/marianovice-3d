@@ -58,6 +58,15 @@ try{
         const hit=ray.intersectObject(posts,true)[0];
         if(!hit||hit.point.y<houseTerrainY+2)throw new Error(`Missing full-height carport post: ${post.id}`);
       }
+      if(variant!=='straight'){
+        const post=carportPostLayout(GARDEN).find(p=>p.id==='entrance');
+        for(const dx of [-.085,0,.085])for(const dz of [-.085,0,.085]){
+          if(dx===0&&dz===0)continue;
+          ray.set(new THREE.Vector3(post.x+dx,houseTerrainY+.1,post.z+dz),new THREE.Vector3(0,-1,0));
+          const hit=ray.intersectObject(stairs,true)[0];
+          if(!hit||Math.abs(hit.point.y-(houseTerrainY-model.dimensions.rise))>2e-6)throw new Error('The whole timber post must emerge from the second tread from below');
+        }
+      }
       let count=0,maxError=0,walkError=0;
       for(const surface of model.walkSurfaces){
         const x=(surface.x0+surface.x1)/2,z=(surface.z0+surface.z1)/2;
@@ -71,10 +80,11 @@ try{
           if(probe)bestError=Math.min(bestError,Math.abs(probe.point.y-surface.y));
         }
         maxError=Math.max(maxError,bestError);
-        const walkX=surface.name.startsWith('entrance_east_')?surface.x1-Math.min(.04,(surface.x1-surface.x0)/2):x;
-        const walkZ=surface.name.startsWith('entrance_south_')?surface.z1-Math.min(.04,(surface.z1-surface.z0)/2):z;
-        walkError=Math.max(walkError,Math.abs(walkingHeight(walkX,walkZ)-surface.y));
         count++;
+      }
+      for(const [i,offset] of [.35,.96,1.26].entries()){
+        const x=model.dimensions.facadeX+offset,z=(model.dimensions.zNorth+model.dimensions.zSouth)/2;
+        walkError=Math.max(walkError,Math.abs(walkingHeight(x,z)-(houseTerrainY-i*model.dimensions.rise)));
       }
       for(const surface of [model.proposedFill]){
         const x=(surface.x0+surface.x1)/2,z=(surface.z0+surface.z1)/2;
