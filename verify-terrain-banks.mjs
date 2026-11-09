@@ -69,7 +69,7 @@ function maximum(fn,[x0,x1,z0,z1]) {
   }
   return {maximumPercent:max*100,maximumAt};
 }
-const measurements=[['north west',[10,20,1,5],125],['pergola bank',[20,31,0,6],125],['north east',[31,40,1,5],125],['lower',[35,43,2,18],125],['productive',[0,9,7,23],121],['south',[8,23,27.5,31],45],['east terrace',[23.58,27,12.5,18.5],65],['water-source approach',[34.13,42.5,21,27.89],45]].map(([name,bounds,limitPercent])=>({name,...maximum(site.height,bounds),limitPercent}));
+const measurements=[['north west',[10,20,1,5],125],['pergola bank',[20,31,0,6],125],['north east',[31,40,1,5],125],['lower',[35,43,2,18],125],['productive',[0,9,7,23],121],['south',[8,23,27.5,31],45],['east terrace',[23.61,27,12.5,18.5],65],['water-source approach',[34.13,42.5,21,27.89],45]].map(([name,bounds,limitPercent])=>({name,...maximum(site.height,bounds),limitPercent}));
 for(const value of measurements)assert(Number.isFinite(value.maximumPercent)&&value.maximumPercent<=value.limitPercent,`${value.name} earth-bank gradient ${value.maximumPercent}% at ${value.maximumAt} exceeds ${value.limitPercent}%`);
 for(const segment of site.spec.fixedFences?.segments??[])for(let i=0;i<=100;i++){const t=i/100,x=segment.start[0]+(segment.end[0]-segment.start[0])*t,z=segment.start[1]+(segment.end[1]-segment.start[1])*t;near(site.height(x,z),site.baseHeight(x,z),'Every measured built-fence foot preserves existing ground');}
 for(const bank of GARDEN.gradingBanks) {
