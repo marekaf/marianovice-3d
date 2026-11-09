@@ -30,6 +30,14 @@ Ground and finished surfaces remain separate. Grass levels describe ground; pavi
 
 ## Retained garden features
 
+### East terrace ground strip
+
+The November 9 coordination proposal adds a nominal **1.00 m level soil strip** outside the east-facing terrace edge. It retains the central ground level of **396.88 m Bpv**, 120 mm below the unchanged 397.00 m terrace finish. Beyond the strip, the bank falls **40% (1:2.5)** over **1.20 m** to the unchanged 396.40 m lawn. Previously the 480 mm drop began immediately at the terrace edge at **48%**, reaching the lawn after 1.00 m. The new toe is 2.20 m from the terrace edge, extending earthworks 1.20 m eastward.
+
+These dimensions describe the middle frontage. The northern junction preserves the independently graded path to the pergola; the southern junction blends down to the existing carport. The terrace deck is not extended. The initial pond path follows the raised ground, and frontage planting follows the relocated bank. House, garage, carport, pond and surveyed boundary levels remain unchanged.
+
+Confirm the 1.00 m width, 40% bank and 396.88 m soil level before setting out. The level strip has no designed drainage fall or outlet; surface-water discharge and the terrace edge detail still require confirmation. The southern transition must be coordinated with the entrance stairs and retaining-wall proposal in PR #259. This terrain proposal does not include that separate stair change or establish soil stability.
+
 The drawing omits the greenhouse, raised beds, pond, firepit, bench and garden paths. They remain in the model. The greenhouse and bed court follow the 397.50 m western platform. The pond rim follows the 396.40 m lawn. The firepit keeps its independent 396.50 m surface. Paths connect the revised levels, and their rendered paving and walking heights use the same surface definitions.
 
 The tank label is **8–10 m³**, as drawn. Its footprint and accessible cover remain in their established positions.

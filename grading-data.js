@@ -127,6 +127,13 @@ function createGradingData({ garden, terrain, site, survey, baseline }) {
     point('gate', 'Práh brány', driveway.gate, site.spec.gateRunback?.finishedLevel);
   }
   const bench = site.spec?.benchPad;
+  const eastTerrace=rect('eastTerrace'),eastApron=garden.gradingPlan?.eastTerraceApron;
+  if(eastTerrace&&eastApron){
+    const edge=eastTerrace.x+eastTerrace.w,z=eastTerrace.y+eastTerrace.d/2;
+    const run=(terrain.bpvDatum+eastApron.levelOffset-garden.gradingPlan.mainLawnBpv)/eastApron.bankSlope;
+    point('eastTerraceApron','Rovný pás před východní terasou',[edge+eastApron.width/2,z]);
+    section('east-terrace-bank','Východní terasa: rovný pás a svah',[[edge,z],[edge+eastApron.width,z],[edge+eastApron.width+run,z],[edge+eastApron.width+run+.5,z]]);
+  }
   if (bench) section('bench', 'Plocha lavičky od západu k východu', [[bench.x0 - 1, (bench.z0 + bench.z1) / 2], [bench.x1 + 1, (bench.z0 + bench.z1) / 2]]);
   if(site.spec?.bankReview) {
     section('south-bank', 'Jihozápadní svah u domu', [[10.75,26.6],[10.75,31]]);

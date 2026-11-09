@@ -28,6 +28,14 @@ const GradingOverlay = (() => {
       {id:'east-garage',from:garden.gradingPlan?[37,22]:[38,24],to:garden.gradingPlan?[41,22]:[40,26]},
       {id:'west-bed',from:[garden.gradingPlan?-.6:-1.0436216216,12],to:[garden.gradingPlan?1.3:1.4,12]}
     ];
+    const apron=garden.gradingPlan?.eastTerraceApron,terrace=garden.elements.find(e=>e.id==='eastTerrace')?.parts.find(p=>p.kind==='rect');
+    if(apron&&terrace){
+      const edge=terrace.x+terrace.w,crest=edge+apron.width;
+      const run=(397+apron.levelOffset-garden.gradingPlan.mainLawnBpv)/apron.bankSlope;
+      const arrow=slopes.find(mark=>mark.id==='east-terrace');
+      arrow.from=[crest+.05,15];arrow.to=[crest+run-.05,15];
+      flats.push({id:'east-terrace-apron',position:[edge+apron.width/2,15]});
+    }
     if(garden.gradingPlan)slopes.push({id:'carport-fall',from:[24.5,20],to:[24.5,25.5]},{id:'apron-fall',from:[30,27],to:[30,30]});
     const drainage=garden.elements.find(e=>e.id==='westDrainageStrip');
     const mainDrainage=drainage?.parts.find(p=>p.kind==='rect');

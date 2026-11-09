@@ -524,6 +524,8 @@ const SiteTerrain = (() => {
       spec.carportSurface={x0:21.28,x1:27.63,z0:19.4,z1:26.45,finishNorth:options.houseFFL-.51,finishSouth:options.houseFFL-.52};
       if(garden.gradingPlan){
       const plan=garden.gradingPlan,platform=plan.westPlatform;
+      const eastApron=plan.eastTerraceApron,eastDeck=spec.finishPads.find(p=>p.id==="eastTerrace");
+      if(eastApron&&eastDeck)spec.protectedPads.push({id:"east-terrace-apron",x0:eastDeck.x1,x1:eastDeck.x1+eastApron.width,z0:eastDeck.z0,z1:eastDeck.z1,level:options.houseFFL+eastApron.levelOffset,bankSlope:eastApron.bankSlope});
       spec.boundaryBankWidth=plan.northBankWidth;
       spec.westBank={width:plan.westBank.width,footNorth:options.houseFFL+plan.westBank.northFootBpv-397,footSouth:options.houseFFL+plan.westBank.southFootBpv-397,fallZ0:7.18,fallZ1:platform.y+platform.d};
       spec.westPlatform={id:'west-platform',x0:platform.x,x1:platform.x+platform.w,z0:platform.y,z1:platform.y+platform.d,level:options.houseFFL+platform.bpv-397,blend:.7};
