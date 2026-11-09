@@ -1,5 +1,4 @@
 // DITON large-format pavers (MONACO/MILÁNO, natural grey), running bond, world-space UV.
-// Canvas covers a 2.4 m block (0.6×0.4 m units) so per-paver tone varies before it repeats.
 export function createDrivewayPavingMaterial(THREE) {
   const M = 2.4, S = 512, ppm = S / M;
   const cv = document.createElement('canvas'); cv.width = cv.height = S;
