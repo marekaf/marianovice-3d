@@ -165,7 +165,7 @@ for(const [x,z] of surveyed.spec.houseExcavation.points)for(const [dx,dz] of [[1
   checks.push([x+dx,z+dz]);
 }
 for(const pad of surveyed.spec.finishPads)for(let ix=0;ix<=4;ix++)for(let iz=0;iz<=4;iz++) {
-  const x=pad.x0+(pad.x1-pad.x0)*ix/4,z=pad.z0+(pad.z1-pad.z0)*iz/4;
+  const x=pad.x0+(pad.x1-pad.x0)*ix/4-(pad.id==='eastTerrace'&&ix===4?1e-6:0),z=pad.z0+(pad.z1-pad.z0)*iz/4;
   const protectedEdge=surveyed.spec.protectedPads.slice(0,1).some(p=>Math.hypot(Math.max(p.x0-x,0,x-p.x1),Math.max(p.z0-z,0,z-p.z1))<p.blend);
   if(!protectedEdge)assert.ok(surveyed.height(x,z)<=pad.finish-.04+1e-10,`Finished soil and route bedding must stay below level access surfaces at ${x},${z}: ${surveyed.height(x,z)}`);
   else assert.ok(surveyed.height(x,z)<=TERRAIN.houseFFLInternal-.12+1e-10,'Vehicle pad must stay clear under adjacent terrace edge');

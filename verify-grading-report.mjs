@@ -134,17 +134,17 @@ const terraceZone=quantities.zones.find(zone=>zone.id==='N');
 assert.equal(terraceZone.name,'Svahy kolem východní terasy');
 assert(contains('N',...terraceZone.label));
 for(const mark of flatInstructions.slopes.filter(mark=>['east-terrace','north-terrace'].includes(mark.id)))for(let i=0;i<=100;i++){const t=i/100;assert(contains('N',mark.from[0]+t*(mark.to[0]-mark.from[0]),mark.from[1]+t*(mark.to[1]-mark.from[1])),'Terrace arrows stay inside their slope zone');}
-for(const point of [[26,15],[22.5,10.4],[24,19.5],[23,14]])assert(!contains('N',...point),'Earthwork zone excludes lower lawn, carport and terrace');
-assert(contains('N',24.1,15)&&contains('N',25.4,15),'Earthwork zone includes the level strip and relocated bank');
+for(const point of [[26.2,15],[22.5,10.4],[24,19.5],[23,14]])assert(!contains('N',...point),'Earthwork zone excludes lower lawn, carport and terrace');
+assert(contains('N',24.1,15)&&contains('N',25.9,15),'Earthwork zone includes the level strip and relocated bank');
 const eastArrow=flatInstructions.slopes.find(mark=>mark.id==='east-terrace');
-assert(eastArrow.from[0]>24.58&&eastArrow.to[0]<25.78,'Slope arrow starts beyond the level strip and ends before the toe');
+assert(eastArrow.from[0]>24.58&&eastArrow.to[0]<26.08,'Slope arrow starts beyond the level strip and ends before the toe');
 assert(flatInstructions.flats.some(mark=>mark.id==='east-terrace-apron'&&mark.position[0]>23.58&&mark.position[0]<24.58));
 assert(contains('N',24.2,11)&&!contains('N',24.5,10.7),'The northeast bank follows a rounded corner');
 if(existsSync('docs/survey-terrain.js')){
   const actual=GradingSite.create({garden:GARDEN,terrain:TERRAIN,survey:require('./docs/survey-terrain.js').SURVEY_TERRAIN}).site;
   const {GardenRouteModel}=require('./garden-route-model.js');
   let samples=0,slopedSamples=0;
-  for(let x=20.6;x<25.83;x+=.05)for(let z=10.54;z<19.38;z+=.05){
+  for(let x=20.6;x<26.13;x+=.05)for(let z=10.54;z<19.38;z+=.05){
     if(!contains('N',x,z)||GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)<.01)continue;
     if(x>=23.58&&x<=24.58&&z>=11.58)continue;
     const h=.001,grade=Math.hypot((actual.height(x+h,z)-actual.height(x-h,z))/(2*h),(actual.height(x,z+h)-actual.height(x,z-h))/(2*h));
