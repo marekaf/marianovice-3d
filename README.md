@@ -127,3 +127,9 @@ The full scene verifier validates the supplement against its saved provenance an
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Entrance stairs and retaining wall
+
+The entrance uses the straight-front stair and Luneta wall proposal described in [entrance-luneta.md](entrance-luneta.md). The default geometry avoids the entrance carport post; `?entrance=sketch` and `?entrance=aligned` retain the wrapping proposals for collision comparison. Both retain the existing graded carport level.
+
+Run `node verify-entrance-luneta.mjs` for dimensions, finish coverage and wall courses, and `node verify-entrance-stairs-browser.mjs` for both variants in the full scene. `node generate-entrance-luneta-pdf.mjs` creates ignored `docs/entrance-luneta.pdf`, with a dimensioned plan, section and 3D view. Chrome and the installed viewer dependencies are required; the exporter closes its browser. Foundation, drainage, post-footing and setting-out confirmations remain necessary before construction.

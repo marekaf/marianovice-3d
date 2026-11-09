@@ -153,7 +153,7 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 </script>
 
 <script src="terrain.js?v=f11b9d65254d"></script>
-<script src="layout.js?v=994fb7b07245"></script>
+<script src="layout.js?v=e75b59543fc5"></script>
 <script src="garden-route-model.js"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=68757001ef24"></script>
@@ -195,7 +195,8 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="grading-overlay.js?v=2eb1f1995e4e"></script>
 <script type="module">
 import * as THREE from 'three';
-import { buildEntranceStairs, buildEntranceRecess, entrancePavingDatum } from './entrance-landing.js?v=5839e6a04fae';
+import { buildEntranceLuneta, entranceLunetaPavingDatum } from './entrance-luneta-model.js?v=d9ba00630d57';
+import { buildCarportPosts } from "./carport-posts-model.js?v=b1cdad53352a";
 import { createMeshHeightQuery } from './mesh-height-query.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel } from './model3d.js?v=08daa6e001b5';
@@ -1154,19 +1155,7 @@ const carportWestY = carportEastY - carportRoofWidth * carportPitch;
 }
 
 // Carport between house and garage — open posts on west side (garage walls support east side)
-const carportPostMaterial = new THREE.MeshStandardMaterial({ color: 0x5a3e25, roughness: 0.7 });
-[[CP.x, CP.y], [CP.x, CP.y + CP.d]].forEach(([px, pz]) => {
-  const baseY = terrainHeight(px, pz);
-  // Each post stretched from its local terrain to the plate's west edge
-  const ph = carportWestY - .08 - baseY;
-  const post = new THREE.Mesh(
-    new THREE.BoxGeometry(0.15, ph, 0.15),
-    carportPostMaterial
-  );
-  post.position.set(px, baseY + ph / 2, pz);
-  post.castShadow = true;
-  scene.add(post);
-});
+scene.add(buildModel(THREE,buildCarportPosts(GARDEN,x=>carportWestY+(x-CP.x)*carportPitch-.08,terrainHeight)));
 
 // Parking bay is paved as part of the driveway polygon (see driveway); dashed stall on the 2D plan only
 
@@ -1720,11 +1709,12 @@ const exteriorWalkingDoors=[];
     scene.add(d2);
   }
   if(localHouseData){
-    const entrancePaving=entrancePavingDatum(GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),localHouseData);
-    const stairs=buildEntranceStairs(localHouseData,GARDEN,ty,entrancePaving);
-    const recess=buildEntranceRecess(localHouseData,GARDEN,ty,entrancePaving);
-    scene.add(buildModel(THREE,stairs),buildModel(THREE,recess));
-    entranceWalkSurfaces.push(...stairs.walkSurfaces,recess.soil);
+    const requestedEntrance=new URLSearchParams(location.search).get('entrance');
+    const variant=['sketch','aligned'].includes(requestedEntrance)?requestedEntrance:'straight';
+    const entrancePaving=entranceLunetaPavingDatum(localHouseData,GARDEN,(x,z)=>SiteTerrain.drivewayFinish(siteTerrain.spec,x,z),{variant});
+    const stairs=buildEntranceLuneta(localHouseData,GARDEN,ty,entrancePaving,{variant});
+    scene.add(buildModel(THREE,stairs));
+    entranceWalkSurfaces.push(...stairs.walkSurfaces,stairs.soil,stairs.proposedFill);
   }
 }
 

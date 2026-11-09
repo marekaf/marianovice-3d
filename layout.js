@@ -27,13 +27,13 @@ const GARDEN = {
     { from: [34.78, 19.39], to: [44.11, 19.39], label: "9.35 m", at: [39.44, 19.17], anchor: "middle" }
   ],
   // Vehicle fleet — nominal manufacturer dimensions (m): length, width (excl. mirrors), turning
-  // circle Ø. Parked nose-north; cx = lane centre; noseZ = front bumper. Carport cars are spaced to
-  // leave ~0.8 m walkways to the two pedestrian doors; garage cars sit south of the north-wall
-  // workbench. hinge = A-pillar distance back from the front bumper; doorLen = front-door leaf
+  // circle Ø. Parked nose-north; cx = lane centre; noseZ = front bumper.
+  // Garage cars sit south of the north-wall workbench.
+  // hinge = A-pillar distance back from the front bumper; doorLen = front-door leaf
   // length (a coupe like the M4 has one long door, hatchbacks/estates shorter front doors).
   vehicles: [
-    { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3a72b8", cx: 22.98, noseZ: 20.0, hinge: 1.65, doorLen: 1.00 },
-    { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#b3a06e", cx: 25.83, noseZ: 20.0, hinge: 1.80, doorLen: 1.05 },
+    { name: "Škoda Scala",       l: 4.36, w: 1.79, turn: 10.4, bay: "carport", col: "#3a72b8", cx: 23.525, noseZ: 20.0, hinge: 1.65, doorLen: 1.00 },
+    { name: "Audi A6 allroad",   l: 4.95, w: 1.90, turn: 12.1, bay: "carport", col: "#b3a06e", cx: 26.12, noseZ: 20.0, hinge: 1.80, doorLen: 1.05 },
     { name: "BMW M4 F82",        l: 4.67, w: 1.87, turn: 11.9, bay: "garage",  col: "#0f5aa8", cx: 30.7,  noseZ: 20.95, reversed: true, hinge: 2.00, doorLen: 1.35 }, // reverse-parked (low coupe) squarely in the 5 m door
     { name: "Yamaha Ténéré 700", l: 2.37, w: 0.91, turn: 5.0,  bay: "garage",  col: "#462482", cx: 33.1,  noseZ: 20.95, moto: true }
   ],

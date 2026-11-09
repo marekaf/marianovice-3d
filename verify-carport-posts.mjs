@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {readFileSync} from 'node:fs';
+import {carportPostLayout,buildCarportPosts} from './carport-posts-model.js';
+const require=createRequire(import.meta.url),{GARDEN:garden}=require('./layout.js');
+const {GarageModel}=require('./garage-model.js'),{TERRAIN}=require('./terrain.js'),{GradingSite}=require('./grading-site.js');
+const {site}=GradingSite.create({garden,terrain:TERRAIN}),dims=GarageModel.build(garden,TERRAIN.houseFFLInternal-.5).dims;
+const roofAt=x=>dims.roofHigh-(dims.rect.x+dims.roofRidgeOffset-x)*dims.carportPitch-.08;
+const before=JSON.stringify(garden),layout=carportPostLayout(garden),model=buildCarportPosts(garden,roofAt,site.height);
+const close=(a,b)=>assert(Math.abs(a-b)<1e-8,`${a} != ${b}`);
+assert.equal(layout.length,3);assert.equal(model.parts.length,3);
+const house=garden.elements.find(e=>e.id==='house').meta;
+const carport=garden.elements.find(e=>e.id==='carport').parts.find(p=>p.kind==='rect');
+for(const [i,z] of [19.475,22.88,26.355].entries()){
+  const post=layout[i],part=model.parts[i];
+  close(post.x,21.405);close(post.z,z);close(post.width,.15);close(post.footingWidth,.6);
+  close(post.x+post.width/2-house.eNotch[2],.2);
+  assert.equal(part.name,`carport_post_${post.id}`);
+  close(part.size[0],.15);close(part.size[1],.15);
+  close(part.position[2]+part.size[2]/2,roofAt(post.x));
+  close(part.position[2]-part.size[2]/2,site.height(post.x,post.z));
+  assert(part.size.every(n=>n>0&&Number.isFinite(n)));
+}
+close(layout[0].z-.075,carport.y);
+close(layout[1].z-house.eNotch[3],.35);
+close(layout[2].z+.075,house.bbox[3]);
+assert.equal(JSON.stringify(garden),before);
+assert.deepEqual(model,buildCarportPosts(garden,roofAt,site.height));
+assert.throws(()=>buildCarportPosts(garden,()=>NaN,site.height));
+assert.throws(()=>buildCarportPosts(garden,roofAt,()=>Infinity));
+assert.throws(()=>buildCarportPosts(garden,()=>0,()=>1));
+const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+assert(html.includes('buildCarportPosts(GARDEN,x=>carportWestY+(x-CP.x)*carportPitch-.08,terrainHeight)'));
+const blender=readFileSync(new URL('./blender/poc.py',import.meta.url),'utf8');
+assert(blender.includes('build_model(GARDEN["carportPosts"])'));
+console.log('Three 150 mm carport posts verified: facade offset, return position, end alignments and roof contact');
