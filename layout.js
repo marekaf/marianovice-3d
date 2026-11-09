@@ -81,7 +81,7 @@ const GARDEN = {
     {"id":"quietGardenBorder","name":"Květiny k řezu u užitkové zahrady","meta":{"palette":"prairieIsland","plant":"perennials","purpose":"cutting-bed","selectedFlowers":"cutting-daisies"},"parts":[{"kind":"polygon","points":[[1.5,16.3],[3.3,16.3],[6.6,16.6],[8.1,17.4],[7.7,17.8],[6.2,17.3],[3.5,17.2],[2.3,18],[2.5,20.5],[5,21.3],[7,20.8],[8.2,21.5],[6,22],[1.5,21.7]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {"id":"eastGatheringBorder","name":"Výsadba u posezení a jezírka","meta":{"palette":"pondFringe","plant":"mixed","exclude":"pond","selectedFlowers":"daisy-drifts"},"parts":[{"kind":"polygon","points":[[22.5,0.8],[36.8,0.3],[37.4,6.5],[41.6,6.5],[41.86875,10.8],[32.4,10.8],[32.4,5.2],[28,5],[24,6],[22.6,4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {id:"compactPondBorder",name:"Nízký lem jezírka",meta:{palette:"pondFringe",plant:"perennials",exclude:"pond",maxHeight:.45,maxSpread:.22},parts:[{kind:"ellipse",cx:30,cy:16,rx:1.85,ry:1.45,fill:"#8fa05a",opacity:.4,stroke:"#6a7a3a",sw:1}]},
-    {"id":"terraceFrontage","name":"Nízká výsadba před terasou","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[25,11.8],[25.6,12.8],[25.6,15.8],[25,16.6],[24.6,16],[24.6,12.5]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
+    {"id":"terraceFrontage","name":"Nízká výsadba před terasou","meta":{"palette":"bedTerrace","plant":"perennials","maxHeight":0.65},"parts":[{"kind":"polygon","points":[[23.98,13],[24.58,13.4],[24.58,15.8],[23.98,16.6],[23.58,16],[23.58,13.4]],"fill":"#8fa05a","opacity":0.4,"stroke":"#6a7a3a","sw":1}]},
     {
       id: "house",
       name: "Dům 10,8 × 19,25 m",

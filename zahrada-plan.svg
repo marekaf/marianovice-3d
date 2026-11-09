@@ -2416,7 +2416,7 @@
       <ellipse cx="540" cy="288" rx="33.3" ry="26.1" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
     </g>
     <g class="el" data-id="terraceFrontage"><title>Nízká výsadba před terasou</title>
-      <polygon points="450,212.4 460.8,230.4 460.8,284.4 450,298.8 442.8,288 442.8,225" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
+      <polygon points="431.64,234 442.44,241.2 442.44,284.4 431.64,298.8 424.44,288 424.44,241.2" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>
     </g>
     <g class="el" data-id="atriumBeds"><title>Trvalky u fasády v atriu</title>
       <polygon points="188.64,286.74 239.94,286.74 239.94,297 223.2,301.5 205.2,298.8 188.64,297" fill="#8fa05a" opacity="0.4" stroke="#6a7a3a" stroke-width="1"/>

@@ -7,6 +7,7 @@ const {GARDEN}=require('./layout.js'),{TERRAIN}=require('./terrain.js');
 const {GradingSite}=require('./grading-site.js'),{SURVEY_TERRAIN}=require('./docs/survey-terrain.js');
 const {createGradingData}=require('./grading-data.js');
 const {TerraceDeckModel}=require('./terrace-deck-model.js');
+const {GardenRouteModel}=require('./garden-route-model.js');
 const create=garden=>GradingSite.create({garden,terrain:TERRAIN,survey:SURVEY_TERRAIN}).site;
 const previousGarden=structuredClone(GARDEN);
 delete previousGarden.gradingPlan.eastTerraceApron;
@@ -26,6 +27,17 @@ const deck=TerraceDeckModel.build(GARDEN,site.spec.deckTop,site.height);
 const board=deck.parts.find(p=>p.name.startsWith('eastTerrace_0_board_'));
 const boardTop=deck.floorHeight+board.position[2]+board.size[2]/2;
 near(apron.level,boardTop,'Soil apron aligns with the actual top of the terrace boards');
+const frontage=GARDEN.elements.find(e=>e.id==='terraceFrontage');
+assert.equal(frontage.meta.palette,'bedTerrace','Relocated bed keeps its planting palette');
+for(const polygon of frontage.parts.filter(p=>p.kind==='polygon')) {
+  for(let triangle=1;triangle<polygon.points.length-1;triangle++)for(let u=0;u<=30;u++)for(let v=0;v<=30-u;v++) {
+    const a=polygon.points[0],b=polygon.points[triangle],c=polygon.points[triangle+1];
+    const x=a[0]+(b[0]-a[0])*u/30+(c[0]-a[0])*v/30,z=a[1]+(b[1]-a[1])*u/30+(c[1]-a[1])*v/30;
+    assert(x>=apron.x0-1e-8&&x<=apron.x1+1e-8,'Entire planting bed stays within the one-metre apron');
+    near(site.height(x,z),boardTop,'Bed boundaries and interior stay on level terrain');
+    assert(GardenRouteModel.distance(GARDEN.gardenRoutes,x,z)>=.4-1e-8,'Bed stays clear of the northern approach and southern pond path');
+  }
+}
 
 for(const z of [14,15,16,17,18]) {
   for(let i=0;i<=20;i++){
