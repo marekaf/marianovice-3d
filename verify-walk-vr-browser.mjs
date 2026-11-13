@@ -1,22 +1,14 @@
 import assert from 'node:assert/strict';
-import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
-import {resolve,extname} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {launchChrome,serveRepo} from './scripts/browser.mjs';
 
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
-const root=fileURLToPath(new URL('.',import.meta.url));
 const hook=`window.vrReview={THREE,scene,camera,renderer,controls,vrWalk,houseTerrainY,localHouseData,get house(){return walkHouse;},get shown(){return [roofGroup,walkHouse.furniture,walkHouse.loft.furniture];},hidden:[treesGroup,vehiclesGroup,furnitureGroup,outdoorLoungeGroup,cotoneasterGroup]};ViewerLoading.finish();`;
-const server=createServer(async(req,res)=>{try{
-  const path=new URL(req.url,'http://localhost').pathname,file=resolve(root,'.'+path);
-  let data=await readFile(file);
+const server=await serveRepo({rewrite(path,data){
   if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',hook);
-  res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg'}[extname(file)]||'application/octet-stream'});res.end(data);
-}catch{res.writeHead(404).end();}});
-await new Promise(done=>server.listen(0,'127.0.0.1',done));
+  return data;
+}});
 let browser;
 try{
-  browser=await chromium.launch({channel:'chrome',headless:true});
+  browser=await launchChrome();
   const errors=[];
   async function open(supported){
     const page=await browser.newPage({viewport:{width:1000,height:700}}),requests=[];
@@ -30,7 +22,7 @@ try{
         addEventListener(){},removeEventListener(){},
       }});
     },supported);
-    await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+    await page.goto(`${server.origin}/index.html`);
     try{await page.waitForFunction(()=>window.vrReview,null,{timeout:120000});}
     catch(error){throw new Error(`${error.message}; page errors: ${JSON.stringify(errors)}`);}
     console.log(`Desktop ready; mocked XR support: ${supported}`);
@@ -175,4 +167,4 @@ try{
   assert.deepEqual(errors,[]);
   await page.close();
   console.log('VR browser regression passed: unsupported UI, lazy interiors, rejected request retry, mocked session entry/exit, metre scale, tracked snap turns, actual-floor teleport and wall rejection. Preview: /tmp/quest-vr-preview.png. Headset runtime and performance remain untested.');
-}finally{await browser?.close();await new Promise(done=>server.close(done));}
+}finally{await browser?.close();await server.close();}

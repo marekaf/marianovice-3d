@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from './scripts/browser.mjs';
 import {readFile,mkdir} from 'node:fs/promises';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
-const browser=await chromium.launch({channel:'chrome',headless:true});
+const browser=await launchChrome();
 const output=process.env.SAUNA_SCREENSHOTS||'/tmp/compact-sauna';
 try {
   await mkdir(output,{recursive:true});

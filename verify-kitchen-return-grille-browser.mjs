@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from './scripts/browser.mjs';
 import {mkdir} from 'node:fs/promises';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const output=process.env.GRILLE_OUTPUT||'/tmp/kitchen-return-grille';await mkdir(output,{recursive:true});
-const browser=await chromium.launch({headless:true,channel:'chrome'});
+const browser=await launchChrome();
 try{
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));

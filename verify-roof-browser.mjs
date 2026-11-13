@@ -1,26 +1,19 @@
 import assert from 'node:assert/strict';
 import {prepareReviewFloor,captureReview} from './scripts/review-floor.mjs';
-import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
-import {resolve,extname} from 'node:path';
-import {fileURLToPath} from 'node:url';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-const root=fileURLToPath(new URL('.',import.meta.url));
-const server=createServer(async(req,res)=>{try{
-  const path=new URL(req.url,'http://localhost').pathname;
-  let data=await readFile(resolve(root,'.'+path));
+import {launchChrome,serveRepo} from './scripts/browser.mjs';
+import {resolve} from 'node:path';
+const server=await serveRepo({rewrite(path,data){
   if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',
     'window.roofReview={scene,camera,controls,renderer,houseRoofSpec,houseMesh,houseInteriorBacking,houseTerrainY,loadWalkInterior,get house(){return walkHouse;},requestRender};ViewerLoading.finish();');
-  res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(path)]||'application/octet-stream'}).end(data);
-}catch{res.writeHead(404).end();}});
-await new Promise(done=>server.listen(0,'127.0.0.1',done));
+  return data;
+}});
 let browser;
 try{
-  browser=await chromium.launch({channel:'chrome',headless:true});
+  browser=await launchChrome();
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
   await prepareReviewFloor(page);
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+  await page.goto(`${server.origin}/index.html`);
   await page.waitForFunction(()=>window.roofReview,null,{timeout:120000});
   await page.waitForFunction(()=>!document.querySelector('#viewerLoading'));
   const verifyCaps=async()=>page.evaluate(async()=>{
@@ -64,4 +57,4 @@ try{
   assert(furnished.excess<1e-5,JSON.stringify(furnished));
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({initial,furnished,errors},null,2));
-}finally{await browser?.close();await new Promise(done=>server.close(done));}
+}finally{await browser?.close();await server.close();}

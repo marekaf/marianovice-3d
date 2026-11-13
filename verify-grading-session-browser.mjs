@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from './scripts/browser.mjs';
 import {readFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 const {GARDEN}=createRequire(import.meta.url)('./layout.js');
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const started=Date.now();
-const browser=await chromium.launch({channel:'chrome',headless:true});
+const browser=await launchChrome();
 try {
   await mkdir('/tmp/grading-session',{recursive:true});
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];

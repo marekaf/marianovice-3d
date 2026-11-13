@@ -1,26 +1,18 @@
 import assert from 'node:assert/strict';
-import {createServer} from 'node:http';
-import {readFile,mkdir} from 'node:fs/promises';
-import {resolve,extname} from 'node:path';
-import {fileURLToPath} from 'node:url';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
-const root=fileURLToPath(new URL('.',import.meta.url));
-const server=createServer(async(req,res)=>{try{
-  const path=new URL(req.url,'http://localhost').pathname;
-  let data=await readFile(resolve(root,'.'+path));
+import {launchChrome,serveRepo} from './scripts/browser.mjs';
+import {mkdir} from 'node:fs/promises';
+const server=await serveRepo({rewrite(path,data){
   if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();','window.entranceCheck={THREE,scene,camera,renderer,controls,walkingHeight,siteTerrain,localHouseData,houseTerrainY,GardenRouteModel,ground};ViewerLoading.finish();');
-  if(['.html','.js','.mjs'].includes(extname(path)))data=data.toString().replaceAll('https://unpkg.com/three@0.186.0/','/node_modules/three/');
-  res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css'}[extname(path)]||'application/octet-stream'}).end(data);
-}catch{res.writeHead(404).end();}});
-await new Promise(done=>server.listen(0,'127.0.0.1',done));
+  return data;
+}});
 let browser;
 try{
-  browser=await chromium.launch({channel:'chrome',headless:true});
+  browser=await launchChrome();
   const page=await browser.newPage({viewport:{width:1500,height:1100}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   const output=process.env.ENTRANCE_OUTPUT||'/tmp/entrance-stairs';await mkdir(output,{recursive:true});
   for(const variant of ['aligned','straight','sketch']){
-    await page.goto(`http://127.0.0.1:${server.address().port}/index.html?entrance=${variant}`);
+    await page.goto(`${server.origin}/index.html?entrance=${variant}`);
     await page.waitForFunction(()=>window.entranceCheck,null,{timeout:180000});
     await page.locator('#viewerLoading').waitFor({state:'detached',timeout:30000});
     const measurements=await page.evaluate(async variant=>{
@@ -107,4 +99,4 @@ try{
   }
   assert.deepEqual(errors,[]);
   console.log(`Entrance variants rendered without browser errors: ${output}`);
-}finally{await browser?.close();await new Promise(done=>server.close(done));}
+}finally{await browser?.close();await server.close();}

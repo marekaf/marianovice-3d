@@ -1,14 +1,11 @@
 import assert from 'node:assert/strict';
-import {createServer} from 'node:http';
+import {launchChrome,serveRepo} from './scripts/browser.mjs';
 import {spawnSync} from 'node:child_process';
-import {mkdtemp, readFile, writeFile, rm} from 'node:fs/promises';
+import {mkdtemp, writeFile, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
-import {resolve, extname, join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {join} from 'node:path';
 import {buildTour} from './unreal/tour-geometry.mjs';
 
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
-const root=fileURLToPath(new URL('.',import.meta.url));
 const dir=await mkdtemp(join(tmpdir(),'tour-browser-'));
 // A synthetic stereo panorama: the top (left eye) half has green at the centre, red on
 // the right quarter and blue on the left quarter; the bottom (right eye) half is magenta.
@@ -23,21 +20,14 @@ const shots=[
 const tour=buildTour(shots,{stereo:true,extension:'png'});
 for(const item of tour.stills){item.file='a_360_TB.png';}
 await writeFile(join(dir,'tour.json'),JSON.stringify(tour));
-const types={'.html':'text/html','.js':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'};
-const server=createServer(async(req,res)=>{try{
-  const path=new URL(req.url,'http://localhost').pathname;
-  const file=path.startsWith('/unreal/generated/tour/')?join(dir,path.slice('/unreal/generated/tour/'.length)):resolve(root,'.'+path);
-  const data=await readFile(file);
-  res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);
-}catch{res.writeHead(404).end();}});
-await new Promise(done=>server.listen(0,'127.0.0.1',done));
+const server=await serveRepo({locate:path=>path.startsWith('/unreal/generated/tour/')?join(dir,path.slice('/unreal/generated/tour/'.length)):undefined});
 let browser;
 try{
-  browser=await chromium.launch({channel:'chrome',headless:true});
+  browser=await launchChrome();
   const page=await browser.newPage({viewport:{width:800,height:600}});
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(`http://127.0.0.1:${server.address().port}/tour.html`);
+  await page.goto(`${server.origin}/tour.html`);
   await page.waitForFunction(()=>window.tourReview&&document.getElementById('tourStatus').textContent==='A room',null,{timeout:60000});
   assert.deepEqual(errors,[]);
   async function centrePixel(){
@@ -79,6 +69,6 @@ try{
   console.log('Tour browser: panorama centre faces the heading, right and left turns map to the right and left image quarters, the left eye is the top half, and floor rings navigate.');
 }finally{
   await browser?.close();
-  server.close();
+  await server.close();
   await rm(dir,{recursive:true,force:true});
 }

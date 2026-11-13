@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from './scripts/browser.mjs';
 import {readFileSync,existsSync} from 'node:fs';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-const browser=await chromium.launch({channel:'chrome',headless:true});
+const browser=await launchChrome();
 const base=process.env.MODEL_URL||'http://127.0.0.1:8765/';
 try {
   const page=await browser.newPage({viewport:{width:1480,height:1100}}),errors=[];
