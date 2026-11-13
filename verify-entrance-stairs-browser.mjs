@@ -1,4 +1,4 @@
-// browser-ci {"status":"ci-skipped","reason":"allows 30 s for the loading panel to close, and CPU rendering needs longer"}
+// browser-ci {"shard":"slow-6"}
 import assert from 'node:assert/strict';
 import {launchChrome,serveRepo} from './scripts/browser.mjs';
 import {mkdir} from 'node:fs/promises';
@@ -14,8 +14,15 @@ try{
   const output=process.env.ENTRANCE_OUTPUT||'/tmp/entrance-stairs';await mkdir(output,{recursive:true});
   for(const variant of ['aligned','straight','sketch']){
     await page.goto(`${server.origin}/index.html?entrance=${variant}`);
-    await page.waitForFunction(()=>window.entranceCheck,null,{timeout:180000});
-    await page.locator('#viewerLoading').waitFor({state:'detached',timeout:30000});
+    // The panel leaves on an animation frame after the model is ready, and a
+    // frame takes many seconds on CPU rendering. This wait and the screenshot
+    // below have no time limit, because the runner in
+    // scripts/verify-browser.mjs ends a check that hangs.
+    await page.waitForFunction(()=>{
+      const panel=document.getElementById('viewerLoading');
+      if(panel?.dataset.state==='error')throw new Error(document.getElementById('loadingHint').textContent);
+      return !panel&&window.entranceCheck;
+    },null,{timeout:0});
     const measurements=await page.evaluate(async variant=>{
       const {buildEntranceLuneta,entranceLunetaPavingDatum}=await import('./entrance-luneta-model.js');
       const {THREE,scene,walkingHeight,camera,controls,renderer,siteTerrain,localHouseData,houseTerrainY,GardenRouteModel,ground}=entranceCheck;
@@ -95,7 +102,7 @@ try{
       return {variant,count,maxError,walkError,rise:model.dimensions.rise,datum};
     },variant);
     assert(measurements.count>=(variant==='straight'?6:8));assert(measurements.maxError<2e-6,JSON.stringify(measurements));assert(measurements.walkError<1e-7,JSON.stringify(measurements));
-    await page.screenshot({path:`${output}/entrance-${variant}.png`});
+    await page.screenshot({path:`${output}/entrance-${variant}.png`,timeout:0});
     console.log(JSON.stringify(measurements));
   }
   assert.deepEqual(errors,[]);
