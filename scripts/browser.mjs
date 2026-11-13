@@ -18,7 +18,15 @@ const LOCAL_THREE=existsSync(resolve(ROOT,'node_modules/three/package.json'));
 
 export async function launchChrome(options={}) {
   const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
-  return chromium.launch({channel:'chrome',headless:true,...options});
+  const browser=await chromium.launch({channel:'chrome',headless:true,...options});
+  // A runner without a GPU renders WebGL on the CPU, and the page then answers
+  // slower than the 30 s Playwright default. Timeouts a check passes itself stay.
+  const timeout=Number(process.env.BROWSER_TIMEOUT_MS);
+  if(timeout)for(const method of ['newPage','newContext']){
+    const create=browser[method].bind(browser);
+    browser[method]=async(...args)=>{const made=await create(...args);made.setDefaultTimeout(timeout);return made;};
+  }
+  return browser;
 }
 
 export async function serveRepo({rewrite,locate}={}) {

@@ -26,5 +26,11 @@ jobs:
           cache: yarn
       - name: Install test dependencies
         run: yarn install --frozen-lockfile
+      # verify-tour-browser.mjs draws its test panorama with ffmpeg.
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Run browser checks
         run: yarn verify:browser
+        env:
+          BROWSER_JOBS: 1
+          BROWSER_TIMEOUT_MS: 180000
