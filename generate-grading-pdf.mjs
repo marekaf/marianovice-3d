@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {useLocalThree} from './three-cdn.mjs';
 
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const inside=(root,file)=>{const p=relative(root,file);return p!==''&&!isAbsolute(p)&&p!=='..'&&!p.startsWith('../');};
@@ -43,7 +44,7 @@ export async function generateGradingPDF({sourceRoot=fileURLToPath(new URL('.',i
         assert.equal(source.split(marker).length,2,'Viewer completion hook must be unique');
         bytes=source.replace(marker,'window.gradingPdfCapture={camera,controls,renderer,scene,plot:GARDEN.plot.vertices,fenceBounds:new THREE.Box3().setFromObject(fenceGroup)};'+marker);
       }
-      if(['.html','.js','.mjs'].includes(extname(pathname)))bytes=bytes.toString().replaceAll('https://unpkg.com/three@0.186.0/','/node_modules/three/');
+      if(['.html','.js','.mjs'].includes(extname(pathname)))bytes=useLocalThree(bytes.toString());
       res.writeHead(200,{'Content-Type':types[extname(pathname)]||'application/octet-stream','Cache-Control':'no-store'});res.end(bytes);
     }catch(error){if(req.url!=='/favicon.ico')errors.push(`${req.url}: ${error.message}`);res.writeHead(404).end();}
   });
