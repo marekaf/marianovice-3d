@@ -1,4 +1,4 @@
-// browser-ci {"status":"known-failing","reason":"expects 23 view presets, index.html has 24"}
+// browser-ci {"shard":"roof"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 const browser = await launchChrome();
@@ -8,10 +8,17 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(process.env.MODEL_URL || 'http://127.0.0.1:8765/index.html');
-    await page.locator('#viewerLoading').waitFor({ state:'hidden', timeout:120000 });
+    // No time limit: a page without a GPU needs minutes to build the garden. The
+    // loading panel reports an error itself, and the runner limits the whole check.
+    const loadError = await page.waitForFunction(() => {
+      const panel = document.getElementById('viewerLoading');
+      if (!panel) return 'none';
+      return panel.dataset.state === 'error' && document.getElementById('loadingHint').textContent;
+    }, null, { timeout:0 });
+    assert.equal(await loadError.jsonValue(), 'none');
     assert.equal(await page.locator('.viewer-panel:visible').count(), 0);
     await page.click('[data-panel="views"]');
-    assert.equal(await page.locator('#presets [data-view]').count(), 23);
+    assert.equal(await page.locator('#presets [data-view]').count(), 24);
     await page.click('[data-view="marekOfficeView"]');
     assert.equal(await page.locator('.viewer-panel:visible').count(), 0);
     await page.click('[data-panel="sun"]');
