@@ -5,10 +5,14 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 const output=resolve(process.env.PERGOLA_SCREENSHOT_DIR||'/tmp/pergola-bedroom-review');
 await mkdir(output,{recursive:true});
+// A page frame drawn outside first-person runs controls.update(), and its maxPolarAngle lifts the two
+// bedroom viewpoints by about 0.24 m. aim() stops the page's render scheduler so only its own render draws.
 const server=await serveRepo({rewrite(path,data){
-  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.pergolaReview={scene,camera,renderer,loadWalkInterior,aim(position,target){fpState.active=false;controls.enabled=false;camera.position.set(...position);controls.target.set(...target);camera.lookAt(...target);renderer.render(scene,camera);}};ViewerLoading.finish();`);
+  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.pergolaReview={scene,camera,renderer,loadWalkInterior,aim(position,target){renderScheduler.setVisible(false);fpState.active=false;controls.enabled=false;camera.position.set(...position);controls.target.set(...target);camera.lookAt(...target);renderer.render(scene,camera);}};ViewerLoading.finish();`);
   return data;
 }});
+// CPU rendering needs more than 120 s to load the page, so the CI limit applies when it is longer.
+const loadTimeout=Math.max(120000,Number(process.env.BROWSER_TIMEOUT_MS)||0);
 let browser;
 try{
   browser=await launchChrome();
@@ -16,9 +20,10 @@ try{
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${server.origin}/index.html`);
-  await page.waitForFunction(()=>window.pergolaReview,null,{timeout:120000});
-  await page.locator('#toggleFP').evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change'));});
-  await page.waitForFunction(()=>document.querySelector('#walkInteriorStatus').dataset.state==='ready',null,{timeout:120000});
+  await page.waitForFunction(()=>window.pergolaReview,null,{timeout:loadTimeout});
+  // No time limit: the page's first frames block it for longer than a locator waits on CPU rendering.
+  await page.evaluate(()=>{const el=document.querySelector('#toggleFP');el.checked=true;el.dispatchEvent(new Event('change'));});
+  await page.waitForFunction(()=>document.querySelector('#walkInteriorStatus').dataset.state==='ready',null,{timeout:loadTimeout});
   await page.addStyleTag({content:'body > :not(canvas):not(script):not(style) {visibility:hidden !important}'});
   const views=[
     {name:'bedroom-window-seat',position:[20.48,3.665,9.38],target:[34.5,3.2,7.5]},
