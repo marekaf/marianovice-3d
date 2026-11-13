@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
-import {launchChrome} from './scripts/browser.mjs';
-import { readFile } from 'node:fs/promises';
+import {launchChrome,readPage} from './scripts/browser.mjs';
 
 const url = process.env.MODEL_URL || 'http://127.0.0.1:8765/index.html';
-const html = await readFile(new URL('./index.html', import.meta.url), 'utf8');
+const html = await readPage('index.html');
 const importMap = html.match(/<script type="importmap">[\s\S]*?<\/script>/)[0];
 const browser = await launchChrome();
 try {

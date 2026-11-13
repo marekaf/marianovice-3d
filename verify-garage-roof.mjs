@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
-import {launchChrome} from './scripts/browser.mjs';
-import { readFile } from 'node:fs/promises';
+import {launchChrome,readPage} from './scripts/browser.mjs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
@@ -8,7 +7,7 @@ const { TERRAIN } = require('./terrain.js');
 const { GarageModel } = require('./garage-model.js');
 const { dims } = GarageModel.build(GARDEN, TERRAIN.houseFFLInternal - .5);
 
-const html = await readFile(new URL('./index.html', import.meta.url), 'utf8');
+const html = await readPage('index.html');
 const roofBlock = html.slice(html.indexOf('// Garage pult roof'), html.indexOf('// Carport plate'));
 const helper = html.slice(html.indexOf('function makePultRoofWE('), html.indexOf('const houseRoof ='));
 const importMap = html.match(/<script type="importmap">[\s\S]*?<\/script>/)[0];

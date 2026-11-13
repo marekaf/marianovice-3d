@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {launchChrome} from './scripts/browser.mjs';
-import {readFile,mkdir} from 'node:fs/promises';
+import {launchChrome,readPage} from './scripts/browser.mjs';
+import {mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 const {GARDEN}=createRequire(import.meta.url)('./layout.js');
 const started=Date.now();
@@ -9,7 +9,7 @@ try {
   await mkdir('/tmp/grading-session',{recursive:true});
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
   page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
-  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,cotoneasterModel,cotoneasterGroup,gardenRoutes,firepitGroup,firepitModel,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
+  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readPage('index.html')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,cotoneasterModel,cotoneasterGroup,gardenRoutes,firepitGroup,firepitModel,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
   await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
   console.log('Viewer ready in',Date.now()-started,'ms');

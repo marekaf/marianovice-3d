@@ -1,5 +1,5 @@
 import {createServer} from 'node:http';
-import {existsSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -11,10 +11,25 @@ const TYPES={
   '.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg',
 };
 
-// The pages import three from this CDN path. With the pinned devDependency
-// installed, the server answers from node_modules, so a run needs no network.
-const THREE_CDN='https://unpkg.com/three@0.186.0/';
+// The pages import the pinned three version from a CDN. With the devDependency
+// installed, a check gets it from node_modules, so a run needs no network.
+const THREE_VERSION=JSON.parse(readFileSync(resolve(ROOT,'package.json'),'utf8')).devDependencies.three;
+const THREE_CDNS=[`https://unpkg.com/three@${THREE_VERSION}/`,`https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/`];
+const CDN_HOSTS=/^https:\/\/(unpkg\.com|cdn\.jsdelivr\.net)\//;
 const LOCAL_THREE=existsSync(resolve(ROOT,'node_modules/three/package.json'));
+
+// jsDelivr builds each .min.js on request. The package ships only the
+// unminified files, so a .min.js name maps to the file beside it.
+export function useLocalThree(source) {
+  if(!LOCAL_THREE)return source;
+  for(const cdn of THREE_CDNS)source=source.replaceAll(cdn,'/node_modules/three/');
+  return source.replace(/(\/node_modules\/three\/[\w./-]+?)\.min\.js/g,'$1.js');
+}
+
+// For a check that fulfills a page itself instead of asking a server for it.
+export async function readPage(name) {
+  return useLocalThree(await readFile(resolve(ROOT,name),'utf8'));
+}
 
 export async function launchChrome(options={}) {
   const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
@@ -22,9 +37,15 @@ export async function launchChrome(options={}) {
   // A runner without a GPU renders WebGL on the CPU, and the page then answers
   // slower than the 30 s Playwright default. Timeouts a check passes itself stay.
   const timeout=Number(process.env.BROWSER_TIMEOUT_MS);
-  if(timeout)for(const method of ['newPage','newContext']){
+  const offline=process.env.BROWSER_BLOCK_CDN==='1';
+  if(timeout||offline)for(const method of ['newPage','newContext']){
     const create=browser[method].bind(browser);
-    browser[method]=async(...args)=>{const made=await create(...args);made.setDefaultTimeout(timeout);return made;};
+    browser[method]=async(...args)=>{
+      const made=await create(...args);
+      if(timeout)made.setDefaultTimeout(timeout);
+      if(offline)await made.route(CDN_HOSTS,route=>route.abort());
+      return made;
+    };
   }
   return browser;
 }
@@ -40,7 +61,7 @@ export async function serveRepo({rewrite,locate}={}) {
       }
       let data=await readFile(file);
       if(rewrite)data=await rewrite(path,data);
-      if(LOCAL_THREE&&['.html','.js','.mjs'].includes(extname(file)))data=data.toString().replaceAll(THREE_CDN,'/node_modules/three/');
+      if(['.html','.js','.mjs'].includes(extname(file)))data=useLocalThree(data.toString());
       res.writeHead(200,{'Content-Type':TYPES[extname(file)]||'application/octet-stream'}).end(data);
     }catch{res.writeHead(404).end();}
   });
