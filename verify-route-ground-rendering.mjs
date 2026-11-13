@@ -50,6 +50,32 @@ try{
     // The page keeps the soil under a path inside each drainage strip, so the area balance uses a cut without that rule.
     const fullCut=sampler(cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry));
     const inStrip=(x,z)=>preserved.some(rect=>x>=rect.x0-1e-6&&x<=rect.x1+1e-6&&z>=rect.z0-1e-6&&z<=rect.z1+1e-6);
+    // Plan area of a mesh outside every drainage strip. The strips overlap, so each one is subtracted in turn.
+    function areaOutsideStrips({triangles}){
+      const clip=(polygon,axis,limit,below)=>{
+        const result=[];
+        for(let i=0;i<polygon.length;i++){
+          const p=polygon[i],q=polygon[(i+1)%polygon.length],dp=p[axis]-limit,dq=q[axis]-limit,keepP=below?dp<=0:dp>=0,keepQ=below?dq<=0:dq>=0;
+          if(keepP)result.push(p);
+          if(keepP!==keepQ){const t=dp/(dp-dq);result.push([p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t]);}
+        }
+        return result;
+      };
+      let area=0;
+      for(const triangle of triangles){
+        let pieces=[triangle.map(p=>[p[0],p[2]])];
+        for(const rect of preserved)pieces=pieces.flatMap(piece=>{
+          const outside=[];let rest=piece;
+          for(const [axis,limit,below] of [[0,rect.x0,true],[0,rect.x1,false],[1,rect.z0,true],[1,rect.z1,false]]){
+            outside.push(clip(rest,axis,limit,below));rest=clip(rest,axis,limit,!below);
+          }
+          return outside.filter(polygon=>polygon.length>=3);
+        });
+        for(const polygon of pieces)area+=Math.abs(polygon.reduce((sum,p,i)=>{const q=polygon[(i+1)%polygon.length];return sum+p[0]*q[1]-q[0]*p[1];},0))/2;
+      }
+      return area;
+    }
+    const originalOutside=areaOutsideStrips(original),cutOutside=areaOutsideStrips(cut),routesOutside=areaOutsideStrips(routes);
     let samples=0,oldPenetrations=0,newPenetrations=0,maxOldPenetration=0,keptOutsideStrips=0;
     for(const triangle of routes.triangles)for(const weights of [[1/3,1/3,1/3],[.6,.2,.2],[.2,.6,.2],[.2,.2,.6]]){
       const [x,y,z]=[0,1,2].map(axis=>triangle.reduce((sum,p,i)=>sum+weights[i]*p[axis],0));
@@ -86,7 +112,7 @@ try{
     }
     const bytes=geometry=>Object.values(geometry.attributes).reduce((sum,a)=>sum+a.array.byteLength,0)+(geometry.index?.array.byteLength||0);
     return {samples,oldPenetrations,newPenetrations,maxOldPenetration,outsideSamples,maxOutsideError,contacts,seamSamples,seamMisses,misses,largestConnection,
-      areaError:Math.abs(original.area-fullCut.area-routes.area),preservedArea:cut.area-fullCut.area,keptOutsideStrips,beforeBytes:bytes(groundGeom),afterBytes:bytes(ground.geometry),edgeBytes:bytes(gardenRouteEdges.geometry),edgeStats:gardenRouteEdges.geometry.userData,clipMs:window.clipMs,connectionMs:window.connectionMs,
+      areaError:Math.abs(original.area-fullCut.area-routes.area),preservedArea:cut.area-fullCut.area,keptOutsideStrips,originalOutside,cutOutside,routesOutside,renderedAreaError:Math.abs(originalOutside-cutOutside-routesOutside),beforeBytes:bytes(groundGeom),afterBytes:bytes(ground.geometry),edgeBytes:bytes(gardenRouteEdges.geometry),edgeStats:gardenRouteEdges.geometry.userData,clipMs:window.clipMs,connectionMs:window.connectionMs,
       previewTriangles:terrainPreview.comparison.geometry.index.count/3,originalTriangles:groundGeom.index.count/3};
   });
   console.log(JSON.stringify(result));
@@ -98,6 +124,7 @@ try{
   assert(result.outsideSamples>1000);
   assert(result.maxOutsideError<1e-5,'Ground outside actual path footprints keeps its height and coverage');
   assert(result.areaError<.001,'Clipping removes only the actual route area, without cracks or extra holes');
+  assert(result.renderedAreaError<.001,'Outside the drainage strips the rendered ground loses only the actual route area');
   assert(result.preservedArea>0,'The drainage strips keep their soil under a path');
   assert.equal(result.keptOutsideStrips,0,'Soil stays under a path only inside a drainage strip');
   assert(result.afterBytes<result.beforeBytes*1.2,'Local clipping must not densify the entire terrain');
