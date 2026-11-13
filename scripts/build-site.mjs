@@ -2,7 +2,7 @@ import {copyFileSync,existsSync,mkdirSync,readFileSync,rmSync,writeFileSync} fro
 import {dirname,join,posix,resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {buildSync,transformSync} from 'esbuild';
-import {threeImportMap,threeSource,threeVendorDir,threeVersion} from '../three-import-map.mjs';
+import {threeAddons,threeEntry,threePackage,threeSource,threeVendor,threeVendorDir,threeVersion} from '../three-import-map.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 
@@ -32,8 +32,10 @@ export function* localReferences(source,from){
   for(const match of source.matchAll(reference)){
     // The value of a download attribute or property names the saved file, not a request.
     if(/download\s*=\s*$/.test(source.slice(0,match.index)))continue;
-    if(/^(?:[a-z][a-z0-9+.-]*:|\/\/|three\/)/i.test(match[2])||match[2].startsWith(threeSource))continue;
-    yield posix.normalize(posix.join(posix.dirname(from),match[2].split(/[?#]/)[0]));
+    if(/^(?:[a-z][a-z0-9+.-]*:|\/\/|three\/)/i.test(match[2]))continue;
+    const path=posix.normalize(posix.join(posix.dirname(from),match[2].split(/[?#]/)[0]));
+    // The build vendors these files itself.
+    if(!path.startsWith(threePackage))yield path;
   }
 }
 
@@ -61,14 +63,13 @@ export function siteFiles(){
 // import. Each file stays a separate module at its package path, so the relative imports inside the package
 // still resolve and the browser holds one instance of three.module.js and of three.core.js.
 function vendorThree(out,files){
-  const source=join(root,'.'+threeSource);
+  const source=join(root,threePackage);
   const installed=existsSync(join(source,'package.json'))?JSON.parse(readFileSync(join(source,'package.json'),'utf8')).version:null;
   if(installed!==threeVersion)throw new Error(`Cannot build the site: package.json pins three ${threeVersion}, node_modules holds ${installed??'no three'}. Run yarn install.`);
-  const entry=threeImportMap.imports.three.slice(threeSource.length),addons=threeImportMap.imports['three/addons/'].slice(threeSource.length);
-  const entries=new Set([entry]);
+  const entries=new Set([threeEntry]);
   for(const path of files){
     if(!scanned.test(path))continue;
-    for(const match of readFileSync(join(root,path),'utf8').matchAll(/(['"])three\/addons\/([^'"`\s]+)\1/g))entries.add(addons+match[2]);
+    for(const match of readFileSync(join(root,path),'utf8').matchAll(/(['"])three\/addons\/([^'"`\s]+)\1/g))entries.add(threeAddons+match[2]);
   }
   for(const path of entries)if(!existsSync(join(source,path)))throw new Error(`Cannot build the site: three ${threeVersion} has no ${path}`);
   // This bundle is discarded. Its metafile lists every file the entries reach through relative imports.
@@ -95,8 +96,7 @@ export function buildSite(outDir){
   for(const path of files){
     const target=join(out,path);
     mkdirSync(dirname(target),{recursive:true});
-    // An import map resolves a relative address against the page, so each page gets its own path to the vendor directory.
-    if(path.endsWith('.html'))writeFileSync(target,readFileSync(join(root,path),'utf8').replaceAll(threeSource,(posix.relative(posix.dirname(path),'.')||'.')+'/'+threeVendorDir));
+    if(path.endsWith('.html'))writeFileSync(target,readFileSync(join(root,path),'utf8').replaceAll(threeSource(path),threeVendor(path)));
     else copyFileSync(join(root,path),target);
   }
   return [...files,...vendorThree(out,files)].sort();

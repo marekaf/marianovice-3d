@@ -35,7 +35,7 @@ while (pending.length) {
   const source = readFileSync(file, 'utf8');
   assert(!/\/Users\/|\.\.\/marianovice\/|BEGIN [A-Z ]*PRIVATE KEY/.test(source), `Private source reference: ${relative(root, file)}`);
   for (const path of runtimeAssetReferences(source)) {
-    if (/^(?:https?:|data:|three\/|\/node_modules\/)/.test(path)) continue;
+    if (/^(?:https?:|data:|three\/|(?:\.\.?\/)+node_modules\/)/.test(path)) continue;
     const version=path.match(/\?v=([^&#]+)/)?.[1];
     if(version){
       const asset=resolve(dirname(file),path.split('?')[0]);

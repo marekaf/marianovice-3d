@@ -24,6 +24,7 @@ export const SKIPPED_CHECKS={
   'verify-route-ground-rendering.mjs':'needs Chrome and index.html served at GARDEN_URL (default http://127.0.0.1:8765)',
   'verify-sauna-browser.mjs':SERVED_8765,
   'verify-terrain-worker-browser.mjs':OWN_SERVER,
+  'verify-three-subpath-browser.mjs':OWN_SERVER,
   'verify-tour-browser.mjs':OWN_SERVER,
   'verify-viewer-ui.mjs':SERVED_8765,
   'verify-walk-doors-browser.mjs':OWN_SERVER,

@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import {existsSync,mkdtempSync,readFileSync,readdirSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {basename,join,posix,relative,sep} from 'node:path';
+import {basename,join,relative,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {buildSite,excludedPages,localReferences,pages,unpublished} from './scripts/build-site.mjs';
-import {threeImportMap,threePreloads,threeSource,threeVendorDir} from './three-import-map.mjs';
+import {threeAddons,threeImportMap,threePackage,threePreloadFiles,threePreloads,threeVendor,threeVendorDir} from './three-import-map.mjs';
 
 const root=fileURLToPath(new URL('./',import.meta.url));
 for(const dir of ['','docs/']){
@@ -22,9 +22,8 @@ try{
   assert.deepEqual(built.filter(path=>path.endsWith('.html')),[...pages].sort(),'The site holds the listed pages and no other page');
   assert(built.includes('CNAME'),'CNAME keeps the custom domain');
 
-  const vendor=path=>path.replace(threeSource,threeVendorDir);
-  for(const path of [...threePreloads.map(vendor),threeVendorDir+'LICENSE'])assert(built.includes(path),`The site holds ${path}`);
-  const installed=name=>readFileSync(join(root,'.'+threeSource,name));
+  for(const path of [...threePreloadFiles,'LICENSE'].map(file=>threeVendorDir+file))assert(built.includes(path),`The site holds ${path}`);
+  const installed=name=>readFileSync(join(root,threePackage,name));
   for(const path of built.filter(path=>path.startsWith(threeVendorDir)&&path.endsWith('.js'))){
     const source=installed(path.slice(threeVendorDir.length)),bytes=readFileSync(join(out,path));
     assert(bytes.length<source.length,`${path} is smaller than the file in the three package`);
@@ -38,18 +37,15 @@ try{
     const source=readFileSync(join(out,path),'utf8');
     assert.doesNotMatch(source,/node_modules/,`${path} references node_modules`);
     assert.doesNotMatch(source,/(?:https?:)?\/\/[^"'\s]*\bthree(?:@|\.module|\.core|\/)/,`${path} references a remote three URL`);
-    const base=posix.dirname(path),resolved=target=>posix.normalize(posix.join(base,target));
     const map=source.match(/<script type="importmap">([\s\S]*?)<\/script>/);
     if(map){
       mapped++;
-      const {imports}=JSON.parse(map[1]);
-      assert.deepEqual(Object.keys(imports),Object.keys(threeImportMap.imports),`${path} maps the same names as the source page`);
-      for(const [name,target] of Object.entries(threeImportMap.imports))assert.equal(resolved(imports[name]),posix.normalize(vendor(target).replace(/\/$/,'')+(target.endsWith('/')?'/':'')),`${path} maps ${name} into ${threeVendorDir}`);
-      const preloads=[...source.matchAll(/<link rel="modulepreload" href="([^"]+)">/g)].map(match=>resolved(match[1]));
-      assert.deepEqual(preloads,threePreloads.map(vendor),`${path} preloads the vendored build files`);
+      assert.deepEqual(JSON.parse(map[1]),threeImportMap(threeVendor(path)),`${path} maps three into ${threeVendorDir} with page-relative URLs`);
+      const preloads=[...source.matchAll(/<link rel="modulepreload" href="([^"]+)">/g)].map(match=>match[1]);
+      assert.deepEqual(preloads,threePreloads(threeVendor(path)),`${path} preloads the vendored build files`);
     }
     for(const match of source.matchAll(/(['"])three\/addons\/([^'"`\s]+)\1/g)){
-      const addon=vendor(threeImportMap.imports['three/addons/'])+match[2];
+      const addon=threeVendorDir+threeAddons+match[2];
       assert(built.includes(addon),`${path} imports three/addons/${match[2]}, which the build did not vendor`);
     }
   }
