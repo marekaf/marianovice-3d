@@ -51,8 +51,9 @@ export const BROWSER_MODES=[
 
 // A GitHub runner has no GPU and renders WebGL on the CPU, so some browser
 // checks need minutes each there. The browser workflow runs one job for each
-// of these shards, one check at a time, and one job named "fast" for the rest.
-export const BROWSER_SHARDS=['entrance','roof','vr','doors'];
+// of these shards that a check names, one check at a time, and one job named
+// "fast" for the rest.
+export const BROWSER_SHARDS=['entrance','roof','vr','doors','slow-1','slow-2','slow-3','slow-4'];
 
 // known-failing: the check fails against the current pages.
 // ci-skipped: the check cannot pass on CPU rendering as it is written.
