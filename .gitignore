@@ -4,6 +4,7 @@ __pycache__/
 /blender/generated/
 /unreal/generated/
 /unreal/project/
+/_site/
 /docs/*
 !/docs/coffee-niche.js
 !/docs/loft-roof-windows.js
