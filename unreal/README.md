@@ -34,6 +34,19 @@ It uses a fixed roof-opening fixture and checks geometry ownership and mesh
 transfer without loading textures, a browser or Unreal. It does not validate
 the live garden assembly or replace a GLB round trip.
 
+### Checks outside `yarn unreal:verify`
+
+`yarn unreal:verify` runs each check that needs only Node.js or plain Python.
+Five files in this directory are not in it, so CI does not run them:
+
+| Check | Why it is not in `unreal:verify` | How to run it |
+| --- | --- | --- |
+| `verify-camera-path.py` | imports the `unreal` module | inside the Unreal editor |
+| `verify-walking.py` | imports the `unreal` module and starts Play mode | inside the Unreal editor |
+| `verify-python-closure-runtime.py` | imports the `unreal` module | inside the Unreal editor |
+| `verify-viewer-loft.mjs` | needs `--source-root` | `node unreal/verify-viewer-loft.mjs --source-root /path/to/active/viewer` |
+| `verify-fallback-geometry.mjs` | needs a generated GLB and its extraction JSON | `node unreal/verify-fallback-geometry.mjs source.glb extraction.json [probeMeshIndex]` |
+
 Full-house exports require an attached furnished loft with visible floor,
 furniture, partitions, ceiling and exterior-wall geometry. The manifest records
 loft and roof-window ownership as `house` and includes loft coverage counts.
