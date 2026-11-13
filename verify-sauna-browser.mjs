@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
-import {readFile,mkdir} from 'node:fs/promises';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright-core');
-const browser=await chromium.launch({channel:'chrome',headless:true});
+import {launchChrome,readPage} from './scripts/browser.mjs';
+import {mkdir} from 'node:fs/promises';
+const browser=await launchChrome();
 const output=process.env.SAUNA_SCREENSHOTS||'/tmp/compact-sauna';
 try {
   await mkdir(output,{recursive:true});
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
-  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readFile(new URL('./index.html',import.meta.url),'utf8')).replace('ViewerLoading.finish();','window.saunaCheck={THREE,scene,camera,controls,renderer,saunaGroup,saunaModel,boundaryFence,gradingOverlay,siteTerrain,walkingHeight};ViewerLoading.finish();')}));
+  await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readPage('index.html')).replace('ViewerLoading.finish();','window.saunaCheck={THREE,scene,camera,controls,renderer,saunaGroup,saunaModel,boundaryFence,gradingOverlay,siteTerrain,walkingHeight};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
   await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
   const result=await page.evaluate(()=>{

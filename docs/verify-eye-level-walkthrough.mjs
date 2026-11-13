@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from '../scripts/browser.mjs';
 import { createRequire } from 'node:module';
 import { canWalkAt, WALK_STARTS } from './eye-level-walkthrough.js';
 const require = createRequire(import.meta.url);
@@ -11,8 +12,7 @@ assert(!canWalkAt(data,2,10));
 assert(!canWalkAt(data,9.8,5.5));
 console.log('Walkthrough starts, walls, doorway, atrium and window boundaries pass');
 if (process.env.WALKTHROUGH_BROWSER === '1') {
-  const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-  const browser = await chromium.launch({channel:'chrome',headless:true});
+  const browser = await launchChrome();
   try {
     const page = await browser.newPage({viewport:{width:1440,height:1000}});
     const errors=[]; page.on('pageerror',error=>errors.push(error.message));

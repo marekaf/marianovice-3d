@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-const browser=await chromium.launch({channel:'chrome',headless:true});
+import {launchChrome} from './scripts/browser.mjs';
+const browser=await launchChrome();
 try{
   const page=await browser.newPage({viewport:{width:1400,height:950}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));

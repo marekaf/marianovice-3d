@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from '../scripts/browser.mjs';
 import {createRequire} from 'node:module';
 import {buildShowerFittings} from './shower-fittings.js';
 const {HOUSE_INTERIOR:data}=createRequire(import.meta.url)('../house-interior.js');
@@ -38,8 +39,7 @@ for(const part of model.parts){
 }
 console.log('Showers: source mixer positions, 130mm heads, 1750mm continuous hoses, drain-fit checks and immutable input pass.');
 if(process.env.SHOWER_BROWSER==='1'){
-  const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await launchChrome();
   try{
     const page=await browser.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(e.message));

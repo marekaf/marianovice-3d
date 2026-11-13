@@ -1,28 +1,20 @@
 import assert from 'node:assert/strict';
 import {prepareReviewFloor,waitForReviewFloor,captureReview} from './scripts/review-floor.mjs';
-import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
-import {resolve,extname} from 'node:path';
-import {fileURLToPath} from 'node:url';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const root=fileURLToPath(new URL('.',import.meta.url));
-const server=createServer(async(req,res)=>{try{
-  const path=new URL(req.url,'http://localhost').pathname;
-  const file=resolve(root,'.'+path);
-  let data=await readFile(file);
+import {launchChrome,serveRepo} from './scripts/browser.mjs';
+import {resolve} from 'node:path';
+const server=await serveRepo({rewrite(path,data){
   if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.walkReview={scene,camera,renderer,fpState,fpUpdate,loadWalkInterior,houseInteriorBacking,houseTerrainY,get navigation(){return walkNavigation;},get house(){return walkHouse;},lookAt(x,z,pitch=0){fpYaw=Math.atan2(camera.position.x-x,camera.position.z-z);fpPitch=pitch;fpUpdate(0);requestRender();},aim(x,z,yaw,pitch=0){camera.position.set(x,walkingHeight(x,z)+1.7,z);walkNavigation?.reset(camera.position);fpYaw=yaw;fpPitch=pitch;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
-  res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(data);
-}catch{res.writeHead(404).end();}});
-await new Promise(done=>server.listen(0,'127.0.0.1',done));
+  return data;
+}});
 let browser;
 try{
-  browser=await chromium.launch({channel:'chrome',headless:true});
+  browser=await launchChrome();
   const page=await browser.newPage({viewport:{width:1280,height:900}});
   const errors=[],requests=[];
   await prepareReviewFloor(page);
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>requests.push(r.url()));
-  await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+  await page.goto(`${server.origin}/index.html`);
   await page.waitForFunction(()=>window.walkReview,null,{timeout:120000});
   assert(!requests.some(url=>url.includes('/docs/walk-interior.js')),'Initial garden must not request interiors');
   assert.equal(await page.evaluate(()=>walkReview.scene.getObjectByName('Roof flue before furnished interior')?.visible),true,'Initial garden retains the roof chimney without loading interiors');
@@ -200,4 +192,4 @@ try{
   assert(environmentLifecycle.independent,'Outdoor time changes must not replace the enclosed room environment');
   assert(environmentLifecycle.after<environmentLifecycle.before,'Disposing the interior releases its GPU textures');
   console.log(JSON.stringify({metrics,floorPixel,environmentLifecycle,errors},null,2));assert.deepEqual(errors,[]);
-}finally{await browser?.close();await new Promise(done=>server.close(done));}
+}finally{await browser?.close();await server.close();}

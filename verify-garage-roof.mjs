@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import {launchChrome,readPage} from './scripts/browser.mjs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { GARDEN } = require('./layout.js');
@@ -7,12 +7,11 @@ const { TERRAIN } = require('./terrain.js');
 const { GarageModel } = require('./garage-model.js');
 const { dims } = GarageModel.build(GARDEN, TERRAIN.houseFFLInternal - .5);
 
-const html = await readFile(new URL('./index.html', import.meta.url), 'utf8');
+const html = await readPage('index.html');
 const roofBlock = html.slice(html.indexOf('// Garage pult roof'), html.indexOf('// Carport plate'));
 const helper = html.slice(html.indexOf('function makePultRoofWE('), html.indexOf('const houseRoof ='));
 const importMap = html.match(/<script type="importmap">[\s\S]*?<\/script>/)[0];
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const browser = await chromium.launch({ channel:'chrome', headless:true });
+const browser = await launchChrome();
 try {
   const page = await browser.newPage();
   const url = process.env.MODEL_URL || 'http://127.0.0.1:8765/index.html';

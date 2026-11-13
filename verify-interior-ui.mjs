@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const browser = await chromium.launch({ channel:'chrome', headless:true });
+import {launchChrome} from './scripts/browser.mjs';
+const browser = await launchChrome();
 try {
   for (const mobile of [false, true]) {
     const page = await browser.newPage({ viewport:{ width:mobile ? 390 : 1440, height:900 }, isMobile:mobile, hasTouch:mobile });

@@ -1,29 +1,19 @@
 import assert from 'node:assert/strict';
 import {prepareReviewFloor,captureReview} from './scripts/review-floor.mjs';
-import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
-import {resolve,extname} from 'node:path';
-import {fileURLToPath} from 'node:url';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-const root=fileURLToPath(new URL('.',import.meta.url));
-const server=createServer(async(req,res)=>{
-  try{
-    const pathname=new URL(req.url,'http://localhost').pathname,file=resolve(root,'.'+pathname);
-    if(!file.startsWith(root))throw new Error('Invalid path');
-    let body=await readFile(file);
-    if(pathname==='/index.html')body=body.toString().replace('ViewerLoading.finish();',`window.doorReview={THREE,scene,camera,fpState,loadWalkInterior,get doors(){return walkDoors;},aim(group,side=1){const b=new THREE.Box3().setFromObject(group.userData.walkDoor.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x+side*1.4,houseTerrainY+1.7,c.z);fpYaw=side*Math.PI/2;fpPitch=0;fpUpdate(0);requestRender();},aimPocket(group,side){const p=group.userData.walkDoor.panel.position,c=group.localToWorld(new THREE.Vector3(p[0],1.7,p[1]));camera.position.copy(c);camera.position.z+=side*.8;fpYaw=side===1?0:Math.PI;fpPitch=0;fpUpdate(0);requestRender();},update(){fpUpdate(0);requestRender();},tick(dt){fpUpdate(dt);requestRender();}};ViewerLoading.finish();`);
-    if(pathname==='/index.html')body=body.replace('ViewerLoading.finish();',`doorReview.aimWindow=function(group){const door=group.userData.walkDoor,b=new THREE.Box3().setFromObject(door.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x,houseTerrainY+1.7,c.z+(door.opening.hinge==='north'?1:-1)*.9);fpYaw=door.opening.hinge==='north'?0:Math.PI;fpPitch=0;fpUpdate(0);requestRender();};ViewerLoading.finish();`);
-    res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(file)]||'application/octet-stream'});res.end(body);
-  }catch{res.writeHead(404).end();}
-});
-await new Promise(done=>server.listen(0,'127.0.0.1',done));
+import {launchChrome,serveRepo} from './scripts/browser.mjs';
+import {resolve} from 'node:path';
+const server=await serveRepo({rewrite(path,data){
+  if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.doorReview={THREE,scene,camera,fpState,loadWalkInterior,get doors(){return walkDoors;},aim(group,side=1){const b=new THREE.Box3().setFromObject(group.userData.walkDoor.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x+side*1.4,houseTerrainY+1.7,c.z);fpYaw=side*Math.PI/2;fpPitch=0;fpUpdate(0);requestRender();},aimPocket(group,side){const p=group.userData.walkDoor.panel.position,c=group.localToWorld(new THREE.Vector3(p[0],1.7,p[1]));camera.position.copy(c);camera.position.z+=side*.8;fpYaw=side===1?0:Math.PI;fpPitch=0;fpUpdate(0);requestRender();},update(){fpUpdate(0);requestRender();},tick(dt){fpUpdate(dt);requestRender();}};ViewerLoading.finish();`);
+  if(path==='/index.html')data=data.replace('ViewerLoading.finish();',`doorReview.aimWindow=function(group){const door=group.userData.walkDoor,b=new THREE.Box3().setFromObject(door.leaf),c=b.getCenter(new THREE.Vector3());camera.position.set(c.x,houseTerrainY+1.7,c.z+(door.opening.hinge==='north'?1:-1)*.9);fpYaw=door.opening.hinge==='north'?0:Math.PI;fpPitch=0;fpUpdate(0);requestRender();};ViewerLoading.finish();`);
+  return data;
+}});
 let browser;
 try{
-  browser=await chromium.launch({channel:'chrome',headless:true});
+  browser=await launchChrome();
   const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
   await prepareReviewFloor(page);
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+  await page.goto(`${server.origin}/index.html`);
   await page.waitForFunction(()=>window.doorReview,null,{timeout:120000});
   await page.locator('#walkButton').click();
   await page.waitForFunction(()=>document.querySelector('#walkInteriorStatus').dataset.state==='ready',null,{timeout:120000});
@@ -134,4 +124,4 @@ try{
   }
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({doors:before.count,passage,entrance,errors}));
-}finally{await browser?.close();await new Promise(done=>server.close(done));}
+}finally{await browser?.close();await server.close();}

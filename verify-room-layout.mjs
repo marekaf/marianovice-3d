@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from './scripts/browser.mjs';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 
@@ -120,8 +121,7 @@ for(const light of ['pathLights','gardenSpots'].flatMap(id => element(id).parts)
 }
 console.log('Approved A footprints, room planting, routes, lighting, reserves and fixed geometry verified');
 if(process.env.GARDEN_BROWSER==='1'){
-  const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await launchChrome();
   try{
     const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
     page.on('pageerror',error=>errors.push(error.message));

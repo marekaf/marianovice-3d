@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from './scripts/browser.mjs';
 import {createRenderScheduler} from './render-scheduler.js';
 
 const queued=new Map(),deltas=[];
@@ -32,8 +33,7 @@ scheduler.dispose();scheduler.invalidate();assert.equal(queued.size,0);
 console.log('Render scheduling: idle sleep, input coalescing, animation timing, damping and visibility pass');
 
 if(process.env.RENDER_BROWSER==='1'){
-  const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await launchChrome();
   try{
     const page=await browser.newPage({viewport:{width:1200,height:800}}),errors=[];
     page.on('pageerror',error=>errors.push(error.message));

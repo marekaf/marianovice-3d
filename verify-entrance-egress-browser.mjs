@@ -1,23 +1,15 @@
 import assert from 'node:assert/strict';
-import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
-import {resolve,extname} from 'node:path';
-import {fileURLToPath} from 'node:url';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-const root=fileURLToPath(new URL('.',import.meta.url));
-const server=createServer(async(req,res)=>{try{
-  const path=new URL(req.url,'http://localhost').pathname;
-  let data=await readFile(resolve(root,'.'+path));
+import {launchChrome,serveRepo} from './scripts/browser.mjs';
+const server=await serveRepo({rewrite(path,data){
   if(path==='/index.html')data=data.toString().replace('ViewerLoading.finish();',`window.egress={THREE,scene,camera,fpState,fpUpdate,walkingHeight,houseTerrainY,get doors(){return walkDoors;},get navigation(){return walkNavigation;},aim(x,z,yaw){camera.position.set(x,walkingHeight(x,z)+1.7,z);walkNavigation.reset(camera.position);fpYaw=yaw;fpPitch=0;fpUpdate(0);requestRender();}};ViewerLoading.finish();`);
-  res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.css':'text/css'}[extname(path)]||'application/octet-stream'}).end(data);
-}catch{res.writeHead(404).end();}});
-await new Promise(done=>server.listen(0,'127.0.0.1',done));
+  return data;
+}});
 let browser;
 try{
-  browser=await chromium.launch({channel:'chrome',headless:true});
+  browser=await launchChrome();
   const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+  await page.goto(`${server.origin}/index.html`);
   await page.waitForFunction(()=>window.egress,null,{timeout:120000});
   await page.locator('#walkButton').click();
   await page.waitForFunction(()=>document.querySelector('#walkInteriorStatus').dataset.state==='ready',null,{timeout:120000});
@@ -50,4 +42,4 @@ try{
   assert(Math.abs(inward[1]-4.165)<1e-6,'Returning walker reaches house floor height');
   console.log(JSON.stringify({closed,outward:outward.end,inward,errors}));
   assert.deepEqual(errors,[]);
-}finally{await browser?.close();await new Promise(done=>server.close(done));}
+}finally{await browser?.close();await server.close();}

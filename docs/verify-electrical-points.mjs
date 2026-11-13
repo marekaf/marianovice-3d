@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from '../scripts/browser.mjs';
 import {ELECTRICAL_POINTS as points} from './electrical-points.js';
 import {buildElectricalFrame} from './electrical-model.js';
 import {outletOnFinishedSurface} from './electrical-view.js';
@@ -44,8 +45,7 @@ assert(Math.abs(outletOnFinishedSurface({...surfacePoint,position:[1.025,1.1,2],
 console.log(`${points.filter(p=>p.resolved).length}/${points.length} electrical records resolved; all unresolved records retained with reasons.`);
 
 if(process.env.ELECTRICAL_BROWSER==='1'){
-  const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await launchChrome();
   try{
     const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
     page.on('pageerror',error=>errors.push(error.message));

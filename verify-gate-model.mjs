@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from './scripts/browser.mjs';
 import {createRequire} from 'node:module';
 const {GateModel}=createRequire(import.meta.url)('./gate-model.js');
 const options={open:0,wicketOpen:0},before=JSON.stringify(options),model=GateModel.build(options);
@@ -65,8 +66,7 @@ const original=model.parts.find(p=>p.name==='cantilever_runner').vertices[0],rot
 assert.deepEqual(rotated,[10-original[1],20+original[0],original[2]]);
 console.log('Entrance gate: 4m opening, 5.5m leaf, raised TR42×12 mesh, frame clipping, opening states and placement transforms pass.');
 if(process.env.GATE_BROWSER==='1'){
-  const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await launchChrome();
   try{
     const page=await browser.newPage({viewport:{width:1400,height:950}}),errors=[];
     page.on('pageerror',e=>errors.push(e.message));

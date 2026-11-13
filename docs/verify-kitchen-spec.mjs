@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {launchChrome} from '../scripts/browser.mjs';
 import {createRequire} from 'node:module';
 import {prepareLivingData} from './living-interior.js';
 
@@ -35,7 +36,7 @@ for(const f of data.furniture.filter(f=>f.kind==='cab'&&['1.06','nika'].includes
 assert.equal(JSON.stringify(HOUSE_INTERIOR),before,'Preparation must not mutate source geometry');
 console.log('Kitchen specification: 910 mm finished island top; source data preserved.');
 if(process.env.PLAYWRIGHT_MODULE){
-  const {chromium}=await import(process.env.PLAYWRIGHT_MODULE),browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await launchChrome();
   try{
     const page=await browser.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
     const url=new URL(process.env.INTERIOR_URL??'http://127.0.0.1:8765/interior.html');
