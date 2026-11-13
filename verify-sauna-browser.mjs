@@ -1,4 +1,4 @@
-// browser-ci {"status":"ci-skipped","reason":"allows 120 s for the garden to load, and CPU rendering needs longer"}
+// browser-ci {"shard":"slow-1"}
 import assert from 'node:assert/strict';
 import {launchChrome,readPage} from './scripts/browser.mjs';
 import {mkdir} from 'node:fs/promises';
@@ -8,9 +8,18 @@ try {
   await mkdir(output,{recursive:true});
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
+  // Load and frame time depend on the renderer, so no step has a time limit of
+  // its own. A wait ends on its condition or on a page error, and the runner's
+  // limit for one check stops a page that reports neither.
+  page.setDefaultTimeout(0);
+  const failed=new Promise((_,reject)=>page.on('pageerror',reject));
+  failed.catch(()=>{});
+  const until=(condition,argument)=>Promise.race([page.waitForFunction(condition,argument),failed]);
   await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readPage('index.html')).replace('ViewerLoading.finish();','window.saunaCheck={THREE,scene,camera,controls,renderer,saunaGroup,saunaModel,boundaryFence,gradingOverlay,siteTerrain,walkingHeight};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
-  await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
+  await until(()=>window.saunaCheck||document.querySelector('#viewerLoading')?.dataset.state==='error');
+  assert.equal(await page.evaluate(()=>window.saunaCheck?null:document.querySelector('#loadingHint').textContent),null,'The garden must finish loading');
+  await until(()=>!document.querySelector('#viewerLoading'));
   const result=await page.evaluate(()=>{
     const t=saunaCheck;t.scene.updateMatrixWorld(true);
     const roof=t.saunaGroup.userData.categories.roof,bounds=new t.THREE.Box3().setFromObject(roof);
@@ -80,14 +89,14 @@ try {
     assert.equal(await page.locator('#tooltip').evaluate(el => el.style.opacity), '1');
   }
   await page.goto(new URL('interior.html#sauna-plan',process.env.MODEL_URL||'http://127.0.0.1:8765/index.html').href);
-  await page.locator('#interiorToolbar').waitFor({timeout:120000});
+  await until(()=>document.querySelector('#interiorToolbar'));
   assert.match(await page.locator('#dims').textContent(),/5\.00 × 2\.50 m overall/);
   assert.match(await page.locator('#viewlabel').textContent(),/SAUNA \+ SOFTUB/);
   await page.screenshot({path:`${output}/interior-plan.png`});
   await page.goto(new URL('grading.html', process.env.MODEL_URL || 'http://127.0.0.1:8765/index.html').href);
   for (const id of ['sauna', 'saunaShelter', 'softub']) {
     const title = page.locator(`[data-feature="${id}"] > title`);
-    await title.waitFor({state: 'attached'});
+    await until(id => document.querySelector(`[data-feature="${id}"] > title`), id);
     assert.equal(await title.textContent(), 'Sauna + Softub · 5 × 2,5 m');
   }
   assert.deepEqual(errors,[]);
