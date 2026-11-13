@@ -1,4 +1,4 @@
-// browser-ci {"shard":"entrance"}
+// browser-ci {"shard":"slow-6"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 import { createHash } from 'node:crypto';
