@@ -1,5 +1,5 @@
-import {buildCoronaBed} from '../corona-bed-model.js';
-import {buildCoffeeNicheUpper} from './coffee-niche.js';
+import {buildCoronaBed} from '../corona-bed-model.js?v=b0d3f4e5d645';
+import {buildCoffeeNicheUpper} from './coffee-niche.js?v=02b8ccf440df';
 
 export function attachInteriorLed(THREE,house,data) {
   const group=new THREE.Group();group.name='Interior LED lighting';

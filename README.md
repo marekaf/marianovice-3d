@@ -29,7 +29,7 @@ Run `yarn verify` with Node.js 22 and Yarn 1.22.18, or run `corepack enable` to 
 
 This runs the same checks as CI and regenerates the two SVG drawings. It fails if any check fails or Git reports changed, staged, or untracked SVGs. Review and commit intentional drawing updates before rerunning.
 
-After changing an asset referenced with `?v=`, run `yarn assets:version` and commit the updated viewer pages. These URLs use content hashes so returning browsers fetch changed scripts. `yarn verify` rejects stale hashes.
+After changing a script that a page loads, run `yarn assets:version` and commit the files it rewrites. It adds a content hash as `?v=` to every local script reference in the pages and in the scripts they load, so returning browsers fetch changed scripts. A change deep in an import chain updates each file above it in the same run. `yarn verify` rejects a missing or stale hash.
 
 With Playwright and Chrome available, run `yarn verify:visual` for a local screenshot gallery of furnished rooms, dressing joinery, roofs and operable doors. Set `PLAYWRIGHT_MODULE` to an installed Playwright module path if it is not available by name. The command prints the gallery path and saves full-size PNGs beside it in a temporary directory. It runs browser checks sequentially, closes each browser afterwards, and returns a nonzero exit code with a partial gallery if a check fails. It does not start Unreal or use private finish photos. Passing checks still require visual review of the images.
 

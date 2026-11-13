@@ -4,13 +4,13 @@
 <body>
 <nav><a href="index.html">Zpět do modelu</a><a id="printPlan" href="docs/terrain-works.pdf" download="terenni-upravy.pdf" hidden>Stáhnout PDF · mapa a 3D pohledy</a></nav>
 <main id="report" aria-busy="true"></main>
-<script src="layout.js?v=eb3c3f69cc3c"></script><script src="terrain.js"></script><script src="privacy-screen-model.js"></script><script src="sauna-model.js"></script><script src="garage-model.js"></script><script src="pergola-model.js"></script><script src="greenhouse-model.js"></script><script src="raised-beds-model.js"></script><script src="hidden-bench-model.js"></script><script src="site-terrain.js?v=2c1c7b130364"></script><script src="survey-surface.js"></script><script src="grading-site.js"></script><script src="docs/fence-survey.js"></script><script src="grading-zones.js?v=5c8a87f92e3d"></script><script src="grading-data.js"></script><script src="grading-overlay.js?v=5aab9be18ed5"></script><script src="grading-report.js?v=8406983b8c65"></script>
-<script src="grading-views.js"></script>
+<script src="layout.js?v=eb3c3f69cc3c"></script><script src="terrain.js?v=f11b9d65254d"></script><script src="privacy-screen-model.js?v=b6dc9fe47a0b"></script><script src="sauna-model.js?v=32109848d9b9"></script><script src="garage-model.js?v=8116afc969bc"></script><script src="pergola-model.js?v=bad8cd6d266a"></script><script src="greenhouse-model.js?v=a365b6d0fc21"></script><script src="raised-beds-model.js?v=17f54a471ed2"></script><script src="hidden-bench-model.js?v=cd83b90f23d3"></script><script src="site-terrain.js?v=2c1c7b130364"></script><script src="survey-surface.js?v=ebd5edb4377f"></script><script src="grading-site.js?v=c4a24ab503da"></script><script src="docs/fence-survey.js?v=bcda45433c32"></script><script src="grading-zones.js?v=5c8a87f92e3d"></script><script src="grading-data.js?v=120d92f496a1"></script><script src="grading-overlay.js?v=5aab9be18ed5"></script><script src="grading-report.js?v=8406983b8c65"></script>
+<script src="grading-views.js?v=e1e7b35de1a3"></script>
 <script type="module">
 const main=document.getElementById('report');
 try {
   await new Promise((resolve,reject)=>{
-    const script=document.createElement('script');script.src='docs/survey-terrain.js';
+    const script=document.createElement('script');script.src='docs/survey-terrain.js?v=86555ae475ff';
     script.onload=resolve;script.onerror=()=>reject(new Error('Zaměření není dostupné. Otevřete přehled v místním projektu s daty zaměření.'));
     document.head.append(script);
   });

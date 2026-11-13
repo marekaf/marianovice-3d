@@ -1,5 +1,5 @@
 export async function attachWalkLoft(THREE,house,loftData,{buildModel,renderer,applyChampagneFloor,roof,windowModel}) {
-  const [lining,interior]=await Promise.all([import('./loft-roof-windows.js'),import('./loft-interior.js')]);
+  const [lining,interior]=await Promise.all([import('./loft-roof-windows.js?v=871d15d30896'),import('./loft-interior.js?v=e56e826e47a7')]);
   const prepared=lining.prepareLoftRoofData({...loftData,intWalls:loftData.intWalls.filter(w=>w.id!=='P13')},roof,windowModel);
   const exteriorIds=new Set(prepared.extWalls.map(w=>w.id));
   const data={...prepared,extWalls:prepared.extWalls.map(wall=>{

@@ -63,14 +63,14 @@
     <p><a href="../interior.html#house-cut3d">Whole-house interior</a></p>
   </aside>
   <main id="viewport"><div id="caption"></div><div id="hint"></div><div id="error" role="alert"></div></main>
-  <script src="../house-interior.js"></script>
-  <script src="office-rooms.js"></script>
-  <script src="office-furniture.js"></script>
+  <script src="../house-interior.js?v=7b250f364c06"></script>
+  <script src="office-rooms.js?v=4160387de045"></script>
+  <script src="office-furniture.js?v=f76090b2c03d"></script>
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { buildModel } from '../model3d.js?v=08daa6e001b5';
-    import { loadOfficeIntegration } from './office-integration.js';
+    import { buildModel } from '../model3d.js?v=fcc58a756a0b';
+    import { loadOfficeIntegration } from './office-integration.js?v=c50881f1920c';
     const officeIntegration = await loadOfficeIntegration();
     const viewport=document.querySelector('#viewport'), roomSelect=document.querySelector('#room');
     const raised=document.querySelector('#raised'), ceiling=document.querySelector('#ceiling');

@@ -1,4 +1,4 @@
-import { createFloorTexture, plankSamples } from './floor-texture.js';
+import { createFloorTexture, plankSamples } from './floor-texture.js?v=34acf3791eca';
 
 export function stairFinishSurfaces(stairs) {
   const alongX = stairs.toward === 'E' || stairs.toward === 'W';

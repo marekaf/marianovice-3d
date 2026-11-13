@@ -1,5 +1,5 @@
-import {createWalkDoors} from '../walk-doors.js';
-import {createWalkLevels} from '../walk-levels.js';
+import {createWalkDoors} from '../walk-doors.js?v=e80df7b1a1c5';
+import {createWalkLevels} from '../walk-levels.js?v=78df656ee16d';
 
 export function createWalkHouseNavigation(THREE,{house,data,exteriorDoors,floorY,groundHeight,roof}) {
   const loft=house.loftFitout,loftDoors=house.loft.doors;

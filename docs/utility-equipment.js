@@ -1,4 +1,4 @@
-import { buildUtilityJoinery } from './utility-joinery.js';
+import { buildUtilityJoinery } from './utility-joinery.js?v=0aa1feced84b';
 
 const materials = {
   white: { color: '#e8e9e5', roughness: .48 }, dark: { color: '#242a2c', roughness: .55 },

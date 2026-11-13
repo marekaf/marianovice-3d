@@ -1,4 +1,4 @@
-import { createFloorTexture, plankSamples } from './floor-texture.js';
+import { createFloorTexture, plankSamples } from './floor-texture.js?v=34acf3791eca';
 
 const source = new URL('.', import.meta.url);
 
@@ -13,8 +13,8 @@ function loadScript(name) {
 }
 
 export async function loadOfficeIntegration() {
-  if (typeof OfficeRooms === 'undefined') await loadScript('office-rooms.js');
-  if (typeof OfficeFurniture === 'undefined') await loadScript('office-furniture.js');
+  if (typeof OfficeRooms === 'undefined') await loadScript('office-rooms.js?v=4160387de045');
+  if (typeof OfficeFurniture === 'undefined') await loadScript('office-furniture.js?v=f76090b2c03d');
   return { createOffice, decorateWallMesh, attach };
 }
 

@@ -3,12 +3,28 @@ import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import {runtimeAssetReferences} from './runtime-asset-references.mjs';
+import {assetVersion,localScriptReferences,publicPages,runtimeAssetReferences} from './runtime-asset-references.mjs';
 import { createFloorTexture, plankSamples, waitForFloorReference } from './docs/floor-texture.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
+const pages = publicPages(root).map(path => resolve(root, path));
+const fetched = new Set();
+const scripts = [...pages];
+while (scripts.length) {
+  const file = scripts.pop();
+  if (fetched.has(file)) continue;
+  fetched.add(file);
+  for (const reference of localScriptReferences(readFileSync(file, 'utf8'))) {
+    const asset = resolve(dirname(file), reference.path);
+    assert(existsSync(asset), `Missing script in ${relative(root, file)}: ${reference.path}`);
+    assert(reference.version, `Unversioned local script in ${relative(root, file)}: ${reference.path}. Run yarn assets:version.`);
+    assert.equal(reference.version, assetVersion(asset), `Stale asset version in ${relative(root, file)}: ${reference.path}. Run yarn assets:version.`);
+    scripts.push(asset);
+  }
+}
+
 const checked = new Set();
-const pending = ['index.html', 'interior.html', 'docs/offices.html'].map(path => resolve(root, path));
+const pending = [...pages];
 while (pending.length) {
   const file = pending.pop();
   if (checked.has(file)) continue;

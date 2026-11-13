@@ -33,7 +33,7 @@
 <script type="module">
 import * as THREE from 'three';
 import {VRButton} from 'three/addons/webxr/VRButton.js';
-import {mountTour} from './tour-viewer.js';
+import {mountTour} from './tour-viewer.js?v=b8d404bfc73d';
 window.tourReview = mountTour(THREE, VRButton, {source: new URL('unreal/generated/tour/tour.json', location.href).href});
 </script>
 </body>
