@@ -51,7 +51,7 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build site
         run: node scripts/build-site.mjs _site
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
