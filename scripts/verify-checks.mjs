@@ -93,6 +93,12 @@ function markerProblem(lines,isBrowser) {
   return null;
 }
 
+// Node keeps a UTF-8 byte order mark in the text it reads, and `^` does not
+// match after it, so a marker on the first line needs the mark removed.
+export function browserCiMarkerLines(text) {
+  return [...text.replace(/^\uFEFF/,'').matchAll(/^\/\/ ?browser-ci\b(.*)$/gm)].map(match=>match[1]);
+}
+
 // Returns the `// browser-ci {...}` line of each browser check, by check name.
 // It reads the files as text, because an import runs the check.
 export function browserCiMarkers() {
@@ -100,7 +106,7 @@ export function browserCiMarkers() {
   const markers=new Map();
   const problems=[];
   for(const name of [...EXTRA_CHECKS,...list(''),...list('docs')]){
-    const lines=[...readFileSync(new URL(name,ROOT_URL),'utf8').matchAll(/^\/\/ ?browser-ci\b(.*)$/gm)].map(match=>match[1]);
+    const lines=browserCiMarkerLines(readFileSync(new URL(name,ROOT_URL),'utf8'));
     if(!lines.length)continue;
     const problem=markerProblem(lines,browser.has(name));
     if(problem)problems.push(`${name} ${problem}`);
