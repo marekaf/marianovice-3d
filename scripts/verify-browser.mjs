@@ -32,13 +32,13 @@ const SHARDS={
   'entrance':['verify-entrance-drawing-browser.mjs','verify-entrance-egress-browser.mjs','verify-pergola-view-browser.mjs','docs/verify-utility-rack-placement.mjs'],
   'roof':['verify-roof-browser.mjs','verify-terrain-worker-browser.mjs'],
   'vr':['verify-walk-vr-browser.mjs'],
-  'stairs':['verify-entrance-stairs-browser.mjs'],
   'doors':['verify-walk-doors-browser.mjs'],
 };
 
 // These cannot pass on CPU rendering as they are written. A run with CI set
 // leaves them out.
 const CI_SKIPPED={
+  'verify-entrance-stairs-browser.mjs':'allows 30 s for the loading panel to close, and CPU rendering needs longer',
   'verify-interior-ui.mjs':'gives no result in 20 minutes on a runner without a GPU',
   'verify-render-scheduler.mjs':'counts frames of a resting scene, and the count differs on CPU rendering',
   'verify-sauna-browser.mjs':'allows 120 s for the garden to load, and CPU rendering needs longer',
