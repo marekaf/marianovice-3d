@@ -1,13 +1,28 @@
+// browser-ci {"shard":"doors"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 import {mkdir} from 'node:fs/promises';
 const output=process.env.GRILLE_OUTPUT||'/tmp/kitchen-return-grille';await mkdir(output,{recursive:true});
 const browser=await launchChrome();
+// A screenshot waits until the GPU process has drawn every frame in its queue.
+// On CPU rendering the first kitchen frame needs minutes, which is longer than
+// the screenshot timeout. This resolves when the canvas has no queued work left.
+const drawn=selector=>new Promise((resolve,reject)=>{
+  const gl=document.querySelector(selector).getContext('webgl2'),sync=gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0);
+  gl.flush();
+  // The sync status changes only between tasks, so a loop inside one task never sees it.
+  (function poll(){
+    if(gl.isContextLost())reject(new Error(`${selector} lost its WebGL context`));
+    else if(gl.getSyncParameter(sync,gl.SYNC_STATUS)===gl.SIGNALED){gl.deleteSync(sync);resolve();}
+    else setTimeout(poll,100);
+  })();
+});
 try{
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto((process.env.BASE_URL||'http://127.0.0.1:8781')+'/interior.html#house-kitchen');
   await page.waitForFunction(()=>window.DEBUG?.hou?.furniture,{timeout:180000});
+  await page.evaluate(drawn,'canvas');
   await page.screenshot({path:output+'/kitchen.png'});
   const actual=await page.evaluate(async()=>{
     const THREE=await import('three');
@@ -32,6 +47,7 @@ try{
     return {louverHits,hits,panelHits};
   });
   assert(actual.panelHits.every(d=>Math.abs(d-.05)<1e-5),'Surrounding end panel remains present');assert.equal(actual.louverHits.length,5);assert(actual.louverHits.every(d=>d>.049&&d<.07),'All five louver surfaces are physically present');assert(actual.hits.every(h=>h.distance>.10),'Actual end opening passes liner and carcass');
+  await page.evaluate(drawn,'#grilleCloseup');
   await page.screenshot({path:output+'/end-closeup.png'});
   assert.deepEqual(errors,[]);console.log(JSON.stringify({...actual,errors,output}));
 }finally{await browser.close();}
