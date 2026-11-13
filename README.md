@@ -25,7 +25,7 @@ Browser and simulated-session checks do not establish Quest frame rate or comfor
 
 ## Verification
 
-Run `yarn verify` with Node.js 22 and Yarn 1.22.18, or run `corepack enable` to use the pinned Yarn version. No dependency installation is needed.
+Run `yarn verify` with Node.js 22 and Yarn 1.22.18, or run `corepack enable` to use the pinned Yarn version. Run `yarn install` first, because the checks import `three` and `playwright-core` from `node_modules`.
 
 This runs the same checks as CI and regenerates the two SVG drawings. It fails if any check fails or Git reports changed, staged, or untracked SVGs. Review and commit intentional drawing updates before rerunning.
 
@@ -39,7 +39,7 @@ The viewer and gallery use the published Floorify Champagne reference by default
 
 - [`grading.html`](grading.html) — one-page Czech grading map and legend with work areas, dimensions, surface areas and height marks; `node generate-grading-plan.js` exports the local HTML and SVG; `yarn grading:pdf` creates a two-page A3 PDF with the unchanged map followed by the current model’s Top-down view
 - [`layout.js`](layout.js) — single source of truth for the garden layout (all coordinates in meters); consumed by the 3D viewer, the 2D editor and the SVG generator
-- [`index.html`](index.html) — 3D viewer (Three.js, single-file)
+- [`index.html`](index.html) — 3D viewer (Three.js); the page loads the model and viewer scripts from the repository root
   - Procedural sky shader with day-of-year + hour sliders (real solar formula, 50° N)
   - Walking tour POV
   - First-person mode (WASD + mouse look)
