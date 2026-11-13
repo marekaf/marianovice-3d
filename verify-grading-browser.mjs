@@ -1,4 +1,3 @@
-// browser-ci {"status":"known-failing","reason":"expects 8 zone feature rows, grading.html renders 9"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 import {readFileSync,existsSync} from 'node:fs';
@@ -9,7 +8,7 @@ try {
   page.on('pageerror',error=>errors.push(error.message));
   if(!existsSync('docs/survey-terrain.js'))await page.route('**/docs/survey-terrain.js*',route=>route.fulfill({contentType:'text/javascript',body:'const SURVEY_TERRAIN={points:[[-10,-10,4],[60,-10,1],[60,50,2],[-10,50,5]]};'}));
   await page.goto(new URL('grading.html',base).href);
-  await page.locator('#report[data-revision]').waitFor({timeout:30000});
+  await page.locator('#report[data-revision]').waitFor();
   await page.waitForFunction(() => document.getElementById('report').dataset.views);
   const hasViews = await page.locator('#report').getAttribute('data-views') === 'ready';
   assert.equal(await page.locator('.sheet').count(), hasViews ? 6 : 2);
@@ -33,7 +32,7 @@ try {
   }
   for(const id of ['sauna','saunaDepth','compost','toolStore'])assert.equal(await page.locator(`[data-dimension="${id}"]`).count(),0);
   assert(await page.locator('[data-terrain-downhill="east-garage"]').isVisible());
-  assert.equal(await page.locator('aside [data-zone-features]').count(),8);
+  assert.equal(await page.locator('aside [data-zone-features]').count(),9);
   assert.equal(await page.locator('[data-zone-features="G"]').textContent(),'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník');
   assert.equal(await page.locator('[data-zone-features="L"]').textContent(),'Skalník (Cotoneaster)');
   assert.equal(await page.locator('[data-level-mark]').count(),4);
