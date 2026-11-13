@@ -26,16 +26,19 @@ const KNOWN_FAILING={
 // timeouts they set themselves. A run with CI set leaves them out.
 const SLOW='needs minutes of CPU rendering on a runner without a GPU';
 const CI_SKIPPED={
+  'verify-entrance-drawing-browser.mjs':SLOW,
   'verify-entrance-egress-browser.mjs':SLOW,
   'verify-entrance-stairs-browser.mjs':SLOW,
   'verify-interior-ui.mjs':SLOW,
   'verify-pergola-view-browser.mjs':SLOW,
+  'verify-render-scheduler.mjs':SLOW,
   'verify-roof-browser.mjs':SLOW,
   'verify-sauna-browser.mjs':SLOW,
   'verify-terrain-worker-browser.mjs':SLOW,
   'verify-walk-doors-browser.mjs':SLOW,
   'verify-walk-interior-browser.mjs':SLOW,
   'verify-walk-vr-browser.mjs':SLOW,
+  'docs/verify-eye-level-walkthrough.mjs':SLOW,
   'docs/verify-utility-rack-placement.mjs':'reads window.DEBUG after network idle, and a slow runner reaches idle before the page sets it',
 };
 const skipped={...KNOWN_FAILING,...(process.env.CI?CI_SKIPPED:{})};
