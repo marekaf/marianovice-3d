@@ -1,3 +1,4 @@
+// browser-ci {"status":"ci-skipped","reason":"allows 30 s for the loading panel to close, and CPU rendering needs longer"}
 import assert from 'node:assert/strict';
 import {launchChrome,serveRepo} from './scripts/browser.mjs';
 import {mkdir} from 'node:fs/promises';

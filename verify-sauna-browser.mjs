@@ -1,3 +1,4 @@
+// browser-ci {"status":"ci-skipped","reason":"allows 120 s for the garden to load, and CPU rendering needs longer"}
 import assert from 'node:assert/strict';
 import {launchChrome,readPage} from './scripts/browser.mjs';
 import {mkdir} from 'node:fs/promises';

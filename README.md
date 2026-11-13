@@ -29,6 +29,10 @@ Run `yarn verify` with Node.js 22 and Yarn 1.22.18, or run `corepack enable` to 
 
 This runs the same checks as CI and regenerates the two SVG drawings. It fails if any check fails or Git reports changed, staged, or untracked SVGs. Review and commit intentional drawing updates before rerunning.
 
+Run `yarn verify:browser` for the checks that need Chrome. The `browser` workflow runs them in CI, one job for each name that `node scripts/verify-browser.mjs --shards` prints.
+A browser check keeps its CI status in its own file, as one line: `// browser-ci {"status":"known-failing","reason":"...","shard":"roof"}`. Every key is optional, and a check without the line runs in the shard `fast`.
+The status `known-failing` leaves the check out of every run, and `ci-skipped` leaves it out when `CI` is set. A skipped check needs a `reason`, and `yarn verify` rejects an unknown status or shard and a marker in a check that is not a browser check.
+
 After changing a script that a page loads, run `yarn assets:version` and commit the files it rewrites. It adds a content hash as `?v=` to every local script reference in the pages and in the scripts they load, so returning browsers fetch changed scripts. A change deep in an import chain updates each file above it in the same run. `yarn verify` rejects a missing or stale hash.
 
 With Playwright and Chrome available, run `yarn verify:visual` for a local screenshot gallery of furnished rooms, dressing joinery, roofs and operable doors. Set `PLAYWRIGHT_MODULE` to an installed Playwright module path if it is not available by name. The command prints the gallery path and saves full-size PNGs beside it in a temporary directory. It runs browser checks sequentially, closes each browser afterwards, and returns a nonzero exit code with a partial gallery if a check fails. It does not start Unreal or use private finish photos. Passing checks still require visual review of the images.

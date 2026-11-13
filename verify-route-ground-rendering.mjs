@@ -1,3 +1,4 @@
+// browser-ci {"status":"known-failing","reason":"patches a cutGroundUnderRoutes call that index.html no longer contains, so the page never reports ready"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 const browser=await launchChrome();

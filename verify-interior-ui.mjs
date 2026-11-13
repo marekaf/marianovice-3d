@@ -1,3 +1,4 @@
+// browser-ci {"status":"ci-skipped","reason":"gives no result in 20 minutes on a runner without a GPU"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 const browser = await launchChrome();

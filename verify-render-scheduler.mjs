@@ -1,3 +1,4 @@
+// browser-ci {"status":"ci-skipped","reason":"counts frames of a resting scene, and the count differs on CPU rendering"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 import {createRenderScheduler} from './render-scheduler.js';

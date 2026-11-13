@@ -1,6 +1,6 @@
 import {spawn} from 'node:child_process';
 import {parseArgs} from 'node:util';
-import {ROOT,BROWSER_CHECKS,BROWSER_MODES} from './verify-checks.mjs';
+import {ROOT,BROWSER_CHECKS,BROWSER_MODES,BROWSER_SHARDS,browserCiMarkers} from './verify-checks.mjs';
 import {serveRepo} from './browser.mjs';
 
 const jobs=Number(process.env.BROWSER_JOBS??2);
@@ -13,48 +13,19 @@ if(!Number.isInteger(jobs)||jobs<1){
   process.exit(2);
 }
 
-// Checks that fail against the current pages. A bare run leaves them out.
-// Name one as an argument to run it.
-const KNOWN_FAILING={
-  'verify-grading-browser.mjs':'expects 8 zone feature rows, grading.html renders 9',
-  'verify-grading-session-browser.mjs':'expects 8 zone feature rows, the terrain preview renders 9',
-  'verify-route-ground-rendering.mjs':'patches a cutGroundUnderRoutes call that index.html no longer contains, so the page never reports ready',
-  'verify-room-layout.mjs':'its browser part finds a west-side object that fails the report.west test',
-  'verify-viewer-ui.mjs':'expects 23 view presets, index.html has 24',
-  'docs/verify-electrical-points.mjs':'clicks the #electrical summary, which interior.html keeps hidden',
-  'docs/verify-shower-fittings.mjs':'reads a page global named data that interior.html does not define',
-};
-
-// A GitHub runner has no GPU and renders WebGL on the CPU, so these checks
-// need minutes each there. A CI job runs one shard, one check at a time. Every
-// check that no shard names runs in the shard "fast".
-const SHARDS={
-  'entrance':['verify-entrance-drawing-browser.mjs','verify-entrance-egress-browser.mjs','verify-pergola-view-browser.mjs','docs/verify-utility-rack-placement.mjs'],
-  'roof':['verify-roof-browser.mjs','verify-terrain-worker-browser.mjs'],
-  'vr':['verify-walk-vr-browser.mjs'],
-  'doors':['verify-walk-doors-browser.mjs'],
-};
-
-// These cannot pass on CPU rendering as they are written. A run with CI set
-// leaves them out.
-const CI_SKIPPED={
-  'verify-entrance-stairs-browser.mjs':'allows 30 s for the loading panel to close, and CPU rendering needs longer',
-  'verify-interior-ui.mjs':'gives no result in 20 minutes on a runner without a GPU',
-  'verify-render-scheduler.mjs':'counts frames of a resting scene, and the count differs on CPU rendering',
-  'verify-sauna-browser.mjs':'allows 120 s for the garden to load, and CPU rendering needs longer',
-  'verify-walk-interior-browser.mjs':'its W key walk covers too little distance at the frame rate of CPU rendering',
-  'docs/verify-eye-level-walkthrough.mjs':'allows 5 s for a pointer event to clear, and CPU rendering needs longer',
-};
-const skipped={...KNOWN_FAILING,...(process.env.CI?CI_SKIPPED:{})};
-const slow=Object.values(SHARDS).flat();
+const markers=browserCiMarkers();
+const marker=name=>markers.get(name)??{};
+// A bare run leaves out every known-failing check. A run with CI set also
+// leaves out every ci-skipped check. Name a check as an argument to run it.
+const skips=name=>marker(name).status==='known-failing'||(marker(name).status==='ci-skipped'&&Boolean(process.env.CI));
 
 const all=[...BROWSER_CHECKS.map(name=>({name,env:{}})),...BROWSER_MODES.map(mode=>({name:mode.file,env:mode.env}))];
-const stale=[...slow,...Object.keys(skipped)].filter(name=>!all.some(check=>check.name===name));
-if(stale.length)throw new Error(`scripts/verify-browser.mjs names missing checks: ${stale.join(', ')}`);
+const skipOrder=name=>`${marker(name).status==='ci-skipped'?1:0} ${name.includes('/')?1:0} ${name}`;
+const skipped=all.map(check=>check.name).filter(skips).sort((a,b)=>skipOrder(a)<skipOrder(b)?-1:1);
 
 const {values,positionals:only}=parseArgs({options:{shard:{type:'string'},shards:{type:'boolean'}},allowPositionals:true});
 if(values.shards){
-  console.log(JSON.stringify(['fast',...Object.keys(SHARDS)]));
+  console.log(JSON.stringify(['fast',...BROWSER_SHARDS]));
   process.exit(0);
 }
 const unknown=only.filter(name=>!all.some(check=>check.name===name));
@@ -62,12 +33,13 @@ if(unknown.length){
   console.error(`Not a browser check: ${unknown.join(', ')}`);
   process.exit(2);
 }
-if(values.shard&&values.shard!=='fast'&&!(values.shard in SHARDS)){
+if(values.shard&&values.shard!=='fast'&&!BROWSER_SHARDS.includes(values.shard)){
   console.error(`Not a shard: ${values.shard}`);
   process.exit(2);
 }
-const inShard=name=>!values.shard||(values.shard==='fast'?!slow.includes(name):SHARDS[values.shard].includes(name));
-const checks=all.filter(check=>only.length?only.includes(check.name):!(check.name in skipped)&&inShard(check.name));
+// Every check without a shard in its marker runs in the shard "fast".
+const inShard=name=>!values.shard||(marker(name).shard??'fast')===values.shard;
+const checks=all.filter(check=>only.length?only.includes(check.name):!skips(check.name)&&inShard(check.name));
 
 const server=await serveRepo();
 const env={
@@ -116,7 +88,7 @@ async function worker() {
 await Promise.all(Array.from({length:Math.min(jobs,checks.length)},worker));
 await server.close();
 
-if(!only.length)for(const [name,reason] of Object.entries(skipped))console.log(`\nSkipped: ${name} (${reason})`);
+if(!only.length)for(const name of skipped)console.log(`\nSkipped: ${name} (${marker(name).reason})`);
 if(failures.length){
   console.error(`\n${failures.length} of ${checks.length} browser checks failed:`);
   for(const failure of failures){

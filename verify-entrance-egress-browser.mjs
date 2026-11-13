@@ -1,3 +1,4 @@
+// browser-ci {"shard":"entrance"}
 import assert from 'node:assert/strict';
 import {launchChrome,serveRepo} from './scripts/browser.mjs';
 const server=await serveRepo({rewrite(path,data){
