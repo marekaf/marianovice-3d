@@ -29,7 +29,7 @@ Run `yarn verify` with Node.js 22 and Yarn 1.22.18, or run `corepack enable` to 
 
 This runs the same checks as CI and regenerates the two SVG drawings. It fails if any check fails or Git reports changed, staged, or untracked SVGs. Review and commit intentional drawing updates before rerunning.
 
-Run `yarn verify:browser` for the checks that need Chrome. The `browser` workflow runs them in CI, one job for each name that `node scripts/verify-browser.mjs --shards` prints.
+Run `yarn verify:browser` for the checks that need Chrome. The `browser` workflow runs them in CI, one job for each name that `node scripts/verify-browser.mjs --shards` prints. That command leaves out a shard that no check names, and `yarn verify:browser --shard <name>` for such a shard prints `no checks in shard <name>` and exits 0.
 A browser check keeps its CI status in its own file, as one line: `// browser-ci {"status":"known-failing","reason":"...","shard":"roof"}`. Every key is optional, and a check without the line runs in the shard `fast`.
 The status `known-failing` leaves the check out of every run, and `ci-skipped` leaves it out when `CI` is set. A skipped check needs a `reason`, and `yarn verify` rejects an unknown status or shard and a marker in a check that is not a browser check.
 

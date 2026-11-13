@@ -24,8 +24,11 @@ const skipOrder=name=>`${marker(name).status==='ci-skipped'?1:0} ${name.includes
 const skipped=all.map(check=>check.name).filter(skips).sort((a,b)=>skipOrder(a)<skipOrder(b)?-1:1);
 
 const {values,positionals:only}=parseArgs({options:{shard:{type:'string'},shards:{type:'boolean'}},allowPositionals:true});
+// Every check without a shard in its marker runs in the shard "fast".
+const shardOf=name=>marker(name).shard??'fast';
+const used=new Set(all.map(check=>shardOf(check.name)));
 if(values.shards){
-  console.log(JSON.stringify(['fast',...BROWSER_SHARDS]));
+  console.log(JSON.stringify(['fast',...BROWSER_SHARDS.filter(name=>used.has(name))]));
   process.exit(0);
 }
 const unknown=only.filter(name=>!all.some(check=>check.name===name));
@@ -37,8 +40,11 @@ if(values.shard&&values.shard!=='fast'&&!BROWSER_SHARDS.includes(values.shard)){
   console.error(`Not a shard: ${values.shard}`);
   process.exit(2);
 }
-// Every check without a shard in its marker runs in the shard "fast".
-const inShard=name=>!values.shard||(marker(name).shard??'fast')===values.shard;
+if(values.shard&&!only.length&&!used.has(values.shard)){
+  console.log(`no checks in shard ${values.shard}`);
+  process.exit(0);
+}
+const inShard=name=>!values.shard||shardOf(name)===values.shard;
 const checks=all.filter(check=>only.length?only.includes(check.name):!skips(check.name)&&inShard(check.name));
 
 const server=await serveRepo();
