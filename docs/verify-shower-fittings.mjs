@@ -1,4 +1,4 @@
-// browser-ci {"status":"known-failing","reason":"reads a page global named data that interior.html does not define"}
+// browser-ci {"shard":"entrance"}
 import assert from 'node:assert/strict';
 import {launchChrome} from '../scripts/browser.mjs';
 import {createRequire} from 'node:module';
@@ -48,7 +48,7 @@ if(process.env.SHOWER_BROWSER==='1'){
     await page.waitForFunction(()=>window.DEBUG?.livingFitout);
     const result=await page.evaluate(async()=>{
       const THREE=await import('three'),{buildModel}=await import('./model3d.js'),{buildShowerFittings}=await import('./docs/shower-fittings.js');
-      const model=buildShowerFittings(data),group=buildModel(THREE,model);
+      const model=buildShowerFittings(HOUSE_INTERIOR),group=buildModel(THREE,model);
       const meshes=[];group.traverse(o=>{if(o.isMesh)meshes.push(o);});group.updateMatrixWorld(true);
       const bounds=name=>{const single=buildModel(THREE,{...model,parts:model.parts.filter(p=>p.name===name)}),box=new THREE.Box3().setFromObject(single);return {min:box.min.toArray(),max:box.max.toArray()};};
       return {finite:meshes.every(m=>[...m.geometry.attributes.position.array].every(Number.isFinite)),main:bounds('main_shower_mixer_rosette'),guest:bounds('guest_shower_mixer_rosette')};
@@ -62,8 +62,12 @@ if(process.env.SHOWER_BROWSER==='1'){
     }),'Detailed showers must be attached to house furniture');
     for(const preset of ['mainShower','guestShower']){
       const button=page.locator(`[data-view="${preset}"]`);
+      // The presets are in the Rooms panel and the notes in the More panel. A panel
+      // stays hidden until its toolbar button opens it, and a preset click closes it.
+      await page.click('[data-panel=rooms]');
       await button.click();
       assert(await button.evaluate(element=>element.classList.contains('active')),`${preset} preset must activate`);
+      await page.click('[data-panel=more]');
       assert(await page.locator('#showerNotes').isVisible(),`${preset} must expose shower fit notes`);
       assert(await page.evaluate(()=>DEBUG.camera.isPerspectiveCamera));
       assert((await page.locator('#viewlabel').textContent()).includes(preset.toUpperCase()));
