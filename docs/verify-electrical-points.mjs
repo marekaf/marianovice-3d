@@ -1,4 +1,4 @@
-// browser-ci {"status":"known-failing","reason":"clicks the #electrical summary, which interior.html keeps hidden"}
+// browser-ci {"shard":"slow-6"}
 import assert from 'node:assert/strict';
 import {launchChrome} from '../scripts/browser.mjs';
 import {ELECTRICAL_POINTS as points} from './electrical-points.js';
@@ -55,6 +55,10 @@ if(process.env.ELECTRICAL_BROWSER==='1'){
     await page.waitForFunction(()=>window.DEBUG?.electrical);
     assert(await page.evaluate(()=>DEBUG.electrical.groups.house.children.find(g=>g.userData.recordIds.includes('1.06-Z11')).position.x>=4.125),'Coffee outlets must mount on the finished backsplash face');
     assert.equal(await page.locator('#electricalPoint option').count(),84);
+    // interior-ui.js keeps #electrical in the More panel, and a click on
+    // #electricalFocus closes that panel.
+    const openTools=async()=>{if(await page.locator('#interior-more').isHidden())await page.click('[data-panel=more]');};
+    await openTools();
     await page.locator('#electrical summary').click();
     await page.locator('#electrical-power').uncheck();
     assert(await page.evaluate(()=>Object.values(DEBUG.electrical.groups).every(g=>g.children.filter(o=>o.userData.kind==='power').every(o=>!o.visible))));
@@ -63,9 +67,11 @@ if(process.env.ELECTRICAL_BROWSER==='1'){
     await page.locator('#electricalPoint').selectOption(mapped.id);
     await page.locator('#electricalFocus').click();
     assert(await page.evaluate(()=>DEBUG.camera.isPerspectiveCamera));
+    await openTools();
     await page.locator('#electricalPoint').selectOption('0.01-Z05');
     await page.locator('#electricalFocus').click();
     assert.equal(await page.locator('#electricalPoint').inputValue(),'0.01-Z05');
+    await openTools();
     const unresolved=points.find(p=>!p.resolved);
     await page.locator('#electricalPoint').selectOption(unresolved.id);
     assert(await page.locator('#electricalFocus').isDisabled());
