@@ -1,151 +1,58 @@
-import {spawnSync} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
+import {spawn} from 'node:child_process';
+import {ROOT,GENERATORS,discoverChecks} from './verify-checks.mjs';
 
-const cwd=fileURLToPath(new URL('../',import.meta.url));
-function run(command,args,stdio='inherit') {
-  const result=spawnSync(command,args,{cwd,stdio,encoding:'utf8'});
-  if(result.error)throw result.error;
-  if(result.status!==0)process.exit(result.status??1);
-  return result.stdout;
+const jobs=Number(process.env.VERIFY_JOBS??4);
+if(!Number.isInteger(jobs)||jobs<1){
+  console.error(`VERIFY_JOBS must be a positive integer, got ${process.env.VERIFY_JOBS}`);
+  process.exit(2);
 }
 
-const checks=[
-  'verify-grading-pdf.mjs',
-  'verify-kitchen-return-grille.mjs',
-  'validate-layout.js',
-  'verify-garden-details.mjs',
-  'verify-exterior.mjs',
-  'verify-exterior-transitions.mjs',
-  'verify-exterior-furniture.mjs',
-  'verify-room-layout.mjs',
-  'verify-room-a-grading.mjs',
-  'verify-planting-profiles.mjs',
-  'verify-selected-planting.mjs',
-  'verify-cotoneaster.mjs',
-  'verify-privacy-screens.mjs',
-  'verify-portal-drain.mjs',
-  'verify-terrace-decks.mjs',
-  'verify-east-terrace-grading.mjs',
-  'verify-climber-model.mjs',
-  'verify-sauna.mjs',
-  'verify-pergola.mjs',
-  'verify-pergola-climbing-roof.mjs',
-  'verify-pergola-approach.mjs',
-  'verify-pergola-bedroom-view.mjs',
-  'verify-pond-approach.mjs',
-  'verify-rainwater-path.mjs',
-  'verify-perennial-sharing.mjs',
-  'verify-perennial-batch.mjs',
-  'verify-garage.mjs',
-  'verify-carport-posts.mjs',
-  'verify-garage-roof-ends.mjs',
-  'verify-loft-ceiling.mjs',
-  'verify-attic-datum.mjs',
-  'verify-loft-door-floor.mjs',
-  'verify-loft-roof-windows.mjs',
-  'verify-walk-loft.mjs',
-  'verify-walk-facade.mjs',
-  'verify-cathedral-roof.mjs',
-  'verify-house-roof.mjs',
-  'verify-house-roof-export.mjs',
-  'verify-roof-wall-cap.mjs',
-  'verify-house-chimney.mjs',
-  'verify-house-wall-backing.mjs',
-  'verify-entrance-jamb.mjs',
-  'verify-entrance-landing.mjs',
-  'verify-entrance-luneta.mjs',
-  'verify-entrance-retained-soil.mjs',
-  'verify-entrance-controls.mjs',
-  'verify-entrance-drawing.mjs',
-  'verify-kitchen-upper-modules.mjs',
-  'verify-coffee-niche.mjs',
-  'verify-dressing-room.mjs',
-  'verify-walk-doors.mjs',
-  'verify-walk-door-visibility.mjs',
-  'verify-walk-collision-height.mjs',
-  'verify-walk-levels.mjs',
-  'verify-walk-step-support.mjs',
-  'verify-walk-portals.mjs',
-  'verify-walk-windows.mjs',
-  'verify-pocket-doors.mjs',
-  'verify-house-wall-layers.mjs',
-  'verify-nightstands.mjs',
-  'verify-fixtures.mjs',
-  'verify-public-runtime.mjs',
-  'verify-runtime-asset-references.mjs',
-  'verify-interior-data.mjs house-interior.js',
-  'verify-door-approach.mjs',
-  'verify-hoxter-stove.mjs',
-  'verify-ravak-freedom.mjs',
-  'verify-stair-flight.mjs',
-  'verify-kitchen-fronts.mjs',
-  'verify-cabinet-finishes.mjs',
-  'verify-window-seat-handles.mjs',
-  'verify-bedroom-window-reveal.mjs',
-  'verify-corona-bed.mjs',
-  'verify-driveway-check.mjs',
-  'verify-grading-data.mjs',
-  'verify-september-grading.mjs',
-  'verify-grading-report.mjs',
-  'verify-plan-terrain.mjs',
-  'verify-grading-layout.mjs',
-  'verify-boundary-fence.mjs',
-  'verify-terrain-banks.mjs',
-  'verify-west-drainage.mjs',
-  'verify-garage-bank.mjs',
-  'verify-pond-grading.mjs',
-  'verify-garden-routes.mjs',
-  'verify-route-ground-clipping.mjs',
-  'verify-circular-pad-ground.mjs',
-  'verify-terrain-sampler.mjs',
-  'verify-mesh-height-query.mjs',
-  'verify-pond-ground-mesh.mjs',
-  'verify-fence-model.mjs',
-  'verify-gate-model.mjs',
-  'verify-gate-runback.mjs',
-  'verify-boundary-memory.mjs',
-  'verify-utility-pillar.mjs',
-  'verify-viewer-loading.mjs',
-  'verify-walk-interior-loading.mjs',
-  'verify-interior-door-frames.mjs',
-  'verify-walk-movement.mjs',
-  'verify-walk-vr-locomotion.mjs',
-  'verify-render-scheduler.mjs',
-  'verify-adaptive-resolution.mjs',
-  'verify-viewer-postprocessing.mjs',
-  'verify-tour-loading.mjs',
-  'verify-bathroom-fixtures.mjs',
-  'verify-bathroom-vanities.mjs',
-  'docs/verify-utility-joinery.mjs',
-  'docs/verify-kitchen-spec.mjs',
-  'docs/verify-shower-fittings.mjs',
-  'docs/verify-utility-rack-placement.mjs',
-  'docs/verify-entrance-threshold.mjs',
-  'docs/verify-eye-level-walkthrough.mjs',
-  'docs/verify-electrical-model.mjs',
-  'docs/verify-electrical-points.mjs',
-  'verify-greenhouse.mjs',
-  'verify-raised-beds.mjs',
-  'verify-productive-court.mjs',
-  'verify-firepit.mjs',
-  'verify-hidden-bench.mjs',
-  'verify-site-terrain.mjs',
-  'verify-python-json.mjs',
-  'generate-svg.js',
-  'generate-driveway-check.js',
-];
-
-for(const check of checks){
-  console.log(`\n> ${check}`);
-  run(process.execPath,check.split(' '));
+function run(command,args) {
+  return new Promise(resolve=>{
+    const started=Date.now();
+    const chunks=[];
+    const child=spawn(command,args,{cwd:ROOT,stdio:['ignore','pipe','pipe']});
+    child.stdout.on('data',chunk=>chunks.push(chunk));
+    child.stderr.on('data',chunk=>chunks.push(chunk));
+    const done=(ok,note='')=>resolve({ok,output:Buffer.concat(chunks).toString('utf8')+note,seconds:(Date.now()-started)/1000});
+    child.on('error',error=>done(false,`${error.message}\n`));
+    child.on('close',(code,signal)=>done(code===0,code===0?'':`exit ${signal??code}\n`));
+  });
 }
+
+const failures=[];
+function report(name,result) {
+  console.log(`\n> ${name} (${result.seconds.toFixed(1)}s)${result.ok?'':' FAILED'}`);
+  if(result.output.trim())console.log(result.output.trimEnd());
+  if(!result.ok)failures.push({name,output:result.output});
+}
+
+const checks=discoverChecks();
+let next=0;
+async function worker() {
+  while(next<checks.length){
+    const check=checks[next++];
+    report(check.name,await run(process.execPath,check.args));
+  }
+}
+await Promise.all(Array.from({length:Math.min(jobs,checks.length)},worker));
+
+for(const generator of GENERATORS)report(generator,await run(process.execPath,[generator]));
 
 // Porcelain also catches staged changes and regenerated files deleted from Git.
-const changed=run('git',['status','--porcelain','--','*.svg'],'pipe');
-if(changed){
-  console.error('Generated SVGs are stale or missing. Review and commit the regenerated drawings.');
-  console.error(changed.trimEnd());
-  run('git',['--no-pager','diff','--stat','--','*.svg']);
+const changed=await run('git',['status','--porcelain','--','*.svg']);
+if(!changed.ok)report('git status',changed);
+else if(changed.output){
+  const diff=await run('git',['--no-pager','diff','--stat','--','*.svg']);
+  failures.push({name:'generated SVGs',output:`Generated SVGs are stale or missing. Review and commit the regenerated drawings.\n${changed.output}${diff.output}`});
+}
+
+if(failures.length){
+  console.error(`\n${failures.length} of ${checks.length+GENERATORS.length+1} verification steps failed:`);
+  for(const failure of failures){
+    console.error(`\n--- ${failure.name}`);
+    console.error(failure.output.trimEnd());
+  }
   process.exit(1);
 }
-console.log('\nAll verification checks passed.');
+console.log(`\nAll ${checks.length} verification checks passed.`);
