@@ -1,4 +1,4 @@
-// browser-ci {"status":"known-failing","reason":"patches a cutGroundUnderRoutes call that index.html no longer contains, so the page never reports ready"}
+// browser-ci {"status":"known-failing","reason":"open path-edge seams over the preserved drainage soil: 180 misses at the Quiet garden approach crossing since 78763a7, 3 at the Wellness access inner corner since 662a32e"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 const browser=await launchChrome();
@@ -7,16 +7,25 @@ try{
   page.on('pageerror',error=>errors.push(error.message));
   await page.route('**/index.html',async route=>{
     const response=await route.fetch();
-    const html=(await response.text())
-      .replace('ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry);','const clipStarted=performance.now();ground.geometry=cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry);window.clipMs=performance.now()-clipStarted;')
-      .replace('groundGeom.dispose();','window.connectionMs=performance.now()-clipStarted-window.clipMs;groundGeom.dispose();')
-      .replace('ViewerLoading.finish();','window.routeReview={THREE,ground,groundGeom,gardenRoutes,gardenRouteEdges,terrainPreview,hiddenBenchModel,scene,renderer,camera,controls}; ViewerLoading.finish();');
+    let html=await response.text();
+    // Each anchor is the start of a statement, so a changed argument list does not break the patch.
+    for(const [anchor,before] of [
+      ['ground.geometry=cutGroundUnderRoutes(','const clipStarted=performance.now();'],
+      ['const gardenRouteEdges=','window.clipMs=performance.now()-clipStarted;'],
+      ['groundGeom.dispose();','window.connectionMs=performance.now()-clipStarted-window.clipMs;'],
+      ['ViewerLoading.finish();','window.routeReview={THREE,ground,groundGeom,gardenRoutes,gardenRouteEdges,terrainPreview,hiddenBenchModel,scene,renderer,camera,controls,cutGroundUnderRoutes,preserved:siteTerrain.spec.drainageStrips};'],
+    ]){
+      assert.equal(html.split(anchor).length,2,`index.html must contain "${anchor}" exactly once`);
+      html=html.replace(anchor,before+anchor);
+    }
     await route.fulfill({response,body:html});
   });
   await page.goto(process.env.GARDEN_URL||'http://127.0.0.1:8765/index.html');
-  await page.waitForFunction(()=>window.routeReview,null,{timeout:60000});
+  // No time limit: the garden build has no fixed duration on CPU rendering, and the page reports its own failure.
+  await page.waitForFunction(()=>window.routeReview||document.getElementById('viewerLoading')?.dataset.state==='error',null,{timeout:0});
+  assert(await page.evaluate(()=>Boolean(window.routeReview)),`The garden did not load: ${await page.evaluate(()=>document.getElementById('loadingHint')?.textContent)} ${errors.join('; ')}`);
   const result=await page.evaluate(()=>{
-    const {THREE,ground,groundGeom,gardenRoutes,gardenRouteEdges,terrainPreview,hiddenBenchModel}=routeReview;
+    const {THREE,ground,groundGeom,gardenRoutes,gardenRouteEdges,terrainPreview,hiddenBenchModel,cutGroundUnderRoutes,preserved}=routeReview;
     function sampler(geometry){
       const attribute=geometry.attributes.position,bins=new Map(),triangles=[];
       let area=0;
@@ -38,13 +47,43 @@ try{
       }};
     }
     const original=sampler(groundGeom),cut=sampler(ground.geometry),routes=sampler(gardenRoutes.geometry);
-    let samples=0,oldPenetrations=0,newPenetrations=0,maxOldPenetration=0;
+    // The page keeps the soil under a path inside each drainage strip, so the area balance uses a cut without that rule.
+    const fullCut=sampler(cutGroundUnderRoutes(THREE,groundGeom,gardenRoutes.geometry));
+    const inStrip=(x,z)=>preserved.some(rect=>x>=rect.x0-1e-6&&x<=rect.x1+1e-6&&z>=rect.z0-1e-6&&z<=rect.z1+1e-6);
+    // Plan area of a mesh outside every drainage strip. The strips overlap, so each one is subtracted in turn.
+    function areaOutsideStrips({triangles}){
+      const clip=(polygon,axis,limit,below)=>{
+        const result=[];
+        for(let i=0;i<polygon.length;i++){
+          const p=polygon[i],q=polygon[(i+1)%polygon.length],dp=p[axis]-limit,dq=q[axis]-limit,keepP=below?dp<=0:dp>=0,keepQ=below?dq<=0:dq>=0;
+          if(keepP)result.push(p);
+          if(keepP!==keepQ){const t=dp/(dp-dq);result.push([p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t]);}
+        }
+        return result;
+      };
+      let area=0;
+      for(const triangle of triangles){
+        let pieces=[triangle.map(p=>[p[0],p[2]])];
+        for(const rect of preserved)pieces=pieces.flatMap(piece=>{
+          const outside=[];let rest=piece;
+          for(const [axis,limit,below] of [[0,rect.x0,true],[0,rect.x1,false],[1,rect.z0,true],[1,rect.z1,false]]){
+            outside.push(clip(rest,axis,limit,below));rest=clip(rest,axis,limit,!below);
+          }
+          return outside.filter(polygon=>polygon.length>=3);
+        });
+        for(const polygon of pieces)area+=Math.abs(polygon.reduce((sum,p,i)=>{const q=polygon[(i+1)%polygon.length];return sum+p[0]*q[1]-q[0]*p[1];},0))/2;
+      }
+      return area;
+    }
+    const originalOutside=areaOutsideStrips(original),cutOutside=areaOutsideStrips(cut),routesOutside=areaOutsideStrips(routes);
+    let samples=0,oldPenetrations=0,newPenetrations=0,maxOldPenetration=0,keptOutsideStrips=0;
     for(const triangle of routes.triangles)for(const weights of [[1/3,1/3,1/3],[.6,.2,.2],[.2,.6,.2],[.2,.2,.6]]){
       const [x,y,z]=[0,1,2].map(axis=>triangle.reduce((sum,p,i)=>sum+weights[i]*p[axis],0));
       samples++;
       const before=original.height(x,z)-y,after=cut.height(x,z)-y;
       if(before>.001)oldPenetrations++;
       if(after>.001)newPenetrations++;
+      if(cut.height(x,z)!==undefined&&!inStrip(x,z))keptOutsideStrips++;
       maxOldPenetration=Math.max(maxOldPenetration,before);
     }
     const contacts=hiddenBenchModel.feet.flatMap(foot=>foot.bottomCorners).map(([x,z])=>({before:original.height(x,z),after:cut.height(x,z)}));
@@ -73,7 +112,7 @@ try{
     }
     const bytes=geometry=>Object.values(geometry.attributes).reduce((sum,a)=>sum+a.array.byteLength,0)+(geometry.index?.array.byteLength||0);
     return {samples,oldPenetrations,newPenetrations,maxOldPenetration,outsideSamples,maxOutsideError,contacts,seamSamples,seamMisses,misses,largestConnection,
-      areaError:Math.abs(original.area-cut.area-routes.area),beforeBytes:bytes(groundGeom),afterBytes:bytes(ground.geometry),edgeBytes:bytes(gardenRouteEdges.geometry),edgeStats:gardenRouteEdges.geometry.userData,clipMs:window.clipMs,connectionMs:window.connectionMs,
+      areaError:Math.abs(original.area-fullCut.area-routes.area),preservedArea:cut.area-fullCut.area,keptOutsideStrips,originalOutside,cutOutside,routesOutside,renderedAreaError:Math.abs(originalOutside-cutOutside-routesOutside),beforeBytes:bytes(groundGeom),afterBytes:bytes(ground.geometry),edgeBytes:bytes(gardenRouteEdges.geometry),edgeStats:gardenRouteEdges.geometry.userData,clipMs:window.clipMs,connectionMs:window.connectionMs,
       previewTriangles:terrainPreview.comparison.geometry.index.count/3,originalTriangles:groundGeom.index.count/3};
   });
   console.log(JSON.stringify(result));
@@ -85,6 +124,9 @@ try{
   assert(result.outsideSamples>1000);
   assert(result.maxOutsideError<1e-5,'Ground outside actual path footprints keeps its height and coverage');
   assert(result.areaError<.001,'Clipping removes only the actual route area, without cracks or extra holes');
+  assert(result.renderedAreaError<.001,'Outside the drainage strips the rendered ground loses only the actual route area');
+  assert(result.preservedArea>0,'The drainage strips keep their soil under a path');
+  assert.equal(result.keptOutsideStrips,0,'Soil stays under a path only inside a drainage strip');
   assert(result.afterBytes<result.beforeBytes*1.2,'Local clipping must not densify the entire terrain');
   assert.equal(result.previewTriangles,result.originalTriangles,'Existing and cut/fill comparison remain complete');
   for(const contact of result.contacts)assert(Math.abs(contact.before-contact.after)<1e-6,'Bench supports keep their ground contact');
