@@ -13,9 +13,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  browser:
+  shards:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
+    outputs:
+      names: ${{ steps.list.outputs.names }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: list
+        run: echo "names=$(node scripts/verify-browser.mjs --shards)" >> "$GITHUB_OUTPUT"
+
+  browser:
+    needs: shards
+    runs-on: ubuntu-latest
+    # BROWSER_RUN_MINUTES below plus about 2 minutes of setup must stay at
+    # least 10 minutes under this limit, or Actions cancels the job before the
+    # runner prints its summary.
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.shards.outputs.names) }}
     steps:
       - uses: actions/checkout@v4
       - name: Enable pinned Yarn
@@ -28,8 +49,13 @@ jobs:
         run: yarn install --frozen-lockfile
       # verify-tour-browser.mjs draws its test panorama with ffmpeg.
       - name: Install ffmpeg
+        if: matrix.shard == 'fast'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Run browser checks
-        run: yarn verify:browser
+        run: yarn verify:browser --shard ${{ matrix.shard }}
         env:
+          BROWSER_JOBS: ${{ matrix.shard == 'fast' && 2 || 1 }}
+          BROWSER_RUN_MINUTES: 25
+          BROWSER_CHECK_MINUTES: 20
           BROWSER_TIMEOUT_MS: 180000
+          BROWSER_BLOCK_CDN: 1

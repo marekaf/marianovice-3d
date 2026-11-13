@@ -1,9 +1,13 @@
 import {spawn} from 'node:child_process';
+import {parseArgs} from 'node:util';
 import {ROOT,BROWSER_CHECKS,BROWSER_MODES} from './verify-checks.mjs';
 import {serveRepo} from './browser.mjs';
 
 const jobs=Number(process.env.BROWSER_JOBS??2);
 const minutes=Number(process.env.BROWSER_CHECK_MINUTES??10);
+// The whole run ends inside this budget, so a CI job with a longer limit
+// always gets the summary below.
+const budget=Number(process.env.BROWSER_RUN_MINUTES??Infinity);
 if(!Number.isInteger(jobs)||jobs<1){
   console.error(`BROWSER_JOBS must be a positive integer, got ${process.env.BROWSER_JOBS}`);
   process.exit(2);
@@ -21,36 +25,39 @@ const KNOWN_FAILING={
   'docs/verify-shower-fittings.mjs':'reads a page global named data that interior.html does not define',
 };
 
-// A GitHub runner has no GPU and renders WebGL on the CPU. These checks draw
-// the full scene many times and then need 3 to 10 minutes each, or miss the
-// timeouts they set themselves. A run with CI set leaves them out.
-const SLOW='needs minutes of CPU rendering on a runner without a GPU';
-const CI_SKIPPED={
-  'verify-entrance-drawing-browser.mjs':SLOW,
-  'verify-entrance-egress-browser.mjs':SLOW,
-  'verify-entrance-stairs-browser.mjs':SLOW,
-  'verify-interior-ui.mjs':SLOW,
-  'verify-pergola-view-browser.mjs':SLOW,
-  'verify-render-scheduler.mjs':SLOW,
-  'verify-roof-browser.mjs':SLOW,
-  'verify-sauna-browser.mjs':SLOW,
-  'verify-terrain-worker-browser.mjs':SLOW,
-  'verify-walk-doors-browser.mjs':SLOW,
-  'verify-walk-interior-browser.mjs':SLOW,
-  'verify-walk-vr-browser.mjs':SLOW,
-  'docs/verify-eye-level-walkthrough.mjs':SLOW,
-  'docs/verify-utility-rack-placement.mjs':'reads window.DEBUG after network idle, and a slow runner reaches idle before the page sets it',
+// A GitHub runner has no GPU and renders WebGL on the CPU, so these checks
+// need minutes each there. A CI job runs one shard, one check at a time. Every
+// check that no shard names runs in the shard "fast".
+const SHARDS={
+  'entrance':['verify-entrance-drawing-browser.mjs','verify-entrance-egress-browser.mjs','verify-pergola-view-browser.mjs','docs/verify-utility-rack-placement.mjs'],
+  'interior':['verify-interior-ui.mjs','verify-entrance-stairs-browser.mjs'],
+  'roof':['verify-roof-browser.mjs','verify-sauna-browser.mjs','verify-walk-doors-browser.mjs'],
+  'walk':['verify-walk-interior-browser.mjs','verify-terrain-worker-browser.mjs'],
+  'vr':['verify-walk-vr-browser.mjs','verify-render-scheduler.mjs'],
+  'eye-level':['docs/verify-eye-level-walkthrough.mjs'],
 };
-const skipped={...KNOWN_FAILING,...(process.env.CI?CI_SKIPPED:{})};
+const slow=Object.values(SHARDS).flat();
 
 const all=[...BROWSER_CHECKS.map(name=>({name,env:{}})),...BROWSER_MODES.map(mode=>({name:mode.file,env:mode.env}))];
-const only=process.argv.slice(2);
+const stale=[...slow,...Object.keys(KNOWN_FAILING)].filter(name=>!all.some(check=>check.name===name));
+if(stale.length)throw new Error(`scripts/verify-browser.mjs names missing checks: ${stale.join(', ')}`);
+
+const {values,positionals:only}=parseArgs({options:{shard:{type:'string'},shards:{type:'boolean'}},allowPositionals:true});
+if(values.shards){
+  console.log(JSON.stringify(['fast',...Object.keys(SHARDS)]));
+  process.exit(0);
+}
 const unknown=only.filter(name=>!all.some(check=>check.name===name));
 if(unknown.length){
   console.error(`Not a browser check: ${unknown.join(', ')}`);
   process.exit(2);
 }
-const checks=all.filter(check=>only.length?only.includes(check.name):!(check.name in skipped));
+if(values.shard&&values.shard!=='fast'&&!(values.shard in SHARDS)){
+  console.error(`Not a shard: ${values.shard}`);
+  process.exit(2);
+}
+const inShard=name=>!values.shard||(values.shard==='fast'?!slow.includes(name):SHARDS[values.shard].includes(name));
+const checks=all.filter(check=>only.length?only.includes(check.name):!(check.name in KNOWN_FAILING)&&inShard(check.name));
 
 const server=await serveRepo();
 const env={
@@ -61,12 +68,19 @@ const env={
   BASE_URL:server.origin,
 };
 
+const runStarted=Date.now();
 function run(check) {
   return new Promise(resolve=>{
     const started=Date.now();
     const chunks=[];
-    const child=spawn(process.execPath,[check.name],{cwd:ROOT,env:{...env,...check.env},stdio:['ignore','pipe','pipe']});
-    const timer=setTimeout(()=>{chunks.push(Buffer.from(`no result after ${minutes} minutes\n`));child.kill('SIGKILL');},minutes*60000);
+    const limit=Math.min(minutes,budget-(started-runStarted)/60000);
+    if(limit<=0){resolve({ok:false,output:`not started: the run budget of ${budget} minutes is used\n`,seconds:0});return;}
+    // detached puts Chrome in the group of the check, so the kill reaches it too.
+    const child=spawn(process.execPath,[check.name],{cwd:ROOT,env:{...env,...check.env},stdio:['ignore','pipe','pipe'],detached:true});
+    const timer=setTimeout(()=>{
+      chunks.push(Buffer.from(`no result after ${limit.toFixed(1)} minutes\n`));
+      try{process.kill(-child.pid,'SIGKILL');}catch{child.kill('SIGKILL');}
+    },limit*60000);
     child.stdout.on('data',chunk=>chunks.push(chunk));
     child.stderr.on('data',chunk=>chunks.push(chunk));
     const done=(ok,note='')=>{
@@ -89,11 +103,10 @@ async function worker() {
     if(!result.ok)failures.push({name,output:result.output});
   }
 }
-const started=Date.now();
 await Promise.all(Array.from({length:Math.min(jobs,checks.length)},worker));
 await server.close();
 
-if(!only.length)for(const [name,reason] of Object.entries(skipped))console.log(`\nSkipped: ${name} (${reason})`);
+if(!only.length)for(const [name,reason] of Object.entries(KNOWN_FAILING))console.log(`\nSkipped: ${name} (${reason})`);
 if(failures.length){
   console.error(`\n${failures.length} of ${checks.length} browser checks failed:`);
   for(const failure of failures){
@@ -102,4 +115,4 @@ if(failures.length){
   }
   process.exit(1);
 }
-console.log(`\nAll ${checks.length} browser checks passed in ${((Date.now()-started)/1000).toFixed(0)}s.`);
+console.log(`\nAll ${checks.length} browser checks passed in ${((Date.now()-runStarted)/1000).toFixed(0)}s.`);

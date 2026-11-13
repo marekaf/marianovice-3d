@@ -58,6 +58,7 @@ if(process.env.UTILITY_RACK_BROWSER==='1'){
     const url=new URL(process.env.INTERIOR_URL??'http://127.0.0.1:8765/interior.html');
     url.hash='house-utilityRack';
     await page.goto(url.href,{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>window.DEBUG?.utilityFitout);
     const report=await page.evaluate(async()=>{
       const THREE=await import('three'),house=DEBUG.hou,fit=DEBUG.utilityFitout;
       house.root.updateMatrixWorld(true);
