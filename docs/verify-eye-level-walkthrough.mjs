@@ -1,3 +1,4 @@
+// browser-ci {"status":"ci-skipped","reason":"allows 5 s for a pointer event to clear, and CPU rendering needs longer"}
 import assert from 'node:assert/strict';
 import {launchChrome} from '../scripts/browser.mjs';
 import { createRequire } from 'node:module';

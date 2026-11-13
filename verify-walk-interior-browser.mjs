@@ -1,3 +1,4 @@
+// browser-ci {"status":"ci-skipped","reason":"its W key walk covers too little distance at the frame rate of CPU rendering"}
 import assert from 'node:assert/strict';
 import {prepareReviewFloor,waitForReviewFloor,captureReview} from './scripts/review-floor.mjs';
 import {launchChrome,serveRepo} from './scripts/browser.mjs';

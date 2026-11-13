@@ -1,3 +1,4 @@
+// browser-ci {"shard":"roof"}
 import assert from 'node:assert/strict';
 import {launchChrome,serveRepo} from './scripts/browser.mjs';
 let threads=null;

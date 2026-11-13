@@ -1,3 +1,4 @@
+// browser-ci {"shard":"roof"}
 import assert from 'node:assert/strict';
 import {prepareReviewFloor,captureReview} from './scripts/review-floor.mjs';
 import {launchChrome,serveRepo} from './scripts/browser.mjs';

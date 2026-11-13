@@ -1,3 +1,4 @@
+// browser-ci {"shard":"entrance"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 import {mkdir,readFile} from 'node:fs/promises';

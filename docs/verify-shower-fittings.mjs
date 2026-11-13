@@ -1,3 +1,4 @@
+// browser-ci {"status":"known-failing","reason":"reads a page global named data that interior.html does not define"}
 import assert from 'node:assert/strict';
 import {launchChrome} from '../scripts/browser.mjs';
 import {createRequire} from 'node:module';

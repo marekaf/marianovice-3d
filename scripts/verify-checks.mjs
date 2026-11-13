@@ -1,4 +1,4 @@
-import {readdirSync} from 'node:fs';
+import {readdirSync,readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
 const ROOT_URL=new URL('../',import.meta.url);
@@ -49,6 +49,15 @@ export const BROWSER_MODES=[
   {file:'docs/verify-utility-rack-placement.mjs',env:{UTILITY_RACK_BROWSER:'1'},url:'INTERIOR_URL'},
 ];
 
+// A GitHub runner has no GPU and renders WebGL on the CPU, so some browser
+// checks need minutes each there. The browser workflow runs one job for each
+// of these shards, one check at a time, and one job named "fast" for the rest.
+export const BROWSER_SHARDS=['entrance','roof','vr','doors'];
+
+// known-failing: the check fails against the current pages.
+// ci-skipped: the check cannot pass on CPU rendering as it is written.
+const BROWSER_STATUSES=['run','known-failing','ci-skipped'];
+
 // Checks that exit with an error when they get no arguments.
 export const CHECK_ARGS={
   'verify-interior-data.mjs':['house-interior.js'],
@@ -68,7 +77,40 @@ function list(directory) {
     .map(name=>prefix+name);
 }
 
+function markerProblem(lines,isBrowser) {
+  if(!isBrowser)return 'is not a browser check';
+  if(lines.length>1)return `has ${lines.length} markers`;
+  let marker;
+  try{marker=JSON.parse(lines[0]);}catch{return 'is not JSON';}
+  if(marker===null||typeof marker!=='object'||Array.isArray(marker))return 'is not a JSON object';
+  const extra=Object.keys(marker).filter(key=>!['status','reason','shard'].includes(key));
+  if(extra.length)return `has the unknown key ${extra.join(', ')}`;
+  if('status' in marker&&!BROWSER_STATUSES.includes(marker.status))return `has the unknown status ${marker.status}`;
+  if('shard' in marker&&!BROWSER_SHARDS.includes(marker.shard))return `has the unknown shard ${marker.shard}`;
+  const skips=marker.status==='known-failing'||marker.status==='ci-skipped';
+  if(skips&&(typeof marker.reason!=='string'||!marker.reason.trim()))return `has the status ${marker.status} without a reason`;
+  return null;
+}
+
+// Returns the `// browser-ci {...}` line of each browser check, by check name.
+// It reads the files as text, because an import runs the check.
+export function browserCiMarkers() {
+  const browser=new Set([...BROWSER_CHECKS,...BROWSER_MODES.map(mode=>mode.file)]);
+  const markers=new Map();
+  const problems=[];
+  for(const name of [...EXTRA_CHECKS,...list(''),...list('docs')]){
+    const lines=[...readFileSync(new URL(name,ROOT_URL),'utf8').matchAll(/^\/\/ ?browser-ci\b(.*)$/gm)].map(match=>match[1]);
+    if(!lines.length)continue;
+    const problem=markerProblem(lines,browser.has(name));
+    if(problem)problems.push(`${name} ${problem}`);
+    else markers.set(name,JSON.parse(lines[0]));
+  }
+  if(problems.length)throw new Error(`Wrong browser-ci marker: ${problems.join('; ')}`);
+  return markers;
+}
+
 export function discoverChecks() {
+  browserCiMarkers();
   const found=[...list(''),...list('docs')].sort();
   const known=new Set([...found,...EXTRA_CHECKS]);
   const stale=[...Object.keys(SKIPPED_CHECKS),...Object.keys(CHECK_ARGS),...BROWSER_MODES.map(mode=>mode.file)].filter(name=>!known.has(name));
