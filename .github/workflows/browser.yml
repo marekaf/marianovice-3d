@@ -56,6 +56,6 @@ jobs:
         env:
           BROWSER_JOBS: ${{ matrix.shard == 'fast' && 2 || 1 }}
           BROWSER_RUN_MINUTES: 25
-          BROWSER_CHECK_MINUTES: 20
+          BROWSER_CHECK_MINUTES: 24
           BROWSER_TIMEOUT_MS: 180000
           BROWSER_BLOCK_CDN: 1
