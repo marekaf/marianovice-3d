@@ -1,4 +1,4 @@
-// browser-ci {"status":"ci-skipped","reason":"allows 5 s for a pointer event to clear, and CPU rendering needs longer"}
+// browser-ci {"shard":"slow-2"}
 import assert from 'node:assert/strict';
 import {launchChrome} from '../scripts/browser.mjs';
 import { createRequire } from 'node:module';
@@ -114,7 +114,7 @@ if (process.env.WALKTHROUGH_BROWSER === '1') {
         } else (event==='visibilitychange'?document:window).dispatchEvent(new Event(event));
       },event);
       if(event==='lostpointercapture') await touch('touchMove',[{...forward,y:forward.y+1}]);
-      await mobile.waitForFunction(()=>document.querySelector('[data-direction="forward"]').getAttribute('aria-pressed')==='false',null,{timeout:5000}).catch(error=>{throw new Error(`${event} did not clear held movement`,{cause:error});});
+      await mobile.waitForFunction(()=>document.querySelector('[data-direction="forward"]').getAttribute('aria-pressed')==='false').catch(error=>{throw new Error(`${event} did not clear held movement`,{cause:error});});
       await assertStopped(event+' clears movement');
       await touch('touchEnd',[]);
     }
