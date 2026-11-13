@@ -1,6 +1,8 @@
-import {copyFileSync,existsSync,mkdirSync,readFileSync,rmSync} from 'node:fs';
+import {copyFileSync,existsSync,mkdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {dirname,join,posix,resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import {buildSync,transformSync} from 'esbuild';
+import {threeAddons,threeEntry,threePackage,threeSource,threeVendor,threeVendorDir,threeVersion} from '../three-import-map.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 
@@ -31,7 +33,9 @@ export function* localReferences(source,from){
     // The value of a download attribute or property names the saved file, not a request.
     if(/download\s*=\s*$/.test(source.slice(0,match.index)))continue;
     if(/^(?:[a-z][a-z0-9+.-]*:|\/\/|three\/)/i.test(match[2]))continue;
-    yield posix.normalize(posix.join(posix.dirname(from),match[2].split(/[?#]/)[0]));
+    const path=posix.normalize(posix.join(posix.dirname(from),match[2].split(/[?#]/)[0]));
+    // The build vendors these files itself.
+    if(!path.startsWith(threePackage))yield path;
   }
 }
 
@@ -55,15 +59,47 @@ export function siteFiles(){
   return [...files].sort();
 }
 
+// Writes a minified copy of three's entry file, of each addon the site files import, and of every file those
+// import. Each file stays a separate module at its package path, so the relative imports inside the package
+// still resolve and the browser holds one instance of three.module.js and of three.core.js.
+function vendorThree(out,files){
+  const source=join(root,threePackage);
+  const installed=existsSync(join(source,'package.json'))?JSON.parse(readFileSync(join(source,'package.json'),'utf8')).version:null;
+  if(installed!==threeVersion)throw new Error(`Cannot build the site: package.json pins three ${threeVersion}, node_modules holds ${installed??'no three'}. Run yarn install.`);
+  const entries=new Set([threeEntry]);
+  for(const path of files){
+    if(!scanned.test(path))continue;
+    for(const match of readFileSync(join(root,path),'utf8').matchAll(/(['"])three\/addons\/([^'"`\s]+)\1/g))entries.add(threeAddons+match[2]);
+  }
+  for(const path of entries)if(!existsSync(join(source,path)))throw new Error(`Cannot build the site: three ${threeVersion} has no ${path}`);
+  // This bundle is discarded. Its metafile lists every file the entries reach through relative imports.
+  const {metafile}=buildSync({absWorkingDir:source,entryPoints:[...entries],bundle:true,external:['three'],format:'esm',write:false,metafile:true,outdir:'unused',logLevel:'silent'});
+  const vendored=Object.keys(metafile.inputs).sort();
+  for(const path of vendored){
+    for(const {path:name,original,external} of metafile.inputs[path].imports){
+      // The import map of the pages resolves the name three and no other bare name.
+      if(external?name!=='three':!/^\.\.?\//.test(original))throw new Error(`Cannot build the site: ${path} imports ${original??name}, which the import map does not resolve`);
+    }
+    // The default legal-comment mode keeps the licence header of each file.
+    const {code}=transformSync(readFileSync(join(source,path),'utf8'),{loader:'js',format:'esm',minify:true,sourcefile:path});
+    const target=join(out,threeVendorDir,path);
+    mkdirSync(dirname(target),{recursive:true});
+    writeFileSync(target,code);
+  }
+  copyFileSync(join(source,'LICENSE'),join(out,threeVendorDir,'LICENSE'));
+  return [...vendored,'LICENSE'].map(path=>threeVendorDir+path);
+}
+
 export function buildSite(outDir){
   const out=resolve(outDir),files=siteFiles();
   rmSync(out,{recursive:true,force:true});
   for(const path of files){
     const target=join(out,path);
     mkdirSync(dirname(target),{recursive:true});
-    copyFileSync(join(root,path),target);
+    if(path.endsWith('.html'))writeFileSync(target,readFileSync(join(root,path),'utf8').replaceAll(threeSource(path),threeVendor(path)));
+    else copyFileSync(join(root,path),target);
   }
-  return files;
+  return [...files,...vendorThree(out,files)].sort();
 }
 
 if(import.meta.url===pathToFileURL(process.argv[1]??'').href){

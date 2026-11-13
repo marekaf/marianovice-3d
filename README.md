@@ -64,8 +64,9 @@ The viewer and gallery use the published Floorify Champagne reference by default
 ## Tech
 
 - Vanilla HTML + JS
-- Three.js loaded from CDN
-- No build step — serve the repository over HTTP and open it in a browser
+- Three.js comes from the `three` package in `node_modules`, with no CDN at run time
+- Local development needs no build step: run `yarn install`, serve the repository root over HTTP and open a page in a browser
+- The published site is built by `node scripts/build-site.mjs _site`, which minifies three.js with esbuild into `_site/vendor/` and points the pages at that copy
 
 ## Model previews
 

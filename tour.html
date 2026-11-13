@@ -17,14 +17,13 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.min.js",
-    "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.min.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+    "three": "./node_modules/three/build/three.module.js",
+    "three/addons/": "./node_modules/three/examples/jsm/"
   }
 }
 </script>
-<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.min.js">
-<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.min.js">
+<link rel="modulepreload" href="./node_modules/three/build/three.module.js">
+<link rel="modulepreload" href="./node_modules/three/build/three.core.js">
 </head>
 <body>
 <div id="tourStatus" role="status" aria-live="polite"></div>
