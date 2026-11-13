@@ -9,7 +9,6 @@ import {parseArgs} from 'node:util';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {createExportInputs} from '../unreal/export-inputs.mjs';
-import {useLocalThree} from '../three-cdn.mjs';
 
 const {values}=parseArgs({options:{'source-root':{type:'string'},output:{type:'string'}},allowPositionals:false});
 if(!values['source-root']||!values.output)throw new Error('Use --source-root <viewer> --output <ignored directory>');
@@ -31,7 +30,6 @@ const server=createServer(async(req,res)=>{
     if(input.pathname==='/index.html'){
       body=body.toString();assert.equal(body.split(marker).length,2);body=body.replace(marker,injection+marker);
     }
-    if(['.html','.js','.mjs'].includes(extname(input.file)))body=useLocalThree(body.toString());
     res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.jpg':'image/jpeg','.png':'image/png'}[extname(input.file)]||'application/octet-stream'});res.end(body);
   }catch{res.writeHead(404).end();}
 });

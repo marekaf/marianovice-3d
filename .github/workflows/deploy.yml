@@ -44,6 +44,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: yarn
+      - name: Enable pinned Yarn
+        run: corepack enable
+      - name: Install build dependencies
+        run: yarn install --frozen-lockfile
       - name: Build site
         run: node scripts/build-site.mjs _site
       - uses: actions/configure-pages@v5

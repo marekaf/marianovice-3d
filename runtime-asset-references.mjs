@@ -18,7 +18,7 @@ const notFetched=/(?:\brequire\(|__dirname,|\bdownload\(|\.download\s*=)\s*$/;
 // worker URLs and script URLs kept in a string.
 export function* localScriptReferences(source) {
   for(const match of source.matchAll(/(['"])([^'"`\s?#]+\.m?js)(?:\?v=([^'"`\s&#]*))?\1/g)){
-    if(/^(?:[a-z][a-z+.-]*:|\/\/|three\/)/i.test(match[2]))continue;
+    if(/^(?:[a-z][a-z+.-]*:|\/\/|three\/|\/node_modules\/)/i.test(match[2]))continue;
     if(notFetched.test(source.slice(Math.max(0,match.index-40),match.index)))continue;
     yield {index:match.index,length:match[0].length,quote:match[1],path:match[2],version:match[3]??null};
   }

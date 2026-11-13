@@ -6,7 +6,6 @@ import {fileURLToPath} from 'node:url';
 import {parseExportArgs,createExportInputs} from './export-inputs.mjs';
 import {createFloorReference} from './export-floor-reference.mjs';
 import {assetVersion} from '../runtime-asset-references.mjs';
-import {useLocalThree} from '../three-cdn.mjs';
 const {sourceRoot,loftOnly,floorReferencePath}=parseExportArgs(process.argv.slice(2));
 const root=resolve(fileURLToPath(new URL('../',import.meta.url))),output=resolve(root,'unreal/generated');
 const inputs=await createExportInputs({sourceRoot,toolRoot:root});
@@ -32,7 +31,6 @@ const server=createServer(async(req,res)=>{
       body=body.toString();assert.equal(body.split(marker).length,2);
       body=body.replace(marker,injection+marker);
     }
-    if(['.html','.js','.mjs'].includes(extname(file)))body=useLocalThree(body.toString());
     res.writeHead(200,{'Content-Type':{'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.png':'image/png'}[extname(file)]||'application/octet-stream'});res.end(body);
   }catch{res.writeHead(404).end();}
 });
