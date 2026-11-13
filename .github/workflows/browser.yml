@@ -32,5 +32,4 @@ jobs:
       - name: Run browser checks
         run: yarn verify:browser
         env:
-          BROWSER_JOBS: 1
           BROWSER_TIMEOUT_MS: 180000

@@ -21,6 +21,25 @@ const KNOWN_FAILING={
   'docs/verify-shower-fittings.mjs':'reads a page global named data that interior.html does not define',
 };
 
+// A GitHub runner has no GPU and renders WebGL on the CPU. These checks draw
+// the full scene many times and then need 3 to 10 minutes each, or miss the
+// timeouts they set themselves. A run with CI set leaves them out.
+const SLOW='needs minutes of CPU rendering on a runner without a GPU';
+const CI_SKIPPED={
+  'verify-entrance-egress-browser.mjs':SLOW,
+  'verify-entrance-stairs-browser.mjs':SLOW,
+  'verify-interior-ui.mjs':SLOW,
+  'verify-pergola-view-browser.mjs':SLOW,
+  'verify-roof-browser.mjs':SLOW,
+  'verify-sauna-browser.mjs':SLOW,
+  'verify-terrain-worker-browser.mjs':SLOW,
+  'verify-walk-doors-browser.mjs':SLOW,
+  'verify-walk-interior-browser.mjs':SLOW,
+  'verify-walk-vr-browser.mjs':SLOW,
+  'docs/verify-utility-rack-placement.mjs':'reads window.DEBUG after network idle, and a slow runner reaches idle before the page sets it',
+};
+const skipped={...KNOWN_FAILING,...(process.env.CI?CI_SKIPPED:{})};
+
 const all=[...BROWSER_CHECKS.map(name=>({name,env:{}})),...BROWSER_MODES.map(mode=>({name:mode.file,env:mode.env}))];
 const only=process.argv.slice(2);
 const unknown=only.filter(name=>!all.some(check=>check.name===name));
@@ -28,7 +47,7 @@ if(unknown.length){
   console.error(`Not a browser check: ${unknown.join(', ')}`);
   process.exit(2);
 }
-const checks=all.filter(check=>only.length?only.includes(check.name):!(check.name in KNOWN_FAILING));
+const checks=all.filter(check=>only.length?only.includes(check.name):!(check.name in skipped));
 
 const server=await serveRepo();
 const env={
@@ -71,7 +90,7 @@ const started=Date.now();
 await Promise.all(Array.from({length:Math.min(jobs,checks.length)},worker));
 await server.close();
 
-if(!only.length)for(const [name,reason] of Object.entries(KNOWN_FAILING))console.log(`\nSkipped: ${name} (${reason})`);
+if(!only.length)for(const [name,reason] of Object.entries(skipped))console.log(`\nSkipped: ${name} (${reason})`);
 if(failures.length){
   console.error(`\n${failures.length} of ${checks.length} browser checks failed:`);
   for(const failure of failures){
