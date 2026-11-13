@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # The HTML pages load three from a CDN through import maps (index.html,
+  # interior.html, tour.html, fixtures.html, docs/offices.html). A three bump
+  # must change those maps to the same version as package.json.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
