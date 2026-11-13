@@ -1,10 +1,13 @@
-// browser-ci {"status":"ci-skipped","reason":"gives no result in 20 minutes on a runner without a GPU"}
+// browser-ci {"shard":"slow-3"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 const browser = await launchChrome();
 try {
   for (const mobile of [false, true]) {
-    const page = await browser.newPage({ viewport:{ width:mobile ? 390 : 1440, height:900 }, isMobile:mobile, hasTouch:mobile });
+    // The page draws one frame after every input, and on CPU rendering a frame costs about 11 s per
+    // million drawn pixels. The scale factor cuts the drawn pixels 16 times and leaves the CSS layout,
+    // which is all this check reads, as it is.
+    const page = await browser.newPage({ viewport:{ width:mobile ? 390 : 1440, height:900 }, deviceScaleFactor:.25, isMobile:mobile, hasTouch:mobile });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(process.env.INTERIOR_URL || 'http://127.0.0.1:8765/interior.html');
