@@ -539,7 +539,7 @@ HOUSE_INTERIOR.gableOpening = function (floor=HOUSE_ATTIC_FLOOR) {
     model.parts.push({name:`gable_reveal_${name}`,type:'box',position:[x+w/2,.225,y+h/2],size:[w,.45,h],material:'reveal',category:'openings'});
   return model;
 };
-HOUSE_INTERIOR.roofWindowModelUrl='./docs/house-roof-windows.js';
+HOUSE_INTERIOR.roofWindowModelUrl='./docs/house-roof-windows.js?v=95cb79299b4c';
 
 const HOUSE_LOFT = {
   floorY: HOUSE_LOFT_FLOOR,

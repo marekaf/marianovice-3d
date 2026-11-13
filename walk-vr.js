@@ -1,4 +1,4 @@
-import {placeVRHead,rotateVRRig,createVRTeleportValidator} from './walk-vr-locomotion.js';
+import {placeVRHead,rotateVRRig,createVRTeleportValidator} from './walk-vr-locomotion.js?v=3ae62434d133';
 
 export function mountVRWalk(THREE,{scene,camera,renderer,loadInterior,getContext,onStart,onEnd,closePanels}) {
   const button=document.createElement('button');

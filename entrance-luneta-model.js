@@ -1,5 +1,5 @@
-import {entranceLanding} from './entrance-landing.js';
-import {carportPostLayout} from './carport-posts-model.js';
+import {entranceLanding} from './entrance-landing.js?v=5839e6a04fae';
+import {carportPostLayout} from './carport-posts-model.js?v=f80a7ba66edc';
 
 export function entranceLunetaPavingDatum(house,garden,sampleFinish,{variant='aligned'}={}) {
   const model=buildEntranceLuneta(house,garden,1,.49,{variant}),footprint=model.dimensions.footprint;

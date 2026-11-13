@@ -1,4 +1,4 @@
-import {buildEntranceInterior} from './entrance-interior.js';
+import {buildEntranceInterior} from './entrance-interior.js?v=fc7955a7bfac';
 
 const mm=value=>String(Math.round(value*1000));
 const escape=text=>String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));

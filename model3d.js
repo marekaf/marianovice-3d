@@ -1,6 +1,6 @@
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
+import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js?v=3854011ec235';
 
 function timberTexture(THREE) {
   const canvas = document.createElement('canvas');

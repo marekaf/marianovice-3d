@@ -33,10 +33,10 @@ function insetFacade(mesh,wall,outline) {
 export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,exteriorWallHeight=data.clearH,roofWallProfile,loftData,loftRoof,loftWindows}) {
   const {capRoofWall}=await import('./roof-wall-cap.js?v=0ed105086bfd');
   const [officeModule,living,bathroom,utility,stairs,led,entrance,kitchen,cathedral,electrical,records,electricalView,{RoomEnvironment}]=await Promise.all([
-    import('./office-integration.js'),import('./living-interior.js?v=4f1e987ebddd'),import('./bathroom-finishes.js'),
-    import('./utility-equipment.js'),import('./stair-finishes.js'),import('./interior-led.js'),
-    import('./entrance-interior.js'),import('./kitchen-window-worktop.js'),import('./cathedral-interior.js'),
-    import('./electrical-model.js'),import('./electrical-points.js'),import('./electrical-view.js'),
+    import('./office-integration.js?v=c50881f1920c'),import('./living-interior.js?v=204ae8cb9828'),import('./bathroom-finishes.js?v=c47c5a356d8f'),
+    import('./utility-equipment.js?v=23b271175e68'),import('./stair-finishes.js?v=d0b41ddd3d2f'),import('./interior-led.js?v=e3bb81bf1b5d'),
+    import('./entrance-interior.js?v=fc7955a7bfac'),import('./kitchen-window-worktop.js?v=a0228501ff54'),import('./cathedral-interior.js?v=fec7a14e6f2f'),
+    import('./electrical-model.js?v=bd3cbdabcce7'),import('./electrical-points.js?v=8264a37fbe1f'),import('./electrical-view.js?v=c0cc914aa8c5'),
     import('three/addons/environments/RoomEnvironment.js'),
   ]);
   const offices=await officeModule.loadOfficeIntegration();
@@ -90,7 +90,7 @@ export async function buildWalkInterior(THREE,data,{buildModel,renderer,floorY,e
       .filter(point=>point.building==='house'&&point.resolved&&!point.occupiedBy)
       .map(point=>electricalView.outletOnFinishedSurface(point,panels)));
     if(loftData){
-      const {attachWalkLoft}=await import('./walk-loft.js');
+      const {attachWalkLoft}=await import('./walk-loft.js?v=29bb54650815');
       const groundDoorCount=doors.length;
       house.loftFitout=await attachWalkLoft(THREE,house,loftData,{buildModel:trackedBuild,renderer,applyChampagneFloor:officeModule.applyChampagneFloor,roof:loftRoof,windowModel:loftWindows});
       house.loft=house.loftFitout.loft;

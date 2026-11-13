@@ -154,25 +154,25 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 
 <script src="terrain.js?v=f11b9d65254d"></script>
 <script src="layout.js?v=eb3c3f69cc3c"></script>
-<script src="garden-route-model.js"></script>
+<script src="garden-route-model.js?v=fd0cd5743a5a"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=68757001ef24"></script>
-<script src="vehicle-model.js"></script>
-<script src="exterior-furniture-model.js"></script>
+<script src="vehicle-model.js?v=839682f7868b"></script>
+<script src="exterior-furniture-model.js?v=f26cc5549973"></script>
 <script src="portal-drain-model.js?v=ee065151398f"></script>
 <script src="atrium-stones-model.js?v=ac43b6767fdf"></script>
 <script src="terrace-deck-model.js?v=a054542da1dc"></script>
 <script src="house-plinth.js?v=040c4551c729"></script>
-<script src="planting-preview.js"></script>
-<script src="tree-model.js"></script>
+<script src="planting-preview.js?v=4862f138ae1d"></script>
+<script src="tree-model.js?v=f6d3de2d16df"></script>
 <script src="planting-profiles.js?v=8cb64402df59"></script>
 <script src="cotoneaster-model.js?v=047460b27306"></script>
 <script src="selected-planting.js?v=d571bb203f6d"></script>
-<script src="planting-guide.js"></script>
+<script src="planting-guide.js?v=64e2e8dcd4e7"></script>
 <script src="perennial-model.js?v=bf97f31b37d7"></script>
 <script src="seasonal-planting.js?v=73a125d14e5a"></script>
-<script src="privacy-preview.js"></script>
-<script src="privacy-screen-model.js"></script>
+<script src="privacy-preview.js?v=d5cd32f56d7f"></script>
+<script src="privacy-screen-model.js?v=b6dc9fe47a0b"></script>
 <script src="sauna-model.js?v=32109848d9b9"></script>
 <script src="pergola-model.js?v=bad8cd6d266a"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
@@ -186,57 +186,57 @@ body.viewer-loading > :not(#viewerLoading):not(script):not(style):not(link) { vi
 <script src="gate-model.js?v=672fb9d68d57"></script>
 <script src="fence-model.js?v=650724c57661"></script>
 <script src="boundary-fence-model.js?v=0112fa12d8b8"></script>
-<script src="utility-pillar-model.js"></script>
+<script src="utility-pillar-model.js?v=481ff513d6b8"></script>
 <script src="site-terrain.js?v=2c1c7b130364"></script>
-<script src="survey-surface.js"></script>
+<script src="survey-surface.js?v=ebd5edb4377f"></script>
 <script src="grading-site.js?v=c4a24ab503da"></script>
-<script src="terrain-preview.js"></script>
+<script src="terrain-preview.js?v=91c05cb2d744"></script>
 <script src="grading-zones.js?v=5c8a87f92e3d"></script>
 <script src="grading-overlay.js?v=5aab9be18ed5"></script>
 <script type="module">
 import * as THREE from 'three';
-import { createDrivewayPavingMaterial, applyDrivewayPavingMaterial } from './driveway-paving-material.js';
-import { buildEntranceLuneta, entranceLunetaPavingDatum } from './entrance-luneta-model.js?v=ea836728f39d';
+import { createDrivewayPavingMaterial, applyDrivewayPavingMaterial } from './driveway-paving-material.js?v=5c55d29b4b74';
+import { buildEntranceLuneta, entranceLunetaPavingDatum } from './entrance-luneta-model.js?v=f6a896c85c1a';
 import { buildCarportPosts } from "./carport-posts-model.js?v=f80a7ba66edc";
-import { createMeshHeightQuery } from './mesh-height-query.js';
+import { createMeshHeightQuery } from './mesh-height-query.js?v=468358863820';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { buildModel } from './model3d.js?v=08daa6e001b5';
-import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js';
-import { GroundSurfaceModel } from './ground-surface-model.js';
+import { buildModel } from './model3d.js?v=fcc58a756a0b';
+import { createMarmolitMaterial, marmolitUVs } from './marmolit-material.js?v=3854011ec235';
+import { GroundSurfaceModel } from './ground-surface-model.js?v=cc6809cc5386';
 import {levelCircularGroundAsync,gradingGroundBoundaries,refinePlateauGroundAsync,gradingGroundRefinement} from "./circular-pad-ground.js?v=68a7515ba6ed";
 import { createTerrainSampler, TERRAIN_WORKER_SCRIPTS } from './terrain-sampler.js?v=9800311fdc06';
 import { cutGroundUnderRoutes, routeEdgeGeometry } from './route-ground-clipping.js?v=a15eb452d53a';
-import { ShrubModel } from './shrub-model.js';
+import { ShrubModel } from './shrub-model.js?v=7a7b55c6e562';
 import { createViewerPostprocessing } from './viewer-postprocessing.js?v=a42dc78d7d83';
 import { createAdaptiveResolution } from './adaptive-resolution.js?v=3ad4393273fb';
 import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
-import { createWalkInteriorLoader } from './walk-interior-loading.js';
-import { removeFacadeLid } from './docs/walk-facade.js';
-import { createWalkHouseNavigation } from './docs/walk-house-navigation.js';
-import { createHouseChimney } from './house-chimney.js';
+import { createWalkInteriorLoader } from './walk-interior-loading.js?v=7dc38d1519f5';
+import { removeFacadeLid } from './docs/walk-facade.js?v=ee1e7d2c256c';
+import { createWalkHouseNavigation } from './docs/walk-house-navigation.js?v=7c045f66c59e';
+import { createHouseChimney } from './house-chimney.js?v=b613b8177825';
 import { capRoofWall } from './docs/roof-wall-cap.js?v=0ed105086bfd';
-import { moveWalker } from './walk-movement.js';
-import { mountVRWalk } from './walk-vr.js';
-import { stepSupportHeight } from './walk-step-support.js';
+import { moveWalker } from './walk-movement.js?v=a33f7441ff7d';
+import { mountVRWalk } from './walk-vr.js?v=1a11e84f48df';
+import { stepSupportHeight } from './walk-step-support.js?v=76cc49110675';
 import { buildWalkingDoor, createWalkDoors } from './walk-doors.js?v=e80df7b1a1c5';
 
 await ViewerLoading.stage('Reading the house and garden drawings…');
 await new Promise(resolve => {
   const script = document.createElement('script');
-  script.src = './house-interior.js?v=f49343a5d955';
+  script.src = './house-interior.js?v=7b250f364c06';
   script.dataset.loadingOptional='true';
   script.onload = script.onerror = resolve;
   document.head.appendChild(script);
 });
 const localHouseData = typeof HOUSE_INTERIOR === 'undefined' ? null : HOUSE_INTERIOR;
 if(localHouseData)await new Promise(resolve=>{
-  const script=document.createElement('script');script.src='./docs/planting-palette.js';
+  const script=document.createElement('script');script.src='./docs/planting-palette.js?v=a21d5e25ac1e';
   script.dataset.loadingOptional='true';
   script.onload=script.onerror=resolve;document.head.appendChild(script);
 });
 const localPalette=typeof PLANTING_PALETTE==='undefined'?null:PLANTING_PALETTE;
 if(localHouseData)await new Promise(resolve=>{
-  const script=document.createElement('script');script.src='./docs/survey-terrain.js';
+  const script=document.createElement('script');script.src='./docs/survey-terrain.js?v=86555ae475ff';
   script.dataset.loadingOptional='true';
   script.onload=script.onerror=resolve;document.head.appendChild(script);
 });
@@ -1359,7 +1359,7 @@ scene.add(driveway);
 
 // Facade gravel follows the drainage grade; the heat pump has a level bearing pad.
 {
-  const {GravelSurfaceModel}=await import('./gravel-surface-model.js');
+  const {GravelSurfaceModel}=await import('./gravel-surface-model.js?v=611046d4c762');
   const [northStrip, southStrip] = facadeGravelClearances;
   const northGravel=addTerrainPlatform(rectVerts(northStrip), 0.07, 0x9a9a97);  // N wall (draped)
   northGravel.name='north-facade-gravel';
@@ -1562,7 +1562,7 @@ scene.add(firepitGroup);
 lampLights.push(...firepitGroup.userData.lights);
 nightGroups.push(firepitGroup.userData.categories.fire);
 
-const { PondModel } = await import('./pond-model.js');
+const { PondModel } = await import('./pond-model.js?v=e4f4e18bd007');
 const pondModel = PondModel.create(THREE, { basin: PBOWL, groundGeometry: groundGeom });
 const waterNormal = pondModel.waterNormal;
 scene.add(pondModel.group);
@@ -1797,7 +1797,7 @@ for(const ground of [hiddenBenchGroup.userData.categories.ground,raisedBedsGroup
 });
 
 // Facade climbers on the garage E and solid atrium N/S walls.
-const { ClimberModel } = await import('./climber-model.js');
+const { ClimberModel } = await import('./climber-model.js?v=ad87f2edbfe8');
 function addWallClimber(x1, z1, x2, z2, nx, nz, h = 2.2) {
   const len = Math.hypot(x2 - x1, z2 - z1);
   const n = Math.max(2, Math.round(len / 1.1));
@@ -1995,7 +1995,7 @@ let entranceGate=buildModel(THREE,entranceGateModel),entranceGateOpen=true;scene
   const runback=buildModel(THREE,GateRunbackModel.build(strip,siteTerrain.baseHeight));
   scene.add(runback);
   const surface=runback.getObjectByName('Gate runback_surface_gravel');
-  const {GravelSurfaceModel}=await import('./gravel-surface-model.js');
+  const {GravelSurfaceModel}=await import('./gravel-surface-model.js?v=611046d4c762');
   const stones=GravelSurfaceModel.create(THREE,{surface,bounds:{x0:Math.min(...points.map(p=>p[0])),x1:Math.max(...points.map(p=>p[0])),z0:Math.min(...points.map(p=>p[1])),z1:Math.max(...points.map(p=>p[1]))},seed:129});
   const transform=new THREE.Object3D(),[ux,uz]=strip.direction;
   for(const [i,p] of stones.userData.parts.entries()){
@@ -2337,7 +2337,7 @@ document.addEventListener('keydown',event=>{
 const loadWalkInterior=createWalkInteriorLoader({
   build:async()=>{
     if(!localHouseData)throw new Error('House drawings unavailable');
-    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=96db2a3fd85c');
+    const {buildWalkInterior}=await import('./docs/walk-interior.js?v=0d9fb541d564');
     const loftData=typeof HOUSE_LOFT==='undefined'?null:HOUSE_LOFT;
     const o=localHouseData.originPlot,localRect=r=>[r[0]-o.x,r[1]-o.z,r[2]-o.x,r[3]-o.z],gable=GABLE.map(x=>x-o.x);
     const loftRoof=loftData?HouseRoof.describe({bbox:localRect(HB),atrium:localRect(HA),gable}):null;
@@ -2544,7 +2544,7 @@ function animate(dt=0) {
   return moving;
 }
 await ViewerLoading.stage('Preparing the first view…');
-const { mountViewerUI } = await import('./viewer-ui.js');
+const { mountViewerUI } = await import('./viewer-ui.js?v=852c5bfb5571');
 const viewerUI=mountViewerUI({ stopTour() {
   if (!tourActive) return;
   tourActive = false;

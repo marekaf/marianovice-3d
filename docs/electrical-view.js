@@ -1,4 +1,4 @@
-import {attachElectricalPoints} from './electrical-model.js';
+import {attachElectricalPoints} from './electrical-model.js?v=bd3cbdabcce7';
 
 export function outletOnFinishedSurface(point, panels=[]) {
   if(!point.resolved||point.normal[1])return point;

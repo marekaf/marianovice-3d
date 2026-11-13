@@ -105,27 +105,27 @@
 <script src="layout.js?v=eb3c3f69cc3c"></script>
 <script src="garage-model.js?v=8116afc969bc"></script>
 <script src="furniture-model.js?v=8971e7aa0b42"></script>
-<script src="privacy-screen-model.js"></script>
+<script src="privacy-screen-model.js?v=b6dc9fe47a0b"></script>
 <script src="sauna-model.js?v=32109848d9b9"></script>
 <script src="house-wall-layers.js?v=6f5a07b8c6d3"></script>
 <script src="interiors3d.js?v=68757001ef24"></script>
-<script src="vehicle-model.js"></script>
-<script src="house-interior.js?v=f49343a5d955"></script>
-<script src="house-roof.js"></script>
-<script src="docs/house-roof-windows.js"></script>
+<script src="vehicle-model.js?v=839682f7868b"></script>
+<script src="house-interior.js?v=7b250f364c06"></script>
+<script src="house-roof.js?v=4ddba03ad9f4"></script>
+<script src="docs/house-roof-windows.js?v=95cb79299b4c"></script>
 <script type="module">
 import * as THREE from 'three';
-import {downloadEntranceDrawing} from './docs/entrance-drawing.js?v=16237a51647f';
+import {downloadEntranceDrawing} from './docs/entrance-drawing.js?v=d041161a9eb2';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mountInteriorUI } from './interior-ui.js?v=04a6d3b1a3dd';
-import { prepareLoftRoofData, attachLoftRoofWindows } from './docs/loft-roof-windows.js';
+import { prepareLoftRoofData, attachLoftRoofWindows } from './docs/loft-roof-windows.js?v=871d15d30896';
 import { attachEyeLevelWalkthrough } from './docs/eye-level-walkthrough.js?v=9da3a6375c40';
-import { ELECTRICAL_POINTS } from './docs/electrical-points.js';
-import { attachElectricalView } from './docs/electrical-view.js';
+import { ELECTRICAL_POINTS } from './docs/electrical-points.js?v=8264a37fbe1f';
+import { attachElectricalView } from './docs/electrical-view.js?v=c0cc914aa8c5';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { createRenderScheduler } from './render-scheduler.js';
-import { buildModel } from './model3d.js?v=08daa6e001b5';
+import { createRenderScheduler } from './render-scheduler.js?v=a86851a9cb85';
+import { buildModel } from './model3d.js?v=fcc58a756a0b';
 
 RectAreaLightUniformsLib.init();
 const scene = new THREE.Scene();
@@ -174,23 +174,23 @@ let kitchenWindowIntegration = null;
 let cathedralIntegration = null;
 if (hasHouse) {
   try {
-    const module = await import('./docs/office-integration.js');
+    const module = await import('./docs/office-integration.js?v=c50881f1920c');
     officeIntegration = await module.loadOfficeIntegration();
     officeFloorTexture = module.applyChampagneFloor;
   } catch (error) {
     document.getElementById('fitoutStatus').textContent = `Office fit-out unavailable: ${error.message}`;
   }
   try {
-    livingIntegration = await import('./docs/living-interior.js?v=4f1e987ebddd');
-    const {createBathroomFinishes}=await import('./docs/bathroom-finishes.js');
+    livingIntegration = await import('./docs/living-interior.js?v=204ae8cb9828');
+    const {createBathroomFinishes}=await import('./docs/bathroom-finishes.js?v=c47c5a356d8f');
     bathroomFinishes=createBathroomFinishes(THREE,HOUSE_INTERIOR);
-    utilityIntegration=await import('./docs/utility-equipment.js');
-    loftIntegration=await import('./docs/loft-interior.js');
-    stairIntegration=await import('./docs/stair-finishes.js');
-    ledIntegration=await import('./docs/interior-led.js');
-    entranceIntegration=await import('./docs/entrance-interior.js');
-    kitchenWindowIntegration=await import('./docs/kitchen-window-worktop.js');
-    cathedralIntegration=await import('./docs/cathedral-interior.js');
+    utilityIntegration=await import('./docs/utility-equipment.js?v=23b271175e68');
+    loftIntegration=await import('./docs/loft-interior.js?v=e56e826e47a7');
+    stairIntegration=await import('./docs/stair-finishes.js?v=d0b41ddd3d2f');
+    ledIntegration=await import('./docs/interior-led.js?v=e3bb81bf1b5d');
+    entranceIntegration=await import('./docs/entrance-interior.js?v=fc7955a7bfac');
+    kitchenWindowIntegration=await import('./docs/kitchen-window-worktop.js?v=a0228501ff54');
+    cathedralIntegration=await import('./docs/cathedral-interior.js?v=fec7a14e6f2f');
   } catch (error) {
     document.getElementById('fitoutStatus').textContent += ` Living fit-out unavailable: ${error.message}`;
   }

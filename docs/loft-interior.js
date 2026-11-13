@@ -1,5 +1,5 @@
-import { houseFlooringModel } from './house-flooring.js';
-import { HOUSE_FLUE_INTERIOR_TOP } from '../house-chimney.js';
+import { houseFlooringModel } from './house-flooring.js?v=1c01e8d36c28';
+import { HOUSE_FLUE_INTERIOR_TOP } from '../house-chimney.js?v=b613b8177825';
 
 export const finishColors = { wall: '#ddd1be', ceiling: '#ddd1be' };
 

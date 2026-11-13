@@ -1,15 +1,15 @@
-import {buildHoxterH60} from '../hoxter-stove-model.js';
-import {houseFlue} from '../house-chimney.js';
-import {buildRavakFreedomWall} from '../ravak-freedom-model.js';
-import {buildStairFlight} from '../stair-flight-model.js';
-import {attachHouseFlooring} from './house-flooring.js';
+import {buildHoxterH60} from '../hoxter-stove-model.js?v=c7846465db83';
+import {houseFlue} from '../house-chimney.js?v=b613b8177825';
+import {buildRavakFreedomWall} from '../ravak-freedom-model.js?v=68549cdd6b43';
+import {buildStairFlight} from '../stair-flight-model.js?v=f22cb038b4d3';
+import {attachHouseFlooring} from './house-flooring.js?v=1c01e8d36c28';
 import {buildNightstands} from './nightstand-model.js?v=54a7475cad4e';
-import {buildCoronaBed} from '../corona-bed-model.js';
-import {buildDressingRoom} from './dressing-model.js';
-import {prepareUtilityJoinery} from './utility-joinery.js';
-import {buildShowerFittings} from './shower-fittings.js';
-import {buildCoffeeNicheUpper} from './coffee-niche.js';
-import {buildBedroomWindowReveal} from './bedroom-window-reveal.js';
+import {buildCoronaBed} from '../corona-bed-model.js?v=b0d3f4e5d645';
+import {buildDressingRoom} from './dressing-model.js?v=4380ccbf9157';
+import {prepareUtilityJoinery} from './utility-joinery.js?v=0aa1feced84b';
+import {buildShowerFittings} from './shower-fittings.js?v=fa5e15e0e5cd';
+import {buildCoffeeNicheUpper} from './coffee-niche.js?v=02b8ccf440df';
+import {buildBedroomWindowReveal} from './bedroom-window-reveal.js?v=05f3d8bdd1ff';
 
 export const finishColors={wall:'#ddd1be',ceiling:'#ddd1be'};
 

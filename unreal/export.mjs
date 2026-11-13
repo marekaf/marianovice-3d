@@ -5,6 +5,7 @@ import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseExportArgs,createExportInputs} from './export-inputs.mjs';
 import {createFloorReference} from './export-floor-reference.mjs';
+import {assetVersion} from '../runtime-asset-references.mjs';
 const {sourceRoot,loftOnly,floorReferencePath}=parseExportArgs(process.argv.slice(2));
 const root=resolve(fileURLToPath(new URL('../',import.meta.url))),output=resolve(root,'unreal/generated');
 const inputs=await createExportInputs({sourceRoot,toolRoot:root});
@@ -44,8 +45,11 @@ try{
   await page.goto(`http://127.0.0.1:${server.address().port}/${loftOnly?'interior':'index'}.html`);
   await page.waitForFunction(loftOnly?()=>window.DEBUG?.loft:()=>window.unrealSource,null,{timeout:120000});
   const downloadPromise=page.waitForEvent('download',{timeout:180000});
-  const [manifest,download]=await Promise.all([page.evaluate(async({loftOnly})=>{
-    const waitForFloor=async()=>{await (await import('/docs/floor-texture.js')).waitForFloorReference();};
+  // The viewer keeps its pending floor image inside the module instance it imported, and a URL with
+  // a different query string is a second instance with nothing pending.
+  const floorModule=`/docs/floor-texture.js?v=${assetVersion((await inputs.resolveRequest('/docs/floor-texture.js')).file)}`;
+  const [manifest,download]=await Promise.all([page.evaluate(async({loftOnly,floorModule})=>{
+    const waitForFloor=async()=>{await (await import(floorModule)).waitForFloorReference();};
     if(loftOnly){
       const THREE=await import('three');
       const [{GLTFExporter},{GLTFLoader},{prepareLoftExport}]=await Promise.all([
@@ -137,7 +141,7 @@ try{
     const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([buffer],{type:'model/gltf-binary'}));link.download='house-walkthrough.glb';link.click();
     return {...exported.manifest,ownership:{loft:'house',roofWindows:'house'},loftCoverage,previewPng,bytes:buffer.byteLength,bounds:{min:after.min.toArray(),max:after.max.toArray()},roots:roots.map(r=>r.name),roundtrip:'passed',
       limitations:['Unreal import, lighting, collision and door interaction await engine validation.','The full house envelope and adjacent rooms are retained for light occlusion; PoC review focuses on living/kitchen/east terrace.','Three.js environments and lights are excluded; glass, emissive lighting and materials require Unreal setup.']};
-  },{loftOnly}),downloadPromise]);
+  },{loftOnly,floorModule}),downloadPromise]);
   assert.deepEqual(errors,[]);
   if(loftOnly){
     assert.equal(manifest.meshes,manifest.sourceMeshes);
