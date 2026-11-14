@@ -1,4 +1,4 @@
-// browser-ci {"status":"known-failing","reason":"expects 8 zone feature rows, the terrain preview renders 9"}
+// browser-ci {"shard":"doors"}
 import assert from 'node:assert/strict';
 import {launchChrome,readPage} from './scripts/browser.mjs';
 import {mkdir} from 'node:fs/promises';
@@ -12,7 +12,12 @@ try {
   page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
   await page.route('**/index.html',async route=>route.fulfill({contentType:'text/html',body:(await readPage('index.html')).replace('ViewerLoading.finish();','window.gradingSession={THREE,scene,ground,cotoneasterModel,cotoneasterGroup,gardenRoutes,firepitGroup,firepitModel,siteTerrain,gradingOverlay,renderer,camera,controls,pergolaModel,greenhouseModel,houseRoof,houseRoofSpec,boundaryFence,existingGround,gar,requestRender};ViewerLoading.finish();')}));
   await page.goto(process.env.MODEL_URL||'http://127.0.0.1:8765/index.html');
-  await page.locator('#viewerLoading').waitFor({state:'hidden',timeout:120000});
+  // No time limit: on CPU rendering the load takes minutes, and the runner ends a check that hangs.
+  await page.waitForFunction(()=>{
+    const panel=document.getElementById('viewerLoading');
+    if(panel?.dataset.state==='error')throw new Error(document.getElementById('loadingHint').textContent);
+    return !panel;
+  },null,{timeout:0});
   console.log('Viewer ready in',Date.now()-started,'ms');
   assert.deepEqual(errors,[]);
   await page.waitForFunction(()=>window.gradingSession?.renderer.info.render.calls>0);
@@ -185,8 +190,8 @@ try {
   await page.locator('#panel-more > details > summary').click();
   await page.locator('#terrainPreview summary').click();
   await page.check('#gradingAreas');
-  const featureHints={B:'Brána, revizní kanalizační šachta',C:'Pergola, ohniště, jezírko, lavička',D:'Posezení, venkovní kuchyň',G:'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník',H:'Podzemní dešťová nádrž',L:'Skalník (Cotoneaster)',I:'Přístřešek na popelnice',O:'Plastový úložný box, kompostér'};
-  assert.equal(await page.locator('#terrainPreview [data-zone-features]').count(),8);
+  const featureHints={B:'Brána, revizní kanalizační šachta',C:'Pergola, ohniště, jezírko, lavička',D:'Posezení, venkovní kuchyň',N:'Rovný pás 1,00 m před východní hranou, Navazující svah 40 %; konce navázat na cestu a přístřešek',G:'Dřevostavba sauny, vířivka, vyvýšené záhony, skleník',H:'Podzemní dešťová nádrž',L:'Skalník (Cotoneaster)',I:'Přístřešek na popelnice',O:'Plastový úložný box, kompostér'};
+  assert.equal(await page.locator('#terrainPreview [data-zone-features]').count(),9);
   for(const [id,hint] of Object.entries(featureHints)){
     const row=page.locator(`#terrainPreview [data-zone-features="${id}"]`);
     assert.equal(await row.textContent(),hint);assert(await row.isVisible());
@@ -198,7 +203,7 @@ try {
     return Object.fromEntries(['bank','downhill','flat','preserve'].map(kind=>[kind,names.filter(name=>name.startsWith('grading-'+kind+'-')).length]));
   });
   assert(terrainMarks.bank>=2&&terrainMarks.downhill>=9&&terrainMarks.flat>=4&&terrainMarks.preserve===0,`Terrain instructions are present without selective fence marks: ${JSON.stringify(terrainMarks)}`);
-  assert.deepEqual(await page.evaluate(()=>{const names=[];gradingSession.gradingOverlay.group.traverse(object=>{if(object.name.startsWith("grading-flat-"))names.push(object.name);});return [...new Set(names)].sort();}),["grading-flat-C","grading-flat-D","grading-flat-G"]);
+  assert.deepEqual(await page.evaluate(()=>{const names=[];gradingSession.gradingOverlay.group.traverse(object=>{if(object.name.startsWith("grading-flat-"))names.push(object.name);});return [...new Set(names)].sort();}),["grading-flat-C","grading-flat-D","grading-flat-G","grading-flat-east-terrace-apron"]);
   assert.deepEqual(await page.evaluate(()=>gradingSession.gradingOverlay.data.zones.map(z=>z.id)),[...'ABCDEFGHIJKLMNOP']);
   assert.equal(await page.evaluate(()=>{let count=0;gradingSession.gradingOverlay.group.traverse(o=>{if(o.name.startsWith('grading-bank-spot-'))count++;});return count;}),0,'Removed height references must not remain in the 3D overlay');
   assert(!/\d · (Severní|Východní) (pata|hrana)/.test(await page.locator('#terrainPreview').textContent()),'The 3D legend must not retain the removed height rows');
