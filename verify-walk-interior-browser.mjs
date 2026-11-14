@@ -1,4 +1,4 @@
-// browser-ci {"status":"ci-skipped","reason":"its W key walk covers too little distance at the frame rate of CPU rendering"}
+// browser-ci {"shard":"slow-5"}
 import assert from 'node:assert/strict';
 import {prepareReviewFloor,waitForReviewFloor,captureReview} from './scripts/review-floor.mjs';
 import {launchChrome,serveRepo} from './scripts/browser.mjs';
@@ -164,9 +164,11 @@ try{
     await page.evaluate(fov=>{walkReview.camera.fov=fov;walkReview.camera.updateProjectionMatrix();},reviewFov);
   }
   await page.evaluate(()=>{walkReview.aim(17.5,19,0);walkReview.fpState.keys.w=true;});
-  await page.waitForTimeout(150);
-  const movement=await page.evaluate(()=>{walkReview.fpState.keys={};return walkReview.camera.position.toArray();});
-  assert(movement[2]<19,'W moves through the furnished house');
+  // The render loop gives a frame that follows an idle gap a time step of 0,
+  // so the walker moves only from the second frame on. A fixed wait holds
+  // less than two frames on CPU rendering.
+  await page.waitForFunction(()=>walkReview.camera.position.z<19);
+  await page.evaluate(()=>{walkReview.fpState.keys={};});
   const distances=await page.evaluate(()=>{
     const distances=[];
     for(const keys of [['w'],['w','Shift'],['w','d']]){
