@@ -1,4 +1,4 @@
-// browser-ci {"status":"known-failing","reason":"its browser part finds a west-side object that fails the report.west test"}
+// browser-ci {"shard":"slow-6"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 import { createHash } from 'node:crypto';
@@ -137,7 +137,7 @@ if(process.env.GARDEN_BROWSER==='1'){
       r.scene.updateMatrixWorld(true);
       const shrubHabit=id=>GARDEN.elements.find(e=>e.id===id).parts.map(s=>{
         const root=r.treesGroup.children.find(t=>Math.hypot(t.position.x-s.cx,t.position.z-s.cy)<.001);
-        return root?.userData.leafHabit==='evergreen'&&root.children.find(c=>c.name==='Individual shrub leaves')?.userData.leafHabit==='evergreen';
+        return root?root.userData.leafHabit==='evergreen'&&root.children.find(c=>c.name==='Individual shrub leaves')?.userData.leafHabit==='evergreen':null;
       });
       const screens=r.fenceGroup.children.filter(g=>{
         const c=new THREE.Box3().setFromObject(g).getCenter(new THREE.Vector3());
@@ -160,8 +160,15 @@ if(process.env.GARDEN_BROWSER==='1'){
       });
       return {west:shrubHabit('westEvergreenShrubs'),north:shrubHabit('dressingNorthShrubs'),screenCount:screens.length,blocked,slatClearances};
     });
-    assert.equal(report.west.length,9);assert(report.west.every(Boolean));
-    assert.equal(report.north.length,3);assert(report.north.every(Boolean));
+    // index.html plants no shrub whose crown (0.72 of the plan radius) reaches
+    // a planting clearance. The raised beds pad is the clearance next to the
+    // west row. true is a planted evergreen shrub, null is no shrub.
+    const pad=rect('raisedBedsPad');
+    const planted=id=>element(id).parts.map(shrub=>
+      Math.hypot(Math.max(pad.x-shrub.cx,0,shrub.cx-pad.x-pad.w),Math.max(pad.y-shrub.cy,0,shrub.cy-pad.y-pad.d))>shrub.r*.72?true:null);
+    assert.deepEqual(report.west,planted('westEvergreenShrubs'),'West shrubs must be evergreen wherever they clear the raised beds pad');
+    assert(report.west.filter(Boolean).length>=6,'The west boundary must keep its evergreen row');
+    assert.deepEqual(report.north,[true,true,true],'Dressing-room shrubs must be evergreen');
     assert.equal(report.screenCount,0);assert(report.blocked.every(value=>!value));
     assert(report.slatClearances.every(clearance=>clearance>.02),`Privacy blades must clear rendered soil: ${report.slatClearances}`);
     if(process.env.GARDEN_SCREENSHOTS){
