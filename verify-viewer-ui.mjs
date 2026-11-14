@@ -1,4 +1,4 @@
-// browser-ci {"shard":"roof"}
+// browser-ci {"shard":"slow-7"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 const browser = await launchChrome();
