@@ -1,4 +1,4 @@
-// browser-ci {"status":"ci-skipped","reason":"counts frames of a resting scene, and the count differs on CPU rendering"}
+// browser-ci {"shard":"slow-4"}
 import assert from 'node:assert/strict';
 import {launchChrome} from './scripts/browser.mjs';
 import {createRenderScheduler} from './render-scheduler.js';
@@ -46,13 +46,25 @@ if(process.env.RENDER_BROWSER==='1'){
       await route.fulfill({response,body:html});
     });
     await page.goto(process.env.GARDEN_URL||'http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded'});
-    await page.waitForFunction(()=>window.renderReview,{timeout:90000});
+    const limit=Math.max(90000,Number(process.env.BROWSER_TIMEOUT_MS)||0);
+    await page.waitForFunction(()=>window.renderReview,null,{timeout:limit});
     const frames=()=>page.evaluate(()=>window.renderFrames);
-    const idle=async()=>{
-      await page.waitForTimeout(750);
-      const before=await frames();await page.waitForTimeout(750);
-      assert.equal(await frames(),before,'Resting garden must stop drawing');
-    };
+    // A CPU-rendered frame can take longer than any fixed pause, so rest is counted in animation
+    // frames: a scheduler that still draws does so in every one of them. The 750 ms also covers
+    // the 160 ms timer of adaptive-resolution.js, which asks for one more frame after the last change.
+    const idle=async()=>assert.ok(await page.evaluate(({quiet,limit})=>new Promise(resolve=>{
+      const started=performance.now();
+      let count=window.renderFrames,since=started,ticks=0;
+      const step=()=>{
+        const now=performance.now();
+        if(window.renderFrames!==count){count=window.renderFrames;since=now;ticks=0;}else ticks++;
+        if(ticks>=3&&now-since>=quiet)resolve(true);
+        else if(now-started>limit)resolve(false);
+        else requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }),{quiet:750,limit}),'Resting garden must stop drawing');
+    const moved=from=>page.waitForFunction(from=>renderReview.camera.position.toArray().some((value,index)=>value!==from[index]),from);
     const changed=async action=>{const before=await frames();await action();await page.waitForFunction(value=>window.renderFrames>value,before);};
     await idle();
     const initialCamera=await page.evaluate(()=>renderReview.camera.position.toArray());
@@ -81,11 +93,13 @@ if(process.env.RENDER_BROWSER==='1'){
       texture.dispose();
     }));
     await changed(()=>page.evaluate(()=>renderReview.THREE.DefaultLoadingManager.itemEnd('unfinished-texture')));
-    await page.evaluate(()=>{renderReview.controls.enableDamping=true;});
+    // OrbitControls damps by its default factor of 0.05 for more than 200 frames before the
+    // camera rests. At 0.5 the same decay ends in about 30 frames, which CPU rendering can draw.
+    await page.evaluate(()=>{renderReview.controls.enableDamping=true;renderReview.controls.dampingFactor=.5;});
     const beforeOrbit=await page.evaluate(()=>renderReview.camera.position.toArray());
     await page.mouse.move(650,430);await page.mouse.down();await page.mouse.move(760,475,{steps:8});await page.mouse.up();
     assert.notDeepEqual(await page.evaluate(()=>renderReview.camera.position.toArray()),beforeOrbit);
-    await page.waitForTimeout(5000);await idle();
+    await idle();
     await page.evaluate(()=>{renderReview.controls.enableDamping=false;});
     await page.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
     const hiddenFrames=await frames();
@@ -94,8 +108,7 @@ if(process.env.RENDER_BROWSER==='1'){
     await changed(()=>page.evaluate(()=>window.dispatchEvent(new Event('pageshow'))));
     await changed(()=>page.evaluate(()=>startTour()));
     const tourPosition=await page.evaluate(()=>renderReview.camera.position.toArray());
-    await page.waitForTimeout(500);
-    assert.notDeepEqual(await page.evaluate(()=>renderReview.camera.position.toArray()),tourPosition);
+    await moved(tourPosition);
     await page.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
     const pausedTime=await page.evaluate(()=>renderReview.time);
     await page.waitForTimeout(400);assert.equal(await page.evaluate(()=>renderReview.time),pausedTime);
@@ -105,8 +118,8 @@ if(process.env.RENDER_BROWSER==='1'){
     await page.locator('#walkButton').click();
     await page.waitForFunction(()=>document.pointerLockElement);
     const walkPosition=await page.evaluate(()=>renderReview.camera.position.toArray());
-    await page.keyboard.down('w');await page.waitForTimeout(350);await page.keyboard.up('w');
-    assert.notDeepEqual(await page.evaluate(()=>renderReview.camera.position.toArray()),walkPosition);
+    // The first frame after rest advances no time, so the key stays down until the walker moves.
+    await page.keyboard.down('w');await moved(walkPosition);await page.keyboard.up('w');
     await idle();
     await page.evaluate(()=>document.exitPointerLock());
     await page.waitForFunction(()=>!renderReview.fpState.active);await idle();
