@@ -47,7 +47,7 @@ jobs:
           cache: yarn
       - name: Install test dependencies
         run: yarn install --frozen-lockfile
-      # verify-tour-browser.mjs draws its test panorama with ffmpeg.
+      # checks/verify-tour-browser.mjs draws its test panorama with ffmpeg.
       - name: Install ffmpeg
         if: matrix.shard == 'fast'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg

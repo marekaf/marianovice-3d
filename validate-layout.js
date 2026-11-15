@@ -101,7 +101,7 @@ const key = (a, b) => [a, b].sort().join("|");
 const ALLOW = new Set([
   key("sauna", "saunaShelter"), key("sauna", "softub"), key("saunaShelter", "softub"),
   // The garage's west personnel door leaf is drawn 0.13 m proud of the wall, over the carport slab
-  // it opens onto. The two slabs themselves are checked against each other in verify-exterior.mjs.
+  // it opens onto. The two slabs themselves are checked against each other in checks/verify-exterior.mjs.
   key("carport", "garage"),
 ].map(k => k));
 const collisions = [];

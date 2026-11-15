@@ -27,7 +27,7 @@ jobs:
       - name: Run verification
         run: yarn verify
       - name: Verify site build
-        run: node verify-build-site.mjs
+        run: node checks/verify-build-site.mjs
 
   deploy:
     needs: verify

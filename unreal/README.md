@@ -203,7 +203,7 @@ node unreal/export-tour.mjs
 
 This writes `generated/tour/<index>-<room>_360_TB.jpg`, the two eyes stacked top-bottom, plus `generated/tour/tour.json` with the shot heading and floor hotspots to the previous and next positions. The hotspot azimuth is the target's Unreal yaw minus the shot heading, positive to the right, which `verify-tour.mjs` checks against known positions. The `_360_TB` name tags let DeoVR and similar players open the JPEGs directly from the headset.
 
-`tour.html` at the repository root shows the tour in the browser and in VR. Serve the repository over HTTP or HTTPS, open `tour.html`, drag to look around, and click a green floor disc or use the Previous and Next buttons to move between positions. On the Quest browser, Enter VR shows each eye its own half; the panorama centre faces the shot heading. Run `node verify-tour-browser.mjs` with Chrome available to check the image orientation, eye layout and hotspot navigation against a synthetic panorama.
+`tour.html` at the repository root shows the tour in the browser and in VR. Serve the repository over HTTP or HTTPS, open `tour.html`, drag to look around, and click a green floor disc or use the Previous and Next buttons to move between positions. On the Quest browser, Enter VR shows each eye its own half; the panorama centre faces the shot heading. Run `node checks/verify-tour-browser.mjs` with Chrome available to check the image orientation, eye layout and hotspot navigation against a synthetic panorama.
 
 ## Levels are snapshots: refresh before rendering
 

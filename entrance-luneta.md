@@ -48,6 +48,6 @@ Four courses are a geometric allowance, not a structural approval. The builder/d
 
 ## Preview and verification
 
-Serve the repository over HTTP. The default viewer uses `aligned`; append `?entrance=straight` or `?entrance=sketch` for comparisons. Run `node verify-entrance-luneta.mjs` for geometry and grading checks, and `node verify-entrance-stairs-browser.mjs` for all three rendered variants. The browser check closes Chrome after capture.
+Serve the repository over HTTP. The default viewer uses `aligned`; append `?entrance=straight` or `?entrance=sketch` for comparisons. Run `node checks/verify-entrance-luneta.mjs` for geometry and grading checks, and `node checks/verify-entrance-stairs-browser.mjs` for all three rendered variants. The browser check closes Chrome after capture.
 
 Run `node generate-entrance-luneta-pdf.mjs` to generate ignored `docs/entrance-luneta.pdf` and its 3D image. The PDF includes plan, section, wall course dimensions and a 3D view from the same model. Run `yarn verify` for the full repository gate.
