@@ -21,7 +21,7 @@ In Meta Quest Browser, open the viewer over HTTPS, select **VR**, wait for the i
 
 Teleportation is limited to the ground floor; stairs, loft and garden navigation are excluded. Planting, vehicles and some outdoor furniture are hidden, and shadows are disabled during VR. Their previous settings return when the session ends. Physical roomscale movement remains controlled by the headset and can cross virtual walls.
 
-Browser and simulated-session checks do not establish Quest frame rate or comfort. Verify both on a headset before extending this prototype. Run `node verify-walk-vr-locomotion.mjs` for movement checks and `node verify-walk-vr-browser.mjs` with Chrome available for the browser lifecycle checks.
+Browser and simulated-session checks do not establish Quest frame rate or comfort. Verify both on a headset before extending this prototype. Run `node checks/verify-walk-vr-locomotion.mjs` for movement checks and `node checks/verify-walk-vr-browser.mjs` with Chrome available for the browser lifecycle checks.
 
 ## Verification
 
@@ -74,11 +74,11 @@ The viewer and gallery use the published Floorify Champagne reference by default
 
 ## Model previews
 
-The terrain follows the September 2026 C.4 drawing. [Grading reconciliation](grading-reconciliation.md) records its levels, retained garden features and the remaining gate-slope and drawing-label discrepancies. Run `node verify-september-grading.mjs` to check the drawing controls and agreement between the browser and Blender samplers.
+The terrain follows the September 2026 C.4 drawing. [Grading reconciliation](grading-reconciliation.md) records its levels, retained garden features and the remaining gate-slope and drawing-label discrepancies. Run `node checks/verify-september-grading.mjs` to check the drawing controls and agreement between the browser and Blender samplers.
 
 The house roof uses a 250 mm normal depth for the main overhangs and a 227 mm normal build-up for the western wing: 160 mm rafters plus 67 mm of roof layers. The western enclosed finish is illustrative; its additional lining thickness is not confirmed. Roof elevations and window positions remain fixed. Exterior wall tops follow the western underside in both garden and walk views.
 
-Run `node verify-house-roof.mjs` and `node verify-roof-wall-cap.mjs` to check depths, closed junctions, gutter clearance and wall caps. With Playwright and Chrome available, `node verify-roof-browser.mjs` checks the rendered garden and furnished walk geometry. Set `PLAYWRIGHT_MODULE` to a local Playwright module path if needed, and `ROOF_SCREENSHOT_DIR` to an existing directory to save six exterior views.
+Run `node checks/verify-house-roof.mjs` and `node checks/verify-roof-wall-cap.mjs` to check depths, closed junctions, gutter clearance and wall caps. With Playwright and Chrome available, `node checks/verify-roof-browser.mjs` checks the rendered garden and furnished walk geometry. Set `PLAYWRIGHT_MODULE` to a local Playwright module path if needed, and `ROOF_SCREENSHOT_DIR` to an existing directory to save six exterior views.
 
 The browser's **Sauna and spa** view is also available at `#sauna`. The model includes timber cladding, framed openings, benches, heater, standing-seam roof, shelter framing, a hollow tub and a raised entrance landing. Door placement and architectural details are a design proposal, not construction drawings.
 
@@ -94,17 +94,17 @@ Generate Blender input with `node generate-blender-json.js`. A standalone previe
 
 This saves `blender/pergola.blend` and day, evening and dining PNGs using the CPU. Use `--model=sauna` for sauna views, `--quick` for smaller previews, or `--only=day` for one view. The complete garden builder consumes the same geometry and supports `--only=sauna,sauna-evening,pergola,pergola-evening`, but requires the assets listed in `blender/assets/MANIFEST.md`.
 
-Run `node verify-sauna.mjs` to check openings, entrance clearance, footing, roof joins and separation of the tub and log rack.
-Run `node verify-pergola.mjs` to check frame connections, furniture supports, paving and lighting placement.
+Run `node checks/verify-sauna.mjs` to check openings, entrance clearance, footing, roof joins and separation of the tub and log rack.
+Run `node checks/verify-pergola.mjs` to check frame connections, furniture supports, paving and lighting placement.
 
-Run `node verify-pergola-view-browser.mjs` with Playwright available to capture the bedroom bed view, window-seat view and garden overview in headless Chrome. Images go to `/tmp/pergola-bedroom-review`; set `PERGOLA_SCREENSHOT_DIR` to choose another output directory. The browser closes after capture. `node verify-pergola-bedroom-view.mjs` checks the north-boundary clearance and the bedroom-to-firepit sightline.
-Run `node verify-garage.mjs` to check garage openings, gate states, floor datum and parking clearances. Use `--model=garage` in the standalone Blender command for exterior and interior previews. The browser interior views are available at `interior.html#garage-cut3d` and `interior.html#garage-north`.
-Run `node verify-fixtures.mjs` to check fixture footprints, heights and floor offsets. Use `--model=fixtures --sample=bath` or `--sample=bed` for standalone fixture renders. Beds default to a north-facing headboard; optional `head: 'N'|'S'|'E'|'W'` rotates the bedding within the supplied footprint.
-Run `node verify-greenhouse.mjs` to check the doorway, roof vent and interior supports. The browser preview is at `#greenhouse`; Roof and Furniture controls expose its interior. Use `--model=greenhouse` for standalone exterior and interior Blender previews.
-Run `node verify-raised-beds.mjs` to check the bed shells, soil, crop supports and grading. The browser's Kitchen garden view is at `#raisedBeds`; the Furniture control hides the crops for inspection. Use `--model=raisedBeds` for standalone Blender previews.
-Run `node verify-firepit.mjs` to check the cavity, seating footprint, supports and approach. The browser preview is at `#firepit`; the Furniture control hides the benches, and flames appear after sunset. Use `--model=firepit` for standalone Blender previews.
-Run `node verify-hidden-bench.mjs` to check the bench footprint, connected framing and graded foot contacts. The browser preview is at `#hiddenBench`; use `--model=hiddenBench` for standalone Blender previews.
-Run `node verify-site-terrain.mjs` to compare grading with the saved browser baseline and the Python sampler. Rendering levels follow the placed house geometry; `TERRAIN.houseFFLInternal` remains the nominal survey reference.
+Run `node checks/verify-pergola-view-browser.mjs` with Playwright available to capture the bedroom bed view, window-seat view and garden overview in headless Chrome. Images go to `/tmp/pergola-bedroom-review`; set `PERGOLA_SCREENSHOT_DIR` to choose another output directory. The browser closes after capture. `node checks/verify-pergola-bedroom-view.mjs` checks the north-boundary clearance and the bedroom-to-firepit sightline.
+Run `node checks/verify-garage.mjs` to check garage openings, gate states, floor datum and parking clearances. Use `--model=garage` in the standalone Blender command for exterior and interior previews. The browser interior views are available at `interior.html#garage-cut3d` and `interior.html#garage-north`.
+Run `node checks/verify-fixtures.mjs` to check fixture footprints, heights and floor offsets. Use `--model=fixtures --sample=bath` or `--sample=bed` for standalone fixture renders. Beds default to a north-facing headboard; optional `head: 'N'|'S'|'E'|'W'` rotates the bedding within the supplied footprint.
+Run `node checks/verify-greenhouse.mjs` to check the doorway, roof vent and interior supports. The browser preview is at `#greenhouse`; Roof and Furniture controls expose its interior. Use `--model=greenhouse` for standalone exterior and interior Blender previews.
+Run `node checks/verify-raised-beds.mjs` to check the bed shells, soil, crop supports and grading. The browser's Kitchen garden view is at `#raisedBeds`; the Furniture control hides the crops for inspection. Use `--model=raisedBeds` for standalone Blender previews.
+Run `node checks/verify-firepit.mjs` to check the cavity, seating footprint, supports and approach. The browser preview is at `#firepit`; the Furniture control hides the benches, and flames appear after sunset. Use `--model=firepit` for standalone Blender previews.
+Run `node checks/verify-hidden-bench.mjs` to check the bench footprint, connected framing and graded foot contacts. The browser preview is at `#hiddenBench`; use `--model=hiddenBench` for standalone Blender previews.
+Run `node checks/verify-site-terrain.mjs` to compare grading with the saved browser baseline and the Python sampler. Rendering levels follow the placed house geometry; `TERRAIN.houseFFLInternal` remains the nominal survey reference.
 
 ## Browser garden details in Blender
 
@@ -119,7 +119,7 @@ The exporter batches foliage into split GLBs and checks their roundtrip bounds. 
 
 Terrain, routes, buildings, furniture, west terrace, atrium pots and firewood stay with the Blender builder. The supplement captures one mature summer state; it does not transfer browser animation or lighting. Blender and browser shading can differ.
 
-Run `node verify-garden-details.mjs` for batching and provenance checks. A detail-only import and saved-scene reload can be checked with:
+Run `node checks/verify-garden-details.mjs` for batching and provenance checks. A detail-only import and saved-scene reload can be checked with:
 
 ```sh
 /Applications/Blender.app/Contents/MacOS/Blender -b --python-exit-code 1 -P blender/verify_details_import.py -- blender/generated/garden-details.json blender/garden.json /absolute/viewer/root blender/generated/garden-details.blend
@@ -137,4 +137,4 @@ MIT — see [LICENSE](LICENSE).
 
 The entrance uses the straight-front stair and Luneta wall proposal described in [entrance-luneta.md](entrance-luneta.md). The default geometry avoids the entrance carport post; `?entrance=sketch` and `?entrance=aligned` retain the wrapping proposals for collision comparison. Both retain the existing graded carport level.
 
-Run `node verify-entrance-luneta.mjs` for dimensions, finish coverage and wall courses, and `node verify-entrance-stairs-browser.mjs` for both variants in the full scene. `node generate-entrance-luneta-pdf.mjs` creates ignored `docs/entrance-luneta.pdf`, with a dimensioned plan, section and 3D view. Chrome and the installed viewer dependencies are required; the exporter closes its browser. Foundation, drainage, post-footing and setting-out confirmations remain necessary before construction.
+Run `node checks/verify-entrance-luneta.mjs` for dimensions, finish coverage and wall courses, and `node checks/verify-entrance-stairs-browser.mjs` for both variants in the full scene. `node generate-entrance-luneta-pdf.mjs` creates ignored `docs/entrance-luneta.pdf`, with a dimensioned plan, section and 3D view. Chrome and the installed viewer dependencies are required; the exporter closes its browser. Foundation, drainage, post-footing and setting-out confirmations remain necessary before construction.

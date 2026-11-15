@@ -10,26 +10,26 @@ const SERVED_8765='needs Chrome and the repo served at MODEL_URL (default http:/
 // The only checks the default run leaves out. Every entry needs a browser.
 // A browser job runs these plus the BROWSER_MODES below.
 export const SKIPPED_CHECKS={
-  'verify-entrance-drawing-browser.mjs':'needs Chrome and the repo served at BASE_URL (default http://127.0.0.1:8781)',
-  'verify-entrance-egress-browser.mjs':OWN_SERVER,
-  'verify-entrance-stairs-browser.mjs':OWN_SERVER,
-  'verify-garage-roof.mjs':SERVED_8765,
-  'verify-grading-browser.mjs':SERVED_8765,
-  'verify-grading-session-browser.mjs':SERVED_8765,
-  'verify-interior-ui.mjs':'needs Chrome and interior.html served at INTERIOR_URL (default http://127.0.0.1:8765)',
-  'verify-kitchen-return-grille-browser.mjs':'needs Chrome and the repo served at BASE_URL (default http://127.0.0.1:8781)',
-  'verify-model3d-batching.mjs':SERVED_8765,
-  'verify-pergola-view-browser.mjs':`${OWN_SERVER}; writes screenshots to PERGOLA_SCREENSHOT_DIR`,
-  'verify-roof-browser.mjs':OWN_SERVER,
-  'verify-route-ground-rendering.mjs':'needs Chrome and index.html served at GARDEN_URL (default http://127.0.0.1:8765)',
-  'verify-sauna-browser.mjs':SERVED_8765,
-  'verify-terrain-worker-browser.mjs':OWN_SERVER,
-  'verify-three-subpath-browser.mjs':OWN_SERVER,
-  'verify-tour-browser.mjs':OWN_SERVER,
-  'verify-viewer-ui.mjs':SERVED_8765,
-  'verify-walk-doors-browser.mjs':OWN_SERVER,
-  'verify-walk-interior-browser.mjs':OWN_SERVER,
-  'verify-walk-vr-browser.mjs':OWN_SERVER,
+  'checks/verify-entrance-drawing-browser.mjs':'needs Chrome and the repo served at BASE_URL (default http://127.0.0.1:8781)',
+  'checks/verify-entrance-egress-browser.mjs':OWN_SERVER,
+  'checks/verify-entrance-stairs-browser.mjs':OWN_SERVER,
+  'checks/verify-garage-roof.mjs':SERVED_8765,
+  'checks/verify-grading-browser.mjs':SERVED_8765,
+  'checks/verify-grading-session-browser.mjs':SERVED_8765,
+  'checks/verify-interior-ui.mjs':'needs Chrome and interior.html served at INTERIOR_URL (default http://127.0.0.1:8765)',
+  'checks/verify-kitchen-return-grille-browser.mjs':'needs Chrome and the repo served at BASE_URL (default http://127.0.0.1:8781)',
+  'checks/verify-model3d-batching.mjs':SERVED_8765,
+  'checks/verify-pergola-view-browser.mjs':`${OWN_SERVER}; writes screenshots to PERGOLA_SCREENSHOT_DIR`,
+  'checks/verify-roof-browser.mjs':OWN_SERVER,
+  'checks/verify-route-ground-rendering.mjs':'needs Chrome and index.html served at GARDEN_URL (default http://127.0.0.1:8765)',
+  'checks/verify-sauna-browser.mjs':SERVED_8765,
+  'checks/verify-terrain-worker-browser.mjs':OWN_SERVER,
+  'checks/verify-three-subpath-browser.mjs':OWN_SERVER,
+  'checks/verify-tour-browser.mjs':OWN_SERVER,
+  'checks/verify-viewer-ui.mjs':SERVED_8765,
+  'checks/verify-walk-doors-browser.mjs':OWN_SERVER,
+  'checks/verify-walk-interior-browser.mjs':OWN_SERVER,
+  'checks/verify-walk-vr-browser.mjs':OWN_SERVER,
 };
 
 export const BROWSER_CHECKS=Object.keys(SKIPPED_CHECKS);
@@ -38,9 +38,9 @@ export const BROWSER_CHECKS=Object.keys(SKIPPED_CHECKS);
 // they also open Chrome on the page that the `url` variable names (default
 // http://127.0.0.1:8765).
 export const BROWSER_MODES=[
-  {file:'verify-gate-model.mjs',env:{GATE_BROWSER:'1'},url:'INTERIOR_URL'},
-  {file:'verify-render-scheduler.mjs',env:{RENDER_BROWSER:'1'},url:'GARDEN_URL'},
-  {file:'verify-room-layout.mjs',env:{GARDEN_BROWSER:'1'},url:'GARDEN_URL'},
+  {file:'checks/verify-gate-model.mjs',env:{GATE_BROWSER:'1'},url:'INTERIOR_URL'},
+  {file:'checks/verify-render-scheduler.mjs',env:{RENDER_BROWSER:'1'},url:'GARDEN_URL'},
+  {file:'checks/verify-room-layout.mjs',env:{GARDEN_BROWSER:'1'},url:'GARDEN_URL'},
   {file:'docs/verify-electrical-points.mjs',env:{ELECTRICAL_BROWSER:'1'},url:'INTERIOR_URL'},
   {file:'docs/verify-eye-level-walkthrough.mjs',env:{WALKTHROUGH_BROWSER:'1'},url:'INTERIOR_URL'},
   // No separate switch: a set PLAYWRIGHT_MODULE starts the browser part.
@@ -61,7 +61,7 @@ const BROWSER_STATUSES=['run','known-failing','ci-skipped'];
 
 // Checks that exit with an error when they get no arguments.
 export const CHECK_ARGS={
-  'verify-interior-data.mjs':['house-interior.js'],
+  'checks/verify-interior-data.mjs':['house-interior.js'],
 };
 
 // Checks whose file name does not match verify-*.mjs.
@@ -105,7 +105,7 @@ export function browserCiMarkers() {
   const browser=new Set([...BROWSER_CHECKS,...BROWSER_MODES.map(mode=>mode.file)]);
   const markers=new Map();
   const problems=[];
-  for(const name of [...EXTRA_CHECKS,...list(''),...list('docs')]){
+  for(const name of [...EXTRA_CHECKS,...list('checks'),...list('docs')]){
     const lines=browserCiMarkerLines(readFileSync(new URL(name,ROOT_URL),'utf8'));
     if(!lines.length)continue;
     const problem=markerProblem(lines,browser.has(name));
@@ -118,7 +118,7 @@ export function browserCiMarkers() {
 
 export function discoverChecks() {
   browserCiMarkers();
-  const found=[...list(''),...list('docs')].sort();
+  const found=[...list('docs').sort(),...list('checks').sort()];
   const known=new Set([...found,...EXTRA_CHECKS]);
   const stale=[...Object.keys(SKIPPED_CHECKS),...Object.keys(CHECK_ARGS),...BROWSER_MODES.map(mode=>mode.file)].filter(name=>!known.has(name));
   if(stale.length)throw new Error(`scripts/verify-checks.mjs names missing checks: ${stale.join(', ')}`);

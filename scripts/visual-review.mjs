@@ -19,7 +19,7 @@ const env={...process.env,...(floorPath?{FLOOR_REFERENCE:floorPath}:{}),WALK_SCR
   DOOR_SCREENSHOT:join(output,'opening_W22_0-open.png'),PORTAL_SCREENSHOT_DIR:output,
   WINDOW_SCREENSHOT_DIR:output,POCKET_SCREENSHOT_DIR:output};
 let failed=false;
-for(const test of ['verify-walk-interior-browser.mjs','verify-roof-browser.mjs','verify-walk-doors-browser.mjs']){
+for(const test of ['checks/verify-walk-interior-browser.mjs','checks/verify-roof-browser.mjs','checks/verify-walk-doors-browser.mjs']){
   const result=spawnSync(process.execPath,[join(root,test)],{cwd:root,env,stdio:'inherit'});
   if(result.error)console.error(result.error.message);
   if(result.status!==0){failed=true;break;}

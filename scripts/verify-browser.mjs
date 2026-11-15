@@ -20,7 +20,7 @@ const marker=name=>markers.get(name)??{};
 const skips=name=>marker(name).status==='known-failing'||(marker(name).status==='ci-skipped'&&Boolean(process.env.CI));
 
 const all=[...BROWSER_CHECKS.map(name=>({name,env:{}})),...BROWSER_MODES.map(mode=>({name:mode.file,env:mode.env}))];
-const skipOrder=name=>`${marker(name).status==='ci-skipped'?1:0} ${name.includes('/')?1:0} ${name}`;
+const skipOrder=name=>`${marker(name).status==='ci-skipped'?1:0} ${name.startsWith('docs/')?1:0} ${name}`;
 const skipped=all.map(check=>check.name).filter(skips).sort((a,b)=>skipOrder(a)<skipOrder(b)?-1:1);
 
 const {values,positionals:only}=parseArgs({options:{shard:{type:'string'},shards:{type:'boolean'}},allowPositionals:true});
