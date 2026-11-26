@@ -21,7 +21,9 @@ const log=fs.openSync(path.join(work,'log.txt'),'w');
 // Codex refuses to run outside a trusted repository unless told to skip that check.
 const args=['exec','--ephemeral','--color','never','--skip-git-repo-check','-s','workspace-write','-C',work,'-o',path.join(work,'last.md'),
   ...renders.split(',').flatMap(r=>['-i',path.resolve(r)]),'--',prompt];
-const code=await new Promise(done=>spawn('codex',args,{cwd:work,stdio:['ignore',log,log]}).on('close',done));
+const code=await new Promise(done=>spawn('codex',args,{cwd:work,stdio:['ignore',log,log]})
+  .on('error',error=>{fs.writeSync(log,`spawn codex: ${error.message}\n`);done(null);})
+  .on('close',done));
 const text=fs.readFileSync(path.join(work,'log.txt'),'utf8');
 const tokens=Number(text.match(/tokens used\s*\n\s*([\d,\s]+)/)?.[1].replace(/\D/g,''))||null;
 if(code===0&&fs.existsSync(made))fs.copyFileSync(made,target,fs.constants.COPYFILE_EXCL);

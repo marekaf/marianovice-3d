@@ -31,7 +31,7 @@ The output line of each view prints the camera position used. Chrome without a G
 node scripts/pictures/gen.mjs out/ sauna-v1-house out/sauna-model-house.png place.txt variant.txt tail.txt
 ```
 
-The prompt files are joined in order and every `NAME` in them becomes the picture name. Codex gets the render with `-i` and writes `out/<name>.png`. Several renders are joined with commas and all go to Codex. The script refuses a name that already exists, so a new variant needs a new name. It prints the Codex tokens used. The prompt, log and Codex reply go to `$PICTURE_WORK/<name>` (default `model-pictures` in the system temp directory).
+The prompt files are joined in order and every `NAME` in them becomes the picture name. Codex gets the render with `-i` and writes `out/<name>.png`. The plain model render and the joined text prompt are sent to the Codex service; nothing else is. Several renders are joined with commas and all go to Codex. The script refuses a name that already exists, so a new variant needs a new name. It prints the Codex tokens used. The prompt, log and Codex reply go to `$PICTURE_WORK/<name>` (default `model-pictures` in the system temp directory).
 
 A prompt in three parts kept the geometry in earlier runs:
 
